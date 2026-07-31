@@ -1,0 +1,26 @@
+{
+  "name": "genre-tree-view",
+  "version": "0.0.0",
+  "description": "Reusable D3-based genre tree visualization component and playground app",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BehindTheMusicTree/genre-tree-view.git"
+  },
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @behindthemusictree/genre-tree-view --filter genre-tree-view-playground dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "release": "bash scripts/release.sh"
+  },
+  "keywords": [
+    "react",
+    "d3",
+    "tree",
+    "genre-tree",
+    "data-visualization"
+  ],
+  "author": "Andreas Garcia",
+  "license": "ISC"
+}

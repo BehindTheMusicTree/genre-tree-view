@@ -1,0 +1,104 @@
+/* Styles for @behindthemusictree/genre-tree-view. Scoped with a gtv- prefix so they
+   don't collide with a consuming app's own CSS. Import this file once, anywhere,
+   in any app that renders <GenreTree>. */
+
+.gtv-node-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12px;
+  font-weight: 500;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: inherit;
+}
+
+.gtv-node-label--forbidden {
+  color: #888888;
+}
+
+.gtv-more-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.gtv-more-icon:hover {
+  background-color: #6b7280;
+}
+
+.gtv-action-icon-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gtv-action-icon-container--disabled {
+  opacity: 0.5;
+}
+
+.gtv-action-label-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: white;
+}
+
+.gtv-action-label-container--disabled {
+  opacity: 0.5;
+}
+
+.gtv-icon {
+  display: block;
+}
+
+.gtv-icon--spin {
+  animation: gtv-spin 1s linear infinite;
+}
+
+@keyframes gtv-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gtv-hash-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.gtv-action-row--hovered div {
+  background-color: #6b7280;
+}
+
+.gtv-reparent-target {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gtv-reparent-target-label {
+  color: white;
+  font-size: 12px;
+  margin-left: 0.5rem;
+}
