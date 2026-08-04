@@ -106,7 +106,9 @@
   margin-left: 0.5rem;
 }
 
-.gtv-node-rect:hover {
+/* Applied to the node group (not the rect) so it composes with, rather than
+   overrides, the rect's own `filter="url(#...)"` elevation shadow attribute. */
+g.node:hover {
   filter: brightness(var(--gtv-hover-brightness, 1.05));
 }
 
@@ -115,7 +117,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .gtv-node-rect {
+  g.node {
     transition: filter 150ms ease;
   }
 
