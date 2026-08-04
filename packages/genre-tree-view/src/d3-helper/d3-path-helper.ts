@@ -20,11 +20,11 @@ export function appendPaths(d3Lib: typeof import("d3"), svg: D3Selection, treeDa
     });
 
   svg
-    .selectAll("path.link")
+    .selectAll("path.gtv-link")
     .data(treeData.links())
     .enter()
     .append("path")
-    .attr("class", "link")
+    .attr("class", "gtv-link")
     .attr("d", linkGenerator)
     .style("fill", "none")
     .style("stroke", CONNECTOR_COLOR)
