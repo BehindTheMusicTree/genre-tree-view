@@ -108,8 +108,10 @@ export function renderTree(
     .append("g") as unknown as D3Selection;
 
   // Card elevation shadow, scoped to this root's id so multiple <GenreTree> instances
-  // on one page never collide.
-  const shadowFilterId = `gtv-card-shadow-${treeData.data.id}`;
+  // on one page never collide. The id is sanitized since it's embedded into an SVG
+  // `id`/`url(#...)` reference, which arbitrary GenreTreeNode.id strings are not safe for.
+  const safeRootId = treeData.data.id.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const shadowFilterId = `gtv-card-shadow-${safeRootId}`;
   if (ELEVATION) {
     const filter = svg
       .append("defs")
