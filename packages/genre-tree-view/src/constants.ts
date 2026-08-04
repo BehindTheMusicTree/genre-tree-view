@@ -1,21 +1,45 @@
-export const DEFAULT_NODE_COLOR = "#0d3b66";
+// Visual theme tokens. All render code (tree-renderer.ts, d3-path-helper.ts,
+// NodeHelper.tsx) reads exclusively from this block, so the tree's whole look can be
+// swapped by editing only these values.
+export const SURFACE_FILL = "#FFFFFF";
+export const SURFACE_BORDER_COLOR = "#E4E4E7";
+export const SURFACE_BORDER_WIDTH = 1;
+export const ROOT_BORDER_WIDTH = 1;
+export const CORNER_RADIUS = 8;
+export const ELEVATION = true;
 
-// Color palette used to derive a consistent per-tree color from a seed string.
+export const CONNECTOR_COLOR = "#D4D4D8";
+export const CONNECTOR_WIDTH = 1.5;
+export const CONNECTOR_OPACITY = 1;
+
+export const TEXT_COLOR = "#18181B";
+export const TEXT_MUTED_COLOR = "#A1A1AA";
+
+export const ACCENT_COLOR = "#4F46E5";
+export const ACCENT_TEXT_COLOR = "#FFFFFF";
+
+export const ACTIONS_PANEL_FILL = "#18181B";
+export const ACTIONS_PANEL_TEXT = "#FFFFFF";
+
+// <1 darkens on hover (light surfaces), >1 lightens on hover (dark surfaces).
+export const HOVER_BRIGHTNESS = 0.97;
+
+export const PER_TREE_ACCENT_DOT = true;
+export const ACCENT_DOT_SIZE = 4;
+
+export const DEFAULT_NODE_COLOR = "#4F46E5";
+
+// Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
+// derive a consistent per-tree color from a seed string (see getGenreTreeColor).
 export const TREE_COLORS = [
-  "#0d3b66", // Primary blue
-  "#2c5530", // Forest green
-  "#6b4c93", // Muted purple
-  "#8b4513", // Saddle brown
-  "#2f4f4f", // Dark slate gray
-  "#556b2f", // Dark olive green
-  "#8b008b", // Dark magenta
-  "#2e8b57", // Sea green
-  "#4682b4", // Steel blue
-  "#cd853f", // Peru
-  "#5f9ea0", // Cadet blue
-  "#8b7355", // Light brown
-  "#708090", // Slate gray
-  "#483d8b", // Dark slate blue
+  "#4F46E5", // Indigo
+  "#0D9488", // Teal
+  "#D97706", // Amber
+  "#E11D48", // Rose
+  "#7C3AED", // Violet
+  "#0891B2", // Cyan
+  "#059669", // Emerald
+  "#EA580C", // Orange
 ];
 
 /** Deterministically maps a seed string (e.g. a root node id) to a color in the default palette. */

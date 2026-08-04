@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 
 import { GenreTreeNode } from "../types";
-import { calculateNodeDimensions } from "../constants";
+import { CONNECTOR_COLOR, CONNECTOR_OPACITY, CONNECTOR_WIDTH, calculateNodeDimensions } from "../constants";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -24,9 +24,11 @@ export function appendPaths(d3Lib: typeof import("d3"), svg: D3Selection, treeDa
     .data(treeData.links())
     .enter()
     .append("path")
+    .attr("class", "link")
     .attr("d", linkGenerator)
     .style("fill", "none")
-    .style("stroke", "black")
-    .style("stroke-opacity", 1)
-    .style("stroke-width", 2);
+    .style("stroke", CONNECTOR_COLOR)
+    .style("stroke-width", CONNECTOR_WIDTH)
+    .style("stroke-opacity", CONNECTOR_OPACITY)
+    .style("stroke-linecap", "round");
 }
