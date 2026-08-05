@@ -18,8 +18,18 @@ export const TEXT_MUTED_COLOR = "#A1A1AA";
 export const ACCENT_COLOR = "#4F46E5";
 export const ACCENT_TEXT_COLOR = "#FFFFFF";
 
-export const ACTIONS_PANEL_FILL = "#18181B";
-export const ACTIONS_PANEL_TEXT = "#FFFFFF";
+// Tokens for the toolbar's inline icon row and its overflow menu — reuse the surface/text/
+// accent tokens above so both read as part of the same light, neutral card language.
+export const DANGER_COLOR = "#DC2626";
+export const MENU_ROW_HOVER_FILL = "#F4F4F5";
+export const DANGER_ROW_HOVER_FILL = "rgba(220, 38, 38, 0.08)";
+export const ACCENT_TINT_FILL = "rgba(79, 70, 229, 0.08)";
+
+export const TOOLBAR_BUTTON_SIZE = 26;
+export const TOOLBAR_GAP = 2;
+
+export const MENU_ROW_HEIGHT = 30;
+export const MENU_WIDTH = 130;
 
 // <1 darkens on hover (light surfaces), >1 lightens on hover (dark surfaces).
 export const HOVER_BRIGHTNESS = 0.97;
@@ -71,33 +81,16 @@ export const MIN_NODE_HEIGHT = 35;
 export const MAX_NODE_HEIGHT = 60;
 export const ITEM_COUNT_SCALING_FACTOR = 0.8; // How much width increases per item
 
-export const ACTION_ICON_SIZE = 14;
-
-export const ACTION_ICON_CONTAINER_DIMENSIONS: Dimensions = {
-  WIDTH: ACTION_ICON_SIZE + 10,
-  HEIGHT: RECT_BASE_DIMENSIONS.HEIGHT,
-};
-
-export const ACTION_LABEL_CONTAINER_DIMENSIONS: Dimensions = {
-  WIDTH: 82,
-  HEIGHT: RECT_BASE_DIMENSIONS.HEIGHT,
-};
-
-export const ACTION_CONTAINER_DIMENSIONS: Dimensions = {
-  WIDTH: ACTION_ICON_CONTAINER_DIMENSIONS.WIDTH + ACTION_LABEL_CONTAINER_DIMENSIONS.WIDTH,
-  HEIGHT: RECT_BASE_DIMENSIONS.HEIGHT,
-};
-
-export const MORE_ICON_WIDTH = 22;
-export const ACTIONS_CONTAINER_X_OFFSET = RECT_BASE_DIMENSIONS.WIDTH / 2 + MORE_ICON_WIDTH;
-
-export const ACTIONS_CONTAINER_DIMENSIONS_MAX: Dimensions = {
-  WIDTH: ACTION_CONTAINER_DIMENSIONS.WIDTH,
-  HEIGHT: ACTION_CONTAINER_DIMENSIONS.HEIGHT * 7,
-};
+// Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
+// so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
+// the overflow menu's own width plus the gap the toolbar renders it at (see the `+ 4` x-offset
+// in addToolbarActions), since the menu is wider than the icon row itself.
+export const TOOLBAR_MENU_X_GAP = 4;
+export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
+export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 
 export const NODE_DIMENSIONS: Dimensions = {
-  WIDTH: RECT_BASE_DIMENSIONS.WIDTH + MORE_ICON_WIDTH + ACTIONS_CONTAINER_DIMENSIONS_MAX.WIDTH,
+  WIDTH: RECT_BASE_DIMENSIONS.WIDTH + ACTIONS_OVERLAY_WIDTH,
   HEIGHT: RECT_BASE_DIMENSIONS.HEIGHT,
 };
 
@@ -106,7 +99,6 @@ export const VERTICAL_SEPARATION_BETWEEN_RECTANGLES = 20;
 export const HORIZONTAL_SEPARATION_BETWEEN_NODES =
   NODE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
 export const VERTICAL_SEPARATION_BETWEEN_NODES = NODE_DIMENSIONS.HEIGHT + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
-export const SPINNER_ICON_SIZE = 14;
 
 // Utility functions for dynamic node sizing
 export function calculateNodeDimensions(itemCount: number): Dimensions {

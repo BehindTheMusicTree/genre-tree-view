@@ -37,10 +37,11 @@ export function App() {
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <h1>genre-tree-view playground <small>v{genreTreeViewVersion}</small></h1>
+
       <p>
         {reparentingNodeId
           ? `Reparenting "${nodes.find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
-          : "Hover a node's right edge to reveal actions."}
+          : "Hover a node to reveal an inline light icon row; the kebab holds the rest."}
       </p>
       {reparentingNodeId && (
         <button onClick={() => setReparentingNodeId(null)}>Cancel reparent</button>

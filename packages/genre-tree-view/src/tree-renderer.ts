@@ -4,8 +4,8 @@ import { GenreTreeNode, GenreTreePlayState } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
-  MORE_ICON_WIDTH,
-  ACTIONS_CONTAINER_DIMENSIONS_MAX,
+  ACTIONS_OVERLAY_WIDTH,
+  ACTIONS_OVERLAY_HEIGHT,
   SURFACE_FILL,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
@@ -21,7 +21,7 @@ import {
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import { appendPaths } from "./d3-helper/d3-path-helper";
-import { addMoreIconContainer, addActionsGroup, addReparentTargetOverlay } from "./NodeHelper";
+import { addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -51,18 +51,14 @@ export function calculateSvgDimensions(d3Lib: typeof import("d3"), treeData: D3N
 
   const highestNodeVerticalCoordinate = d3Lib.min(nodes, (d) => d.x)!;
   const highestVerticalCoordinate =
-    highestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 - ACTIONS_CONTAINER_DIMENSIONS_MAX.HEIGHT / 2;
+    highestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 - ACTIONS_OVERLAY_HEIGHT / 2;
   const lowestNodeVerticalCoordinate = d3Lib.max(nodes, (d) => d.x)!;
   const lowestVerticalCoordinate =
-    lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_CONTAINER_DIMENSIONS_MAX.HEIGHT / 2;
+    lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
   const svgHeight = lowestVerticalCoordinate - highestVerticalCoordinate;
 
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
-  const svgWidth =
-    maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES +
-    maxNodeDimensions.WIDTH +
-    MORE_ICON_WIDTH +
-    ACTIONS_CONTAINER_DIMENSIONS_MAX.WIDTH;
+  const svgWidth = maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
   return { svgWidth, svgHeight, highestVerticalCoordinate };
 }
@@ -105,6 +101,7 @@ export function renderTree(
     .append("svg")
     .attr("width", svgWidth)
     .attr("height", svgHeight)
+    .style("overflow", "visible")
     .append("g") as unknown as D3Selection;
 
   // Card elevation shadow, scoped to this root's id so multiple <GenreTree> instances
@@ -173,29 +170,6 @@ export function renderTree(
       .attr("fill", rootColor);
   }
 
-  const handleMoreActionEnterMouse = (event: MouseEvent, d: D3Node, node: GenreTreeNode) => {
-    event.stopPropagation();
-
-    const group = d3Lib.select<SVGGElement, unknown>("#group-" + node.id);
-    const actionsContainer = group.select<SVGGElement>("#actions-container-" + node.id);
-
-    if (actionsContainer.empty()) {
-      addMoreIconContainer(d3Lib, node, group, handleMoreActionEnterMouse);
-      addActionsGroup(d3Lib, node, group, {
-        handleMoreActionEnterMouse,
-        onPlayPause,
-        fileInputRef: callbacks.fileInputRef,
-        selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
-        onAddChild,
-        onRenameRequest,
-        onDeleteRequest,
-        onReparentRequest: callbacks.onReparentRequest,
-        playingNodeId: callbacks.playingNodeId,
-        playState: callbacks.playState,
-      });
-    }
-  };
-
   nodes
     .append("foreignObject")
     .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH)
@@ -209,19 +183,26 @@ export function renderTree(
       return `<div class="gtv-node-label${rootClass}" style="color:${color}">${d.data.name}${itemCountText}</div>`;
     })
     .on("mouseover", function (event, d) {
-      if (!reparentingNodeId && !isForbidden(d)) {
-        addMoreIconContainer(
-          d3Lib,
-          d.data,
-          d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
-            SVGGElement,
-            unknown,
-            HTMLElement,
-            unknown
-          >,
-          handleMoreActionEnterMouse,
-        );
-      }
+      if (reparentingNodeId || isForbidden(d)) return;
+
+      const group = d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
+        SVGGElement,
+        unknown,
+        HTMLElement,
+        unknown
+      >;
+
+      addToolbarActions(d3Lib, d.data, group, {
+        onPlayPause,
+        fileInputRef: callbacks.fileInputRef,
+        selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
+        onAddChild,
+        onRenameRequest,
+        onDeleteRequest,
+        onReparentRequest: callbacks.onReparentRequest,
+        playingNodeId: callbacks.playingNodeId,
+        playState: callbacks.playState,
+      });
     });
 
   nodes.each(function (d: D3Node) {
@@ -239,16 +220,10 @@ export function renderTree(
 
     group.on("mouseleave", function () {
       setTimeout(() => {
-        const moreContainer = d3Lib.select<SVGGElement, unknown>("#more-icon-container-" + d.data.id);
-        const actionsContainer = d3Lib.select<SVGGElement, unknown>("#actions-container-" + d.data.id);
-
-        if (moreContainer.empty() && actionsContainer.empty()) {
-          d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
-        } else {
-          moreContainer.remove();
-          actionsContainer.remove();
-          d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
-        }
+        d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+        // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
+        // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
+        d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
       }, 100);
     });
   });

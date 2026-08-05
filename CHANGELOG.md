@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The toolbar hover actions (inline icon row with overflow kebab) are now the only actions
+  affordance. Removed the dark flyout and kebab-menu variants along with the `actionsVariant`
+  prop and `GenreTreeActionsVariant` type.
+
+### Fixed
+
+- Fixed the tree's connector line showing through the toolbar's icon row by giving `.gtv-toolbar`
+  an opaque background.
+
 ## [0.2.0] - 2026-08-05
 
 ### Added

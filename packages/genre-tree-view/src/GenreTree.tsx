@@ -128,7 +128,9 @@ export function GenreTree({
   return (
     <div className={className} style={{ "--gtv-hover-brightness": HOVER_BRIGHTNESS } as React.CSSProperties}>
       <input type="file" multiple ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
-      <svg ref={svgRef} width={svgWidth} height={svgHeight} />
+      {/* overflow: visible so the toolbar's overflow menu isn't clipped when it extends past
+          the tree's own layout bounds (SVG defaults to overflow: hidden). */}
+      <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ overflow: "visible" }} />
     </div>
   );
 }
