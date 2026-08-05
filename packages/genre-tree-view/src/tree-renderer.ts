@@ -220,7 +220,13 @@ export function renderTree(
 
     group.on("mouseleave", function () {
       setTimeout(() => {
-        d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+        // Leave the toolbar in place while its own overflow menu is still open — the menu is
+        // re-parented to the root layer (see toggleLightActionsMenu), so reaching it with the
+        // mouse necessarily exits this node's <g> and fires this handler; removing the toolbar
+        // here would delete the kebab that anchors the still-open menu.
+        if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
+          d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+        }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
         d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();

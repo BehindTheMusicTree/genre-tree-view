@@ -15,6 +15,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Fixed the tree's connector line showing through the toolbar's icon row by giving `.gtv-toolbar`
   an opaque background.
+- Fixed the toolbar disappearing while its "More actions" overflow menu was still open, when the
+  mouse moved from the kebab button toward the menu.
 
 ## [0.2.0] - 2026-08-05
 
