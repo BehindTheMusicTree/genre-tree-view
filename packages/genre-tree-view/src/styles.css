@@ -142,12 +142,17 @@ g.node:hover {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   height: 30px;
   padding: 0 10px;
-  font-size: 12px;
-  font-weight: 500;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   color: #18181b;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .gtv-menu-row:hover {

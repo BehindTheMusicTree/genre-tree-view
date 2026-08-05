@@ -128,10 +128,10 @@ function renderMenuItemsHtml(items: MenuActionItem[], d: D3Node): string {
       return (
         divider +
         ReactDOMServer.renderToString(
-          <div className={classes} data-menu-key={item.key}>
+          <button type="button" className={classes} disabled={!enabled} data-menu-key={item.key}>
             <span className="gtv-menu-row-icon">{item.icon(d)}</span>
             <span className="gtv-menu-row-label">{item.label(d)}</span>
-          </div>,
+          </button>,
         )
       );
     })
@@ -177,7 +177,7 @@ export function toggleLightActionsMenu(
     .attr("width", MENU_WIDTH)
     .attr("height", menuItemsHeight(items))
     .html(() => `<div class="gtv-menu-card">${renderMenuItemsHtml(items, datum)}</div>`)
-    .selectAll<HTMLDivElement, unknown>(".gtv-menu-row")
+    .selectAll<HTMLButtonElement, unknown>(".gtv-menu-row")
     .each(function () {
       const key = this.getAttribute("data-menu-key");
       const item = items.find((i) => i.key === key);
