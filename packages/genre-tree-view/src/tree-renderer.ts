@@ -207,8 +207,19 @@ export function renderTree(
 
   nodes.each(function (d: D3Node) {
     const group = d3Lib.select<SVGGElement, unknown>(this);
+    let leaveTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     group.on("mouseenter", function () {
+      // A fast mouse movement between this node's own child shapes (e.g. from the label onto
+      // the toolbar) can cross an unpainted gap between them, which the browser reports as
+      // briefly leaving and re-entering this <g> (pointer-events only tracks painted areas, and
+      // <g> itself paints nothing). Cancel any removal that blip scheduled, or a quick pass-through
+      // would still delete the toolbar 100ms later even though the mouse is back on it.
+      if (leaveTimeoutId !== null) {
+        clearTimeout(leaveTimeoutId);
+        leaveTimeoutId = null;
+      }
+
       if (reparentingNodeId && d.data.actionable !== false && !isForbidden(d)) {
         addReparentTargetOverlay(
           d3Lib,
@@ -219,8 +230,15 @@ export function renderTree(
     });
 
     group.on("mouseleave", function () {
-      setTimeout(() => {
-        d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+      leaveTimeoutId = setTimeout(() => {
+        leaveTimeoutId = null;
+        // Leave the toolbar in place while its own overflow menu is still open — the menu is
+        // re-parented to the root layer (see toggleLightActionsMenu), so reaching it with the
+        // mouse necessarily exits this node's <g> and fires this handler; removing the toolbar
+        // here would delete the kebab that anchors the still-open menu.
+        if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
+          d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+        }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
         d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();

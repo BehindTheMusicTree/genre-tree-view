@@ -28,25 +28,34 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "lint": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "d3": "^7.8.5",
-    "react-icons": "^5.0.0"
+    "d3": "7.9.0",
+    "react-icons": "5.7.0"
   },
   "devDependencies": {
-    "@types/d3": "^7.4.3",
-    "@types/node": "^22.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "@testing-library/jest-dom": "7.0.0",
+    "@testing-library/react": "16.3.2",
+    "@types/d3": "7.4.3",
+    "@types/node": "22.20.1",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitest/coverage-v8": "3.2.7",
+    "jsdom": "30.0.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
   },
   "author": "Andreas Garcia",
   "license": "ISC"

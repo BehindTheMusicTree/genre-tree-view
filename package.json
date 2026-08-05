@@ -8,10 +8,16 @@
     "url": "https://github.com/BehindTheMusicTree/genre-tree-view.git"
   },
   "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
+  "engines": {
+    "node": "22.23.2"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @behindthemusictree/genre-tree-view --filter genre-tree-view-playground dev",
     "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
+    "test": "pnpm --filter @behindthemusictree/genre-tree-view test",
+    "coverage": "pnpm --filter @behindthemusictree/genre-tree-view coverage",
     "release": "bash scripts/release.sh"
   },
   "keywords": [
@@ -22,5 +28,12 @@
     "data-visualization"
   ],
   "author": "Andreas Garcia",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.9.0",
+    "typescript-eslint": "8.66.0"
+  }
 }
