@@ -226,7 +226,12 @@ export function addToolbarActions(
         }
         return <FaPlay className="gtv-icon" size={12} />;
       },
-      label: (d) => (callbacks.playingNodeId === d.data.id && callbacks.playState === "playing" ? "Pause" : "Play"),
+      label: (d) => {
+        if (callbacks.playingNodeId !== d.data.id) return "Play";
+        if (callbacks.playState === "playing") return "Pause";
+        if (callbacks.playState === "loading") return "Loading...";
+        return "Play";
+      },
       onClick: (_event, d) => onPlayPause?.(d.data.id),
       enabled: (d) => d.data.itemCount > 0,
     },
