@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GenreTree, type GenreTreeNode, type GenreTreePlayState } from "@behindthemusictree/genre-tree-view";
+import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
 
 const initialNodes: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 0, actionable: false },
@@ -35,7 +36,7 @@ export function App() {
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <h1>genre-tree-view playground</h1>
+      <h1>genre-tree-view playground <small>v{genreTreeViewVersion}</small></h1>
       <p>
         {reparentingNodeId
           ? `Reparenting "${nodes.find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
