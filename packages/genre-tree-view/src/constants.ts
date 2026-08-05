@@ -82,8 +82,11 @@ export const MAX_NODE_HEIGHT = 60;
 export const ITEM_COUNT_SCALING_FACTOR = 0.8; // How much width increases per item
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
-// so the tree layout leaves room for them instead of packing nodes edge-to-edge.
-export const ACTIONS_OVERLAY_WIDTH = 128;
+// so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
+// the overflow menu's own width plus the gap the toolbar renders it at (see the `+ 4` x-offset
+// in addToolbarActions), since the menu is wider than the icon row itself.
+export const TOOLBAR_MENU_X_GAP = 4;
+export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 
 export const NODE_DIMENSIONS: Dimensions = {

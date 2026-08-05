@@ -11,6 +11,7 @@ import {
   CORNER_RADIUS,
   TOOLBAR_BUTTON_SIZE,
   TOOLBAR_GAP,
+  TOOLBAR_MENU_X_GAP,
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
   calculateNodeDimensions,
@@ -279,7 +280,7 @@ export function addToolbarActions(
 
   const buttonCount = primaryItems.length + (overflowItems.length > 0 ? 1 : 0);
   const toolbarWidth = buttonCount * TOOLBAR_BUTTON_SIZE + (buttonCount - 1) * TOOLBAR_GAP + 6;
-  const x = dimensions.WIDTH / 2 + 4;
+  const x = dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP;
   const y = -TOOLBAR_BUTTON_SIZE / 2 - 3;
 
   const group = nodeGroup.append("g").attr("id", "toolbar-" + node.id).attr("class", "gtv-actions-panel");
