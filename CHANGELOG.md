@@ -17,6 +17,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   an opaque background.
 - Fixed the toolbar disappearing while its "More actions" overflow menu was still open, when the
   mouse moved from the kebab button toward the menu.
+- Fixed the toolbar disappearing when the mouse moved quickly from a node onto its toolbar,
+  caused by a spurious mouseleave/mouseenter blip that scheduled a toolbar removal the
+  subsequent re-entry didn't cancel.
 
 ## [0.2.0] - 2026-08-05
 

@@ -42,4 +42,25 @@ describe("toolbar stays anchored while its overflow menu is open", () => {
 
     expect(container.querySelector("#toolbar-root")).toBeFalsy();
   });
+
+  it("keeps the toolbar mounted when the mouse re-enters the node before the mouseleave timeout fires", () => {
+    // A fast movement from the node label onto the toolbar can momentarily cross an unpainted
+    // gap between the two, which the browser reports as a brief mouseleave+mouseenter blip on
+    // the node's <g> even though the mouse never actually left the card. The toolbar must survive
+    // that blip instead of being deleted out from under the still-hovering mouse 100ms later.
+    vi.useFakeTimers();
+    const nodes: GenreTreeNode[] = [{ id: "root", parentId: null, name: "Root", itemCount: 3 }];
+    const { container } = render(<GenreTree nodes={nodes} />);
+
+    const nodeGroup = container.querySelector("#group-root") as unknown as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as unknown as SVGForeignObjectElement);
+    expect(container.querySelector("#toolbar-root")).toBeTruthy();
+
+    fireEvent.mouseLeave(nodeGroup);
+    vi.advanceTimersByTime(50);
+    fireEvent.mouseEnter(nodeGroup);
+    vi.advanceTimersByTime(100);
+
+    expect(container.querySelector("#toolbar-root")).toBeTruthy();
+  });
 });
