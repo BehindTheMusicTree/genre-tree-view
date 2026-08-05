@@ -298,6 +298,8 @@ export function addToolbarActions(
           type="button"
           className={`gtv-toolbar-btn${!enabled ? " gtv-toolbar-btn--disabled" : ""}`}
           title={item.label(datum)}
+          aria-label={item.label(datum)}
+          disabled={!enabled}
           data-menu-key={item.key}
         >
           {item.icon(datum)}
