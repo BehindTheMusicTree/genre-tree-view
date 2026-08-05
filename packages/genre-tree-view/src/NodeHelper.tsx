@@ -14,6 +14,11 @@ import {
   ACTION_ICON_CONTAINER_DIMENSIONS,
   ACTION_LABEL_CONTAINER_DIMENSIONS,
   SPINNER_ICON_SIZE,
+  ACCENT_COLOR,
+  ACCENT_TEXT_COLOR,
+  ACTIONS_PANEL_FILL,
+  ACTIONS_PANEL_TEXT,
+  CORNER_RADIUS,
   calculateNodeDimensions,
 } from "./constants";
 
@@ -46,7 +51,6 @@ export function addMoreIconContainer(
   node: GenreTreeNode,
   group: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   handleMoreActionEnterMouse: (event: MouseEvent, d: D3Node, node: GenreTreeNode) => void,
-  rootColor: string,
 ) {
   const moreIconContainer = group.select("#more-icon-container-" + node.id);
   const dimensions = calculateNodeDimensions(node.itemCount);
@@ -60,7 +64,7 @@ export function addMoreIconContainer(
       .attr("y", -dimensions.HEIGHT / 2)
       .attr("width", MORE_ICON_WIDTH)
       .attr("height", dimensions.HEIGHT)
-      .attr("fill", rootColor);
+      .attr("fill", ACTIONS_PANEL_FILL);
 
     container
       .append("foreignObject")
@@ -71,7 +75,7 @@ export function addMoreIconContainer(
       .html(() =>
         ReactDOMServer.renderToString(
           <div className="gtv-more-icon">
-            <MdMoreVert size={20} color="white" />
+            <MdMoreVert size={20} color={ACTIONS_PANEL_TEXT} />
           </div>,
         ),
       )
@@ -170,7 +174,6 @@ export function addActionsGroup(
   node: GenreTreeNode,
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   callbacks: NodeActionCallbacks,
-  rootColor: string,
 ) {
   const {
     onPlayPause,
@@ -184,7 +187,10 @@ export function addActionsGroup(
     handleMoreActionEnterMouse,
   } = callbacks;
 
-  const actionsGroup = nodeGroup.append("g").attr("id", "actions-container-" + node.id);
+  const actionsGroup = nodeGroup
+    .append("g")
+    .attr("id", "actions-container-" + node.id)
+    .attr("class", "gtv-actions-panel");
   const dimensions = calculateNodeDimensions(node.itemCount);
   const actionsContainerX = dimensions.WIDTH / 2 + MORE_ICON_WIDTH;
 
@@ -201,7 +207,7 @@ export function addActionsGroup(
     .attr("y", actionsContainerY)
     .attr("width", ACTIONS_CONTAINER_DIMENSIONS_MAX.WIDTH)
     .attr("height", actionsContainerHeight)
-    .attr("fill", rootColor);
+    .attr("fill", ACTIONS_PANEL_FILL);
 
   actionsGroup
     .append("path")
@@ -256,7 +262,7 @@ export function addActionsGroup(
       5,
       "add-child-container",
       addChildActionOnclick,
-      () => <FaPlus className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />,
+      () => <FaPlus className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />,
       () => "Add sub-genre",
       () => true,
       actionsContainerX,
@@ -274,7 +280,7 @@ export function addActionsGroup(
       6,
       "change-parent-container",
       changeParentActionOnclick,
-      () => <PiGraphFill className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />,
+      () => <PiGraphFill className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />,
       () => "Change parent",
       () => true,
       actionsContainerX,
@@ -292,7 +298,7 @@ export function addActionsGroup(
       4,
       "rename-container",
       renameActionOnclick,
-      () => <MdModeEdit className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />,
+      () => <MdModeEdit className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />,
       () => "Rename",
       () => true,
       actionsContainerX,
@@ -310,7 +316,7 @@ export function addActionsGroup(
       7,
       "delete-container",
       deleteActionOnclick,
-      () => <FaTrashAlt className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />,
+      () => <FaTrashAlt className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />,
       () => "Delete",
       () => true,
       actionsContainerX,
@@ -329,7 +335,10 @@ export function addActionsGroup(
     "track-count-container",
     () => {},
     () => (
-      <span className="gtv-hash-icon" style={{ width: ACTION_ICON_SIZE, height: ACTION_ICON_SIZE }}>
+      <span
+        className="gtv-hash-icon"
+        style={{ width: ACTION_ICON_SIZE, height: ACTION_ICON_SIZE, color: ACTIONS_PANEL_TEXT }}
+      >
         #
       </span>
     ),
@@ -348,12 +357,12 @@ export function addActionsGroup(
     (d) => {
       if (playingNodeId && playingNodeId === d.data.id) {
         if (playState === "playing") {
-          return <FaPause className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />;
+          return <FaPause className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />;
         } else if (playState === "loading") {
-          return <FaSpinner className="gtv-icon gtv-icon--spin" size={SPINNER_ICON_SIZE} color="white" />;
+          return <FaSpinner className="gtv-icon gtv-icon--spin" size={SPINNER_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />;
         }
       }
-      return <FaPlay className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />;
+      return <FaPlay className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />;
     },
     (d) => {
       if (playingNodeId && playingNodeId === d.data.id) {
@@ -379,14 +388,14 @@ export function addActionsGroup(
     3,
     "upload-files-container",
     uploadActionOnclick,
-    () => <FaFileUpload className="gtv-icon" size={ACTION_ICON_SIZE} color="white" />,
+    () => <FaFileUpload className="gtv-icon" size={ACTION_ICON_SIZE} color={ACTIONS_PANEL_TEXT} />,
     () => "Upload files",
     () => true,
     actionsContainerX,
   );
 
   actionsGroup.on("mouseenter", function () {
-    addMoreIconContainer(d3Lib, node, nodeGroup, handleMoreActionEnterMouse, rootColor);
+    addMoreIconContainer(d3Lib, node, nodeGroup, handleMoreActionEnterMouse);
   });
 
   actionsGroup.on("mouseleave", function () {
@@ -424,7 +433,9 @@ export function addReparentTargetOverlay(
       .attr("height", dimensions.HEIGHT)
       .attr("x", -dimensions.WIDTH / 2)
       .attr("y", -dimensions.HEIGHT / 2)
-      .attr("fill", "green");
+      .attr("rx", CORNER_RADIUS)
+      .attr("ry", CORNER_RADIUS)
+      .attr("fill", ACCENT_COLOR);
 
     overlayGroup
       .append("foreignObject")
@@ -435,8 +446,10 @@ export function addReparentTargetOverlay(
       .html(() =>
         ReactDOMServer.renderToString(
           <div className="gtv-reparent-target">
-            <PiGraphFill size={20} color="white" />
-            <div className="gtv-reparent-target-label">Select as new parent</div>
+            <PiGraphFill size={20} color={ACCENT_TEXT_COLOR} />
+            <div className="gtv-reparent-target-label" style={{ color: ACCENT_TEXT_COLOR }}>
+              Select as new parent
+            </div>
           </div>,
         ),
       )

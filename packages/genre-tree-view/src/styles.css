@@ -14,11 +14,16 @@
     -apple-system,
     "Segoe UI",
     sans-serif;
-  color: inherit;
 }
 
-.gtv-node-label--forbidden {
-  color: #888888;
+.gtv-node-label--root {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.gtv-node--forbidden {
+  opacity: 0.45;
 }
 
 .gtv-more-icon {
@@ -31,7 +36,7 @@
 }
 
 .gtv-more-icon:hover {
-  background-color: #6b7280;
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .gtv-action-icon-container {
@@ -80,13 +85,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   font-size: 1.125rem;
   font-weight: 700;
 }
 
 .gtv-action-row--hovered div {
-  background-color: #6b7280;
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .gtv-reparent-target {
@@ -98,7 +102,35 @@
 }
 
 .gtv-reparent-target-label {
-  color: white;
   font-size: 12px;
   margin-left: 0.5rem;
+}
+
+/* Applied to the node group (not the rect) so it composes with, rather than
+   overrides, the rect's own `filter="url(#...)"` elevation shadow attribute. */
+g.node:hover {
+  filter: brightness(var(--gtv-hover-brightness, 1.05));
+}
+
+.gtv-actions-panel {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  g.node {
+    transition: filter 150ms ease;
+  }
+
+  .gtv-actions-panel {
+    animation: gtv-fade-in 150ms ease;
+  }
+}
+
+@keyframes gtv-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

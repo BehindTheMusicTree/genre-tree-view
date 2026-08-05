@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
-import { getGenreTreeColor } from "./constants";
+import { getGenreTreeColor, HOVER_BRIGHTNESS } from "./constants";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -126,7 +126,7 @@ export function GenreTree({
   }, []);
 
   return (
-    <div className={className}>
+    <div className={className} style={{ "--gtv-hover-brightness": HOVER_BRIGHTNESS } as React.CSSProperties}>
       <input type="file" multiple ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
       <svg ref={svgRef} width={svgWidth} height={svgHeight} />
     </div>

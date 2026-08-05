@@ -6,6 +6,16 @@ import {
   VERTICAL_SEPARATION_BETWEEN_NODES,
   MORE_ICON_WIDTH,
   ACTIONS_CONTAINER_DIMENSIONS_MAX,
+  SURFACE_FILL,
+  SURFACE_BORDER_COLOR,
+  SURFACE_BORDER_WIDTH,
+  ROOT_BORDER_WIDTH,
+  CORNER_RADIUS,
+  ELEVATION,
+  TEXT_COLOR,
+  TEXT_MUTED_COLOR,
+  PER_TREE_ACCENT_DOT,
+  ACCENT_DOT_SIZE,
   calculateNodeDimensions,
   getMaxNodeDimensions,
 } from "./constants";
@@ -97,6 +107,29 @@ export function renderTree(
     .attr("height", svgHeight)
     .append("g") as unknown as D3Selection;
 
+  // Card elevation shadow, scoped to this root's id so multiple <GenreTree> instances
+  // on one page never collide. The id is sanitized since it's embedded into an SVG
+  // `id`/`url(#...)` reference, which arbitrary GenreTreeNode.id strings are not safe for.
+  const safeRootId = treeData.data.id.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const shadowFilterId = `gtv-card-shadow-${safeRootId}`;
+  if (ELEVATION) {
+    const filter = svg
+      .append("defs")
+      .append("filter")
+      .attr("id", shadowFilterId)
+      .attr("x", "-50%")
+      .attr("y", "-50%")
+      .attr("width", "200%")
+      .attr("height", "200%");
+    filter
+      .append("feDropShadow")
+      .attr("dx", 0)
+      .attr("dy", 1)
+      .attr("stdDeviation", 2)
+      .attr("flood-color", TEXT_COLOR)
+      .attr("flood-opacity", 0.12);
+  }
+
   addGrid(svg, svgWidth, svgHeight, true);
 
   appendPaths(d3Lib, svg, treeData);
@@ -108,7 +141,7 @@ export function renderTree(
     .data(treeData.descendants())
     .enter()
     .append("g")
-    .attr("class", "node")
+    .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", function (d) {
       const dimensions = calculateNodeDimensions(d.data.itemCount);
@@ -119,11 +152,26 @@ export function renderTree(
 
   nodes
     .append("rect")
+    .attr("class", "gtv-node-rect")
     .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH)
     .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
     .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
-    .attr("fill", (d) => (isForbidden(d) ? "#cccccc" : rootColor));
+    .attr("rx", CORNER_RADIUS)
+    .attr("ry", CORNER_RADIUS)
+    .attr("fill", SURFACE_FILL)
+    .attr("stroke", SURFACE_BORDER_COLOR)
+    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH))
+    .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
+
+  if (PER_TREE_ACCENT_DOT) {
+    nodes
+      .append("circle")
+      .attr("cx", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2 + 12)
+      .attr("cy", 0)
+      .attr("r", ACCENT_DOT_SIZE)
+      .attr("fill", rootColor);
+  }
 
   const handleMoreActionEnterMouse = (event: MouseEvent, d: D3Node, node: GenreTreeNode) => {
     event.stopPropagation();
@@ -132,25 +180,19 @@ export function renderTree(
     const actionsContainer = group.select<SVGGElement>("#actions-container-" + node.id);
 
     if (actionsContainer.empty()) {
-      addMoreIconContainer(d3Lib, node, group, handleMoreActionEnterMouse, rootColor);
-      addActionsGroup(
-        d3Lib,
-        node,
-        group,
-        {
-          handleMoreActionEnterMouse,
-          onPlayPause,
-          fileInputRef: callbacks.fileInputRef,
-          selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
-          onAddChild,
-          onRenameRequest,
-          onDeleteRequest,
-          onReparentRequest: callbacks.onReparentRequest,
-          playingNodeId: callbacks.playingNodeId,
-          playState: callbacks.playState,
-        },
-        rootColor,
-      );
+      addMoreIconContainer(d3Lib, node, group, handleMoreActionEnterMouse);
+      addActionsGroup(d3Lib, node, group, {
+        handleMoreActionEnterMouse,
+        onPlayPause,
+        fileInputRef: callbacks.fileInputRef,
+        selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
+        onAddChild,
+        onRenameRequest,
+        onDeleteRequest,
+        onReparentRequest: callbacks.onReparentRequest,
+        playingNodeId: callbacks.playingNodeId,
+        playState: callbacks.playState,
+      });
     }
   };
 
@@ -161,9 +203,10 @@ export function renderTree(
     .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
     .html((d) => {
-      const forbiddenClass = isForbidden(d) ? " gtv-node-label--forbidden" : "";
+      const rootClass = d.depth === 0 ? " gtv-node-label--root" : "";
       const itemCountText = d.data.itemCount > 0 ? ` (${d.data.itemCount})` : "";
-      return `<div class="gtv-node-label${forbiddenClass}">${d.data.name}${itemCountText}</div>`;
+      const color = isForbidden(d) ? TEXT_MUTED_COLOR : TEXT_COLOR;
+      return `<div class="gtv-node-label${rootClass}" style="color:${color}">${d.data.name}${itemCountText}</div>`;
     })
     .on("mouseover", function (event, d) {
       if (!reparentingNodeId && !isForbidden(d)) {
@@ -177,7 +220,6 @@ export function renderTree(
             unknown
           >,
           handleMoreActionEnterMouse,
-          rootColor,
         );
       }
     });
