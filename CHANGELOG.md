@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Exposed `package.json` via the package's `exports` map so consumers (and the playground) can
+  read the installed version at build time.
+
 ### Changed
 
 - Redesigned the tree's visual style: rounded white cards with subtle borders and elevation,
