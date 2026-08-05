@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "noEmit": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
