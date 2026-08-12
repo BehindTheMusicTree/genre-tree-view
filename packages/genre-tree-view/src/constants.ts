@@ -134,5 +134,13 @@ export const WHEEL_CHIP_HEIGHT_SELECTED = 48;
 export const WHEEL_CHIP_MIN_WIDTH = 90;
 export const WHEEL_CHIP_MAX_WIDTH = 220;
 
+// The selected chip always sits at the top of the circle (sag 0), i.e. right on the viewport's
+// clip boundary — without this inset it would straddle that boundary and render half-clipped.
+// Pushing the wheel down by half the tallest chip's height (plus a little breathing room) clears
+// it fully. Taken out of the visible-arc-height's own budget (rather than growing the viewport,
+// which would eat into the tree area above it) — farther chips get slightly less headroom before
+// they're clipped, which is an acceptable trade against nearer chips.
+export const WHEEL_TOP_INSET = WHEEL_CHIP_HEIGHT_SELECTED / 2 + 6;
+
 export const WHEEL_ROTATION_TRANSITION_MS = 500;
 export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

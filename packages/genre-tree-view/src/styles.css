@@ -226,10 +226,12 @@ g.node:hover {
   pointer-events: none;
 }
 
-/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. */
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Offset down by
+   --gtv-wheel-top-inset so the selected chip (always sag 0, i.e. at the wheel's topmost point)
+   clears the viewport's overflow:hidden boundary instead of straddling and half-clipping on it. */
 .gtv-wheel {
   position: absolute;
-  top: 0;
+  top: var(--gtv-wheel-top-inset, 30px);
   left: 50%;
   width: calc(var(--gtv-wheel-radius, 260px) * 2);
   height: calc(var(--gtv-wheel-radius, 260px) * 2);

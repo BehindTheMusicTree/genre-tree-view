@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GenreTree } from "./GenreTree";
 import { groupNodesByRoot } from "./root-grouping";
@@ -15,6 +15,7 @@ import {
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
+  WHEEL_TOP_INSET,
   WHEEL_VISIBLE_ARC_HEIGHT,
 } from "./constants";
 
@@ -55,9 +56,16 @@ export function GenreTreeWheel({
     ? selectedRootId
     : groups[0]?.root.id ?? null;
 
+  // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
+  // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
+  const onRootSelectRef = useRef(onRootSelect);
   useEffect(() => {
-    if (effectiveRootId) onRootSelect?.(effectiveRootId);
-  }, [effectiveRootId, onRootSelect]);
+    onRootSelectRef.current = onRootSelect;
+  });
+
+  useEffect(() => {
+    if (effectiveRootId) onRootSelectRef.current?.(effectiveRootId);
+  }, [effectiveRootId]);
 
   const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
@@ -73,6 +81,7 @@ export function GenreTreeWheel({
         {
           "--gtv-wheel-radius": `${WHEEL_RADIUS}px`,
           "--gtv-wheel-visible-arc-height": `${WHEEL_VISIBLE_ARC_HEIGHT}px`,
+          "--gtv-wheel-top-inset": `${WHEEL_TOP_INSET}px`,
           "--gtv-wheel-chip-height": `${WHEEL_CHIP_HEIGHT}px`,
           "--gtv-wheel-chip-height-selected": `${WHEEL_CHIP_HEIGHT_SELECTED}px`,
           "--gtv-wheel-chip-min-width": `${WHEEL_CHIP_MIN_WIDTH}px`,
