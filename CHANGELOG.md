@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeWheel`, a new component that distributes root genres evenly around a wheel hugging
+  the bottom of its container. Clicking a root's chip rotates the wheel so that chip lands at
+  the top-center and swaps in its subtree, growing upward from that anchor; only the selected
+  root's subtree is ever mounted.
+- `orientation` prop on `GenreTree` (`"horizontal" | "vertical"`, default `"horizontal"`) —
+  `GenreTreeWheel` uses `"vertical"` internally, but the prop is available directly too.
+- `groupNodesByRoot`, a pure helper that groups a flat node list by top-level ancestor.
+
 ## [0.3.0] - 2026-08-05
 
 ### Changed

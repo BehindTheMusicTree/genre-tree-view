@@ -39,4 +39,23 @@ describe("appendPaths", () => {
       expect(path.attr("d")).toBeTruthy();
     });
   });
+
+  it("uses linkVertical for orientation vertical, still one path per link", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root", parentId: null, name: "Root", itemCount: 1 },
+      { id: "child-a", parentId: "root", name: "Child A", itemCount: 2 },
+      { id: "child-b", parentId: "root", name: "Child B", itemCount: 3 },
+    ];
+    const root = buildTreeHierarchyStructure(d3, nodes);
+    const treeData = createTreeLayout(d3, root, "vertical");
+
+    const svg = createSvg();
+    appendPaths(d3, svg, treeData, "vertical");
+
+    const paths = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    expect(paths.size()).toBe(2);
+    paths.each(function () {
+      expect(d3.select(this).attr("d")).toBeTruthy();
+    });
+  });
 });

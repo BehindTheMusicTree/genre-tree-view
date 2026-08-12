@@ -192,3 +192,101 @@ g.node:hover {
   margin: 4px 0;
   background-color: #e4e4e7;
 }
+
+/* GenreTreeWheel — root genres distributed around a wheel hugging the bottom of the
+   container. Only the selected root's subtree is mounted, growing upward from the
+   wheel's top-center anchor. */
+
+.gtv-wheel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.gtv-wheel-tree-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--gtv-wheel-visible-arc-height, 120px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  overflow: auto;
+}
+
+.gtv-wheel-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--gtv-wheel-visible-arc-height, 120px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. */
+.gtv-wheel {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--gtv-wheel-radius, 900px) * 2);
+  height: calc(var(--gtv-wheel-radius, 900px) * 2);
+  margin-left: calc(var(--gtv-wheel-radius, 900px) * -1);
+  transform: rotate(var(--gtv-wheel-rotation, 0deg));
+}
+
+/* Places the chip's anchor point on the circle at its static --gtv-chip-angle. */
+.gtv-wheel-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 900px) * -1));
+}
+
+/* Counter-rotates against both the wheel's and the slot's rotation so the label stays
+   upright regardless of where on the wheel it lands. */
+.gtv-wheel-chip {
+  position: absolute;
+  transform: translate(-50%, -50%)
+    rotate(calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg))));
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--gtv-wheel-chip-min-width, 90px);
+  max-width: var(--gtv-wheel-chip-max-width, 220px);
+  height: var(--gtv-wheel-chip-height, 40px);
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--gtv-chip-color, currentColor);
+  background: #ffffff;
+  color: #18181b;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.gtv-wheel-chip--selected {
+  height: var(--gtv-wheel-chip-height-selected, 48px);
+  background: var(--gtv-chip-color, currentColor);
+  border-color: var(--gtv-chip-color, currentColor);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel,
+  .gtv-wheel-chip {
+    transition: transform var(--gtv-wheel-rotation-transition-ms, 500ms)
+      var(--gtv-wheel-rotation-easing, ease);
+  }
+}

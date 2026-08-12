@@ -1,0 +1,108 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render } from "@testing-library/react";
+import { GenreTreeWheel } from "../GenreTreeWheel";
+import type { GenreTreeNode } from "../types";
+
+afterEach(() => {
+  cleanup();
+});
+
+const NODES: GenreTreeNode[] = [
+  { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+  { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 0 },
+  { id: "root-b", parentId: null, name: "Electronic", itemCount: 0 },
+  { id: "b-child", parentId: "root-b", name: "Techno", itemCount: 0 },
+  { id: "root-c", parentId: null, name: "Jazz", itemCount: 0 },
+];
+
+function chipFor(container: HTMLElement, name: string) {
+  return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find(
+    (el) => el.textContent === name,
+  ) as HTMLButtonElement;
+}
+
+describe("GenreTreeWheel", () => {
+  it("renders one chip per root and only the default-selected root's nodes", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
+    expect(container.querySelector("#group-root-a")).toBeTruthy();
+    expect(container.querySelector("#group-a-child")).toBeTruthy();
+    expect(container.querySelector("#group-root-b")).toBeFalsy();
+    expect(container.querySelector("#group-root-c")).toBeFalsy();
+  });
+
+  it("marks the default-selected chip's aria-pressed and none of the others", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    expect(chipFor(container, "Rock").getAttribute("aria-pressed")).toBe("true");
+    expect(chipFor(container, "Electronic").getAttribute("aria-pressed")).toBe("false");
+    expect(chipFor(container, "Jazz").getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("fires onRootSelect on mount with the default root", () => {
+    const onRootSelect = vi.fn();
+    render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);
+    expect(onRootSelect).toHaveBeenCalledWith("root-a");
+  });
+
+  it("swaps the visible subtree and fires onRootSelect when a different chip is clicked", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(container.querySelector("#group-root-a")).toBeFalsy();
+    expect(container.querySelector("#group-root-b")).toBeTruthy();
+    expect(container.querySelector("#group-b-child")).toBeTruthy();
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
+    expect(chipFor(container, "Electronic").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("updates the wheel's rotation custom property after a click", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe("0deg");
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).not.toBe("0deg");
+  });
+
+  it("falls back to the first remaining root when the selected root disappears from nodes", () => {
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
+    fireEvent.click(chipFor(container, "Jazz"));
+    expect(container.querySelector("#group-root-c")).toBeTruthy();
+
+    const withoutRootC = NODES.filter((n) => n.id !== "root-c");
+    rerender(<GenreTreeWheel nodes={withoutRootC} />);
+
+    expect(container.querySelector("#group-root-c")).toBeFalsy();
+    expect(container.querySelector("#group-root-a")).toBeTruthy();
+  });
+
+  it("renders no chips and mounts no subtree when nodes is empty", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={[]} onRootSelect={onRootSelect} />);
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
+    expect(container.querySelectorAll("g.node").length).toBe(0);
+    expect(onRootSelect).not.toHaveBeenCalled();
+  });
+
+  it("falls back to no selection when every root is removed from nodes", () => {
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
+    rerender(<GenreTreeWheel nodes={[]} />);
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
+    expect(container.querySelectorAll("g.node").length).toBe(0);
+  });
+
+  it("still routes node actions from the visible subtree through to the forwarded callback", () => {
+    const onPlayPause = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
+
+    const nodeGroup = container.querySelector("#group-root-a") as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    const playButton = container.querySelector('#toolbar-root-a [data-menu-key="play"]') as HTMLButtonElement;
+    fireEvent.click(playButton);
+
+    expect(onPlayPause).toHaveBeenCalledWith("root-a");
+  });
+});

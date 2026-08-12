@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-import { GenreTreeNode, GenreTreePlayState } from "./types";
+import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
@@ -45,9 +45,37 @@ export interface RenderTreeCallbacks {
   playState?: GenreTreePlayState;
 }
 
-export function calculateSvgDimensions(d3Lib: typeof import("d3"), treeData: D3Node): SvgDimensions {
+export function calculateSvgDimensions(
+  d3Lib: typeof import("d3"),
+  treeData: D3Node,
+  orientation: TreeOrientation = "horizontal",
+): SvgDimensions {
   const nodes = treeData.descendants();
   const maxNodeDimensions = getMaxNodeDimensions(nodes.map((d) => d.data));
+  const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
+
+  if (orientation === "vertical") {
+    const svgHeight =
+      maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT;
+
+    // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
+    // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
+    // exactly at svgWidth/2. The toolbar only ever renders to a node's right, so only the right
+    // half needs its headroom (ACTIONS_OVERLAY_WIDTH); the left half doesn't.
+    const leftmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
+    const rightmostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
+    const leftHalfExtent = treeData.x! - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
+    const rightHalfExtent =
+      rightmostBreadthCoordinate - treeData.x! + maxNodeDimensions.WIDTH / 2 + ACTIONS_OVERLAY_WIDTH;
+    const svgWidth = Math.max(leftHalfExtent, rightHalfExtent) * 2;
+
+    // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, rather
+    // than a vertical coordinate — the two orientations need different single scalars out of
+    // this function and the field isn't worth renaming just for that.
+    const rootCenteringOffset = svgWidth / 2 - treeData.x!;
+
+    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset };
+  }
 
   const highestNodeVerticalCoordinate = d3Lib.min(nodes, (d) => d.x)!;
   const highestVerticalCoordinate =
@@ -57,13 +85,26 @@ export function calculateSvgDimensions(d3Lib: typeof import("d3"), treeData: D3N
     lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
   const svgHeight = lowestVerticalCoordinate - highestVerticalCoordinate;
 
-  const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
   const svgWidth = maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
   return { svgWidth, svgHeight, highestVerticalCoordinate };
 }
 
-export function setupTreeLayout(_d3Lib: typeof import("d3"), treeData: D3Node, highestVerticalCoordinate: number): D3Node {
+export function setupTreeLayout(
+  d3Lib: typeof import("d3"),
+  treeData: D3Node,
+  highestVerticalCoordinate: number,
+  orientation: TreeOrientation = "horizontal",
+): D3Node {
+  if (orientation === "vertical") {
+    const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
+    treeData.each(function (d) {
+      d.x = d.x! + highestVerticalCoordinate;
+      d.y = (maximumLevel - d.depth) * VERTICAL_SEPARATION_BETWEEN_NODES;
+    });
+    return treeData;
+  }
+
   treeData.each(function (d) {
     const tempX = d.x!;
     d.x = d.y!;
@@ -72,10 +113,16 @@ export function setupTreeLayout(_d3Lib: typeof import("d3"), treeData: D3Node, h
   return treeData;
 }
 
-export function createTreeLayout(d3Lib: typeof import("d3"), root: D3Node): D3Node {
-  const treeLayout = d3Lib
-    .tree<GenreTreeNode>()
-    .nodeSize([VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES]);
+export function createTreeLayout(
+  d3Lib: typeof import("d3"),
+  root: D3Node,
+  orientation: TreeOrientation = "horizontal",
+): D3Node {
+  const nodeSize: [number, number] =
+    orientation === "vertical"
+      ? [HORIZONTAL_SEPARATION_BETWEEN_NODES, VERTICAL_SEPARATION_BETWEEN_NODES]
+      : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
+  const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize);
   return treeLayout(root);
 }
 
@@ -89,6 +136,7 @@ export function renderTree(
   reparentForbiddenIds: string[],
   rootColor: string,
   callbacks: RenderTreeCallbacks,
+  orientation: TreeOrientation = "horizontal",
 ): D3Selection {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
 
@@ -129,7 +177,7 @@ export function renderTree(
 
   addGrid(svg, svgWidth, svgHeight, true);
 
-  appendPaths(d3Lib, svg, treeData);
+  appendPaths(d3Lib, svg, treeData, orientation);
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
 
@@ -146,6 +194,25 @@ export function renderTree(
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
     });
+
+  // Invisible hit-region spanning the node body plus the reserved toolbar/menu area to its
+  // right, appended before any visible content so painted siblings (rect, label, toolbar)
+  // take pointer-event priority over it wherever they overlap it. Without this, the group's
+  // mouseenter/mouseleave below is governed only by the union of whichever painted children
+  // currently exist — the ~4px unpainted gap between the node's rect and the toolbar's
+  // foreignObject (TOOLBAR_MENU_X_GAP) sits right where a resting cursor tends to land, and
+  // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
+  // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
+  // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
+  nodes
+    .append("rect")
+    .attr("class", "gtv-hover-hit-area")
+    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH + ACTIONS_OVERLAY_WIDTH)
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
+    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
+    .attr("fill", "transparent")
+    .attr("pointer-events", "all");
 
   nodes
     .append("rect")

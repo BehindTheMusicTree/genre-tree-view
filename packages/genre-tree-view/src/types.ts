@@ -9,10 +9,15 @@ export interface GenreTreeNode {
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";
 
+/** "horizontal" grows children rightward from a left root (default). "vertical" grows children
+ * upward from a bottom-anchored root — used by GenreTreeWheel. */
+export type TreeOrientation = "horizontal" | "vertical";
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   className?: string;
   rootColor?: string;
+  orientation?: TreeOrientation;
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
   /** Id of the node currently being reassigned to a new parent (owned by the consumer, since it can span multiple GenreTree instances). */

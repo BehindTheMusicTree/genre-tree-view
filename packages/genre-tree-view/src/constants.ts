@@ -119,3 +119,16 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
   const maxItems = Math.max(...nodes.map((node) => node.itemCount), 0);
   return calculateNodeDimensions(maxItems);
 }
+
+// GenreTreeWheel tokens. Radius is large relative to the visible strip so chips near the apex
+// (where the wheel reads as a row of tabs, not a dial) stay generously spaced for ~10 roots.
+export const WHEEL_RADIUS = 900;
+export const WHEEL_VISIBLE_ARC_HEIGHT = 120;
+
+export const WHEEL_CHIP_HEIGHT = 40;
+export const WHEEL_CHIP_HEIGHT_SELECTED = 48;
+export const WHEEL_CHIP_MIN_WIDTH = 90;
+export const WHEEL_CHIP_MAX_WIDTH = 220;
+
+export const WHEEL_ROTATION_TRANSITION_MS = 500;
+export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

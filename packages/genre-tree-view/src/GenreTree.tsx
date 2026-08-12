@@ -17,6 +17,7 @@ export function GenreTree({
   nodes,
   className,
   rootColor,
+  orientation = "horizontal",
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -43,13 +44,13 @@ export function GenreTree({
 
   const { treeData, resolvedRootColor, svgWidth, svgHeight } = useMemo(() => {
     const root = buildTreeHierarchyStructure(d3, nodes);
-    const originalTreeData = createTreeLayout(d3, root);
+    const originalTreeData = createTreeLayout(d3, root, orientation);
     const {
       svgWidth: width,
       svgHeight: height,
       highestVerticalCoordinate,
-    } = calculateSvgDimensions(d3, originalTreeData);
-    const reshapedTreeData = setupTreeLayout(d3, originalTreeData, highestVerticalCoordinate);
+    } = calculateSvgDimensions(d3, originalTreeData, orientation);
+    const reshapedTreeData = setupTreeLayout(d3, originalTreeData, highestVerticalCoordinate, orientation);
 
     return {
       treeData: reshapedTreeData,
@@ -57,7 +58,7 @@ export function GenreTree({
       svgWidth: width,
       svgHeight: height,
     };
-  }, [nodes, rootColor]);
+  }, [nodes, rootColor, orientation]);
 
   // A reparent-in-progress node can belong to a *different* GenreTree instance (a different
   // root). Only the tree that actually contains it needs to block self/descendants as targets.
@@ -98,6 +99,7 @@ export function GenreTree({
         playingNodeId,
         playState,
       },
+      orientation,
     );
   }, [
     treeData,
@@ -114,6 +116,7 @@ export function GenreTree({
     onDeleteRequest,
     onReparentRequest,
     onReparent,
+    orientation,
   ]);
 
   useEffect(() => {
