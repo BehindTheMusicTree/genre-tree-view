@@ -208,7 +208,7 @@ g.node:hover {
   top: 0;
   left: 0;
   right: 0;
-  bottom: var(--gtv-wheel-visible-arc-height, 120px);
+  bottom: var(--gtv-wheel-visible-arc-height, 200px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -221,7 +221,7 @@ g.node:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  height: var(--gtv-wheel-visible-arc-height, 120px);
+  height: var(--gtv-wheel-visible-arc-height, 200px);
   overflow: hidden;
   pointer-events: none;
 }
@@ -231,9 +231,9 @@ g.node:hover {
   position: absolute;
   top: 0;
   left: 50%;
-  width: calc(var(--gtv-wheel-radius, 900px) * 2);
-  height: calc(var(--gtv-wheel-radius, 900px) * 2);
-  margin-left: calc(var(--gtv-wheel-radius, 900px) * -1);
+  width: calc(var(--gtv-wheel-radius, 260px) * 2);
+  height: calc(var(--gtv-wheel-radius, 260px) * 2);
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   transform: rotate(var(--gtv-wheel-rotation, 0deg));
 }
 
@@ -244,7 +244,7 @@ g.node:hover {
   left: 50%;
   width: 0;
   height: 0;
-  transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 900px) * -1));
+  transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
 }
 
 /* Counter-rotates against both the wheel's and the slot's rotation so the label stays

@@ -120,10 +120,14 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
   return calculateNodeDimensions(maxItems);
 }
 
-// GenreTreeWheel tokens. Radius is large relative to the visible strip so chips near the apex
-// (where the wheel reads as a row of tabs, not a dial) stay generously spaced for ~10 roots.
-export const WHEEL_RADIUS = 900;
-export const WHEEL_VISIBLE_ARC_HEIGHT = 120;
+// GenreTreeWheel tokens. Chips sit a fixed angular pitch apart (see WHEEL_CHIP_ANGLE_STEP_DEGREES
+// in wheel-geometry.ts); radius and visible-arc-height are tuned together so a handful of
+// neighbors on either side of the selected chip stay within the visible strip — a radius much
+// larger than the arc height (as an absolute wheel-diameter/viewport ratio might suggest) would
+// push even the nearest neighbor's vertical drop past the visible edge, leaving only the
+// selected chip on screen.
+export const WHEEL_RADIUS = 260;
+export const WHEEL_VISIBLE_ARC_HEIGHT = 200;
 
 export const WHEEL_CHIP_HEIGHT = 40;
 export const WHEEL_CHIP_HEIGHT_SELECTED = 48;

@@ -1,7 +1,13 @@
-/** The static angle (CSS `rotate()` convention: 0° = top, clockwise) of the `index`-th of
- * `totalCount` chips evenly spaced around the wheel, before any wheel rotation is applied. */
-export function getChipAngle(index: number, totalCount: number): number {
-  return (index * 360) / totalCount;
+/** Fixed angular pitch between adjacent chips. A fixed step (rather than spreading chips to
+ * fill the full 360° regardless of count) keeps neighbors close to the top for any root
+ * count — spacing chips by `360 / totalCount` instead would put e.g. two roots 180° apart,
+ * permanently on opposite sides of the wheel with neither reachable from the other. */
+export const WHEEL_CHIP_ANGLE_STEP_DEGREES = 32;
+
+/** The static angle (CSS `rotate()` convention: 0° = top, clockwise) of the `index`-th chip,
+ * evenly spaced around the wheel by a fixed pitch, before any wheel rotation is applied. */
+export function getChipAngle(index: number): number {
+  return index * WHEEL_CHIP_ANGLE_STEP_DEGREES;
 }
 
 function mod360(value: number): number {
