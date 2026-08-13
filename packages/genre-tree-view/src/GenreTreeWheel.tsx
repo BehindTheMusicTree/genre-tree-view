@@ -71,6 +71,15 @@ export function GenreTreeWheel({
     setRotationDeg((current) => computeRotationForSelection(current, angle));
   };
 
+  // A newly selected root's tree can be taller than the visible tree area; overflow:auto
+  // starts scrolled to the top, which would show its topmost ancestor instead of the root
+  // anchored at the wheel. Re-anchor to the bottom every time the selection changes.
+  const treeAreaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const treeArea = treeAreaRef.current;
+    if (treeArea) treeArea.scrollTop = treeArea.scrollHeight;
+  }, [effectiveRootId]);
+
   return (
     <div
       className={["gtv-wheel-container", className].filter(Boolean).join(" ")}
@@ -83,10 +92,11 @@ export function GenreTreeWheel({
         } as React.CSSProperties
       }
     >
-      <div className="gtv-wheel-tree-area">
+      <div className="gtv-wheel-tree-area" ref={treeAreaRef}>
         {selectedGroup && (
           <GenreTree
             key={selectedGroup.root.id}
+            className="gtv-wheel-tree"
             nodes={selectedGroup.nodes}
             orientation="vertical"
             rootColor={getGenreTreeColor(selectedGroup.root.id)}

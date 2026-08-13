@@ -211,9 +211,17 @@ g.node:hover {
   bottom: var(--gtv-wheel-visible-arc-height, 200px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* flex-end here (paired with overflow: auto) would hit the classic "unsafe alignment"
+     gap: once the tree is taller than this box, end-aligned overflow is clipped off the
+     top with no way to scroll to it. margin-top: auto on the tree itself (below) gets the
+     same bottom-anchored placement while staying reachable when it overflows. */
+  justify-content: flex-start;
   align-items: center;
   overflow: auto;
+}
+
+.gtv-wheel-tree {
+  margin-top: auto;
 }
 
 .gtv-wheel-viewport {
