@@ -193,9 +193,9 @@ g.node:hover {
   background-color: #e4e4e7;
 }
 
-/* GenreTreeWheel — root genres distributed around a wheel hugging the bottom of the
-   container. Only the selected root's subtree is mounted, growing upward from the
-   wheel's top-center anchor. */
+/* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
+   container, its full circle always on screen. Only the selected root's subtree is mounted,
+   growing upward from the wheel's top-center anchor. */
 
 .gtv-wheel-container {
   position: relative;
@@ -208,7 +208,7 @@ g.node:hover {
   top: 0;
   left: 0;
   right: 0;
-  bottom: var(--gtv-wheel-visible-arc-height, 200px);
+  bottom: var(--gtv-wheel-viewport-height, 550px);
   display: flex;
   flex-direction: column;
   /* flex-end here (paired with overflow: auto) would hit the classic "unsafe alignment"
@@ -224,16 +224,19 @@ g.node:hover {
   margin-top: auto;
 }
 
-/* The selected chip sits exactly at sag 0 (the wheel's topmost point, see .gtv-wheel-slot
-   below), which is also this box's own top edge — so half its height renders above y:0.
-   clip-path (rather than overflow: hidden) lets that half render uncropped while still
-   clipping the rest of the circle below the visible arc. */
+/* Height covers the wheel's full diameter plus a chip's own half-height, so the entire circle
+   of chips stays on screen — including at its lowest point, where a chip is centered on the
+   diameter's edge and its bottom half would otherwise stick out past this box. The selected
+   chip still sits exactly at sag 0 (the wheel's topmost point, see .gtv-wheel-slot below),
+   which is also this box's own top edge, so half its height renders above y:0. clip-path
+   (rather than overflow: hidden) lets that half render uncropped while still clipping
+   anything outside the box's left/right/bottom. */
 .gtv-wheel-viewport {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: var(--gtv-wheel-visible-arc-height, 200px);
+  height: var(--gtv-wheel-viewport-height, 550px);
   clip-path: inset(-9999px 0 0 0);
   pointer-events: none;
 }

@@ -128,13 +128,12 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
 }
 
 // GenreTreeWheel tokens. Chips sit a fixed angular pitch apart (see WHEEL_CHIP_ANGLE_STEP_DEGREES
-// in wheel-geometry.ts); radius and visible-arc-height are tuned together so a handful of
-// neighbors on either side of the selected chip stay within the visible strip — a radius much
-// larger than the arc height (as an absolute wheel-diameter/viewport ratio might suggest) would
-// push even the nearest neighbor's vertical drop past the visible edge, leaving only the
-// selected chip on screen.
+// in wheel-geometry.ts). The wheel's reserved bottom strip needs to fit more than just the bare
+// circle (2 * WHEEL_RADIUS): a chip is centered *on* its point on that circle, so at the circle's
+// lowest point a chip's own half-height still sticks out past the diameter. Reserving that extra
+// half-height keeps every chip fully on screen, not just the ones nearest the top.
 export const WHEEL_RADIUS = 260;
-export const WHEEL_VISIBLE_ARC_HEIGHT = 200;
+export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 
 export const WHEEL_ROTATION_TRANSITION_MS = 500;
 export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

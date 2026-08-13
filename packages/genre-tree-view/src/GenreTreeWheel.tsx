@@ -13,7 +13,7 @@ import {
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
-  WHEEL_VISIBLE_ARC_HEIGHT,
+  WHEEL_VIEWPORT_HEIGHT,
 } from "./constants";
 
 export interface GenreTreeWheelProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
@@ -94,7 +94,7 @@ export function GenreTreeWheel({
       style={
         {
           "--gtv-wheel-radius": `${WHEEL_RADIUS}px`,
-          "--gtv-wheel-visible-arc-height": `${WHEEL_VISIBLE_ARC_HEIGHT}px`,
+          "--gtv-wheel-viewport-height": `${WHEEL_VIEWPORT_HEIGHT}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
