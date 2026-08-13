@@ -15,6 +15,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `GenreTreeWheel` uses `"vertical"` internally, but the prop is available directly too.
 - `groupNodesByRoot`, a pure helper that groups a flat node list by top-level ancestor.
 
+### Fixed
+
+- The per-node hover toolbar (and its overflow menu) now floats above the card, centered, in
+  vertical-orientation trees instead of to its right — the sibling axis in that orientation
+  reserves no toolbar headroom, so a right-side toolbar collided with neighboring cards.
+
 ## [0.3.0] - 2026-08-05
 
 ### Changed
