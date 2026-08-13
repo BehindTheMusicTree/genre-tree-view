@@ -19,6 +19,37 @@ const initialNodes: GenreTreeNode[] = [
   { id: "b-house", parentId: "root-b", name: "House", itemCount: 0 },
 ];
 
+// Cycles through varying branching factors (including 0, a dead end) so descendants of
+// a-post-punk (depth 2) cover depths 3-6 without every branch growing at the same rate.
+const DEEP_BRANCH_CHILD_COUNTS = [2, 0, 3, 1, 4];
+
+function buildDeepBranch(
+  parentId: string,
+  namePrefix: string,
+  depth: number,
+  maxDepth: number,
+  countIndex: { next: number },
+): GenreTreeNode[] {
+  if (depth > maxDepth) return [];
+  const childCount = DEEP_BRANCH_CHILD_COUNTS[countIndex.next % DEEP_BRANCH_CHILD_COUNTS.length];
+  countIndex.next++;
+
+  const nodes: GenreTreeNode[] = [];
+  for (let i = 0; i < childCount; i++) {
+    const id = `${namePrefix}-${i}`;
+    nodes.push({
+      id,
+      parentId,
+      name: `${namePrefix} ${i}`,
+      itemCount: (depth * 3 + i) % 20,
+    });
+    nodes.push(...buildDeepBranch(id, id, depth + 1, maxDepth, countIndex));
+  }
+  return nodes;
+}
+
+initialNodes.push(...buildDeepBranch("a-post-punk", "pp-depth3", 3, 6, { next: 0 }));
+
 const LARGE_ROOT_NAMES = ["Rock", "Electronic", "Jazz", "Hip-Hop", "Classical", "Folk", "Metal", "Pop"];
 
 /** One root plus `nodeCount - 1` descendants, branching every few nodes so the tree gets a
