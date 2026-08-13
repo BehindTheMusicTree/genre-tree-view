@@ -18,6 +18,10 @@ export interface GenreTreeProps {
   className?: string;
   rootColor?: string;
   orientation?: TreeOrientation;
+  /** Omits the root node's own card (and its toolbar) from rendering, keeping only its
+   * connecting paths to its children — used when the root is represented elsewhere, e.g.
+   * GenreTreeWheel's chip. Defaults to false. */
+  hideRoot?: boolean;
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
   /** Id of the node currently being reassigned to a new parent (owned by the consumer, since it can span multiple GenreTree instances). */

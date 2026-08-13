@@ -49,6 +49,7 @@ export function calculateSvgDimensions(
   d3Lib: typeof import("d3"),
   treeData: D3Node,
   orientation: TreeOrientation = "horizontal",
+  hideRoot = false,
 ): SvgDimensions {
   const nodes = treeData.descendants();
   const maxNodeDimensions = getMaxNodeDimensions(nodes.map((d) => d.data));
@@ -58,8 +59,11 @@ export function calculateSvgDimensions(
     // Root sits at the bottom edge, so only that one side needs toolbar/menu clearance — the
     // horizontal branch below reserves the same ACTIONS_OVERLAY_HEIGHT split in half across its
     // two ends (top and bottom margins), so match that per-side amount rather than the full budget.
-    const svgHeight =
-      maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
+    // A hidden root renders no card and no toolbar, so it needs neither its own height nor that
+    // clearance — the svg's bottom edge instead lands exactly on the root's anchor point.
+    const svgHeight = hideRoot
+      ? maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES
+      : maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
@@ -140,6 +144,7 @@ export function renderTree(
   rootColor: string,
   callbacks: RenderTreeCallbacks,
   orientation: TreeOrientation = "horizontal",
+  hideRoot = false,
 ): D3Selection {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
 
@@ -184,9 +189,15 @@ export function renderTree(
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
 
+  // The hidden root still contributes its (x, y) as the anchor endpoint for appendPaths above —
+  // only its own card/toolbar is skipped here, not its position.
+  const visibleDescendants = hideRoot
+    ? treeData.descendants().filter((d) => d.depth !== 0)
+    : treeData.descendants();
+
   const nodes = svg
     .selectAll<SVGGElement, D3Node>("g.node")
-    .data(treeData.descendants())
+    .data(visibleDescendants)
     .enter()
     .append("g")
     .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))

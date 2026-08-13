@@ -9,7 +9,7 @@ afterEach(() => {
 
 const NODES: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
-  { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 0 },
+  { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
   { id: "root-b", parentId: null, name: "Electronic", itemCount: 0 },
   { id: "b-child", parentId: "root-b", name: "Techno", itemCount: 0 },
   { id: "root-c", parentId: null, name: "Jazz", itemCount: 0 },
@@ -22,13 +22,16 @@ function chipFor(container: HTMLElement, name: string) {
 }
 
 describe("GenreTreeWheel", () => {
-  it("renders a chip for every root except the default-selected one, and only that root's nodes", () => {
+  it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(2);
-    expect(chipFor(container, "Rock")).toBeUndefined();
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
+    expect(chipFor(container, "Rock")).toBeTruthy();
+    expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Electronic")).toBeTruthy();
     expect(chipFor(container, "Jazz")).toBeTruthy();
-    expect(container.querySelector("#group-root-a")).toBeTruthy();
+    // The selected root's own card is hidden — its tree grows directly out of its chip — but
+    // its descendants still render.
+    expect(container.querySelector("#group-root-a")).toBeFalsy();
     expect(container.querySelector("#group-a-child")).toBeTruthy();
     expect(container.querySelector("#group-root-b")).toBeFalsy();
     expect(container.querySelector("#group-root-c")).toBeFalsy();
@@ -47,11 +50,11 @@ describe("GenreTreeWheel", () => {
     fireEvent.click(chipFor(container, "Electronic"));
 
     expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-root-b")).toBeTruthy();
+    expect(container.querySelector("#group-root-b")).toBeFalsy();
     expect(container.querySelector("#group-b-child")).toBeTruthy();
     expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
-    expect(chipFor(container, "Electronic")).toBeUndefined();
-    expect(chipFor(container, "Rock")).toBeTruthy();
+    expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+    expect(chipFor(container, "Rock").className).not.toContain("gtv-wheel-chip--selected");
   });
 
   it("updates the wheel's rotation custom property after a click", () => {
@@ -67,13 +70,13 @@ describe("GenreTreeWheel", () => {
   it("falls back to the first remaining root when the selected root disappears from nodes", () => {
     const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
     fireEvent.click(chipFor(container, "Jazz"));
-    expect(container.querySelector("#group-root-c")).toBeTruthy();
+    expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
 
     const withoutRootC = NODES.filter((n) => n.id !== "root-c");
     rerender(<GenreTreeWheel nodes={withoutRootC} />);
 
-    expect(container.querySelector("#group-root-c")).toBeFalsy();
-    expect(container.querySelector("#group-root-a")).toBeTruthy();
+    expect(chipFor(container, "Jazz")).toBeUndefined();
+    expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
   });
 
   it("renders no chips and mounts no subtree when nodes is empty", () => {
@@ -95,11 +98,11 @@ describe("GenreTreeWheel", () => {
     const onPlayPause = vi.fn();
     const { container } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
 
-    const nodeGroup = container.querySelector("#group-root-a") as SVGGElement;
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
     fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const playButton = container.querySelector('#toolbar-root-a [data-menu-key="play"]') as HTMLButtonElement;
+    const playButton = container.querySelector('#toolbar-a-child [data-menu-key="play"]') as HTMLButtonElement;
     fireEvent.click(playButton);
 
-    expect(onPlayPause).toHaveBeenCalledWith("root-a");
+    expect(onPlayPause).toHaveBeenCalledWith("a-child");
   });
 });

@@ -224,20 +224,21 @@ g.node:hover {
   margin-top: auto;
 }
 
+/* The selected chip sits exactly at sag 0 (the wheel's topmost point, see .gtv-wheel-slot
+   below), which is also this box's own top edge — so half its height renders above y:0.
+   clip-path (rather than overflow: hidden) lets that half render uncropped while still
+   clipping the rest of the circle below the visible arc. */
 .gtv-wheel-viewport {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: var(--gtv-wheel-visible-arc-height, 200px);
-  overflow: hidden;
+  clip-path: inset(-9999px 0 0 0);
   pointer-events: none;
 }
 
-/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. The selected
-   root never renders a chip here (its root node above serves that role), so no chip ever sits
-   at sag 0 — the wheel's topmost point — meaning nothing needs clearance from the viewport's
-   overflow:hidden boundary. */
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. */
 .gtv-wheel {
   position: absolute;
   top: 0;
@@ -286,6 +287,18 @@ g.node:hover {
   transform: translateY(-50%);
   border-radius: 50%;
   background: var(--gtv-chip-color, currentColor);
+}
+
+/* The selected root's tree grows directly out of this chip (see GenreTree's `hideRoot`) — filled
+   in the root's own accent color so it reads as the tree's origin, not just another option. */
+.gtv-wheel-chip--selected {
+  border-color: var(--gtv-chip-color);
+  background: var(--gtv-chip-color);
+  color: #ffffff;
+}
+
+.gtv-wheel-chip--selected .gtv-wheel-chip-dot {
+  background: #ffffff;
 }
 
 @media (prefers-reduced-motion: no-preference) {

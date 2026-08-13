@@ -99,6 +99,7 @@ export function GenreTreeWheel({
             className="gtv-wheel-tree"
             nodes={selectedGroup.nodes}
             orientation="vertical"
+            hideRoot
             rootColor={getGenreTreeColor(selectedGroup.root.id)}
             playingNodeId={playingNodeId}
             playState={playState}
@@ -119,9 +120,6 @@ export function GenreTreeWheel({
           {groups.map((group, index) => {
             const angle = getChipAngle(index);
             const selected = group.root.id === effectiveRootId;
-            // The selected root is already represented by its own root node atop the tree above —
-            // rendering a chip for it here too would show that same root twice.
-            if (selected) return null;
             const dimensions = calculateNodeDimensions(group.root.itemCount);
             const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";
             return (
@@ -132,7 +130,7 @@ export function GenreTreeWheel({
               >
                 <button
                   type="button"
-                  className="gtv-wheel-chip"
+                  className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
                   style={
                     {
                       width: dimensions.WIDTH,
