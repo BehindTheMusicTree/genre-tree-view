@@ -140,7 +140,11 @@ export function createTreeLayout(
     orientation === "vertical"
       ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_SEPARATION_BETWEEN_NODES]
       : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
-  const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize);
+  // d3's default separation() doubles the gap between same-depth nodes that don't share a
+  // parent, which compounds up the tree for deeply-branching data and produces gaps several
+  // times wider than the nodeSize slot itself. Every node already reserves its own slot via
+  // nodeSize, so a flat 1 keeps that slot's spacing consistent regardless of parentage.
+  const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize).separation(() => 1);
   return treeLayout(root);
 }
 
