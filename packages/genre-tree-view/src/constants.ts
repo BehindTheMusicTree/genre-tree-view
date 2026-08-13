@@ -100,6 +100,12 @@ export const HORIZONTAL_SEPARATION_BETWEEN_NODES =
   NODE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
 export const VERTICAL_SEPARATION_BETWEEN_NODES = NODE_DIMENSIONS.HEIGHT + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
 
+// The depth-axis step for a vertical-orientation tree (root-to-leaf growth). Kept distinct from
+// VERTICAL_SEPARATION_BETWEEN_NODES, which horizontal-orientation trees also reuse as their
+// breadth (sibling) axis step — doubling that constant directly would have also doubled sibling
+// spacing in horizontal trees, not just the gap between depths.
+export const VERTICAL_ORIENTATION_DEPTH_SEPARATION = VERTICAL_SEPARATION_BETWEEN_NODES * 2;
+
 // Same-depth siblings in a vertical-orientation tree sit side by side on-screen, so this axis
 // doesn't need HORIZONTAL_SEPARATION_BETWEEN_NODES's baked-in toolbar/menu headroom — that's
 // only for the depth axis, where a hovered node's toolbar pops into the space before the next

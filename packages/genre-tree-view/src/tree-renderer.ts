@@ -4,6 +4,7 @@ import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
+  VERTICAL_ORIENTATION_DEPTH_SEPARATION,
   SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
@@ -63,8 +64,8 @@ export function calculateSvgDimensions(
     // A hidden root renders no card and no toolbar, so it needs neither its own height nor that
     // clearance — the svg's bottom edge instead lands exactly on the root's anchor point.
     const svgHeight = hideRoot
-      ? maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES
-      : maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
+      ? maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION
+      : maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
@@ -118,7 +119,7 @@ export function setupTreeLayout(
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
-      d.y = (maximumLevel - d.depth) * VERTICAL_SEPARATION_BETWEEN_NODES;
+      d.y = (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION;
     });
     return treeData;
   }
@@ -138,7 +139,7 @@ export function createTreeLayout(
 ): D3Node {
   const nodeSize: [number, number] =
     orientation === "vertical"
-      ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_SEPARATION_BETWEEN_NODES]
+      ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION]
       : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
   // d3's default separation() doubles the gap between same-depth nodes that don't share a
   // parent, which compounds up the tree for deeply-branching data and produces gaps several
