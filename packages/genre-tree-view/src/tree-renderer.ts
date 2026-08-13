@@ -70,17 +70,27 @@ export function calculateSvgDimensions(
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
     // exactly at svgWidth/2. The toolbar only ever renders to a node's right, so only the right
     // half needs its headroom (ACTIONS_OVERLAY_WIDTH); the left half doesn't.
+    //
+    // Every consumer of a node's x (link endpoints in appendPaths, the rendered card's own
+    // center) treats `d.x + own width / 2` as that node's true visual position — d.x alone is
+    // just its left edge. The root is no exception (hideRoot only skips drawing its card, not
+    // this convention), so it has to be centered on that same point, not on the bare `d.x`.
+    // Skipping the `+ width / 2` here left the root's card/chip sitting half its own width left
+    // of where its children's links actually converge.
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount).WIDTH;
+    const rootAnchorX = treeData.x! + rootWidth / 2;
+
     const leftmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
     const rightmostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
-    const leftHalfExtent = treeData.x! - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
+    const leftHalfExtent = rootAnchorX - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
     const rightHalfExtent =
-      rightmostBreadthCoordinate - treeData.x! + maxNodeDimensions.WIDTH / 2 + ACTIONS_OVERLAY_WIDTH;
+      rightmostBreadthCoordinate - rootAnchorX + maxNodeDimensions.WIDTH / 2 + ACTIONS_OVERLAY_WIDTH;
     const svgWidth = Math.max(leftHalfExtent, rightHalfExtent) * 2;
 
     // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, rather
     // than a vertical coordinate — the two orientations need different single scalars out of
     // this function and the field isn't worth renaming just for that.
-    const rootCenteringOffset = svgWidth / 2 - treeData.x!;
+    const rootCenteringOffset = svgWidth / 2 - rootAnchorX;
 
     return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset };
   }
