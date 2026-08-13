@@ -8,6 +8,8 @@ import {
   SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
+  TOOLBAR_BUTTON_SIZE,
+  TOOLBAR_MENU_X_GAP,
   SURFACE_FILL,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
@@ -234,13 +236,24 @@ export function renderTree(
   // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
   // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
   // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
+  // In vertical orientation the toolbar floats above the card instead of to its right (see
+  // addToolbarActions), so the gap a resting cursor can jitter across is the vertical one above
+  // the card, not the horizontal one beside it — extend the hit area upward instead of rightward.
+  const isVertical = orientation === "vertical";
+  const toolbarClearance = TOOLBAR_BUTTON_SIZE + 6 + TOOLBAR_MENU_X_GAP;
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH + ACTIONS_OVERLAY_WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
+    .attr(
+      "width",
+      (d) => calculateNodeDimensions(d.data.itemCount).WIDTH + (isVertical ? 0 : ACTIONS_OVERLAY_WIDTH),
+    )
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT + (isVertical ? toolbarClearance : 0))
     .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
+    .attr(
+      "y",
+      (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2 - (isVertical ? toolbarClearance : 0),
+    )
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
@@ -289,17 +302,23 @@ export function renderTree(
         unknown
       >;
 
-      addToolbarActions(d3Lib, d.data, group, {
-        onPlayPause,
-        fileInputRef: callbacks.fileInputRef,
-        selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
-        onAddChild,
-        onRenameRequest,
-        onDeleteRequest,
-        onReparentRequest: callbacks.onReparentRequest,
-        playingNodeId: callbacks.playingNodeId,
-        playState: callbacks.playState,
-      });
+      addToolbarActions(
+        d3Lib,
+        d.data,
+        group,
+        {
+          onPlayPause,
+          fileInputRef: callbacks.fileInputRef,
+          selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
+          onAddChild,
+          onRenameRequest,
+          onDeleteRequest,
+          onReparentRequest: callbacks.onReparentRequest,
+          playingNodeId: callbacks.playingNodeId,
+          playState: callbacks.playState,
+        },
+        orientation,
+      );
     });
 
   nodes.each(function (d: D3Node) {

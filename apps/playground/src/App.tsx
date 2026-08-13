@@ -75,7 +75,15 @@ const largeWheelNodes: GenreTreeNode[] = LARGE_ROOT_NAMES.flatMap((name, index) 
 
 let nextId = 1;
 
+const TABS = [
+  { id: "wheel", label: "Genre wheel" },
+  { id: "wheel-large", label: "Genre wheel (8 roots x 50 nodes)" },
+  { id: "stacked", label: "Stacked trees" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
 export function App() {
+  const [activeTab, setActiveTab] = useState<TabId>("wheel");
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
@@ -156,26 +164,48 @@ export function App() {
         <button onClick={() => setReparentingNodeId(null)}>Cancel reparent</button>
       )}
 
-      <h2>Genre wheel</h2>
-      <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
-        <GenreTreeWheel
-          nodes={nodes}
-          {...sharedCallbacks}
-          onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
-        />
-      </div>
-
-      <h2>Genre wheel (8 roots x 50 nodes)</h2>
-      <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
-        <GenreTreeWheel nodes={largeWheelNodes} />
-      </div>
-
-      <h2>Stacked trees</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 24 }}>
-        {groups.map((group) => (
-          <GenreTree key={group.root.id} nodes={group.nodes} {...sharedCallbacks} />
+      <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #e4e4e7", marginBottom: 24 }}>
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: "8px 12px",
+              border: "none",
+              borderBottom: activeTab === tab.id ? "2px solid #4F46E5" : "2px solid transparent",
+              background: "none",
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              cursor: "pointer",
+            }}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
+
+      {activeTab === "wheel" && (
+        <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+          <GenreTreeWheel
+            nodes={nodes}
+            {...sharedCallbacks}
+            onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
+          />
+        </div>
+      )}
+
+      {activeTab === "wheel-large" && (
+        <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+          <GenreTreeWheel nodes={largeWheelNodes} />
+        </div>
+      )}
+
+      {activeTab === "stacked" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 24 }}>
+          {groups.map((group) => (
+            <GenreTree key={group.root.id} nodes={group.nodes} {...sharedCallbacks} />
+          ))}
+        </div>
+      )}
 
       <h2 style={{ marginTop: 32 }}>Action log</h2>
       <ul>
