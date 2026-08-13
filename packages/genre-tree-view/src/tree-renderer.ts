@@ -4,6 +4,7 @@ import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
+  SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
   SURFACE_FILL,
@@ -127,7 +128,7 @@ export function createTreeLayout(
 ): D3Node {
   const nodeSize: [number, number] =
     orientation === "vertical"
-      ? [HORIZONTAL_SEPARATION_BETWEEN_NODES, VERTICAL_SEPARATION_BETWEEN_NODES]
+      ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_SEPARATION_BETWEEN_NODES]
       : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
   const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize);
   return treeLayout(root);

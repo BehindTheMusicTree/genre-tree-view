@@ -100,6 +100,13 @@ export const HORIZONTAL_SEPARATION_BETWEEN_NODES =
   NODE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
 export const VERTICAL_SEPARATION_BETWEEN_NODES = NODE_DIMENSIONS.HEIGHT + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
 
+// Same-depth siblings in a vertical-orientation tree sit side by side on-screen, so this axis
+// doesn't need HORIZONTAL_SEPARATION_BETWEEN_NODES's baked-in toolbar/menu headroom — that's
+// only for the depth axis, where a hovered node's toolbar pops into the space before the next
+// generation. Reserving that much between every sibling pair made the wheel's tree read far
+// more spread out than its cards actually are.
+export const SIBLING_SEPARATION_BETWEEN_NODES = RECT_BASE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
+
 // Utility functions for dynamic node sizing
 export function calculateNodeDimensions(itemCount: number): Dimensions {
   const logItemCount = Math.log(Math.max(1, itemCount));
