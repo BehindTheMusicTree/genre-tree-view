@@ -4,7 +4,7 @@ import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload } from "re
 import { PiGraphFill } from "react-icons/pi";
 import * as d3 from "d3";
 
-import { GenreTreeNode, GenreTreePlayState } from "./types";
+import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
 import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
@@ -207,6 +207,7 @@ export function addToolbarActions(
   node: GenreTreeNode,
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   callbacks: NodeActionCallbacks,
+  orientation: TreeOrientation = "horizontal",
 ) {
   if (!nodeGroup.select("#toolbar-" + node.id).empty()) return;
 
@@ -285,8 +286,15 @@ export function addToolbarActions(
 
   const buttonCount = primaryItems.length + (overflowItems.length > 0 ? 1 : 0);
   const toolbarWidth = buttonCount * TOOLBAR_BUTTON_SIZE + (buttonCount - 1) * TOOLBAR_GAP + 6;
-  const x = dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP;
-  const y = -TOOLBAR_BUTTON_SIZE / 2 - 3;
+  const toolbarHeight = TOOLBAR_BUTTON_SIZE + 6;
+
+  // In vertical orientation (the wheel), same-depth siblings sit tightly side by side with no
+  // reserved toolbar headroom on that axis (see SIBLING_SEPARATION_BETWEEN_NODES) — a right-side
+  // toolbar would overlap the next sibling's card. The depth axis (above/below) has the slack
+  // instead, so the toolbar floats above the card there, centered, out of the sibling row entirely.
+  const isVertical = orientation === "vertical";
+  const x = isVertical ? -toolbarWidth / 2 : dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP;
+  const y = isVertical ? -dimensions.HEIGHT / 2 - toolbarHeight - TOOLBAR_MENU_X_GAP : -TOOLBAR_BUTTON_SIZE / 2 - 3;
 
   const group = nodeGroup.append("g").attr("id", "toolbar-" + node.id).attr("class", "gtv-actions-panel");
 
@@ -322,7 +330,7 @@ export function addToolbarActions(
     .attr("x", x)
     .attr("y", y)
     .attr("width", toolbarWidth)
-    .attr("height", TOOLBAR_BUTTON_SIZE + 6)
+    .attr("height", toolbarHeight)
     .html(() => `<div class="gtv-toolbar">${buttonsHtml}${kebabHtml}</div>`)
     .selectAll<HTMLButtonElement, unknown>(".gtv-toolbar-btn")
     .each(function () {
@@ -330,14 +338,12 @@ export function addToolbarActions(
       if (key === "__more") {
         d3Lib.select(this).on("click", (event: MouseEvent) => {
           event.stopPropagation();
-          toggleLightActionsMenu(
-            d3Lib,
-            nodeGroup,
-            "overflow-menu-" + node.id,
-            x,
-            y + TOOLBAR_BUTTON_SIZE + 8,
-            overflowItems,
-          );
+          // Below the toolbar for horizontal (toward empty space); above it for vertical, since
+          // below would fall back onto the card the toolbar is already floating clear of.
+          const menuY = isVertical
+            ? y - menuItemsHeight(overflowItems) - TOOLBAR_MENU_X_GAP
+            : y + TOOLBAR_BUTTON_SIZE + 8;
+          toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, x, menuY, overflowItems);
         });
         return;
       }
