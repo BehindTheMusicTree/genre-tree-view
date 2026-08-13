@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   GenreTree,
   GenreTreeWheel,
@@ -75,6 +75,25 @@ const largeWheelNodes: GenreTreeNode[] = LARGE_ROOT_NAMES.flatMap((name, index) 
 
 let nextId = 1;
 
+/** The wheel's tree area scrolls internally by design, sized to a fixed viewport — for the
+ * playground we'd rather grow the demo frame to fit whichever tree is currently selected than
+ * make the user scroll inside a fixed box. Measures the actual rendered content instead of
+ * duplicating the library's internal spacing constants. */
+function useWheelFrameHeight(containerRef: React.RefObject<HTMLDivElement>, refreshKey: unknown): number {
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const treeArea = container.querySelector<HTMLElement>(".gtv-wheel-tree-area");
+    const viewport = container.querySelector<HTMLElement>(".gtv-wheel-viewport");
+    if (!treeArea || !viewport) return;
+    setHeight(treeArea.scrollHeight + viewport.getBoundingClientRect().height);
+  }, [containerRef, refreshKey]);
+
+  return height;
+}
+
 const TABS = [
   { id: "wheel", label: "Genre wheel" },
   { id: "wheel-large", label: "Genre wheel (8 roots x 50 nodes)" },
@@ -89,6 +108,14 @@ export function App() {
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
+
+  const wheelFrameRef = useRef<HTMLDivElement>(null);
+  const [wheelSelectedRootId, setWheelSelectedRootId] = useState<string | null>(null);
+  const wheelFrameHeight = useWheelFrameHeight(wheelFrameRef, `${nodes.length}-${wheelSelectedRootId}`);
+
+  const largeWheelFrameRef = useRef<HTMLDivElement>(null);
+  const [largeWheelSelectedRootId, setLargeWheelSelectedRootId] = useState<string | null>(null);
+  const largeWheelFrameHeight = useWheelFrameHeight(largeWheelFrameRef, largeWheelSelectedRootId);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 
@@ -184,18 +211,27 @@ export function App() {
       </div>
 
       {activeTab === "wheel" && (
-        <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <div
+          ref={wheelFrameRef}
+          style={{ position: "relative", height: wheelFrameHeight || 900, border: "1px solid #e4e4e7", marginBottom: 32 }}
+        >
           <GenreTreeWheel
             nodes={nodes}
             {...sharedCallbacks}
-            onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
+            onRootSelect={(rootId) => {
+              appendLog(`wheel selected root ${rootId}`);
+              setWheelSelectedRootId(rootId);
+            }}
           />
         </div>
       )}
 
       {activeTab === "wheel-large" && (
-        <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
-          <GenreTreeWheel nodes={largeWheelNodes} />
+        <div
+          ref={largeWheelFrameRef}
+          style={{ position: "relative", height: largeWheelFrameHeight || 900, border: "1px solid #e4e4e7", marginBottom: 32 }}
+        >
+          <GenreTreeWheel nodes={largeWheelNodes} onRootSelect={setLargeWheelSelectedRootId} />
         </div>
       )}
 
