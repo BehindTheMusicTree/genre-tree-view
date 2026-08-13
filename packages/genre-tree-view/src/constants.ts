@@ -129,9 +129,5 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VISIBLE_ARC_HEIGHT = 200;
 
-export const WHEEL_CHIP_HEIGHT = 40;
-export const WHEEL_CHIP_MIN_WIDTH = 90;
-export const WHEEL_CHIP_MAX_WIDTH = 220;
-
 export const WHEEL_ROTATION_TRANSITION_MS = 500;
 export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

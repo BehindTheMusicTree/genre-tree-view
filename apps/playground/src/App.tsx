@@ -19,6 +19,29 @@ const initialNodes: GenreTreeNode[] = [
   { id: "b-house", parentId: "root-b", name: "House", itemCount: 0 },
 ];
 
+const LARGE_ROOT_NAMES = ["Rock", "Electronic", "Jazz", "Hip-Hop", "Classical", "Folk", "Metal", "Pop"];
+
+/** One root plus `nodeCount - 1` descendants, branching every few nodes so the tree gets a
+ * few levels deep instead of 49 siblings in a flat row. */
+function buildLargeRootGroup(rootName: string, rootIndex: number, nodeCount: number): GenreTreeNode[] {
+  const rootId = `large-root-${rootIndex}`;
+  const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: rootName, itemCount: 0 }];
+  for (let i = 1; i < nodeCount; i++) {
+    const parentId = i % 4 === 0 ? rootId : nodes[Math.max(0, i - 2)].id;
+    nodes.push({
+      id: `${rootId}-${i}`,
+      parentId,
+      name: `${rootName} sub-genre ${i}`,
+      itemCount: (i * 3) % 20,
+    });
+  }
+  return nodes;
+}
+
+const largeWheelNodes: GenreTreeNode[] = LARGE_ROOT_NAMES.flatMap((name, index) =>
+  buildLargeRootGroup(name, index, 50),
+);
+
 let nextId = 1;
 
 export function App() {
@@ -109,6 +132,11 @@ export function App() {
           {...sharedCallbacks}
           onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
         />
+      </div>
+
+      <h2>Genre wheel (8 roots x 50 nodes)</h2>
+      <div style={{ position: "relative", height: 480, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <GenreTreeWheel nodes={largeWheelNodes} />
       </div>
 
       <h2>Stacked trees</h2>

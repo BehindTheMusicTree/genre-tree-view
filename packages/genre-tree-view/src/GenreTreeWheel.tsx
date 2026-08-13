@@ -7,10 +7,9 @@ import { groupNodesByRoot } from "./root-grouping";
 import { computeRotationForSelection, getChipAngle } from "./wheel-geometry";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
+  calculateNodeDimensions,
   getGenreTreeColor,
-  WHEEL_CHIP_HEIGHT,
-  WHEEL_CHIP_MAX_WIDTH,
-  WHEEL_CHIP_MIN_WIDTH,
+  PER_TREE_ACCENT_DOT,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -79,9 +78,6 @@ export function GenreTreeWheel({
         {
           "--gtv-wheel-radius": `${WHEEL_RADIUS}px`,
           "--gtv-wheel-visible-arc-height": `${WHEEL_VISIBLE_ARC_HEIGHT}px`,
-          "--gtv-wheel-chip-height": `${WHEEL_CHIP_HEIGHT}px`,
-          "--gtv-wheel-chip-min-width": `${WHEEL_CHIP_MIN_WIDTH}px`,
-          "--gtv-wheel-chip-max-width": `${WHEEL_CHIP_MAX_WIDTH}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
@@ -116,6 +112,8 @@ export function GenreTreeWheel({
             // The selected root is already represented by its own root node atop the tree above —
             // rendering a chip for it here too would show that same root twice.
             if (selected) return null;
+            const dimensions = calculateNodeDimensions(group.root.itemCount);
+            const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";
             return (
               <div
                 key={group.root.id}
@@ -125,10 +123,20 @@ export function GenreTreeWheel({
                 <button
                   type="button"
                   className="gtv-wheel-chip"
-                  style={{ "--gtv-chip-color": getGenreTreeColor(group.root.id) } as React.CSSProperties}
+                  style={
+                    {
+                      width: dimensions.WIDTH,
+                      height: dimensions.HEIGHT,
+                      "--gtv-chip-color": getGenreTreeColor(group.root.id),
+                    } as React.CSSProperties
+                  }
                   onClick={() => handleChipClick(group.root.id, angle)}
                 >
-                  {group.root.name}
+                  {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
+                  <span className="gtv-node-label gtv-node-label--root">
+                    {group.root.name}
+                    {itemCountText}
+                  </span>
                 </button>
               </div>
             );

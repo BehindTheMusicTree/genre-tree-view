@@ -16,8 +16,8 @@ const NODES: GenreTreeNode[] = [
 ];
 
 function chipFor(container: HTMLElement, name: string) {
-  return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find(
-    (el) => el.textContent === name,
+  return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find((el) =>
+    el.textContent?.startsWith(name),
   ) as HTMLButtonElement;
 }
 
