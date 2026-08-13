@@ -127,8 +127,8 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
   return calculateNodeDimensions(maxItems);
 }
 
-// GenreTreeWheel tokens. Chips sit a fixed angular pitch apart (see WHEEL_CHIP_ANGLE_STEP_DEGREES
-// in wheel-geometry.ts). The wheel's reserved bottom strip needs to fit more than just the bare
+// GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
+// wheel-geometry.ts). The wheel's reserved bottom strip needs to fit more than just the bare
 // circle (2 * WHEEL_RADIUS): a chip is centered *on* its point on that circle, so at the circle's
 // lowest point a chip's own half-height still sticks out past the diameter. Reserving that extra
 // half-height keeps every chip fully on screen, not just the ones nearest the top.

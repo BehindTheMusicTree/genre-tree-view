@@ -126,7 +126,7 @@ export function GenreTreeWheel({
       <div className="gtv-wheel-viewport">
         <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
           {groups.map((group, index) => {
-            const angle = getChipAngle(index);
+            const angle = getChipAngle(index, groups.length);
             const selected = group.root.id === effectiveRootId;
             const dimensions = calculateNodeDimensions(group.root.itemCount);
             const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";

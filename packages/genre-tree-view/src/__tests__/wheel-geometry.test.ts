@@ -2,16 +2,18 @@ import { describe, expect, it } from "vitest";
 import { computeRotationForSelection, getChipAngle } from "../wheel-geometry";
 
 describe("getChipAngle", () => {
-  it("spaces chips by a fixed pitch, starting at 0 for the first chip", () => {
-    expect(getChipAngle(0)).toBe(0);
-    expect(getChipAngle(1)).toBe(32);
-    expect(getChipAngle(2)).toBe(64);
-    expect(getChipAngle(3)).toBe(96);
+  it("spaces chips evenly around the full circle, starting at 0 for the first chip", () => {
+    expect(getChipAngle(0, 4)).toBe(0);
+    expect(getChipAngle(1, 4)).toBe(90);
+    expect(getChipAngle(2, 4)).toBe(180);
+    expect(getChipAngle(3, 4)).toBe(270);
   });
 
-  it("keeps the same fixed pitch regardless of how many chips exist", () => {
-    for (let i = 0; i < 10; i++) {
-      expect(getChipAngle(i)).toBe(i * 32);
+  it("spreads the pitch across the full 360 degrees regardless of chip count", () => {
+    for (const total of [1, 2, 3, 5, 10]) {
+      for (let i = 0; i < total; i++) {
+        expect(getChipAngle(i, total)).toBe(i * (360 / total));
+      }
     }
   });
 });
