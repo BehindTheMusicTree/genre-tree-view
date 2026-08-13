@@ -66,6 +66,14 @@ export function GenreTreeWheel({
 
   const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
+  // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
+  // centered on the circle like every other chip, but every real tree node's rect is top-anchored
+  // at its own d.y instead. Left alone, that mismatch makes the chip sit half its own height too
+  // high, eating into the gap above it — reserving that half-height below the tree area pushes the
+  // tree's own bottom edge up to compensate, so the root->depth1 gap reads the same as any other
+  // consecutive-depth gap.
+  const rootChipHalfHeight = selectedGroup ? calculateNodeDimensions(selectedGroup.root.itemCount).HEIGHT / 2 : 0;
+
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
     setRotationDeg((current) => computeRotationForSelection(current, angle));
@@ -92,7 +100,7 @@ export function GenreTreeWheel({
         } as React.CSSProperties
       }
     >
-      <div className="gtv-wheel-tree-area" ref={treeAreaRef}>
+      <div className="gtv-wheel-tree-area" ref={treeAreaRef} style={{ paddingBottom: rootChipHalfHeight }}>
         {selectedGroup && (
           <GenreTree
             key={selectedGroup.root.id}

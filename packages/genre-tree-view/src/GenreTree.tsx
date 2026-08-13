@@ -135,8 +135,16 @@ export function GenreTree({
     <div className={className} style={{ "--gtv-hover-brightness": HOVER_BRIGHTNESS } as React.CSSProperties}>
       <input type="file" multiple ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
       {/* overflow: visible so the toolbar's overflow menu isn't clipped when it extends past
-          the tree's own layout bounds (SVG defaults to overflow: hidden). */}
-      <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ overflow: "visible" }} />
+          the tree's own layout bounds (SVG defaults to overflow: hidden). display: block avoids
+          the few px of phantom whitespace an inline-level svg otherwise leaves below itself,
+          which would throw off pixel-exact alignment against sibling elements (e.g. the wheel's
+          root chip in GenreTreeWheel). */}
+      <svg
+        ref={svgRef}
+        width={svgWidth}
+        height={svgHeight}
+        style={{ overflow: "visible", display: "block" }}
+      />
     </div>
   );
 }
