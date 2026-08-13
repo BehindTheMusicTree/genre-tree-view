@@ -126,7 +126,7 @@ export function App() {
       )}
 
       <h2>Genre wheel</h2>
-      <div style={{ position: "relative", height: 480, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+      <div style={{ position: "relative", height: 700, border: "1px solid #e4e4e7", marginBottom: 32 }}>
         <GenreTreeWheel
           nodes={nodes}
           {...sharedCallbacks}
@@ -135,7 +135,7 @@ export function App() {
       </div>
 
       <h2>Genre wheel (8 roots x 50 nodes)</h2>
-      <div style={{ position: "relative", height: 480, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+      <div style={{ position: "relative", height: 700, border: "1px solid #e4e4e7", marginBottom: 32 }}>
         <GenreTreeWheel nodes={largeWheelNodes} />
       </div>
 
