@@ -17,6 +17,8 @@ export function GenreTree({
   nodes,
   className,
   rootColor,
+  orientation = "horizontal",
+  hideRoot = false,
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -43,13 +45,13 @@ export function GenreTree({
 
   const { treeData, resolvedRootColor, svgWidth, svgHeight } = useMemo(() => {
     const root = buildTreeHierarchyStructure(d3, nodes);
-    const originalTreeData = createTreeLayout(d3, root);
+    const originalTreeData = createTreeLayout(d3, root, orientation);
     const {
       svgWidth: width,
       svgHeight: height,
       highestVerticalCoordinate,
-    } = calculateSvgDimensions(d3, originalTreeData);
-    const reshapedTreeData = setupTreeLayout(d3, originalTreeData, highestVerticalCoordinate);
+    } = calculateSvgDimensions(d3, originalTreeData, orientation, hideRoot);
+    const reshapedTreeData = setupTreeLayout(d3, originalTreeData, highestVerticalCoordinate, orientation);
 
     return {
       treeData: reshapedTreeData,
@@ -57,7 +59,7 @@ export function GenreTree({
       svgWidth: width,
       svgHeight: height,
     };
-  }, [nodes, rootColor]);
+  }, [nodes, rootColor, orientation, hideRoot]);
 
   // A reparent-in-progress node can belong to a *different* GenreTree instance (a different
   // root). Only the tree that actually contains it needs to block self/descendants as targets.
@@ -98,6 +100,8 @@ export function GenreTree({
         playingNodeId,
         playState,
       },
+      orientation,
+      hideRoot,
     );
   }, [
     treeData,
@@ -114,6 +118,8 @@ export function GenreTree({
     onDeleteRequest,
     onReparentRequest,
     onReparent,
+    orientation,
+    hideRoot,
   ]);
 
   useEffect(() => {
@@ -129,8 +135,16 @@ export function GenreTree({
     <div className={className} style={{ "--gtv-hover-brightness": HOVER_BRIGHTNESS } as React.CSSProperties}>
       <input type="file" multiple ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
       {/* overflow: visible so the toolbar's overflow menu isn't clipped when it extends past
-          the tree's own layout bounds (SVG defaults to overflow: hidden). */}
-      <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ overflow: "visible" }} />
+          the tree's own layout bounds (SVG defaults to overflow: hidden). display: block avoids
+          the few px of phantom whitespace an inline-level svg otherwise leaves below itself,
+          which would throw off pixel-exact alignment against sibling elements (e.g. the wheel's
+          root chip in GenreTreeWheel). */}
+      <svg
+        ref={svgRef}
+        width={svgWidth}
+        height={svgHeight}
+        style={{ overflow: "visible", display: "block" }}
+      />
     </div>
   );
 }

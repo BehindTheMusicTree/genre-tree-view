@@ -100,6 +100,19 @@ export const HORIZONTAL_SEPARATION_BETWEEN_NODES =
   NODE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
 export const VERTICAL_SEPARATION_BETWEEN_NODES = NODE_DIMENSIONS.HEIGHT + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
 
+// The depth-axis step for a vertical-orientation tree (root-to-leaf growth). Kept distinct from
+// VERTICAL_SEPARATION_BETWEEN_NODES, which horizontal-orientation trees also reuse as their
+// breadth (sibling) axis step — doubling that constant directly would have also doubled sibling
+// spacing in horizontal trees, not just the gap between depths.
+export const VERTICAL_ORIENTATION_DEPTH_SEPARATION = VERTICAL_SEPARATION_BETWEEN_NODES * 2;
+
+// Same-depth siblings in a vertical-orientation tree sit side by side on-screen, so this axis
+// doesn't need HORIZONTAL_SEPARATION_BETWEEN_NODES's baked-in toolbar/menu headroom — that's
+// only for the depth axis, where a hovered node's toolbar pops into the space before the next
+// generation. Reserving that much between every sibling pair made the wheel's tree read far
+// more spread out than its cards actually are.
+export const SIBLING_SEPARATION_BETWEEN_NODES = RECT_BASE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
+
 // Utility functions for dynamic node sizing
 export function calculateNodeDimensions(itemCount: number): Dimensions {
   const logItemCount = Math.log(Math.max(1, itemCount));
@@ -119,3 +132,14 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
   const maxItems = Math.max(...nodes.map((node) => node.itemCount), 0);
   return calculateNodeDimensions(maxItems);
 }
+
+// GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
+// wheel-geometry.ts). The wheel's reserved bottom strip needs to fit more than just the bare
+// circle (2 * WHEEL_RADIUS): a chip is centered *on* its point on that circle, so at the circle's
+// lowest point a chip's own half-height still sticks out past the diameter. Reserving that extra
+// half-height keeps every chip fully on screen, not just the ones nearest the top.
+export const WHEEL_RADIUS = 260;
+export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
+
+export const WHEEL_ROTATION_TRANSITION_MS = 500;
+export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

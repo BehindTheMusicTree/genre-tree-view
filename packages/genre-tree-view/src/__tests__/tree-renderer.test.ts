@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as d3 from "d3";
 import { calculateSvgDimensions, createTreeLayout, renderTree, setupTreeLayout } from "../tree-renderer";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
+import { calculateNodeDimensions } from "../constants";
 import type { GenreTreeNode } from "../types";
 import type { RenderTreeCallbacks } from "../tree-renderer";
 
@@ -53,6 +54,38 @@ describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout", () => {
       expect(d.x).toBe(before[i].y);
       expect(d.y).toBe(before[i].x - 10);
     });
+  });
+});
+
+describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout (vertical orientation)", () => {
+  const VERTICAL_NODES: GenreTreeNode[] = [
+    { id: "root", parentId: null, name: "Root", itemCount: 0 },
+    { id: "child-a", parentId: "root", name: "Child A", itemCount: 0 },
+    { id: "child-b", parentId: "root", name: "Child B", itemCount: 0 },
+    { id: "grandchild", parentId: "child-a", name: "Grandchild", itemCount: 0 },
+  ];
+
+  it("computes positive svg dimensions for a small tree", () => {
+    const root = buildTreeHierarchyStructure(d3, VERTICAL_NODES);
+    const laidOut = createTreeLayout(d3, root, "vertical");
+    const dims = calculateSvgDimensions(d3, laidOut, "vertical");
+    expect(dims.svgWidth).toBeGreaterThan(0);
+    expect(dims.svgHeight).toBeGreaterThan(0);
+  });
+
+  it("centers the root's own visual anchor (x + own width / 2) at svgWidth / 2 and grows y upward with depth", () => {
+    const root = buildTreeHierarchyStructure(d3, VERTICAL_NODES);
+    const laidOut = createTreeLayout(d3, root, "vertical");
+    const { svgWidth, highestVerticalCoordinate } = calculateSvgDimensions(d3, laidOut, "vertical");
+    const treeData = setupTreeLayout(d3, laidOut, highestVerticalCoordinate, "vertical");
+
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount).WIDTH;
+    expect(treeData.x! + rootWidth / 2).toBe(svgWidth / 2);
+
+    const descendants = treeData.descendants();
+    const rootNode = descendants.find((d) => d.depth === 0)!;
+    const deepestNode = descendants.reduce((deepest, d) => (d.depth > deepest.depth ? d : deepest));
+    expect(rootNode.y).toBeGreaterThan(deepestNode.y!);
   });
 });
 

@@ -192,3 +192,122 @@ g.node:hover {
   margin: 4px 0;
   background-color: #e4e4e7;
 }
+
+/* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
+   container, its full circle always on screen. Only the selected root's subtree is mounted,
+   growing upward from the wheel's top-center anchor. */
+
+.gtv-wheel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.gtv-wheel-tree-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--gtv-wheel-viewport-height, 550px);
+  display: flex;
+  flex-direction: column;
+  /* flex-end here (paired with overflow: auto) would hit the classic "unsafe alignment"
+     gap: once the tree is taller than this box, end-aligned overflow is clipped off the
+     top with no way to scroll to it. margin-top: auto on the tree itself (below) gets the
+     same bottom-anchored placement while staying reachable when it overflows. */
+  justify-content: flex-start;
+  align-items: center;
+  overflow: auto;
+}
+
+.gtv-wheel-tree {
+  margin-top: auto;
+}
+
+/* Height covers the wheel's full diameter plus a chip's own half-height, so the entire circle
+   of chips stays on screen — including at its lowest point, where a chip is centered on the
+   diameter's edge and its bottom half would otherwise stick out past this box. The selected
+   chip still sits exactly at sag 0 (the wheel's topmost point, see .gtv-wheel-slot below),
+   which is also this box's own top edge, so half its height renders above y:0. clip-path
+   (rather than overflow: hidden) lets that half render uncropped while still clipping
+   anything outside the box's left/right/bottom. */
+.gtv-wheel-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--gtv-wheel-viewport-height, 550px);
+  clip-path: inset(-9999px 0 0 0);
+  pointer-events: none;
+}
+
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. */
+.gtv-wheel {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--gtv-wheel-radius, 260px) * 2);
+  height: calc(var(--gtv-wheel-radius, 260px) * 2);
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  transform: rotate(var(--gtv-wheel-rotation, 0deg));
+}
+
+/* Places the chip's anchor point on the circle at its static --gtv-chip-angle. */
+.gtv-wheel-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
+}
+
+/* Counter-rotates against both the wheel's and the slot's rotation so the card stays
+   upright regardless of where on the wheel it lands. Sized and styled to match a tree
+   node card exactly (same corner radius, border, shadow, and .gtv-node-label typography)
+   so a root reads the same whether it's shown here or promoted to the actual root node. */
+.gtv-wheel-chip {
+  position: absolute;
+  transform: translate(-50%, -50%)
+    rotate(calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg))));
+  pointer-events: auto;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.12);
+  color: #18181b;
+  cursor: pointer;
+}
+
+.gtv-wheel-chip-dot {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--gtv-chip-color, currentColor);
+}
+
+/* The selected root's tree grows directly out of this chip (see GenreTree's `hideRoot`) — filled
+   in the root's own accent color so it reads as the tree's origin, not just another option. */
+.gtv-wheel-chip--selected {
+  border-color: var(--gtv-chip-color);
+  background: var(--gtv-chip-color);
+  color: #ffffff;
+}
+
+.gtv-wheel-chip--selected .gtv-wheel-chip-dot {
+  background: #ffffff;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel,
+  .gtv-wheel-chip {
+    transition: transform var(--gtv-wheel-rotation-transition-ms, 500ms)
+      var(--gtv-wheel-rotation-easing, ease);
+  }
+}

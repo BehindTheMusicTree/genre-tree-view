@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { GenreTree, type GenreTreeNode, type GenreTreePlayState } from "@behindthemusictree/genre-tree-view";
+import {
+  GenreTree,
+  GenreTreeWheel,
+  groupNodesByRoot,
+  type GenreTreeNode,
+  type GenreTreePlayState,
+} from "@behindthemusictree/genre-tree-view";
 import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
 
 const initialNodes: GenreTreeNode[] = [
@@ -13,6 +19,60 @@ const initialNodes: GenreTreeNode[] = [
   { id: "b-house", parentId: "root-b", name: "House", itemCount: 0 },
 ];
 
+// Cycles through varying branching factors (including 0, a dead end) so descendants of
+// a-post-punk (depth 2) cover depths 3-6 without every branch growing at the same rate.
+const DEEP_BRANCH_CHILD_COUNTS = [2, 0, 3, 1, 4];
+
+function buildDeepBranch(
+  parentId: string,
+  namePrefix: string,
+  depth: number,
+  maxDepth: number,
+  countIndex: { next: number },
+): GenreTreeNode[] {
+  if (depth > maxDepth) return [];
+  const childCount = DEEP_BRANCH_CHILD_COUNTS[countIndex.next % DEEP_BRANCH_CHILD_COUNTS.length];
+  countIndex.next++;
+
+  const nodes: GenreTreeNode[] = [];
+  for (let i = 0; i < childCount; i++) {
+    const id = `${namePrefix}-${i}`;
+    nodes.push({
+      id,
+      parentId,
+      name: `${namePrefix} ${i}`,
+      itemCount: (depth * 3 + i) % 20,
+    });
+    nodes.push(...buildDeepBranch(id, id, depth + 1, maxDepth, countIndex));
+  }
+  return nodes;
+}
+
+initialNodes.push(...buildDeepBranch("a-post-punk", "pp-depth3", 3, 6, { next: 0 }));
+
+const LARGE_ROOT_NAMES = ["Rock", "Electronic", "Jazz", "Hip-Hop", "Classical", "Folk", "Metal", "Pop"];
+
+/** One root plus `nodeCount - 1` descendants, branching every few nodes so the tree gets a
+ * few levels deep instead of 49 siblings in a flat row. */
+function buildLargeRootGroup(rootName: string, rootIndex: number, nodeCount: number): GenreTreeNode[] {
+  const rootId = `large-root-${rootIndex}`;
+  const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: rootName, itemCount: 0 }];
+  for (let i = 1; i < nodeCount; i++) {
+    const parentId = i % 4 === 0 ? rootId : nodes[Math.max(0, i - 2)].id;
+    nodes.push({
+      id: `${rootId}-${i}`,
+      parentId,
+      name: `${rootName} sub-genre ${i}`,
+      itemCount: (i * 3) % 20,
+    });
+  }
+  return nodes;
+}
+
+const largeWheelNodes: GenreTreeNode[] = LARGE_ROOT_NAMES.flatMap((name, index) =>
+  buildLargeRootGroup(name, index, 50),
+);
+
 let nextId = 1;
 
 export function App() {
@@ -24,15 +84,64 @@ export function App() {
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 
-  // Group flat nodes by their top-level ancestor so each root renders in its own <GenreTree>.
-  const rootIds = nodes.filter((n) => n.parentId === null).map((n) => n.id);
-  const parentById = new Map(nodes.map((n) => [n.id, n.parentId]));
-  const rootOf = (id: string): string => {
-    let current = id;
-    while (parentById.get(current)) current = parentById.get(current)!;
-    return current;
+  const groups = groupNodesByRoot(nodes);
+
+  const sharedCallbacks = {
+    playingNodeId,
+    playState,
+    reparentingNodeId,
+    onPlayPause: (nodeId: string) => {
+      if (playingNodeId === nodeId) {
+        setPlayState((s) => (s === "playing" ? "paused" : "playing"));
+      } else {
+        setPlayingNodeId(nodeId);
+        setPlayState("playing");
+      }
+      appendLog(`play/pause ${nodeId}`);
+    },
+    onAddChild: (parentId: string) => {
+      const id = `new-${nextId++}`;
+      setNodes((prev) => [...prev, { id, parentId, name: "New sub-genre", itemCount: 0 }]);
+      appendLog(`added child ${id} under ${parentId}`);
+    },
+    onRenameRequest: (node: GenreTreeNode) => {
+      const name = window.prompt("Rename to:", node.name);
+      if (name) {
+        setNodes((prev) => prev.map((n) => (n.id === node.id ? { ...n, name } : n)));
+        appendLog(`renamed ${node.id} -> ${name}`);
+      }
+    },
+    onDeleteRequest: (node: GenreTreeNode) => {
+      if (window.confirm(`Delete "${node.name}" and its sub-genres?`)) {
+        const idsToRemove = new Set<string>([node.id]);
+        let grew = true;
+        while (grew) {
+          grew = false;
+          for (const n of nodes) {
+            if (n.parentId && idsToRemove.has(n.parentId) && !idsToRemove.has(n.id)) {
+              idsToRemove.add(n.id);
+              grew = true;
+            }
+          }
+        }
+        setNodes((prev) => prev.filter((n) => !idsToRemove.has(n.id)));
+        appendLog(`deleted ${node.id} (+${idsToRemove.size - 1} descendants)`);
+      }
+    },
+    onReparentRequest: (node: GenreTreeNode) => {
+      setReparentingNodeId(node.id);
+      appendLog(`reparent requested for ${node.id}`);
+    },
+    onReparent: (nodeId: string, newParentId: string) => {
+      setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)));
+      setReparentingNodeId(null);
+      appendLog(`reparented ${nodeId} -> ${newParentId}`);
+    },
+    onUploadFiles: (nodeId: string, files: File[]) => {
+      setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, itemCount: n.itemCount + files.length } : n)));
+      appendLog(`uploaded ${files.length} file(s) to ${nodeId}`);
+    },
   };
-  const groups = rootIds.map((rootId) => nodes.filter((n) => rootOf(n.id) === rootId));
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
@@ -47,68 +156,24 @@ export function App() {
         <button onClick={() => setReparentingNodeId(null)}>Cancel reparent</button>
       )}
 
+      <h2>Genre wheel</h2>
+      <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <GenreTreeWheel
+          nodes={nodes}
+          {...sharedCallbacks}
+          onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
+        />
+      </div>
+
+      <h2>Genre wheel (8 roots x 50 nodes)</h2>
+      <div style={{ position: "relative", height: 900, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <GenreTreeWheel nodes={largeWheelNodes} />
+      </div>
+
+      <h2>Stacked trees</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 24 }}>
         {groups.map((group) => (
-          <GenreTree
-            key={group[0].id}
-            nodes={group}
-            playingNodeId={playingNodeId}
-            playState={playState}
-            reparentingNodeId={reparentingNodeId}
-            onPlayPause={(nodeId) => {
-              if (playingNodeId === nodeId) {
-                setPlayState((s) => (s === "playing" ? "paused" : "playing"));
-              } else {
-                setPlayingNodeId(nodeId);
-                setPlayState("playing");
-              }
-              appendLog(`play/pause ${nodeId}`);
-            }}
-            onAddChild={(parentId) => {
-              const id = `new-${nextId++}`;
-              setNodes((prev) => [...prev, { id, parentId, name: "New sub-genre", itemCount: 0 }]);
-              appendLog(`added child ${id} under ${parentId}`);
-            }}
-            onRenameRequest={(node) => {
-              const name = window.prompt("Rename to:", node.name);
-              if (name) {
-                setNodes((prev) => prev.map((n) => (n.id === node.id ? { ...n, name } : n)));
-                appendLog(`renamed ${node.id} -> ${name}`);
-              }
-            }}
-            onDeleteRequest={(node) => {
-              if (window.confirm(`Delete "${node.name}" and its sub-genres?`)) {
-                const idsToRemove = new Set<string>([node.id]);
-                let grew = true;
-                while (grew) {
-                  grew = false;
-                  for (const n of nodes) {
-                    if (n.parentId && idsToRemove.has(n.parentId) && !idsToRemove.has(n.id)) {
-                      idsToRemove.add(n.id);
-                      grew = true;
-                    }
-                  }
-                }
-                setNodes((prev) => prev.filter((n) => !idsToRemove.has(n.id)));
-                appendLog(`deleted ${node.id} (+${idsToRemove.size - 1} descendants)`);
-              }
-            }}
-            onReparentRequest={(node) => {
-              setReparentingNodeId(node.id);
-              appendLog(`reparent requested for ${node.id}`);
-            }}
-            onReparent={(nodeId, newParentId) => {
-              setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)));
-              setReparentingNodeId(null);
-              appendLog(`reparented ${nodeId} -> ${newParentId}`);
-            }}
-            onUploadFiles={(nodeId, files) => {
-              setNodes((prev) =>
-                prev.map((n) => (n.id === nodeId ? { ...n, itemCount: n.itemCount + files.length } : n)),
-              );
-              appendLog(`uploaded ${files.length} file(s) to ${nodeId}`);
-            }}
-          />
+          <GenreTree key={group.root.id} nodes={group.nodes} {...sharedCallbacks} />
         ))}
       </div>
 

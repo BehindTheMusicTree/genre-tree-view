@@ -1,9 +1,11 @@
 import * as d3 from "d3";
 
-import { GenreTreeNode, GenreTreePlayState } from "./types";
+import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
+  VERTICAL_ORIENTATION_DEPTH_SEPARATION,
+  SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
   SURFACE_FILL,
@@ -45,9 +47,54 @@ export interface RenderTreeCallbacks {
   playState?: GenreTreePlayState;
 }
 
-export function calculateSvgDimensions(d3Lib: typeof import("d3"), treeData: D3Node): SvgDimensions {
+export function calculateSvgDimensions(
+  d3Lib: typeof import("d3"),
+  treeData: D3Node,
+  orientation: TreeOrientation = "horizontal",
+  hideRoot = false,
+): SvgDimensions {
   const nodes = treeData.descendants();
   const maxNodeDimensions = getMaxNodeDimensions(nodes.map((d) => d.data));
+  const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
+
+  if (orientation === "vertical") {
+    // Root sits at the bottom edge, so only that one side needs toolbar/menu clearance — the
+    // horizontal branch below reserves the same ACTIONS_OVERLAY_HEIGHT split in half across its
+    // two ends (top and bottom margins), so match that per-side amount rather than the full budget.
+    // A hidden root renders no card and no toolbar, so it needs neither its own height nor that
+    // clearance — the svg's bottom edge instead lands exactly on the root's anchor point.
+    const svgHeight = hideRoot
+      ? maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION
+      : maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
+
+    // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
+    // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
+    // exactly at svgWidth/2. The toolbar only ever renders to a node's right, so only the right
+    // half needs its headroom (ACTIONS_OVERLAY_WIDTH); the left half doesn't.
+    //
+    // Every consumer of a node's x (link endpoints in appendPaths, the rendered card's own
+    // center) treats `d.x + own width / 2` as that node's true visual position — d.x alone is
+    // just its left edge. The root is no exception (hideRoot only skips drawing its card, not
+    // this convention), so it has to be centered on that same point, not on the bare `d.x`.
+    // Skipping the `+ width / 2` here left the root's card/chip sitting half its own width left
+    // of where its children's links actually converge.
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount).WIDTH;
+    const rootAnchorX = treeData.x! + rootWidth / 2;
+
+    const leftmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
+    const rightmostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
+    const leftHalfExtent = rootAnchorX - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
+    const rightHalfExtent =
+      rightmostBreadthCoordinate - rootAnchorX + maxNodeDimensions.WIDTH / 2 + ACTIONS_OVERLAY_WIDTH;
+    const svgWidth = Math.max(leftHalfExtent, rightHalfExtent) * 2;
+
+    // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, rather
+    // than a vertical coordinate — the two orientations need different single scalars out of
+    // this function and the field isn't worth renaming just for that.
+    const rootCenteringOffset = svgWidth / 2 - rootAnchorX;
+
+    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset };
+  }
 
   const highestNodeVerticalCoordinate = d3Lib.min(nodes, (d) => d.x)!;
   const highestVerticalCoordinate =
@@ -57,13 +104,26 @@ export function calculateSvgDimensions(d3Lib: typeof import("d3"), treeData: D3N
     lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
   const svgHeight = lowestVerticalCoordinate - highestVerticalCoordinate;
 
-  const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
   const svgWidth = maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
   return { svgWidth, svgHeight, highestVerticalCoordinate };
 }
 
-export function setupTreeLayout(_d3Lib: typeof import("d3"), treeData: D3Node, highestVerticalCoordinate: number): D3Node {
+export function setupTreeLayout(
+  d3Lib: typeof import("d3"),
+  treeData: D3Node,
+  highestVerticalCoordinate: number,
+  orientation: TreeOrientation = "horizontal",
+): D3Node {
+  if (orientation === "vertical") {
+    const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
+    treeData.each(function (d) {
+      d.x = d.x! + highestVerticalCoordinate;
+      d.y = (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION;
+    });
+    return treeData;
+  }
+
   treeData.each(function (d) {
     const tempX = d.x!;
     d.x = d.y!;
@@ -72,10 +132,20 @@ export function setupTreeLayout(_d3Lib: typeof import("d3"), treeData: D3Node, h
   return treeData;
 }
 
-export function createTreeLayout(d3Lib: typeof import("d3"), root: D3Node): D3Node {
-  const treeLayout = d3Lib
-    .tree<GenreTreeNode>()
-    .nodeSize([VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES]);
+export function createTreeLayout(
+  d3Lib: typeof import("d3"),
+  root: D3Node,
+  orientation: TreeOrientation = "horizontal",
+): D3Node {
+  const nodeSize: [number, number] =
+    orientation === "vertical"
+      ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION]
+      : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
+  // d3's default separation() doubles the gap between same-depth nodes that don't share a
+  // parent, which compounds up the tree for deeply-branching data and produces gaps several
+  // times wider than the nodeSize slot itself. Every node already reserves its own slot via
+  // nodeSize, so a flat 1 keeps that slot's spacing consistent regardless of parentage.
+  const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize).separation(() => 1);
   return treeLayout(root);
 }
 
@@ -89,6 +159,8 @@ export function renderTree(
   reparentForbiddenIds: string[],
   rootColor: string,
   callbacks: RenderTreeCallbacks,
+  orientation: TreeOrientation = "horizontal",
+  hideRoot = false,
 ): D3Selection {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
 
@@ -129,13 +201,19 @@ export function renderTree(
 
   addGrid(svg, svgWidth, svgHeight, true);
 
-  appendPaths(d3Lib, svg, treeData);
+  appendPaths(d3Lib, svg, treeData, orientation);
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
 
+  // The hidden root still contributes its (x, y) as the anchor endpoint for appendPaths above —
+  // only its own card/toolbar is skipped here, not its position.
+  const visibleDescendants = hideRoot
+    ? treeData.descendants().filter((d) => d.depth !== 0)
+    : treeData.descendants();
+
   const nodes = svg
     .selectAll<SVGGElement, D3Node>("g.node")
-    .data(treeData.descendants())
+    .data(visibleDescendants)
     .enter()
     .append("g")
     .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
@@ -146,6 +224,25 @@ export function renderTree(
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
     });
+
+  // Invisible hit-region spanning the node body plus the reserved toolbar/menu area to its
+  // right, appended before any visible content so painted siblings (rect, label, toolbar)
+  // take pointer-event priority over it wherever they overlap it. Without this, the group's
+  // mouseenter/mouseleave below is governed only by the union of whichever painted children
+  // currently exist — the ~4px unpainted gap between the node's rect and the toolbar's
+  // foreignObject (TOOLBAR_MENU_X_GAP) sits right where a resting cursor tends to land, and
+  // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
+  // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
+  // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
+  nodes
+    .append("rect")
+    .attr("class", "gtv-hover-hit-area")
+    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH + ACTIONS_OVERLAY_WIDTH)
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
+    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
+    .attr("fill", "transparent")
+    .attr("pointer-events", "all");
 
   nodes
     .append("rect")
