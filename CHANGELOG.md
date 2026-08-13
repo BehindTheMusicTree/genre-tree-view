@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-13
+
 ### Added
 
 - `GenreTreeWheel`, a new component that distributes root genres evenly around a wheel hugging
