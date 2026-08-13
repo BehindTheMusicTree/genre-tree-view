@@ -22,20 +22,16 @@ function chipFor(container: HTMLElement, name: string) {
 }
 
 describe("GenreTreeWheel", () => {
-  it("renders one chip per root and only the default-selected root's nodes", () => {
+  it("renders a chip for every root except the default-selected one, and only that root's nodes", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(2);
+    expect(chipFor(container, "Rock")).toBeUndefined();
+    expect(chipFor(container, "Electronic")).toBeTruthy();
+    expect(chipFor(container, "Jazz")).toBeTruthy();
     expect(container.querySelector("#group-root-a")).toBeTruthy();
     expect(container.querySelector("#group-a-child")).toBeTruthy();
     expect(container.querySelector("#group-root-b")).toBeFalsy();
     expect(container.querySelector("#group-root-c")).toBeFalsy();
-  });
-
-  it("marks the default-selected chip's aria-pressed and none of the others", () => {
-    const { container } = render(<GenreTreeWheel nodes={NODES} />);
-    expect(chipFor(container, "Rock").getAttribute("aria-pressed")).toBe("true");
-    expect(chipFor(container, "Electronic").getAttribute("aria-pressed")).toBe("false");
-    expect(chipFor(container, "Jazz").getAttribute("aria-pressed")).toBe("false");
   });
 
   it("fires onRootSelect on mount with the default root", () => {
@@ -54,7 +50,8 @@ describe("GenreTreeWheel", () => {
     expect(container.querySelector("#group-root-b")).toBeTruthy();
     expect(container.querySelector("#group-b-child")).toBeTruthy();
     expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
-    expect(chipFor(container, "Electronic").getAttribute("aria-pressed")).toBe("true");
+    expect(chipFor(container, "Electronic")).toBeUndefined();
+    expect(chipFor(container, "Rock")).toBeTruthy();
   });
 
   it("updates the wheel's rotation custom property after a click", () => {

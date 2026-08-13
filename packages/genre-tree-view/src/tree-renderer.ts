@@ -55,8 +55,11 @@ export function calculateSvgDimensions(
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
 
   if (orientation === "vertical") {
+    // Root sits at the bottom edge, so only that one side needs toolbar/menu clearance — the
+    // horizontal branch below reserves the same ACTIONS_OVERLAY_HEIGHT split in half across its
+    // two ends (top and bottom margins), so match that per-side amount rather than the full budget.
     const svgHeight =
-      maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT;
+      maximumLevel * VERTICAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root

@@ -226,12 +226,13 @@ g.node:hover {
   pointer-events: none;
 }
 
-/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Offset down by
-   --gtv-wheel-top-inset so the selected chip (always sag 0, i.e. at the wheel's topmost point)
-   clears the viewport's overflow:hidden boundary instead of straddling and half-clipping on it. */
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. The selected
+   root never renders a chip here (its root node above serves that role), so no chip ever sits
+   at sag 0 — the wheel's topmost point — meaning nothing needs clearance from the viewport's
+   overflow:hidden boundary. */
 .gtv-wheel {
   position: absolute;
-  top: var(--gtv-wheel-top-inset, 30px);
+  top: 0;
   left: 50%;
   width: calc(var(--gtv-wheel-radius, 260px) * 2);
   height: calc(var(--gtv-wheel-radius, 260px) * 2);
@@ -274,15 +275,6 @@ g.node:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-}
-
-.gtv-wheel-chip--selected {
-  height: var(--gtv-wheel-chip-height-selected, 48px);
-  background: var(--gtv-chip-color, currentColor);
-  border-color: var(--gtv-chip-color, currentColor);
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: no-preference) {

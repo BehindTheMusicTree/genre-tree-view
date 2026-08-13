@@ -9,13 +9,11 @@ import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   getGenreTreeColor,
   WHEEL_CHIP_HEIGHT,
-  WHEEL_CHIP_HEIGHT_SELECTED,
   WHEEL_CHIP_MAX_WIDTH,
   WHEEL_CHIP_MIN_WIDTH,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
-  WHEEL_TOP_INSET,
   WHEEL_VISIBLE_ARC_HEIGHT,
 } from "./constants";
 
@@ -81,9 +79,7 @@ export function GenreTreeWheel({
         {
           "--gtv-wheel-radius": `${WHEEL_RADIUS}px`,
           "--gtv-wheel-visible-arc-height": `${WHEEL_VISIBLE_ARC_HEIGHT}px`,
-          "--gtv-wheel-top-inset": `${WHEEL_TOP_INSET}px`,
           "--gtv-wheel-chip-height": `${WHEEL_CHIP_HEIGHT}px`,
-          "--gtv-wheel-chip-height-selected": `${WHEEL_CHIP_HEIGHT_SELECTED}px`,
           "--gtv-wheel-chip-min-width": `${WHEEL_CHIP_MIN_WIDTH}px`,
           "--gtv-wheel-chip-max-width": `${WHEEL_CHIP_MAX_WIDTH}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
@@ -117,6 +113,9 @@ export function GenreTreeWheel({
           {groups.map((group, index) => {
             const angle = getChipAngle(index);
             const selected = group.root.id === effectiveRootId;
+            // The selected root is already represented by its own root node atop the tree above —
+            // rendering a chip for it here too would show that same root twice.
+            if (selected) return null;
             return (
               <div
                 key={group.root.id}
@@ -125,8 +124,7 @@ export function GenreTreeWheel({
               >
                 <button
                   type="button"
-                  className={"gtv-wheel-chip" + (selected ? " gtv-wheel-chip--selected" : "")}
-                  aria-pressed={selected}
+                  className="gtv-wheel-chip"
                   style={{ "--gtv-chip-color": getGenreTreeColor(group.root.id) } as React.CSSProperties}
                   onClick={() => handleChipClick(group.root.id, angle)}
                 >
