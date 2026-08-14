@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTree } from "./GenreTree";
 import { groupNodesByRoot } from "./root-grouping";
 import { computeRotationForSelection, getChipAngle } from "./wheel-geometry";
+import { usePanZoom } from "./use-pan-zoom";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
@@ -46,6 +48,10 @@ export function GenreTreeWheel({
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const [selectedRootId, setSelectedRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   const [rotationDeg, setRotationDeg] = useState(0);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
+  // wheel to the same point — so panning/zooming moves them together with no JS sync required.
+  const panZoom = usePanZoom(viewportRef);
 
   // Falls back to the first root without writing state back when the explicitly selected root
   // disappears from `nodes` — avoids a setState-in-effect cascading render for derived state.
@@ -67,11 +73,10 @@ export function GenreTreeWheel({
   const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
   // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
-  // centered on the circle like every other chip, but every real tree node's rect is top-anchored
-  // at its own d.y instead. Left alone, that mismatch makes the chip sit half its own height too
-  // high, eating into the gap above it — reserving that half-height below the tree area pushes the
-  // tree's own bottom edge up to compensate, so the root->depth1 gap reads the same as any other
-  // consecutive-depth gap.
+  // centered on the circle like every other chip, but the tree's root lands with its bottom edge
+  // exactly at that same anchor point (see .gtv-wheel-tree-anchor). Left alone, that mismatch makes
+  // the chip's top half overlap the tree's bottom edge — offsetting the anchor down by the chip's
+  // own half-height clears it, so the root->depth1 gap reads the same as any other consecutive-depth gap.
   const rootChipHalfHeight = selectedGroup ? calculateNodeDimensions(selectedGroup.root.itemCount).HEIGHT / 2 : 0;
 
   const handleChipClick = (rootId: string, angle: number) => {
@@ -79,17 +84,9 @@ export function GenreTreeWheel({
     setRotationDeg((current) => computeRotationForSelection(current, angle));
   };
 
-  // A newly selected root's tree can be taller than the visible tree area; overflow:auto
-  // starts scrolled to the top, which would show its topmost ancestor instead of the root
-  // anchored at the wheel. Re-anchor to the bottom every time the selection changes.
-  const treeAreaRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const treeArea = treeAreaRef.current;
-    if (treeArea) treeArea.scrollTop = treeArea.scrollHeight;
-  }, [effectiveRootId]);
-
   return (
     <div
+      ref={viewportRef}
       className={["gtv-wheel-container", className].filter(Boolean).join(" ")}
       style={
         {
@@ -99,65 +96,107 @@ export function GenreTreeWheel({
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
       }
+      onPointerDown={panZoom.handlePointerDown}
     >
-      <div className="gtv-wheel-tree-area" ref={treeAreaRef} style={{ paddingBottom: rootChipHalfHeight }}>
-        {selectedGroup && (
-          <GenreTree
-            key={selectedGroup.root.id}
-            className="gtv-wheel-tree"
-            nodes={selectedGroup.nodes}
-            orientation="vertical"
-            hideRoot
-            rootColor={getGenreTreeColor(selectedGroup.root.id)}
-            playingNodeId={playingNodeId}
-            playState={playState}
-            reparentingNodeId={reparentingNodeId}
-            onPlayPause={onPlayPause}
-            onAddChild={onAddChild}
-            onRenameRequest={onRenameRequest}
-            onDeleteRequest={onDeleteRequest}
-            onReparentRequest={onReparentRequest}
-            onReparent={onReparent}
-            onUploadFiles={onUploadFiles}
-          />
-        )}
+      {/* height: 100% (not just width) so this is the containing block .gtv-wheel-stage's own
+          `bottom: var(--gtv-wheel-viewport-height)` measures against — otherwise, with only an
+          absolutely-positioned child, this wrapper's height collapses to 0 and the stage's anchor
+          point would land at the container's top instead of its bottom. The transform is purely
+          visual and doesn't affect this box-model sizing. */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          transform: panZoom.transform,
+          transformOrigin: "0 0",
+        }}
+      >
+        <div
+          className="gtv-wheel-stage"
+          style={{ "--gtv-wheel-chip-half-height": `${rootChipHalfHeight}px` } as React.CSSProperties}
+        >
+          {selectedGroup && (
+            <div className="gtv-wheel-tree-anchor">
+              <GenreTree
+                key={selectedGroup.root.id}
+                nodes={selectedGroup.nodes}
+                orientation="vertical"
+                hideRoot
+                interactive={false}
+                rootColor={getGenreTreeColor(selectedGroup.root.id)}
+                playingNodeId={playingNodeId}
+                playState={playState}
+                reparentingNodeId={reparentingNodeId}
+                onPlayPause={onPlayPause}
+                onAddChild={onAddChild}
+                onRenameRequest={onRenameRequest}
+                onDeleteRequest={onDeleteRequest}
+                onReparentRequest={onReparentRequest}
+                onReparent={onReparent}
+                onUploadFiles={onUploadFiles}
+              />
+            </div>
+          )}
+
+          <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
+            {groups.map((group, index) => {
+              const angle = getChipAngle(index, groups.length);
+              const selected = group.root.id === effectiveRootId;
+              const dimensions = calculateNodeDimensions(group.root.itemCount);
+              const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";
+              return (
+                <div
+                  key={group.root.id}
+                  className="gtv-wheel-slot"
+                  style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
+                >
+                  <button
+                    type="button"
+                    className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
+                    style={
+                      {
+                        width: dimensions.WIDTH,
+                        height: dimensions.HEIGHT,
+                        "--gtv-chip-color": getGenreTreeColor(group.root.id),
+                      } as React.CSSProperties
+                    }
+                    onClick={() => handleChipClick(group.root.id, angle)}
+                  >
+                    {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
+                    <span className="gtv-node-label gtv-node-label--root">
+                      {group.root.name}
+                      {itemCountText}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="gtv-wheel-viewport">
-        <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
-          {groups.map((group, index) => {
-            const angle = getChipAngle(index, groups.length);
-            const selected = group.root.id === effectiveRootId;
-            const dimensions = calculateNodeDimensions(group.root.itemCount);
-            const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";
-            return (
-              <div
-                key={group.root.id}
-                className="gtv-wheel-slot"
-                style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
-              >
-                <button
-                  type="button"
-                  className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
-                  style={
-                    {
-                      width: dimensions.WIDTH,
-                      height: dimensions.HEIGHT,
-                      "--gtv-chip-color": getGenreTreeColor(group.root.id),
-                    } as React.CSSProperties
-                  }
-                  onClick={() => handleChipClick(group.root.id, angle)}
-                >
-                  {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                  <span className="gtv-node-label gtv-node-label--root">
-                    {group.root.name}
-                    {itemCountText}
-                  </span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      <div className="gtv-zoom-controls">
+        <button
+          type="button"
+          className={["gtv-zoom-btn", !panZoom.canZoomIn && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          disabled={!panZoom.canZoomIn}
+          onClick={panZoom.zoomIn}
+          aria-label="Zoom in"
+        >
+          <MdZoomIn className="gtv-icon" size={18} />
+        </button>
+        <button
+          type="button"
+          className={["gtv-zoom-btn", !panZoom.canZoomOut && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          disabled={!panZoom.canZoomOut}
+          onClick={panZoom.zoomOut}
+          aria-label="Zoom out"
+        >
+          <MdZoomOut className="gtv-icon" size={18} />
+        </button>
       </div>
     </div>
   );

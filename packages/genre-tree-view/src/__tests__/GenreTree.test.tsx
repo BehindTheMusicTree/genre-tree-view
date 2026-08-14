@@ -161,4 +161,145 @@ describe("GenreTree", () => {
       expect(container.querySelector("#select-as-new-parent-group-root")).toBeFalsy();
     });
   });
+
+  describe("zoom and pan", () => {
+    const getTransformDiv = (container: HTMLElement) =>
+      (container.querySelector("svg") as SVGSVGElement).parentElement as HTMLElement;
+
+    const getScale = (div: HTMLElement) => {
+      const match = div.style.transform.match(/scale\(([^)]+)\)/);
+      return match ? Number(match[1]) : NaN;
+    };
+
+    it("ctrl+wheel scales the shared transform, anchored on the cursor", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const wrapper = container.firstChild as HTMLElement;
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
+
+      fireEvent.wheel(wrapper, { ctrlKey: true, deltaY: -100, clientX: 50, clientY: 50 });
+
+      expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+    });
+
+    it("ignores plain wheel scroll (no ctrlKey) and leaves the svg size unchanged", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const wrapper = container.firstChild as HTMLElement;
+      const svg = container.querySelector("svg") as SVGSVGElement;
+      const baseWidth = svg.getAttribute("width");
+
+      fireEvent.wheel(wrapper, { ctrlKey: false, deltaY: -100 });
+
+      expect(svg.getAttribute("width")).toBe(baseWidth);
+    });
+
+    it("does not rescale when a zero delta resolves to the same clamped scale", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const wrapper = container.firstChild as HTMLElement;
+      const svg = container.querySelector("svg") as SVGSVGElement;
+      const baseWidth = svg.getAttribute("width");
+
+      fireEvent.wheel(wrapper, { ctrlKey: true, deltaY: 0 });
+
+      expect(svg.getAttribute("width")).toBe(baseWidth);
+    });
+
+    it("drag-panning from empty background moves the shared transform", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const svg = container.querySelector("svg") as SVGSVGElement;
+      const transformDiv = getTransformDiv(container);
+
+      fireEvent.pointerDown(svg, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+      fireEvent.pointerUp(window);
+
+      expect(transformDiv.style.transform).toContain("translate(-20px, -30px)");
+    });
+
+    it("does not start a pan drag from a pointerdown on a node", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const rootGroup = container.querySelector("#group-root") as SVGGElement;
+      const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+      fireEvent.pointerDown(rootGroup, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+      fireEvent.pointerUp(window);
+
+      expect(scrollBySpy).not.toHaveBeenCalled();
+
+      scrollBySpy.mockRestore();
+    });
+
+    it("ignores a non-primary-button pointerdown", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const svg = container.querySelector("svg") as SVGSVGElement;
+      const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+      fireEvent.pointerDown(svg, { button: 2, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+      fireEvent.pointerUp(window);
+
+      expect(scrollBySpy).not.toHaveBeenCalled();
+
+      scrollBySpy.mockRestore();
+    });
+
+    it("zoom-in button scales the shared transform up, anchored on the viewport center", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
+
+      fireEvent.click(container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement);
+
+      expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+    });
+
+    it("zoom-out button scales the shared transform down", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
+
+      fireEvent.click(container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement);
+
+      expect(getScale(transformDiv)).toBeLessThan(baseScale);
+    });
+
+    it("disables the zoom-in button once the max scale is reached", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const zoomIn = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
+      const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+      for (let i = 0; i < 20; i++) fireEvent.click(zoomIn);
+
+      expect(zoomIn.disabled).toBe(true);
+
+      scrollBySpy.mockRestore();
+    });
+
+    it("disables the zoom-out button once the min scale is reached", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const zoomOut = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
+      const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+      for (let i = 0; i < 20; i++) fireEvent.click(zoomOut);
+
+      expect(zoomOut.disabled).toBe(true);
+
+      scrollBySpy.mockRestore();
+    });
+
+    it("does not start a pan drag from a pointerdown on the zoom controls", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const zoomControls = container.querySelector(".gtv-zoom-controls") as HTMLElement;
+      const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+      fireEvent.pointerDown(zoomControls, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+      fireEvent.pointerUp(window);
+
+      expect(scrollBySpy).not.toHaveBeenCalled();
+
+      scrollBySpy.mockRestore();
+    });
+  });
 });

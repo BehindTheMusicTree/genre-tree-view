@@ -35,4 +35,9 @@ export interface GenreTreeProps {
   /** Fired when the user picks a target node while `reparentingNodeId` is set. */
   onReparent?: (nodeId: string, newParentId: string) => void | Promise<void>;
   onUploadFiles?: (nodeId: string, files: File[]) => void;
+  /** When true (the default), GenreTree owns its own pan/zoom viewport, zoom buttons, and
+   * wheel/drag listeners. Set to false to render just the bare SVG at its natural size with none
+   * of that — used by GenreTreeWheel, which applies one shared pan/zoom transform to the tree and
+   * its wheel together instead of giving the tree its own independent one. */
+  interactive?: boolean;
 }
