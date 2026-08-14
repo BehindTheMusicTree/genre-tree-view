@@ -141,5 +141,23 @@ export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimen
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 
+// Suggested height for the fixed-height ancestor GenreTreeWheel requires (see its own doc
+// comment): enough room for a typically-deep tree above the wheel strip. Not derived from
+// WHEEL_VIEWPORT_HEIGHT/WHEEL_RADIUS — those size the wheel-of-chips only, not the
+// variable-depth tree growing above it.
+export const WHEEL_DEFAULT_FRAME_HEIGHT = 600;
+
 export const WHEEL_ROTATION_TRANSITION_MS = 500;
 export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+// Zoom/pan tokens (see zoom-pan.ts). Bounds keep the tree from shrinking past legibility or
+// growing so large that a single wheel tick jumps an unreasonable amount.
+export const ZOOM_MIN_SCALE = 0.25;
+export const ZOOM_MAX_SCALE = 3;
+// Exponent multiplier applied to a wheel event's deltaY — small because deltaY is typically
+// tens to hundreds of pixels per tick, and exp() amplifies fast.
+export const ZOOM_WHEEL_SCALE_SPEED = 0.0015;
+// Multiplicative step applied per click of the zoom in/out buttons — a fallback control for
+// ctrl+scroll/pinch, which some trackpad/OS/browser combinations never translate into a
+// ctrlKey wheel event at all.
+export const ZOOM_BUTTON_SCALE_STEP = 1.2;

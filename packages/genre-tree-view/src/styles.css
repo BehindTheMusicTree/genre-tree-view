@@ -193,6 +193,56 @@ g.node:hover {
   background-color: #e4e4e7;
 }
 
+/* Zoom in/out buttons — a fallback for ctrl+scroll/pinch, which some trackpad/OS/browser
+   combinations never translate into a ctrlKey wheel event at all. Positioned absolutely against
+   GenreTree's own viewport (the pan/zoom transform lives on a separate inner element, so this
+   stays fixed in the corner regardless of pan/zoom state). */
+.gtv-zoom-controls {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: fit-content;
+  padding: 3px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
+}
+
+.gtv-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #52525b;
+  cursor: pointer;
+}
+
+.gtv-zoom-btn:hover {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+
+.gtv-zoom-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gtv-zoom-btn--disabled:hover {
+  background-color: transparent;
+  color: #52525b;
+}
+
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
    container, its full circle always on screen. Only the selected root's subtree is mounted,
    growing upward from the wheel's top-center anchor. */
@@ -201,47 +251,42 @@ g.node:hover {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  cursor: grab;
 }
 
-.gtv-wheel-tree-area {
+/* The single shared pan/zoom transform (see use-pan-zoom.ts) is applied here, to one "stage"
+   anchored at a fixed point relative to the container: its own box has zero height, positioned
+   `--gtv-wheel-viewport-height` above the container's bottom edge — everything below is placed
+   relative to that one point via percentage-based self-transforms, so the tree and the wheel stay
+   attached to each other and to the cursor/buttons under any pan or zoom with no JS sync at all. */
+.gtv-wheel-stage {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
   bottom: var(--gtv-wheel-viewport-height, 550px);
-  display: flex;
-  flex-direction: column;
-  /* flex-end here (paired with overflow: auto) would hit the classic "unsafe alignment"
-     gap: once the tree is taller than this box, end-aligned overflow is clipped off the
-     top with no way to scroll to it. margin-top: auto on the tree itself (below) gets the
-     same bottom-anchored placement while staying reachable when it overflows. */
-  justify-content: flex-start;
-  align-items: center;
-  overflow: auto;
+  height: 0;
+  transform-origin: 50% 0;
 }
 
-.gtv-wheel-tree {
-  margin-top: auto;
-}
-
-/* Height covers the wheel's full diameter plus a chip's own half-height, so the entire circle
-   of chips stays on screen — including at its lowest point, where a chip is centered on the
-   diameter's edge and its bottom half would otherwise stick out past this box. The selected
-   chip still sits exactly at sag 0 (the wheel's topmost point, see .gtv-wheel-slot below),
-   which is also this box's own top edge, so half its height renders above y:0. clip-path
-   (rather than overflow: hidden) lets that half render uncropped while still clipping
-   anything outside the box's left/right/bottom. */
-.gtv-wheel-viewport {
+/* Wraps the (non-interactive) tree. `bottom: 100%` puts this box's own bottom edge at the
+   stage's anchor point (regardless of the stage's own zero height); `left: 50%` +
+   `translateX(-50%)` centers it there horizontally. The tree's root sits at exactly
+   (svgWidth / 2, svgHeight) in vertical + hideRoot mode (see calculateSvgDimensions /
+   setupTreeLayout), i.e. this box's own bottom-center — so the root lands precisely on the
+   anchor with no measurement needed. The extra `--gtv-wheel-chip-half-height` offset (set from
+   JS, since it depends on the selected root's own chip size) clears the selected chip's top
+   half, which is centered ON the anchor point rather than sitting below it like the tree. */
+.gtv-wheel-tree-anchor {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--gtv-wheel-viewport-height, 550px);
-  clip-path: inset(-9999px 0 0 0);
-  pointer-events: none;
+  left: 50%;
+  bottom: calc(100% + var(--gtv-wheel-chip-half-height, 0px));
+  transform: translateX(-50%);
 }
 
-/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. */
+/* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Positioned so
+   its own top edge sits at the stage's anchor point, horizontally centered — the same point the
+   tree anchors its root to above. */
 .gtv-wheel {
   position: absolute;
   top: 0;

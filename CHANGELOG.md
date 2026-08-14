@@ -5,6 +5,34 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Zoom and pan on `GenreTree` and `GenreTreeWheel`: ctrl+scroll or trackpad pinch zooms in/out
+  anchored on the cursor, plain scroll pans, and click-and-drag over empty background pans.
+  Visible zoom in/out buttons are included as a fallback for ctrl+scroll/pinch, which some
+  trackpad/OS/browser combinations never translate into a `ctrlKey` wheel event at all.
+- `WHEEL_DEFAULT_FRAME_HEIGHT`, an exported constant giving consumers a sensible default height
+  for the fixed-height ancestor `GenreTreeWheel` requires.
+
+### Changed
+
+- Reworked `GenreTree` and `GenreTreeWheel` to share one pan/zoom viewport instead of
+  independently scrolled/scaled DOM subtrees kept in sync by JS (mirrored `scrollLeft`, a
+  `ResizeObserver`, and a shared `zoomScale`/`onZoomScaleChange` prop pair). Pan and zoom are now
+  a single CSS `transform: translate(...) scale(...)` applied to one stage element, so
+  `GenreTreeWheel`'s wheel of chips and its selected root's tree — anchored to the same point in
+  that stage — move and scale together with no separate synchronization step. `GenreTree` owns
+  this viewport itself by default; passing `interactive={false}` renders just the bare tree so an
+  ancestor (like `GenreTreeWheel`'s stage) can supply the transform instead.
+- `GenreTree` and `GenreTreeWheel` no longer auto-size to fit their content's height — both now
+  require an ancestor with an explicit height (they fill it via `width: 100%; height: 100%`) and
+  clip/pan/zoom within it, rather than growing the page to match the tree.
+
+### Removed
+
+- `zoomScale`/`onZoomScaleChange` props on `GenreTree` — zoom is now internal to the shared
+  pan/zoom viewport and isn't meant to be driven externally.
+
 ## [0.4.0] - 2026-08-13
 
 ### Added

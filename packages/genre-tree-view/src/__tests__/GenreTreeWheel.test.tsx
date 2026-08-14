@@ -21,6 +21,15 @@ function chipFor(container: HTMLElement, name: string) {
   ) as HTMLButtonElement;
 }
 
+function getTransformDiv(container: HTMLElement) {
+  return (container.querySelector(".gtv-wheel-stage") as HTMLElement).parentElement as HTMLElement;
+}
+
+function getScale(div: HTMLElement) {
+  const match = div.style.transform.match(/scale\(([^)]+)\)/);
+  return match ? Number(match[1]) : NaN;
+}
+
 describe("GenreTreeWheel", () => {
   it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
@@ -92,6 +101,54 @@ describe("GenreTreeWheel", () => {
     rerender(<GenreTreeWheel nodes={[]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(container.querySelectorAll("g.node").length).toBe(0);
+  });
+
+  it("ctrl+wheel scales the shared stage that anchors both the tree and the wheel", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+    const transformDiv = getTransformDiv(container);
+    const baseScale = getScale(transformDiv);
+
+    fireEvent.wheel(wheelContainer, { ctrlKey: true, deltaY: -100, clientX: 50, clientY: 50 });
+
+    expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+  });
+
+  it("drag-panning the container moves the shared stage that both the tree and wheel sit inside", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+    const transformDiv = getTransformDiv(container);
+    const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
+
+    fireEvent.pointerDown(wheelContainer, { button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+    fireEvent.pointerUp(window);
+
+    expect(transformDiv.style.transform).toContain("translate(-20px, -30px)");
+    expect(transformDiv.contains(stage.querySelector(".gtv-wheel-tree-anchor"))).toBe(true);
+    expect(transformDiv.contains(stage.querySelector(".gtv-wheel"))).toBe(true);
+  });
+
+  it("does not start a pan drag from a pointerdown on a wheel chip", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const transformDiv = getTransformDiv(container);
+    const chip = chipFor(container, "Electronic");
+
+    fireEvent.pointerDown(chip, { button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+    fireEvent.pointerUp(window);
+
+    expect(transformDiv.style.transform).toBe("translate(0px, 0px) scale(1)");
+  });
+
+  it("zoom-in button scales the shared stage, keeping the tree and wheel visually linked", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const transformDiv = getTransformDiv(container);
+    const baseScale = getScale(transformDiv);
+
+    fireEvent.click(container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement);
+
+    expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
   });
 
   it("still routes node actions from the visible subtree through to the forwarded callback", () => {
