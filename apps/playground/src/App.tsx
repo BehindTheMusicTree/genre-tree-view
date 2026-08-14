@@ -79,36 +79,19 @@ const STACKED_TREE_HEIGHT = 500;
 
 const TABS = [
   { id: "wheel", label: "Genre wheel" },
-  { id: "wheel-large", label: "Genre wheel (8 roots x 50 nodes)" },
   { id: "stacked", label: "Stacked trees" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-export function App() {
-  const [activeTab, setActiveTab] = useState<TabId>("wheel");
-  const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
-  const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
-  const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
-  const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
-  const [log, setLog] = useState<string[]>([]);
-
-  const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
-
-  const groups = groupNodesByRoot(nodes);
-
-  const sharedCallbacks = {
-    playingNodeId,
-    playState,
-    reparentingNodeId,
-    onPlayPause: (nodeId: string) => {
-      if (playingNodeId === nodeId) {
-        setPlayState((s) => (s === "playing" ? "paused" : "playing"));
-      } else {
-        setPlayingNodeId(nodeId);
-        setPlayState("playing");
-      }
-      appendLog(`play/pause ${nodeId}`);
-    },
+/** CRUD callbacks bound to one node list/setter pair — shared by both tabs that mount an
+ * interactive tree, so the same add/rename/delete/reparent/upload logic isn't duplicated per tab. */
+function createNodeCallbacks(
+  nodes: GenreTreeNode[],
+  setNodes: React.Dispatch<React.SetStateAction<GenreTreeNode[]>>,
+  appendLog: (message: string) => void,
+  setReparentingNodeId: React.Dispatch<React.SetStateAction<string | null>>,
+) {
+  return {
     onAddChild: (parentId: string) => {
       const id = `new-${nextId++}`;
       setNodes((prev) => [...prev, { id, parentId, name: "New sub-genre", itemCount: 0 }]);
@@ -152,6 +135,41 @@ export function App() {
       appendLog(`uploaded ${files.length} file(s) to ${nodeId}`);
     },
   };
+}
+
+export function App() {
+  const [activeTab, setActiveTab] = useState<TabId>("wheel");
+  const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
+  const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
+  const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
+  const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
+  const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
+  const [log, setLog] = useState<string[]>([]);
+
+  const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
+
+  const groups = groupNodesByRoot(nodes);
+
+  const playCallbacks = {
+    playingNodeId,
+    playState,
+    reparentingNodeId,
+    onPlayPause: (nodeId: string) => {
+      if (playingNodeId === nodeId) {
+        setPlayState((s) => (s === "playing" ? "paused" : "playing"));
+      } else {
+        setPlayingNodeId(nodeId);
+        setPlayState("playing");
+      }
+      appendLog(`play/pause ${nodeId}`);
+    },
+  };
+
+  const sharedCallbacks = { ...playCallbacks, ...createNodeCallbacks(nodes, setNodes, appendLog, setReparentingNodeId) };
+  const wheelCallbacks = {
+    ...playCallbacks,
+    ...createNodeCallbacks(wheelNodes, setWheelNodes, appendLog, setReparentingNodeId),
+  };
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
@@ -159,7 +177,7 @@ export function App() {
 
       <p>
         {reparentingNodeId
-          ? `Reparenting "${nodes.find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
+          ? `Reparenting "${[...nodes, ...wheelNodes].find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
           : "Hover a node to reveal an inline light icon row; the kebab holds the rest."}
       </p>
       {reparentingNodeId && (
@@ -188,20 +206,10 @@ export function App() {
       {activeTab === "wheel" && (
         <div style={{ height: WHEEL_DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7", marginBottom: 32 }}>
           <GenreTreeWheel
-            nodes={nodes}
-            {...sharedCallbacks}
+            nodes={wheelNodes}
+            {...wheelCallbacks}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
-          />
-        </div>
-      )}
-
-      {activeTab === "wheel-large" && (
-        <div style={{ height: WHEEL_DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7", marginBottom: 32 }}>
-          <GenreTreeWheel
-            nodes={largeWheelNodes}
-            centerLabel="TheMusicTree"
-            onRootSelect={(rootId) => appendLog(`large wheel selected root ${rootId}`)}
           />
         </div>
       )}
