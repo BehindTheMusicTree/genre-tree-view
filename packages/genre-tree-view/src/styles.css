@@ -284,6 +284,47 @@ g.node:hover {
   transform: translateX(-50%);
 }
 
+/* Static outline of the wheel's full circle — same box as .gtv-wheel (top:0, left:50%, one
+   radius tall/wide, shifted left by one radius) but a sibling rendered before it, so it sits
+   behind the chips and doesn't rotate with --gtv-wheel-rotation. Without this the "wheel" is
+   only implied by the chips' arrangement; this draws its boundary as a visible trait. */
+.gtv-wheel-circle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--gtv-wheel-radius, 260px) * 2);
+  height: calc(var(--gtv-wheel-radius, 260px) * 2);
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  border-radius: 50%;
+  border: 1px solid #e4e4e7;
+  pointer-events: none;
+}
+
+/* Optional decorative label centered on the wheel's pivot point — a sibling of .gtv-wheel
+   (not nested inside it) so it stays upright and fixed regardless of --gtv-wheel-rotation.
+   `top: var(--gtv-wheel-radius)` places it at the circle's actual center, since .gtv-wheel's
+   own top edge (0) sits at the stage's anchor point one radius above that. Width/font-size are
+   sized to fit typical short labels (e.g. a brand name) on one line without a mid-word wrap;
+   overflow-wrap still lets longer labels break as a fallback rather than overflow the circle. */
+.gtv-wheel-center-label {
+  position: absolute;
+  top: var(--gtv-wheel-radius, 260px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--gtv-wheel-radius, 260px) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: calc(var(--gtv-wheel-radius, 260px) * 0.15);
+  font-weight: 700;
+  line-height: 1.05;
+  color: #18181b;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 /* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Positioned so
    its own top edge sits at the stage's anchor point, horizontally centered — the same point the
    tree anchors its root to above. */

@@ -190,6 +190,7 @@ export function App() {
           <GenreTreeWheel
             nodes={nodes}
             {...sharedCallbacks}
+            centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
           />
         </div>

@@ -22,6 +22,9 @@ export interface GenreTreeWheelProps extends Omit<GenreTreeProps, "nodes" | "roo
   nodes: GenreTreeNode[];
   /** Fired whenever the selected root changes — on mount with the default selection, and on every chip click. */
   onRootSelect?: (rootId: string) => void;
+  /** Optional label centered on the wheel's pivot point, e.g. a brand name. Stays upright and
+   * fixed regardless of the wheel's rotation. */
+  centerLabel?: string;
 }
 
 /**
@@ -34,6 +37,7 @@ export function GenreTreeWheel({
   nodes,
   className,
   onRootSelect,
+  centerLabel,
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -140,6 +144,10 @@ export function GenreTreeWheel({
               />
             </div>
           )}
+
+          <div className="gtv-wheel-circle" />
+
+          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
 
           <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
             {groups.map((group, index) => {

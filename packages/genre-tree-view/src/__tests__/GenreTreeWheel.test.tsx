@@ -151,6 +151,19 @@ describe("GenreTreeWheel", () => {
     expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
   });
 
+  it("draws the wheel's circle outline", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
+  });
+
+  it("renders an optional center label, and omits it when not provided", () => {
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
+    expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();
+
+    rerender(<GenreTreeWheel nodes={NODES} centerLabel="TheMusicTree" />);
+    expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
+  });
+
   it("still routes node actions from the visible subtree through to the forwarded callback", () => {
     const onPlayPause = vi.fn();
     const { container } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
