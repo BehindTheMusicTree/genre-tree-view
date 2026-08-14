@@ -190,6 +190,7 @@ export function App() {
           <GenreTreeWheel
             nodes={nodes}
             {...sharedCallbacks}
+            centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
           />
         </div>
@@ -199,6 +200,7 @@ export function App() {
         <div style={{ height: WHEEL_DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7", marginBottom: 32 }}>
           <GenreTreeWheel
             nodes={largeWheelNodes}
+            centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`large wheel selected root ${rootId}`)}
           />
         </div>

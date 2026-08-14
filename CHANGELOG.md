@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `centerLabel` prop on `GenreTreeWheel` — an optional label (e.g. a brand name) centered on
+  the wheel's pivot point, staying upright and fixed regardless of the wheel's rotation.
+
 ## [0.5.0] - 2026-08-14
 
 ### Added
