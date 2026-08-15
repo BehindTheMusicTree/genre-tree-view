@@ -279,28 +279,59 @@ const LARGE_ROOTS: LargeRootDef[] = [
   },
 ];
 
-// Cycles through varying branching factors (0-5) so no node always has exactly one child —
-// some are dead ends, some fan out wide, mirroring DEEP_BRANCH_CHILD_COUNTS above.
-const LARGE_ROOT_CHILD_COUNTS = [3, 1, 5, 0, 2, 4];
+// One target depth per root (matching LARGE_ROOTS order below) so the demo shows a mix of
+// shallow and deep subtrees instead of every root maxing out at the same depth.
+const LARGE_ROOT_TARGET_DEPTHS = [5, 8, 3, 10, 4, 9, 6, 7];
 
-/** One root plus its real subgenres, assigned breadth-first so each node gets 0-5 children
- * (per LARGE_ROOT_CHILD_COUNTS) instead of a single long chain. */
+// Cycles through varying branch-off counts (further capped by each node's remaining capacity
+// out of 5 total children) so no node always branches the same amount.
+const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
+
+/** One root plus its real subgenres, built as a spine of LARGE_ROOT_TARGET_DEPTHS[rootIndex]
+ * nodes (fixing the max depth) with the remaining subgenres attached breadth-first onto any
+ * node below that depth, capping every node at 5 children total so branching stays varied
+ * without ever exceeding the depth target. */
 function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNode[] {
   const rootId = `large-root-${rootIndex}`;
   const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: root.name, itemCount: 0 }];
   const remaining = [...root.subgenres];
-  const parentQueue: string[] = [rootId];
-  let patternIndex = 0;
+  const targetDepth = Math.min(LARGE_ROOT_TARGET_DEPTHS[rootIndex % LARGE_ROOT_TARGET_DEPTHS.length], remaining.length);
 
-  while (remaining.length > 0 && parentQueue.length > 0) {
-    const parentId = parentQueue.shift()!;
-    const childCount = Math.min(LARGE_ROOT_CHILD_COUNTS[patternIndex++ % LARGE_ROOT_CHILD_COUNTS.length], remaining.length);
-    for (let i = 0; i < childCount; i++) {
+  const depthOf = new Map<string, number>([[rootId, 0]]);
+  const childCountOf = new Map<string, number>([[rootId, 0]]);
+  const queue: string[] = [rootId];
+
+  let spineTail = rootId;
+  for (let d = 0; d < targetDepth; d++) {
+    const name = remaining.shift()!;
+    const id = `${rootId}-${nodes.length}`;
+    nodes.push({ id, parentId: spineTail, name, itemCount: (nodes.length * 3) % 20 });
+    depthOf.set(id, d + 1);
+    childCountOf.set(id, 0);
+    childCountOf.set(spineTail, (childCountOf.get(spineTail) ?? 0) + 1);
+    if (d + 1 < targetDepth) queue.push(id);
+    spineTail = id;
+  }
+
+  let patternIndex = 0;
+  while (remaining.length > 0) {
+    const parentId = queue.shift()!;
+    const parentDepth = depthOf.get(parentId)!;
+    const capacity = 5 - childCountOf.get(parentId)!;
+    const count = Math.min(LARGE_ROOT_BRANCH_COUNTS[patternIndex++ % LARGE_ROOT_BRANCH_COUNTS.length], capacity, remaining.length);
+    for (let i = 0; i < count; i++) {
       const name = remaining.shift()!;
       const id = `${rootId}-${nodes.length}`;
+      const depth = parentDepth + 1;
       nodes.push({ id, parentId, name, itemCount: (nodes.length * 3) % 20 });
-      parentQueue.push(id);
+      depthOf.set(id, depth);
+      childCountOf.set(id, 0);
+      childCountOf.set(parentId, childCountOf.get(parentId)! + 1);
+      if (depth < targetDepth) queue.push(id);
     }
+    // A low pattern draw can leave capacity unused — requeue so this node gets another
+    // chance instead of permanently starving (which would silently drop leftover names).
+    if (capacity - count > 0 && parentDepth < targetDepth) queue.push(parentId);
   }
   return nodes;
 }
