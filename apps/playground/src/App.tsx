@@ -279,16 +279,29 @@ const LARGE_ROOTS: LargeRootDef[] = [
   },
 ];
 
-/** One root plus its real subgenres, branching every few nodes (chaining off the previous
- * subgenre, resetting to the root every 4th) so the tree gets a few levels deep instead of
- * dozens of siblings in a flat row. */
+// Cycles through varying branching factors (0-5) so no node always has exactly one child —
+// some are dead ends, some fan out wide, mirroring DEEP_BRANCH_CHILD_COUNTS above.
+const LARGE_ROOT_CHILD_COUNTS = [3, 1, 5, 0, 2, 4];
+
+/** One root plus its real subgenres, assigned breadth-first so each node gets 0-5 children
+ * (per LARGE_ROOT_CHILD_COUNTS) instead of a single long chain. */
 function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNode[] {
   const rootId = `large-root-${rootIndex}`;
   const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: root.name, itemCount: 0 }];
-  root.subgenres.forEach((name, i) => {
-    const parentId = i < 2 || i % 4 === 0 ? rootId : nodes[nodes.length - 1].id;
-    nodes.push({ id: `${rootId}-${i}`, parentId, name, itemCount: (i * 3) % 20 });
-  });
+  const remaining = [...root.subgenres];
+  const parentQueue: string[] = [rootId];
+  let patternIndex = 0;
+
+  while (remaining.length > 0 && parentQueue.length > 0) {
+    const parentId = parentQueue.shift()!;
+    const childCount = Math.min(LARGE_ROOT_CHILD_COUNTS[patternIndex++ % LARGE_ROOT_CHILD_COUNTS.length], remaining.length);
+    for (let i = 0; i < childCount; i++) {
+      const name = remaining.shift()!;
+      const id = `${rootId}-${nodes.length}`;
+      nodes.push({ id, parentId, name, itemCount: (nodes.length * 3) % 20 });
+      parentQueue.push(id);
+    }
+  }
   return nodes;
 }
 
