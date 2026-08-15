@@ -20,8 +20,11 @@ import {
   TEXT_MUTED_COLOR,
   PER_TREE_ACCENT_DOT,
   ACCENT_DOT_SIZE,
+  MAX_NODE_WIDTH,
+  MAX_NODE_HEIGHT,
   calculateNodeDimensions,
-  getMaxNodeDimensions,
+  calculateNodeFontSize,
+  getItemCountRange,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import { appendPaths } from "./d3-helper/d3-path-helper";
@@ -56,7 +59,10 @@ export function calculateSvgDimensions(
   hideRoot = false,
 ): SvgDimensions {
   const nodes = treeData.descendants();
-  const maxNodeDimensions = getMaxNodeDimensions(nodes.map((d) => d.data));
+  const itemCountRange = getItemCountRange(nodes.map((d) => d.data));
+  // The node with the highest itemCount in range always scales to exactly MAX_NODE_*
+  // (see calculateNodeDimensions), so the layout budget can use those constants directly.
+  const maxNodeDimensions = { WIDTH: MAX_NODE_WIDTH, HEIGHT: MAX_NODE_HEIGHT };
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
 
   if (orientation === "vertical") {
@@ -80,7 +86,7 @@ export function calculateSvgDimensions(
     // this convention), so it has to be centered on that same point, not on the bare `d.x`.
     // Skipping the `+ width / 2` here left the root's card/chip sitting half its own width left
     // of where its children's links actually converge.
-    const rootWidth = calculateNodeDimensions(treeData.data.itemCount).WIDTH;
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).WIDTH;
     const rootAnchorX = treeData.x! + rootWidth / 2;
 
     const leftmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
@@ -170,6 +176,8 @@ export function renderTree(
     throw new Error("SVG reference is null");
   }
 
+  const itemCountRange = getItemCountRange(treeData.descendants().map((d) => d.data));
+
   const svg = d3Lib
     .select<SVGSVGElement, unknown>(svgRef.current)
     .append("svg")
@@ -203,7 +211,7 @@ export function renderTree(
 
   addGrid(svg, svgWidth, svgHeight, true);
 
-  appendPaths(d3Lib, svg, treeData, orientation);
+  appendPaths(d3Lib, svg, treeData, itemCountRange, orientation);
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
 
@@ -221,7 +229,7 @@ export function renderTree(
     .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", function (d) {
-      const dimensions = calculateNodeDimensions(d.data.itemCount);
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
       const translateX = d.x! + dimensions.WIDTH / 2;
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
@@ -246,13 +254,16 @@ export function renderTree(
     .attr("class", "gtv-hover-hit-area")
     .attr(
       "width",
-      (d) => calculateNodeDimensions(d.data.itemCount).WIDTH + (isVertical ? 0 : ACTIONS_OVERLAY_WIDTH),
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH + (isVertical ? 0 : ACTIONS_OVERLAY_WIDTH),
     )
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT + (isVertical ? toolbarClearance : 0))
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
+    .attr(
+      "height",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT + (isVertical ? toolbarClearance : 0),
+    )
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
     .attr(
       "y",
-      (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2 - (isVertical ? toolbarClearance : 0),
+      (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2 - (isVertical ? toolbarClearance : 0),
     )
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
@@ -260,10 +271,10 @@ export function renderTree(
   nodes
     .append("rect")
     .attr("class", "gtv-node-rect")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
+    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
+    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .attr("rx", CORNER_RADIUS)
     .attr("ry", CORNER_RADIUS)
     .attr("fill", SURFACE_FILL)
@@ -274,7 +285,7 @@ export function renderTree(
   if (PER_TREE_ACCENT_DOT) {
     nodes
       .append("circle")
-      .attr("cx", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2 + 12)
+      .attr("cx", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2 + 12)
       .attr("cy", 0)
       .attr("r", ACCENT_DOT_SIZE)
       .attr("fill", rootColor);
@@ -282,15 +293,15 @@ export function renderTree(
 
   nodes
     .append("foreignObject")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount).HEIGHT / 2)
+    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
+    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .html((d) => {
       const rootClass = d.depth === 0 ? " gtv-node-label--root" : "";
-      const itemCountText = d.data.itemCount > 0 ? ` (${d.data.itemCount})` : "";
       const color = isForbidden(d) ? TEXT_MUTED_COLOR : TEXT_COLOR;
-      return `<div class="gtv-node-label${rootClass}" style="color:${color}">${d.data.name}${itemCountText}</div>`;
+      const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
+      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (event, d) {
       if (reparentingNodeId || isForbidden(d)) return;
@@ -317,6 +328,7 @@ export function renderTree(
           playingNodeId: callbacks.playingNodeId,
           playState: callbacks.playState,
         },
+        itemCountRange,
         orientation,
       );
     });
@@ -341,6 +353,7 @@ export function renderTree(
           d3Lib,
           group as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
           onReparentTargetSelect,
+          itemCountRange,
         );
       }
     });

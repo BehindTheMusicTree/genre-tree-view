@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { appendPaths } from "../d3-helper/d3-path-helper";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { createTreeLayout } from "../tree-renderer";
-import { CONNECTOR_COLOR, CONNECTOR_WIDTH } from "../constants";
+import { CONNECTOR_COLOR, CONNECTOR_WIDTH, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -27,7 +27,7 @@ describe("appendPaths", () => {
     const treeData = createTreeLayout(d3, root);
 
     const svg = createSvg();
-    appendPaths(d3, svg, treeData);
+    appendPaths(d3, svg, treeData, getItemCountRange(nodes));
 
     const paths = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     expect(paths.size()).toBe(2);
@@ -50,7 +50,7 @@ describe("appendPaths", () => {
     const treeData = createTreeLayout(d3, root, "vertical");
 
     const svg = createSvg();
-    appendPaths(d3, svg, treeData, "vertical");
+    appendPaths(d3, svg, treeData, getItemCountRange(nodes), "vertical");
 
     const paths = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     expect(paths.size()).toBe(2);

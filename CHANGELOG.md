@@ -10,6 +10,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `centerLabel` prop on `GenreTreeWheel` — an optional label (e.g. a brand name) centered on
   the wheel's pivot point, staying upright and fixed regardless of the wheel's rotation.
 
+### Changed
+
+- Node width, height, and label font size now scale proportionally to each node's item count,
+  relative to the min/max item count across the currently-rendered set, instead of a fixed size.
+  Layout slot constants (the tree's per-node spacing) are rebased on the new maximum node size so
+  large nodes no longer overlap their neighbors.
+
 ## [0.5.0] - 2026-08-14
 
 ### Added

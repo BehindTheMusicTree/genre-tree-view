@@ -9,6 +9,7 @@ import {
   type MenuActionItem,
   type NodeActionCallbacks,
 } from "../NodeHelper";
+import { getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -53,7 +54,7 @@ describe("addReparentTargetOverlay", () => {
     const { g } = createSvgGroup(node);
     const onSelect = vi.fn();
 
-    addReparentTargetOverlay(d3, g, onSelect);
+    addReparentTargetOverlay(d3, g, onSelect, getItemCountRange([node]));
 
     const foreignObject = g.select("foreignObject").node() as SVGForeignObjectElement;
     foreignObject.dispatchEvent(new MouseEvent("click", { bubbles: false }));
@@ -65,8 +66,8 @@ describe("addReparentTargetOverlay", () => {
     const { g } = createSvgGroup(node);
     const onSelect = vi.fn();
 
-    addReparentTargetOverlay(d3, g, onSelect);
-    addReparentTargetOverlay(d3, g, onSelect);
+    addReparentTargetOverlay(d3, g, onSelect, getItemCountRange([node]));
+    addReparentTargetOverlay(d3, g, onSelect, getItemCountRange([node]));
 
     expect(g.selectAll("#select-as-new-parent-group-n1").size()).toBe(1);
   });
@@ -75,7 +76,7 @@ describe("addReparentTargetOverlay", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 0 };
     const { g } = createSvgGroup(node);
 
-    const overlay = addReparentTargetOverlay(d3, g, vi.fn());
+    const overlay = addReparentTargetOverlay(d3, g, vi.fn(), getItemCountRange([node]));
     (overlay.node() as SVGGElement).dispatchEvent(new MouseEvent("mouseleave", { bubbles: false }));
 
     expect(g.select("#select-as-new-parent-group-n1").empty()).toBe(true);
@@ -180,8 +181,8 @@ describe("addToolbarActions", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
     const { g } = createSvgGroup(node);
 
-    addToolbarActions(d3, node, g, baseCallbacks());
-    addToolbarActions(d3, node, g, baseCallbacks());
+    addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
+    addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
 
     expect(g.selectAll("#toolbar-n1").size()).toBe(1);
   });
@@ -190,7 +191,7 @@ describe("addToolbarActions", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5, actionable: false };
     const { svgEl, g } = createSvgGroup(node);
 
-    addToolbarActions(d3, node, g, baseCallbacks());
+    addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
 
     expect(svgEl.querySelector('[data-menu-key="play"]')).toBeTruthy();
     expect(svgEl.querySelector('[data-menu-key="upload"]')).toBeFalsy();
@@ -202,7 +203,7 @@ describe("addToolbarActions", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
     const { svgEl, g } = createSvgGroup(node);
 
-    addToolbarActions(d3, node, g, baseCallbacks());
+    addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
 
     expect(svgEl.querySelector('[data-menu-key="upload"]')).toBeTruthy();
     expect(svgEl.querySelector('[data-menu-key="add"]')).toBeTruthy();
@@ -214,7 +215,7 @@ describe("addToolbarActions", () => {
     const { svgEl, g } = createSvgGroup(node);
     const onPlayPause = vi.fn();
 
-    addToolbarActions(d3, node, g, baseCallbacks({ onPlayPause }));
+    addToolbarActions(d3, node, g, baseCallbacks({ onPlayPause }), getItemCountRange([node]));
 
     const playButton = svgEl.querySelector('[data-menu-key="play"]') as HTMLButtonElement;
     expect(playButton.disabled).toBe(true);
@@ -227,7 +228,7 @@ describe("addToolbarActions", () => {
     const { svgEl, g } = createSvgGroup(node);
     const onPlayPause = vi.fn();
 
-    addToolbarActions(d3, node, g, baseCallbacks({ onPlayPause }));
+    addToolbarActions(d3, node, g, baseCallbacks({ onPlayPause }), getItemCountRange([node]));
 
     const playButton = svgEl.querySelector('[data-menu-key="play"]') as HTMLButtonElement;
     playButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -238,7 +239,7 @@ describe("addToolbarActions", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 3 };
     const { svgEl, g } = createSvgGroup(node);
 
-    addToolbarActions(d3, node, g, baseCallbacks({ playingNodeId: "n1", playState: "playing" }));
+    addToolbarActions(d3, node, g, baseCallbacks({ playingNodeId: "n1", playState: "playing" }), getItemCountRange([node]));
 
     const playButton = svgEl.querySelector('[data-menu-key="play"]') as HTMLButtonElement;
     expect(playButton.title).toBe("Pause");
@@ -248,7 +249,7 @@ describe("addToolbarActions", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 3 };
     const { svgEl, g } = createSvgGroup(node);
 
-    addToolbarActions(d3, node, g, baseCallbacks({ playingNodeId: "n1", playState: "loading" }));
+    addToolbarActions(d3, node, g, baseCallbacks({ playingNodeId: "n1", playState: "loading" }), getItemCountRange([node]));
 
     const playButton = svgEl.querySelector('[data-menu-key="play"]') as HTMLButtonElement;
     expect(playButton.title).toBe("Loading...");
@@ -266,6 +267,7 @@ describe("addToolbarActions", () => {
       node,
       g,
       baseCallbacks({ fileInputRef: { current: fileInput }, selectingFileNodeIdRef }),
+      getItemCountRange([node]),
     );
 
     const uploadButton = svgEl.querySelector('[data-menu-key="upload"]') as HTMLButtonElement;
@@ -280,7 +282,7 @@ describe("addToolbarActions", () => {
     const { svgEl, g } = createSvgGroup(node);
     const onAddChild = vi.fn();
 
-    addToolbarActions(d3, node, g, baseCallbacks({ onAddChild }));
+    addToolbarActions(d3, node, g, baseCallbacks({ onAddChild }), getItemCountRange([node]));
 
     const addButton = svgEl.querySelector('[data-menu-key="add"]') as HTMLButtonElement;
     addButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -299,6 +301,7 @@ describe("addToolbarActions", () => {
       node,
       g,
       baseCallbacks({ onRenameRequest, onDeleteRequest, onReparentRequest }),
+      getItemCountRange([node]),
     );
 
     const kebab = svgEl.querySelector('[data-menu-key="__more"]') as HTMLButtonElement;
