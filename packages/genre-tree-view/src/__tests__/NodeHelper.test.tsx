@@ -46,6 +46,32 @@ describe("buildTreeHierarchyStructure", () => {
     expect(root.data.id).toBe("root");
     expect(root.children?.[0].data.id).toBe("child");
   });
+
+  it("rolls up itemCount bottom-up so a node's count is at least the sum of its children's", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root", parentId: null, name: "Root", itemCount: 1 },
+      { id: "child", parentId: "root", name: "Child", itemCount: 2 },
+      { id: "grandchild-a", parentId: "child", name: "Grandchild A", itemCount: 3 },
+      { id: "grandchild-b", parentId: "child", name: "Grandchild B", itemCount: 4 },
+    ];
+    const root = buildTreeHierarchyStructure(d3, nodes);
+    const byId = new Map(root.descendants().map((d) => [d.data.id, d.data.itemCount]));
+
+    expect(byId.get("grandchild-a")).toBe(3);
+    expect(byId.get("grandchild-b")).toBe(4);
+    expect(byId.get("child")).toBe(2 + 3 + 4);
+    expect(byId.get("root")).toBe(1 + 2 + 3 + 4);
+  });
+
+  it("does not mutate the original nodes array/objects passed in", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root", parentId: null, name: "Root", itemCount: 1 },
+      { id: "child", parentId: "root", name: "Child", itemCount: 2 },
+    ];
+    buildTreeHierarchyStructure(d3, nodes);
+    expect(nodes[0].itemCount).toBe(1);
+    expect(nodes[1].itemCount).toBe(2);
+  });
 });
 
 describe("addReparentTargetOverlay", () => {

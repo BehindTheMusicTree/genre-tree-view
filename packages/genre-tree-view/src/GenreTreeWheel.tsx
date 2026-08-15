@@ -52,6 +52,17 @@ export function GenreTreeWheel({
   onUploadFiles,
 }: GenreTreeWheelProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
+
+  // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
+  // against) reflects the full subtree total instead, mirroring the tree's own rollup in
+  // buildTreeHierarchyStructure. `group.nodes` already holds the root plus every descendant.
+  const aggregatedRootItemCountById = useMemo(
+    () =>
+      new Map(
+        groups.map((group) => [group.root.id, group.nodes.reduce((sum, node) => sum + node.itemCount, 0)]),
+      ),
+    [groups],
+  );
   const [selectedRootId, setSelectedRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   const [rotationDeg, setRotationDeg] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -81,7 +92,11 @@ export function GenreTreeWheel({
   // Root chip size is proportional to itemCount relative to the other roots on the wheel, not
   // an absolute scale — the root with the fewest items always renders at MIN size and the one
   // with the most always at MAX, regardless of the actual counts involved.
-  const rootItemCountRange = useMemo(() => getItemCountRange(groups.map((group) => group.root)), [groups]);
+  const rootItemCountRange = useMemo(
+    () =>
+      getItemCountRange(groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id)! }))),
+    [groups, aggregatedRootItemCountById],
+  );
 
   // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
   // centered on the circle like every other chip, but the tree's root lands with its bottom edge
@@ -89,7 +104,7 @@ export function GenreTreeWheel({
   // the chip's top half overlap the tree's bottom edge — offsetting the anchor down by the chip's
   // own half-height clears it, so the root->depth1 gap reads the same as any other consecutive-depth gap.
   const rootChipHalfHeight = selectedGroup
-    ? calculateNodeDimensions(selectedGroup.root.itemCount, rootItemCountRange).HEIGHT / 2
+    ? calculateNodeDimensions(aggregatedRootItemCountById.get(selectedGroup.root.id)!, rootItemCountRange).HEIGHT / 2
     : 0;
 
   const handleChipClick = (rootId: string, angle: number) => {
@@ -162,8 +177,9 @@ export function GenreTreeWheel({
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
-              const dimensions = calculateNodeDimensions(group.root.itemCount, rootItemCountRange);
-              const fontSize = calculateNodeFontSize(group.root.itemCount, rootItemCountRange);
+              const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
+              const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
+              const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
               return (
                 <div
                   key={group.root.id}

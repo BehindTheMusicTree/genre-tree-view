@@ -175,4 +175,21 @@ describe("GenreTreeWheel", () => {
 
     expect(onPlayPause).toHaveBeenCalledWith("a-child");
   });
+
+  it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
+    // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
+    // chip should size (and scale the shared range) off that aggregated total, not read as 0.
+    const nodesWithZeroRoot: GenreTreeNode[] = [
+      { id: "root-empty", parentId: null, name: "Empty", itemCount: 0 },
+      { id: "empty-child", parentId: "root-empty", name: "Filled", itemCount: 9 },
+      { id: "root-flat", parentId: null, name: "Flat", itemCount: 0 },
+    ];
+    const { container } = render(<GenreTreeWheel nodes={nodesWithZeroRoot} />);
+
+    const emptyChip = chipFor(container, "Empty");
+    const flatChip = chipFor(container, "Flat");
+
+    expect(emptyChip.style.width).not.toBe(flatChip.style.width);
+    expect(parseFloat(emptyChip.style.width)).toBeGreaterThan(parseFloat(flatChip.style.width));
+  });
 });
