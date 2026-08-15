@@ -28,6 +28,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   effective count is always at least the sum of its children's. Previously a genre with items only
   on its leaves could render smaller than a sibling leaf, or a wheel root chip could read as empty
   despite a full subtree beneath it.
+- `GenreTreeWheel` now grows its wheel radius to fit the largest possible chip when there are
+  enough roots that a fixed radius would crowd their anchor points together — previously, with
+  many roots and/or item counts large enough to push chips toward `MAX_NODE_WIDTH`, neighboring
+  chips (and their labels) could overlap.
 
 ## [0.5.0] - 2026-08-14
 
