@@ -32,12 +32,30 @@ export interface NodeActionCallbacks {
   playState?: GenreTreePlayState;
 }
 
-/** Builds the hierarchical tree structure from a flat node list. */
+/** Builds the hierarchical tree structure from a flat node list. A node's itemCount must be
+ * at least the sum of its children's — some inputs report only a node's own count, leaving
+ * its ancestors under-reporting the subtree's true total — so counts are rolled up bottom-up
+ * before the returned hierarchy is built. Rolled up onto clones, not the input nodes/array
+ * themselves, since callers (e.g. a useMemo depending on `nodes`) own that data and re-run
+ * this on every render — mutating it in place would compound the rollup across renders. */
 export function buildTreeHierarchyStructure(d3Lib: typeof import("d3"), nodes: GenreTreeNode[]) {
-  return d3Lib
+  const rawRoot = d3Lib
     .stratify<GenreTreeNode>()
     .id((d) => d.id)
     .parentId((d) => d.parentId)(nodes);
+
+  rawRoot.sum((d) => d.itemCount);
+  const aggregatedItemCountById = new Map(rawRoot.descendants().map((d) => [d.data.id, d.value ?? 0]));
+
+  const aggregatedNodes = nodes.map((node) => ({
+    ...node,
+    itemCount: aggregatedItemCountById.get(node.id) ?? node.itemCount,
+  }));
+
+  return d3Lib
+    .stratify<GenreTreeNode>()
+    .id((d) => d.id)
+    .parentId((d) => d.parentId)(aggregatedNodes);
 }
 
 /** Adds the "select as new parent" overlay to a node while a reparent is in progress. */

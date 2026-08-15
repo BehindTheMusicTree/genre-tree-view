@@ -17,6 +17,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Layout slot constants (the tree's per-node spacing) are rebased on the new maximum node size so
   large nodes no longer overlap their neighbors.
 
+### Fixed
+
+- A node's item count (and everything sized from it — box dimensions, label font size, wheel
+  chip size) now rolls up its descendants' counts instead of reporting only its own, so a node's
+  effective count is always at least the sum of its children's. Previously a genre with items only
+  on its leaves could render smaller than a sibling leaf, or a wheel root chip could read as empty
+  despite a full subtree beneath it.
+
 ## [0.5.0] - 2026-08-14
 
 ### Added
