@@ -45,11 +45,11 @@ export function buildTreeHierarchyStructure(d3Lib: typeof import("d3"), nodes: G
     .parentId((d) => d.parentId)(nodes);
 
   rawRoot.sum((d) => d.itemCount);
-  const aggregatedItemCountById = new Map(rawRoot.descendants().map((d) => [d.data.id, d.value ?? 0]));
+  const aggregatedItemCountById = new Map(rawRoot.descendants().map((d) => [d.data.id, d.value!]));
 
   const aggregatedNodes = nodes.map((node) => ({
     ...node,
-    itemCount: aggregatedItemCountById.get(node.id) ?? node.itemCount,
+    itemCount: aggregatedItemCountById.get(node.id)!,
   }));
 
   return d3Lib

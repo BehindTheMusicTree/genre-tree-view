@@ -94,9 +94,7 @@ export function GenreTreeWheel({
   // with the most always at MAX, regardless of the actual counts involved.
   const rootItemCountRange = useMemo(
     () =>
-      getItemCountRange(
-        groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id) ?? group.root.itemCount })),
-      ),
+      getItemCountRange(groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id)! }))),
     [groups, aggregatedRootItemCountById],
   );
 
@@ -106,10 +104,7 @@ export function GenreTreeWheel({
   // the chip's top half overlap the tree's bottom edge — offsetting the anchor down by the chip's
   // own half-height clears it, so the root->depth1 gap reads the same as any other consecutive-depth gap.
   const rootChipHalfHeight = selectedGroup
-    ? calculateNodeDimensions(
-        aggregatedRootItemCountById.get(selectedGroup.root.id) ?? selectedGroup.root.itemCount,
-        rootItemCountRange,
-      ).HEIGHT / 2
+    ? calculateNodeDimensions(aggregatedRootItemCountById.get(selectedGroup.root.id)!, rootItemCountRange).HEIGHT / 2
     : 0;
 
   const handleChipClick = (rootId: string, angle: number) => {
@@ -182,7 +177,7 @@ export function GenreTreeWheel({
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
-              const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id) ?? group.root.itemCount;
+              const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
               const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
               return (
