@@ -9,14 +9,24 @@ import {
 } from "@behindthemusictree/genre-tree-view";
 import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
 
+const MIN_DEMO_ITEM_COUNT = 50;
+const MAX_DEMO_ITEM_COUNT = 10000;
+
+/** Deterministic pseudo-realistic track count for demo nodes, spread across
+ * [MIN_DEMO_ITEM_COUNT, MAX_DEMO_ITEM_COUNT] via a large prime multiplier so nearby seeds
+ * don't cluster together. */
+function demoItemCount(seed: number): number {
+  return MIN_DEMO_ITEM_COUNT + ((seed * 9973) % (MAX_DEMO_ITEM_COUNT - MIN_DEMO_ITEM_COUNT + 1));
+}
+
 const initialNodes: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 0, actionable: false },
-  { id: "a-punk", parentId: "root-a", name: "Punk", itemCount: 5 },
-  { id: "a-post-punk", parentId: "a-punk", name: "Post-Punk", itemCount: 2 },
+  { id: "a-punk", parentId: "root-a", name: "Punk", itemCount: 340 },
+  { id: "a-post-punk", parentId: "a-punk", name: "Post-Punk", itemCount: 95 },
   { id: "a-metal", parentId: "root-a", name: "Metal", itemCount: 0 },
 
   { id: "root-b", parentId: null, name: "Electronic", itemCount: 0, actionable: false },
-  { id: "b-techno", parentId: "root-b", name: "Techno", itemCount: 8 },
+  { id: "b-techno", parentId: "root-b", name: "Techno", itemCount: 1250 },
   { id: "b-house", parentId: "root-b", name: "House", itemCount: 0 },
 ];
 
@@ -42,7 +52,7 @@ function buildDeepBranch(
       id,
       parentId,
       name: `${namePrefix} ${i}`,
-      itemCount: (depth * 3 + i) % 20,
+      itemCount: demoItemCount(depth * 7 + i),
     });
     nodes.push(...buildDeepBranch(id, id, depth + 1, maxDepth, countIndex));
   }
@@ -305,7 +315,7 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
   for (let d = 0; d < targetDepth; d++) {
     const name = remaining.shift()!;
     const id = `${rootId}-${nodes.length}`;
-    nodes.push({ id, parentId: spineTail, name, itemCount: (nodes.length * 3) % 20 });
+    nodes.push({ id, parentId: spineTail, name, itemCount: demoItemCount(nodes.length) });
     depthOf.set(id, d + 1);
     childCountOf.set(id, 0);
     childCountOf.set(spineTail, (childCountOf.get(spineTail) ?? 0) + 1);
@@ -323,7 +333,7 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
       const name = remaining.shift()!;
       const id = `${rootId}-${nodes.length}`;
       const depth = parentDepth + 1;
-      nodes.push({ id, parentId, name, itemCount: (nodes.length * 3) % 20 });
+      nodes.push({ id, parentId, name, itemCount: demoItemCount(nodes.length) });
       depthOf.set(id, depth);
       childCountOf.set(id, 0);
       childCountOf.set(parentId, childCountOf.get(parentId)! + 1);

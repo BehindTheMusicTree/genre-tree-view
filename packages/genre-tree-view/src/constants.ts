@@ -132,13 +132,24 @@ export function getItemCountRange(nodes: Array<{ itemCount: number }>): ItemCoun
   return { min: Math.min(...counts), max: Math.max(...counts) };
 }
 
-/** Linearly maps itemCount's position within `range` onto [MIN_NODE_*, MAX_NODE_*] — the node
- * with the lowest itemCount in range always renders at MIN size and the highest always at MAX,
- * regardless of the actual counts involved. A degenerate range (every node sharing one count)
- * falls back to MIN size for all of them. */
-export function calculateNodeDimensions(itemCount: number, range: ItemCountRange): Dimensions {
+/** Log-scaled position of itemCount within `range`, normalized to [0, 1] — the node with the
+ * lowest itemCount in range always sits at 0 and the highest always at 1, regardless of the
+ * actual counts involved. A degenerate range (every node sharing one count) falls back to 0.
+ * Real track counts commonly span tens to tens of thousands: a linear scale would flatten
+ * nearly every node down near the minimum and let only the very largest stand out, so position
+ * is computed on a log scale instead — equal *ratios* of item count grow a node by roughly
+ * equal amounts, not equal absolute differences. log1p (not log) so an itemCount of 0 is finite. */
+function logarithmicPosition(itemCount: number, range: ItemCountRange): number {
   const { min, max } = range;
-  const t = max > min ? (itemCount - min) / (max - min) : 0;
+  const logMin = Math.log1p(Math.max(min, 0));
+  const logMax = Math.log1p(Math.max(max, 0));
+  const logValue = Math.log1p(Math.max(itemCount, 0));
+  return logMax > logMin ? (logValue - logMin) / (logMax - logMin) : 0;
+}
+
+/** Maps itemCount's log-scaled position within `range` onto [MIN_NODE_*, MAX_NODE_*]. */
+export function calculateNodeDimensions(itemCount: number, range: ItemCountRange): Dimensions {
+  const t = logarithmicPosition(itemCount, range);
 
   return {
     WIDTH: Math.round(MIN_NODE_WIDTH + t * (MAX_NODE_WIDTH - MIN_NODE_WIDTH)),
@@ -149,8 +160,7 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
 /** Same interpolation as calculateNodeDimensions, mapped onto [MIN_NODE_FONT_SIZE,
  * MAX_NODE_FONT_SIZE] instead — keeps the label's font size in step with its node's box size. */
 export function calculateNodeFontSize(itemCount: number, range: ItemCountRange): number {
-  const { min, max } = range;
-  const t = max > min ? (itemCount - min) / (max - min) : 0;
+  const t = logarithmicPosition(itemCount, range);
 
   return Math.round(MIN_NODE_FONT_SIZE + t * (MAX_NODE_FONT_SIZE - MIN_NODE_FONT_SIZE));
 }

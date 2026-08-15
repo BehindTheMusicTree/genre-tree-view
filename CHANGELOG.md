@@ -16,6 +16,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   relative to the min/max item count across the currently-rendered set, instead of a fixed size.
   Layout slot constants (the tree's per-node spacing) are rebased on the new maximum node size so
   large nodes no longer overlap their neighbors.
+- That item-count-based sizing now scales logarithmically instead of linearly, so it stays legible
+  across the wide item-count ranges real track counts span (tens to tens of thousands) — a linear
+  scale would flatten nearly every node down near the minimum size and let only the largest few
+  stand out.
 
 ## [0.5.0] - 2026-08-14
 
