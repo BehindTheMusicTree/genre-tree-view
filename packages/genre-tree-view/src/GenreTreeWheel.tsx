@@ -10,7 +10,9 @@ import { usePanZoom } from "./use-pan-zoom";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
+  calculateNodeFontSize,
   getGenreTreeColor,
+  getItemCountRange,
   PER_TREE_ACCENT_DOT,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
@@ -76,12 +78,19 @@ export function GenreTreeWheel({
 
   const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
+  // Root chip size is proportional to itemCount relative to the other roots on the wheel, not
+  // an absolute scale — the root with the fewest items always renders at MIN size and the one
+  // with the most always at MAX, regardless of the actual counts involved.
+  const rootItemCountRange = useMemo(() => getItemCountRange(groups.map((group) => group.root)), [groups]);
+
   // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
   // centered on the circle like every other chip, but the tree's root lands with its bottom edge
   // exactly at that same anchor point (see .gtv-wheel-tree-anchor). Left alone, that mismatch makes
   // the chip's top half overlap the tree's bottom edge — offsetting the anchor down by the chip's
   // own half-height clears it, so the root->depth1 gap reads the same as any other consecutive-depth gap.
-  const rootChipHalfHeight = selectedGroup ? calculateNodeDimensions(selectedGroup.root.itemCount).HEIGHT / 2 : 0;
+  const rootChipHalfHeight = selectedGroup
+    ? calculateNodeDimensions(selectedGroup.root.itemCount, rootItemCountRange).HEIGHT / 2
+    : 0;
 
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
@@ -153,8 +162,8 @@ export function GenreTreeWheel({
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
-              const dimensions = calculateNodeDimensions(group.root.itemCount);
-              const itemCountText = group.root.itemCount > 0 ? ` (${group.root.itemCount})` : "";
+              const dimensions = calculateNodeDimensions(group.root.itemCount, rootItemCountRange);
+              const fontSize = calculateNodeFontSize(group.root.itemCount, rootItemCountRange);
               return (
                 <div
                   key={group.root.id}
@@ -174,9 +183,8 @@ export function GenreTreeWheel({
                     onClick={() => handleChipClick(group.root.id, angle)}
                   >
                     {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                    <span className="gtv-node-label gtv-node-label--root">
+                    <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                       {group.root.name}
-                      {itemCountText}
                     </span>
                   </button>
                 </div>

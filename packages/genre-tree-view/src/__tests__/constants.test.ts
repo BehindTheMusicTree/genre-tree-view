@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getGenreTreeColor,
   calculateNodeDimensions,
-  getMaxNodeDimensions,
+  getItemCountRange,
   TREE_COLORS,
   MIN_NODE_WIDTH,
   MAX_NODE_WIDTH,
@@ -29,34 +29,50 @@ describe("getGenreTreeColor", () => {
   });
 });
 
+describe("getItemCountRange", () => {
+  it("returns the min and max itemCount across the nodes", () => {
+    const nodes = [{ itemCount: 5 }, { itemCount: 1 }, { itemCount: 10 }];
+    expect(getItemCountRange(nodes)).toEqual({ min: 1, max: 10 });
+  });
+
+  it("falls back to a zero/zero range for an empty node list", () => {
+    expect(getItemCountRange([])).toEqual({ min: 0, max: 0 });
+  });
+});
+
 describe("calculateNodeDimensions", () => {
-  it("clamps width and height to the minimum for a zero item count", () => {
-    const dims = calculateNodeDimensions(0);
+  it("renders the lowest itemCount in range at the minimum size", () => {
+    const range = { min: 0, max: 50 };
+    const dims = calculateNodeDimensions(0, range);
     expect(dims.WIDTH).toBe(MIN_NODE_WIDTH);
     expect(dims.HEIGHT).toBe(MIN_NODE_HEIGHT);
   });
 
-  it("grows width and height with item count", () => {
-    const small = calculateNodeDimensions(1);
-    const large = calculateNodeDimensions(50);
-    expect(large.WIDTH).toBeGreaterThanOrEqual(small.WIDTH);
-    expect(large.HEIGHT).toBeGreaterThan(small.HEIGHT);
-  });
-
-  it("clamps width and height to the maximum for an astronomically large item count", () => {
-    const dims = calculateNodeDimensions(1e100);
+  it("renders the highest itemCount in range at the maximum size", () => {
+    const range = { min: 0, max: 50 };
+    const dims = calculateNodeDimensions(50, range);
     expect(dims.WIDTH).toBe(MAX_NODE_WIDTH);
     expect(dims.HEIGHT).toBe(MAX_NODE_HEIGHT);
   });
-});
 
-describe("getMaxNodeDimensions", () => {
-  it("picks the dimensions of the node with the largest item count", () => {
-    const nodes = [{ itemCount: 1 }, { itemCount: 100 }, { itemCount: 10 }];
-    expect(getMaxNodeDimensions(nodes)).toEqual(calculateNodeDimensions(100));
+  it("grows width and height with item count between the range's min and max", () => {
+    const range = { min: 0, max: 50 };
+    const small = calculateNodeDimensions(1, range);
+    const large = calculateNodeDimensions(40, range);
+    expect(large.WIDTH).toBeGreaterThan(small.WIDTH);
+    expect(large.HEIGHT).toBeGreaterThan(small.HEIGHT);
   });
 
-  it("falls back to zero item count for an empty node list", () => {
-    expect(getMaxNodeDimensions([])).toEqual(calculateNodeDimensions(0));
+  it("falls back to the minimum size when every node in range shares the same itemCount", () => {
+    const range = { min: 7, max: 7 };
+    const dims = calculateNodeDimensions(7, range);
+    expect(dims.WIDTH).toBe(MIN_NODE_WIDTH);
+    expect(dims.HEIGHT).toBe(MIN_NODE_HEIGHT);
+  });
+
+  it("is independent of the range's absolute magnitude — only relative position matters", () => {
+    const small = calculateNodeDimensions(5, { min: 0, max: 10 });
+    const large = calculateNodeDimensions(500, { min: 0, max: 1000 });
+    expect(small).toEqual(large);
   });
 });

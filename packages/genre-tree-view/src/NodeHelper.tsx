@@ -15,6 +15,7 @@ import {
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
   calculateNodeDimensions,
+  ItemCountRange,
 } from "./constants";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -44,10 +45,11 @@ export function addReparentTargetOverlay(
   d3Lib: typeof import("d3"),
   parentNode: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   onReparentTargetSelect: (newParentId: string) => void,
+  itemCountRange: ItemCountRange,
 ) {
   const nodeId = (parentNode.datum() as D3Node).data.id;
   const nodeData = (parentNode.datum() as D3Node).data;
-  const dimensions = calculateNodeDimensions(nodeData.itemCount);
+  const dimensions = calculateNodeDimensions(nodeData.itemCount, itemCountRange);
 
   let overlayGroup = parentNode.select<SVGGElement>("#select-as-new-parent-group-" + nodeId);
   if (overlayGroup.empty()) {
@@ -207,13 +209,14 @@ export function addToolbarActions(
   node: GenreTreeNode,
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   callbacks: NodeActionCallbacks,
+  itemCountRange: ItemCountRange,
   orientation: TreeOrientation = "horizontal",
 ) {
   if (!nodeGroup.select("#toolbar-" + node.id).empty()) return;
 
   const { onPlayPause, fileInputRef, selectingFileNodeIdRef, onAddChild, onRenameRequest, onDeleteRequest } =
     callbacks;
-  const dimensions = calculateNodeDimensions(node.itemCount);
+  const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
   const isActionable = node.actionable !== false;
   const datum = nodeGroup.datum() as D3Node;
 

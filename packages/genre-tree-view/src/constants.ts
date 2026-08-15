@@ -79,7 +79,8 @@ export const MIN_NODE_WIDTH = 180;
 export const MAX_NODE_WIDTH = 350;
 export const MIN_NODE_HEIGHT = 35;
 export const MAX_NODE_HEIGHT = 60;
-export const ITEM_COUNT_SCALING_FACTOR = 0.8; // How much width increases per item
+export const MIN_NODE_FONT_SIZE = 12;
+export const MAX_NODE_FONT_SIZE = 18;
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
@@ -89,9 +90,12 @@ export const TOOLBAR_MENU_X_GAP = 4;
 export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 
+// Layout slot size, not a rendered node's actual size (see calculateNodeDimensions) — every
+// node's slot has to fit the largest a node can render at, or a high-itemCount node overflows
+// its neighbors' slots and overlaps them.
 export const NODE_DIMENSIONS: Dimensions = {
-  WIDTH: RECT_BASE_DIMENSIONS.WIDTH + ACTIONS_OVERLAY_WIDTH,
-  HEIGHT: RECT_BASE_DIMENSIONS.HEIGHT,
+  WIDTH: MAX_NODE_WIDTH + ACTIONS_OVERLAY_WIDTH,
+  HEIGHT: MAX_NODE_HEIGHT,
 };
 
 export const HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES = 5;
@@ -111,26 +115,44 @@ export const VERTICAL_ORIENTATION_DEPTH_SEPARATION = VERTICAL_SEPARATION_BETWEEN
 // only for the depth axis, where a hovered node's toolbar pops into the space before the next
 // generation. Reserving that much between every sibling pair made the wheel's tree read far
 // more spread out than its cards actually are.
-export const SIBLING_SEPARATION_BETWEEN_NODES = RECT_BASE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
+export const SIBLING_SEPARATION_BETWEEN_NODES = MAX_NODE_WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES;
 
 // Utility functions for dynamic node sizing
-export function calculateNodeDimensions(itemCount: number): Dimensions {
-  const logItemCount = Math.log(Math.max(1, itemCount));
-  const widthScale = Math.min(logItemCount * ITEM_COUNT_SCALING_FACTOR, MAX_NODE_WIDTH - MIN_NODE_WIDTH);
-  const width = Math.max(MIN_NODE_WIDTH, MIN_NODE_WIDTH + widthScale);
+export interface ItemCountRange {
+  min: number;
+  max: number;
+}
 
-  const heightScale = Math.min(itemCount * 0.5, MAX_NODE_HEIGHT - MIN_NODE_HEIGHT);
-  const height = Math.max(MIN_NODE_HEIGHT, MIN_NODE_HEIGHT + heightScale);
+/** The min/max itemCount across a set of nodes — the reference points calculateNodeDimensions
+ * scales every node's size against, so a node's size reflects its item count relative to its
+ * peers rather than an absolute, arbitrarily-chosen scale. */
+export function getItemCountRange(nodes: Array<{ itemCount: number }>): ItemCountRange {
+  if (nodes.length === 0) return { min: 0, max: 0 };
+  const counts = nodes.map((node) => node.itemCount);
+  return { min: Math.min(...counts), max: Math.max(...counts) };
+}
+
+/** Linearly maps itemCount's position within `range` onto [MIN_NODE_*, MAX_NODE_*] — the node
+ * with the lowest itemCount in range always renders at MIN size and the highest always at MAX,
+ * regardless of the actual counts involved. A degenerate range (every node sharing one count)
+ * falls back to MIN size for all of them. */
+export function calculateNodeDimensions(itemCount: number, range: ItemCountRange): Dimensions {
+  const { min, max } = range;
+  const t = max > min ? (itemCount - min) / (max - min) : 0;
 
   return {
-    WIDTH: Math.round(width),
-    HEIGHT: Math.round(height),
+    WIDTH: Math.round(MIN_NODE_WIDTH + t * (MAX_NODE_WIDTH - MIN_NODE_WIDTH)),
+    HEIGHT: Math.round(MIN_NODE_HEIGHT + t * (MAX_NODE_HEIGHT - MIN_NODE_HEIGHT)),
   };
 }
 
-export function getMaxNodeDimensions(nodes: Array<{ itemCount: number }>): Dimensions {
-  const maxItems = Math.max(...nodes.map((node) => node.itemCount), 0);
-  return calculateNodeDimensions(maxItems);
+/** Same interpolation as calculateNodeDimensions, mapped onto [MIN_NODE_FONT_SIZE,
+ * MAX_NODE_FONT_SIZE] instead — keeps the label's font size in step with its node's box size. */
+export function calculateNodeFontSize(itemCount: number, range: ItemCountRange): number {
+  const { min, max } = range;
+  const t = max > min ? (itemCount - min) / (max - min) : 0;
+
+  return Math.round(MIN_NODE_FONT_SIZE + t * (MAX_NODE_FONT_SIZE - MIN_NODE_FONT_SIZE));
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in

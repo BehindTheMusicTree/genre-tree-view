@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as d3 from "d3";
 import { calculateSvgDimensions, createTreeLayout, renderTree, setupTreeLayout } from "../tree-renderer";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { calculateNodeDimensions } from "../constants";
+import { calculateNodeDimensions, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 import type { RenderTreeCallbacks } from "../tree-renderer";
 
@@ -79,7 +79,8 @@ describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout (vertical 
     const { svgWidth, highestVerticalCoordinate } = calculateSvgDimensions(d3, laidOut, "vertical");
     const treeData = setupTreeLayout(d3, laidOut, highestVerticalCoordinate, "vertical");
 
-    const rootWidth = calculateNodeDimensions(treeData.data.itemCount).WIDTH;
+    const itemCountRange = getItemCountRange(treeData.descendants().map((d) => d.data));
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).WIDTH;
     expect(treeData.x! + rootWidth / 2).toBe(svgWidth / 2);
 
     const descendants = treeData.descendants();
@@ -136,7 +137,7 @@ describe("renderTree", () => {
     expect(childGroup.getAttribute("class")).toContain("gtv-node--forbidden");
   });
 
-  it("suffixes the label with the item count when non-zero, and omits it when zero", () => {
+  it("renders the label as just the node name, with no item count suffix", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     document.body.appendChild(svgEl);
@@ -146,7 +147,7 @@ describe("renderTree", () => {
 
     const rootLabel = svgEl.querySelector("#group-root .gtv-node-label") as HTMLDivElement;
     const childLabel = svgEl.querySelector("#group-child .gtv-node-label") as HTMLDivElement;
-    expect(rootLabel.textContent).toBe("Root (5)");
+    expect(rootLabel.textContent).toBe("Root");
     expect(childLabel.textContent).toBe("Child");
   });
 
