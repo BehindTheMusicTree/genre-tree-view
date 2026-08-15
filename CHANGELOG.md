@@ -21,6 +21,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   scale would flatten nearly every node down near the minimum size and let only the largest few
   stand out.
 
+### Fixed
+
+- A node's item count (and everything sized from it — box dimensions, label font size, wheel
+  chip size) now rolls up its descendants' counts instead of reporting only its own, so a node's
+  effective count is always at least the sum of its children's. Previously a genre with items only
+  on its leaves could render smaller than a sibling leaf, or a wheel root chip could read as empty
+  despite a full subtree beneath it.
+
 ## [0.5.0] - 2026-08-14
 
 ### Added
