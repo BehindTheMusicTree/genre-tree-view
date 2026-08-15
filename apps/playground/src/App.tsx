@@ -51,28 +51,292 @@ function buildDeepBranch(
 
 initialNodes.push(...buildDeepBranch("a-post-punk", "pp-depth3", 3, 6, { next: 0 }));
 
-const LARGE_ROOT_NAMES = ["Rock", "Electronic", "Jazz", "Hip-Hop", "Classical", "Folk", "Metal", "Pop"];
+interface LargeRootDef {
+  name: string;
+  subgenres: string[];
+}
 
-/** One root plus `nodeCount - 1` descendants, branching every few nodes so the tree gets a
- * few levels deep instead of 49 siblings in a flat row. */
-function buildLargeRootGroup(rootName: string, rootIndex: number, nodeCount: number): GenreTreeNode[] {
+// Real genre/subgenre names, 15-60 per root, so the large wheel demo reads like an actual
+// genre catalogue instead of "Rock sub-genre 12".
+const LARGE_ROOTS: LargeRootDef[] = [
+  {
+    name: "Rock",
+    subgenres: [
+      "Punk",
+      "Post-Punk",
+      "Hardcore Punk",
+      "Garage Rock",
+      "Psychedelic Rock",
+      "Progressive Rock",
+      "Alternative Rock",
+      "Indie Rock",
+      "Grunge",
+      "Glam Rock",
+      "Southern Rock",
+      "Blues Rock",
+      "Hard Rock",
+      "Soft Rock",
+      "Art Rock",
+      "Math Rock",
+      "Post-Rock",
+      "Stoner Rock",
+      "Surf Rock",
+      "Rockabilly",
+      "Krautrock",
+      "Noise Rock",
+      "Shoegaze",
+      "Emo",
+      "Pop Punk",
+      "Ska Punk",
+      "Folk Rock",
+      "Country Rock",
+      "Yacht Rock",
+      "Arena Rock",
+      "Gothic Rock",
+      "Industrial Rock",
+    ],
+  },
+  {
+    name: "Electronic",
+    subgenres: [
+      "Techno",
+      "House",
+      "Deep House",
+      "Tech House",
+      "Acid House",
+      "Trance",
+      "Progressive Trance",
+      "Drum and Bass",
+      "Dubstep",
+      "Trap",
+      "Future Bass",
+      "Ambient",
+      "Downtempo",
+      "IDM",
+      "Breakbeat",
+      "Electro",
+      "Synthwave",
+      "Vaporwave",
+      "Chillwave",
+      "UK Garage",
+      "Grime",
+      "Hardstyle",
+      "Gabber",
+      "Jungle",
+      "Minimal Techno",
+      "Detroit Techno",
+      "Big Room",
+      "Electro Swing",
+      "Nu-Disco",
+      "Disco",
+    ],
+  },
+  {
+    name: "Jazz",
+    subgenres: [
+      "Swing",
+      "Bebop",
+      "Hard Bop",
+      "Cool Jazz",
+      "Free Jazz",
+      "Modal Jazz",
+      "Fusion",
+      "Smooth Jazz",
+      "Latin Jazz",
+      "Gypsy Jazz",
+      "Acid Jazz",
+      "Nu Jazz",
+      "Dixieland",
+      "Big Band",
+      "Vocal Jazz",
+      "Post-Bop",
+      "Avant-Garde Jazz",
+      "Soul Jazz",
+      "Ska Jazz",
+      "Chamber Jazz",
+    ],
+  },
+  {
+    name: "Hip-Hop",
+    subgenres: [
+      "Boom Bap",
+      "Trap",
+      "Gangsta Rap",
+      "Conscious Hip Hop",
+      "East Coast Hip Hop",
+      "West Coast Hip Hop",
+      "Southern Hip Hop",
+      "Drill",
+      "Cloud Rap",
+      "Mumble Rap",
+      "Jazz Rap",
+      "Alternative Hip Hop",
+      "Underground Hip Hop",
+      "Horrorcore",
+      "Crunk",
+      "G-Funk",
+      "Hyphy",
+      "Trap Soul",
+      "Lo-Fi Hip Hop",
+      "Chopped and Screwed",
+    ],
+  },
+  {
+    name: "Classical",
+    subgenres: [
+      "Baroque",
+      "Renaissance",
+      "Medieval",
+      "Classical Period",
+      "Romantic",
+      "Modernist",
+      "Minimalism",
+      "Opera",
+      "Chamber Music",
+      "Symphonic",
+      "Choral",
+      "Concerto",
+      "Sonata",
+      "Impressionism",
+      "Neoclassicism",
+      "Avant-Garde Classical",
+    ],
+  },
+  {
+    name: "Folk",
+    subgenres: [
+      "Traditional Folk",
+      "Contemporary Folk",
+      "Americana",
+      "Bluegrass",
+      "Celtic Folk",
+      "Indie Folk",
+      "Anti-Folk",
+      "Folk Punk",
+      "Sea Shanty",
+      "Nordic Folk",
+      "Appalachian Folk",
+      "Gospel Folk",
+      "World Folk",
+      "Freak Folk",
+      "Chamber Folk",
+      "Neofolk",
+      "Progressive Folk",
+      "Psych Folk",
+    ],
+  },
+  {
+    name: "Metal",
+    subgenres: [
+      "Heavy Metal",
+      "Thrash Metal",
+      "Death Metal",
+      "Black Metal",
+      "Doom Metal",
+      "Power Metal",
+      "Progressive Metal",
+      "Nu Metal",
+      "Metalcore",
+      "Deathcore",
+      "Sludge Metal",
+      "Stoner Metal",
+      "Symphonic Metal",
+      "Folk Metal",
+      "Industrial Metal",
+      "Groove Metal",
+      "Speed Metal",
+      "Gothic Metal",
+      "Viking Metal",
+      "Djent",
+      "Grindcore",
+      "Melodic Death Metal",
+      "Rap Metal",
+      "Mathcore",
+    ],
+  },
+  {
+    name: "Pop",
+    subgenres: [
+      "Synth-pop",
+      "Dance-pop",
+      "Electropop",
+      "Indie Pop",
+      "Teen Pop",
+      "Power Pop",
+      "Art Pop",
+      "Dream Pop",
+      "K-Pop",
+      "J-Pop",
+      "Bubblegum Pop",
+      "Baroque Pop",
+      "Chamber Pop",
+      "Sunshine Pop",
+      "Bedroom Pop",
+      "Hyperpop",
+      "Britpop",
+      "Latin Pop",
+    ],
+  },
+];
+
+// One target depth per root (matching LARGE_ROOTS order below) so the demo shows a mix of
+// shallow and deep subtrees instead of every root maxing out at the same depth.
+const LARGE_ROOT_TARGET_DEPTHS = [5, 8, 3, 10, 4, 9, 6, 7];
+
+// Cycles through varying branch-off counts (further capped by each node's remaining capacity
+// out of 5 total children) so no node always branches the same amount.
+const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
+
+/** One root plus its real subgenres, built as a spine of LARGE_ROOT_TARGET_DEPTHS[rootIndex]
+ * nodes (fixing the max depth) with the remaining subgenres attached breadth-first onto any
+ * node below that depth, capping every node at 5 children total so branching stays varied
+ * without ever exceeding the depth target. */
+function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNode[] {
   const rootId = `large-root-${rootIndex}`;
-  const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: rootName, itemCount: 0 }];
-  for (let i = 1; i < nodeCount; i++) {
-    const parentId = i % 4 === 0 ? rootId : nodes[Math.max(0, i - 2)].id;
-    nodes.push({
-      id: `${rootId}-${i}`,
-      parentId,
-      name: `${rootName} sub-genre ${i}`,
-      itemCount: (i * 3) % 20,
-    });
+  const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: root.name, itemCount: 0 }];
+  const remaining = [...root.subgenres];
+  const targetDepth = Math.min(LARGE_ROOT_TARGET_DEPTHS[rootIndex % LARGE_ROOT_TARGET_DEPTHS.length], remaining.length);
+
+  const depthOf = new Map<string, number>([[rootId, 0]]);
+  const childCountOf = new Map<string, number>([[rootId, 0]]);
+  const queue: string[] = [rootId];
+
+  let spineTail = rootId;
+  for (let d = 0; d < targetDepth; d++) {
+    const name = remaining.shift()!;
+    const id = `${rootId}-${nodes.length}`;
+    nodes.push({ id, parentId: spineTail, name, itemCount: (nodes.length * 3) % 20 });
+    depthOf.set(id, d + 1);
+    childCountOf.set(id, 0);
+    childCountOf.set(spineTail, (childCountOf.get(spineTail) ?? 0) + 1);
+    if (d + 1 < targetDepth) queue.push(id);
+    spineTail = id;
+  }
+
+  let patternIndex = 0;
+  while (remaining.length > 0) {
+    const parentId = queue.shift()!;
+    const parentDepth = depthOf.get(parentId)!;
+    const capacity = 5 - childCountOf.get(parentId)!;
+    const count = Math.min(LARGE_ROOT_BRANCH_COUNTS[patternIndex++ % LARGE_ROOT_BRANCH_COUNTS.length], capacity, remaining.length);
+    for (let i = 0; i < count; i++) {
+      const name = remaining.shift()!;
+      const id = `${rootId}-${nodes.length}`;
+      const depth = parentDepth + 1;
+      nodes.push({ id, parentId, name, itemCount: (nodes.length * 3) % 20 });
+      depthOf.set(id, depth);
+      childCountOf.set(id, 0);
+      childCountOf.set(parentId, childCountOf.get(parentId)! + 1);
+      if (depth < targetDepth) queue.push(id);
+    }
+    // A low pattern draw can leave capacity unused — requeue so this node gets another
+    // chance instead of permanently starving (which would silently drop leftover names).
+    if (capacity - count > 0 && parentDepth < targetDepth) queue.push(parentId);
   }
   return nodes;
 }
 
-const largeWheelNodes: GenreTreeNode[] = LARGE_ROOT_NAMES.flatMap((name, index) =>
-  buildLargeRootGroup(name, index, 50),
-);
+const largeWheelNodes: GenreTreeNode[] = LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index));
 
 let nextId = 1;
 const STACKED_TREE_HEIGHT = 500;
