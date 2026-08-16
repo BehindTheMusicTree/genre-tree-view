@@ -55,8 +55,15 @@ export function GenreTree({
       svgWidth: width,
       svgHeight: height,
       highestVerticalCoordinate,
+      rootDepthOffset,
     } = calculateSvgDimensions(d3, originalTreeData, orientation, hideRoot);
-    const reshapedTreeData = setupTreeLayout(d3, originalTreeData, highestVerticalCoordinate, orientation);
+    const reshapedTreeData = setupTreeLayout(
+      d3,
+      originalTreeData,
+      highestVerticalCoordinate,
+      orientation,
+      rootDepthOffset,
+    );
 
     return {
       treeData: reshapedTreeData,

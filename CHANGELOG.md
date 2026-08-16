@@ -7,6 +7,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `GenreTreeWheelRight`, a third tree renderer alongside `GenreTree` and `GenreTreeWheel`: a
+  mechanical mirror of `GenreTreeWheel` rotated 90° — its chip ring hugs the left edge instead of
+  the bottom, clicking a chip spins it to land right-center, and the selected subtree grows
+  rightward instead of upward. Shares the same props and pan/zoom/rotation behavior as
+  `GenreTreeWheel`.
 - `centerLabel` prop on `GenreTreeWheel` — an optional label (e.g. a brand name) centered on
   the wheel's pivot point, staying upright and fixed regardless of the wheel's rotation.
 

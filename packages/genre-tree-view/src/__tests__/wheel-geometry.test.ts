@@ -65,4 +65,18 @@ describe("computeRotationForSelection", () => {
     const afterBackToStart = computeRotationForSelection(afterReselectingSame, 0);
     expect(afterBackToStart).toBe(0);
   });
+
+  describe("with a non-default landing angle (90, used by the left-hugging wheel)", () => {
+    it("is a no-op when the target is already at the landing angle", () => {
+      expect(computeRotationForSelection(0, 90, 90)).toBe(0);
+    });
+
+    it("takes the shortest path to bring a 0 degree chip to 90", () => {
+      expect(computeRotationForSelection(0, 0, 90)).toBe(90);
+    });
+
+    it("resolves the 180 degree tie deterministically when bringing a 270 degree chip to 90", () => {
+      expect(computeRotationForSelection(0, 270, 90)).toBe(-180);
+    });
+  });
 });

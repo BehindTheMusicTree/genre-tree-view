@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   GenreTree,
   GenreTreeWheel,
+  GenreTreeWheelRight,
   groupNodesByRoot,
   WHEEL_DEFAULT_FRAME_HEIGHT,
   type GenreTreeNode,
@@ -353,6 +354,7 @@ const STACKED_TREE_HEIGHT = 500;
 
 const TABS = [
   { id: "wheel", label: "Genre wheel" },
+  { id: "wheel-right", label: "Genre wheel (right)" },
   { id: "stacked", label: "Stacked trees" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -484,6 +486,17 @@ export function App() {
             {...wheelCallbacks}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
+          />
+        </div>
+      )}
+
+      {activeTab === "wheel-right" && (
+        <div style={{ width: 800, height: 500, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+          <GenreTreeWheelRight
+            nodes={wheelNodes}
+            {...wheelCallbacks}
+            centerLabel="TheMusicTree"
+            onRootSelect={(rootId) => appendLog(`wheel-right selected root ${rootId}`)}
           />
         </div>
       )}

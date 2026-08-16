@@ -90,6 +90,70 @@ describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout (vertical 
   });
 });
 
+describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout (horizontal-anchored orientation)", () => {
+  const HORIZONTAL_ANCHORED_NODES: GenreTreeNode[] = [
+    { id: "root", parentId: null, name: "Root", itemCount: 0 },
+    { id: "child-a", parentId: "root", name: "Child A", itemCount: 0 },
+    { id: "child-b", parentId: "root", name: "Child B", itemCount: 0 },
+    { id: "grandchild", parentId: "child-a", name: "Grandchild", itemCount: 0 },
+  ];
+
+  it("computes positive svg dimensions for a small tree", () => {
+    const root = buildTreeHierarchyStructure(d3, HORIZONTAL_ANCHORED_NODES);
+    const laidOut = createTreeLayout(d3, root, "horizontal-anchored");
+    const dims = calculateSvgDimensions(d3, laidOut, "horizontal-anchored");
+    expect(dims.svgWidth).toBeGreaterThan(0);
+    expect(dims.svgHeight).toBeGreaterThan(0);
+  });
+
+  it("centers the root's own visual anchor (y + own height / 2) at svgHeight / 2 and grows x rightward with depth", () => {
+    const root = buildTreeHierarchyStructure(d3, HORIZONTAL_ANCHORED_NODES);
+    const laidOut = createTreeLayout(d3, root, "horizontal-anchored");
+    const { svgHeight, highestVerticalCoordinate } = calculateSvgDimensions(d3, laidOut, "horizontal-anchored");
+    const treeData = setupTreeLayout(d3, laidOut, highestVerticalCoordinate, "horizontal-anchored");
+
+    const itemCountRange = getItemCountRange(treeData.descendants().map((d) => d.data));
+    const rootHeight = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).HEIGHT;
+    expect(treeData.y! + rootHeight / 2).toBe(svgHeight / 2);
+
+    const descendants = treeData.descendants();
+    const rootNode = descendants.find((d) => d.depth === 0)!;
+    const deepestNode = descendants.reduce((deepest, d) => (d.depth > deepest.depth ? d : deepest));
+    expect(rootNode.x).toBeLessThan(deepestNode.x!);
+  });
+
+  it("keeps depth-to-depth center spacing uniform when the root is hidden", () => {
+    const LINEAR_NODES: GenreTreeNode[] = [
+      { id: "root", parentId: null, name: "Root", itemCount: 0 },
+      { id: "d1", parentId: "root", name: "D1", itemCount: 0 },
+      { id: "d2", parentId: "d1", name: "D2", itemCount: 0 },
+      { id: "d3", parentId: "d2", name: "D3", itemCount: 0 },
+    ];
+    const root = buildTreeHierarchyStructure(d3, LINEAR_NODES);
+    const laidOut = createTreeLayout(d3, root, "horizontal-anchored");
+    const { highestVerticalCoordinate, rootDepthOffset } = calculateSvgDimensions(
+      d3,
+      laidOut,
+      "horizontal-anchored",
+      true,
+    );
+    const treeData = setupTreeLayout(d3, laidOut, highestVerticalCoordinate, "horizontal-anchored", rootDepthOffset);
+
+    const itemCountRange = getItemCountRange(treeData.descendants().map((d) => d.data));
+    const centerXByDepth = new Map<number, number>();
+    treeData.each((d) => {
+      const width = calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH;
+      centerXByDepth.set(d.depth, d.x! + width / 2);
+    });
+
+    const gap01 = centerXByDepth.get(1)! - centerXByDepth.get(0)!;
+    const gap12 = centerXByDepth.get(2)! - centerXByDepth.get(1)!;
+    const gap23 = centerXByDepth.get(3)! - centerXByDepth.get(2)!;
+    expect(gap01).toBeCloseTo(gap12);
+    expect(gap12).toBeCloseTo(gap23);
+  });
+});
+
 describe("renderTree", () => {
   it("throws when svgRef.current is null", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);

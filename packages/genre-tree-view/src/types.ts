@@ -10,8 +10,11 @@ export interface GenreTreeNode {
 export type GenreTreePlayState = "playing" | "paused" | "loading";
 
 /** "horizontal" grows children rightward from a left root (default). "vertical" grows children
- * upward from a bottom-anchored root — used by GenreTreeWheel. */
-export type TreeOrientation = "horizontal" | "vertical";
+ * upward from a bottom-anchored root — used by GenreTreeWheel. "horizontal-anchored" grows
+ * rightward like "horizontal" but anchors the root at a fixed local coordinate
+ * (0, svgHeight / 2) regardless of tree shape, instead of "horizontal"'s unanchored top-aligned
+ * bounding box — used by GenreTreeWheelRight. */
+export type TreeOrientation = "horizontal" | "vertical" | "horizontal-anchored";
 
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];

@@ -24,16 +24,21 @@ function mod360(value: number): number {
 }
 
 /**
- * Computes the wheel rotation (degrees) that brings the chip at `targetAngle` to the top,
- * taking the shortest path from `currentRotationDeg`. The wheel's own rotation composes with
- * each chip's static angle, so bringing `targetAngle` to 0° requires a rotation congruent to
- * `-targetAngle` (mod 360).
+ * Computes the wheel rotation (degrees) that brings the chip at `targetAngle` to `landingAngle`
+ * (default 0, the top — used by the bottom-hugging wheel; 270, the left, lands a chip at the
+ * right — used by the left-hugging wheel), taking the shortest path from `currentRotationDeg`.
+ * The wheel's own rotation composes with each chip's static angle, so bringing `targetAngle` to
+ * `landingAngle` requires a rotation congruent to `landingAngle - targetAngle` (mod 360).
  *
  * The result is never renormalized into [0, 360) — it keeps accumulating so a CSS
  * `transition: transform` never has to jump across a 359°→0° wraparound.
  */
-export function computeRotationForSelection(currentRotationDeg: number, targetAngle: number): number {
-  const targetMod = mod360(-targetAngle);
+export function computeRotationForSelection(
+  currentRotationDeg: number,
+  targetAngle: number,
+  landingAngle = 0,
+): number {
+  const targetMod = mod360(landingAngle - targetAngle);
   const delta = targetMod - mod360(currentRotationDeg);
   const shortestDelta = delta - 360 * Math.round(delta / 360);
   return currentRotationDeg + shortestDelta;
