@@ -71,8 +71,14 @@ describe("computeFitScale", () => {
     expect(computeFitScale(100, 100, 200, 200, 50)).toBeCloseTo(1);
   });
 
-  it("clamps the result to the configured bounds", () => {
+  it("clamps only the upper bound, never the lower one", () => {
+    // Content far smaller than the viewport clamps to ZOOM_MAX_SCALE — no point zooming in
+    // further than that just because there's little content.
     expect(computeFitScale(1, 1, 1000, 1000, 0)).toBe(ZOOM_MAX_SCALE);
-    expect(computeFitScale(10000, 10000, 100, 100, 0)).toBe(ZOOM_MIN_SCALE);
+    // Content far larger than the viewport must shrink below ZOOM_MIN_SCALE to actually fit —
+    // clamping it at ZOOM_MIN_SCALE here would render content too big for the viewport while
+    // still centering on the full bounding box, cropping it instead of fitting it.
+    expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeLessThan(ZOOM_MIN_SCALE);
+    expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeCloseTo(0.01);
   });
 });

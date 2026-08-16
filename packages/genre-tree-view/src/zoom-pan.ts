@@ -15,7 +15,11 @@ export function computeZoomScaleForButton(currentScale: number, direction: 1 | -
 }
 
 /** Scale that fits `contentWidth`×`contentHeight` inside `viewportWidth`×`viewportHeight` with
- * `padding` px of clearance on every side, picking whichever dimension is more constraining. */
+ * `padding` px of clearance on every side, picking whichever dimension is more constraining. Only
+ * clamped against `ZOOM_MAX_SCALE` (no point zooming in past that for small content) — unlike
+ * interactive zoom, this deliberately ignores `ZOOM_MIN_SCALE`: capping it there would make the
+ * button lie about "fitting" content too large to fit at the interactive floor, rendering it too
+ * big for the viewport while still centering on the full (larger) bounding box, cropping content. */
 export function computeFitScale(
   contentWidth: number,
   contentHeight: number,
@@ -23,7 +27,9 @@ export function computeFitScale(
   viewportHeight: number,
   padding: number,
 ): number {
-  return clampZoomScale(
-    Math.min((viewportWidth - padding * 2) / contentWidth, (viewportHeight - padding * 2) / contentHeight),
+  return Math.min(
+    ZOOM_MAX_SCALE,
+    (viewportWidth - padding * 2) / contentWidth,
+    (viewportHeight - padding * 2) / contentHeight,
   );
 }
