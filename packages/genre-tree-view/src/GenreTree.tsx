@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
-import { MdZoomIn, MdZoomOut } from "react-icons/md";
+import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
@@ -198,6 +198,14 @@ export function GenreTree({
           aria-label="Zoom out"
         >
           <MdZoomOut className="gtv-icon" size={18} />
+        </button>
+        <button
+          type="button"
+          className="gtv-zoom-btn"
+          onClick={() => panZoom.fitToFrame([svgRef.current])}
+          aria-label="Fit to frame"
+        >
+          <MdFitScreen className="gtv-icon" size={18} />
         </button>
       </div>
     </div>

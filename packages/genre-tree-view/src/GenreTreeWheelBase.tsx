@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MdZoomIn, MdZoomOut } from "react-icons/md";
+import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTree } from "./GenreTree";
 import { groupNodesByRoot } from "./root-grouping";
@@ -106,6 +106,10 @@ export function WheelCore({
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
   const panZoom = usePanZoom(viewportRef);
+  // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
+  // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
+  const wheelCircleRef = useRef<HTMLDivElement>(null);
+  const treeAnchorRef = useRef<HTMLDivElement>(null);
 
   // Falls back to the first root without writing state back when the explicitly selected root
   // disappears from `nodes` — avoids a setState-in-effect cascading render for derived state.
@@ -187,7 +191,7 @@ export function WheelCore({
       >
         <div className="gtv-wheel-stage" style={{ [chipHalfExtentVar]: `${rootChipHalfExtent}px` } as React.CSSProperties}>
           {selectedGroup && (
-            <div className="gtv-wheel-tree-anchor">
+            <div className="gtv-wheel-tree-anchor" ref={treeAnchorRef}>
               <GenreTree
                 key={selectedGroup.root.id}
                 nodes={selectedGroup.nodes}
@@ -209,7 +213,7 @@ export function WheelCore({
             </div>
           )}
 
-          <div className="gtv-wheel-circle" />
+          <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
           {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
 
@@ -268,6 +272,14 @@ export function WheelCore({
           aria-label="Zoom out"
         >
           <MdZoomOut className="gtv-icon" size={18} />
+        </button>
+        <button
+          type="button"
+          className="gtv-zoom-btn"
+          onClick={() => panZoom.fitToFrame([wheelCircleRef.current, treeAnchorRef.current])}
+          aria-label="Fit to frame"
+        >
+          <MdFitScreen className="gtv-icon" size={18} />
         </button>
       </div>
     </div>

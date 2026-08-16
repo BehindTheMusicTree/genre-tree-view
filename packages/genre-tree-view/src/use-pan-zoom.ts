@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "./constants";
-import { computeZoomScale, computeZoomScaleForButton } from "./zoom-pan";
+import { ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "./constants";
+import { computeFitScale, computeZoomScale, computeZoomScaleForButton } from "./zoom-pan";
 
 export interface UsePanZoomResult {
   panX: number;
@@ -15,6 +15,9 @@ export interface UsePanZoomResult {
   canZoomOut: boolean;
   zoomIn: () => void;
   zoomOut: () => void;
+  /** Recomputes pan/scale so the union bounding box of the given elements (nulls ignored) fits
+   * inside the viewport with ZOOM_FIT_PADDING of clearance. No-ops if none are present/measurable. */
+  fitToFrame: (elements: (Element | null | undefined)[]) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
 }
 
@@ -83,6 +86,47 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     [zoomAtPoint, zoomScale, viewportRef],
   );
 
+  // Generalizes zoomAtPoint's screen->content conversion from a single point to the union
+  // bounding box of one or more elements, measured live via getBoundingClientRect() — this way
+  // fitting the wheel+tree doesn't require re-deriving their geometry (radius, chip offsets,
+  // svg dimensions) a second time here.
+  const fitToFrame = useCallback(
+    (elements: (Element | null | undefined)[]) => {
+      const viewport = viewportRef.current;
+      const present = elements.filter((el): el is Element => Boolean(el));
+      if (!viewport || present.length === 0) return;
+
+      const viewportRect = viewport.getBoundingClientRect();
+      if (viewportRect.width <= 0 || viewportRect.height <= 0) return;
+
+      const rects = present.map((el) => el.getBoundingClientRect());
+      const contentLeft = Math.min(...rects.map((r) => r.left));
+      const contentTop = Math.min(...rects.map((r) => r.top));
+      const contentRight = Math.max(...rects.map((r) => r.right));
+      const contentBottom = Math.max(...rects.map((r) => r.bottom));
+
+      const contentWidth = (contentRight - contentLeft) / zoomScale;
+      const contentHeight = (contentBottom - contentTop) / zoomScale;
+      if (contentWidth <= 0 || contentHeight <= 0) return;
+
+      const contentOriginX = (contentLeft - viewportRect.left - panX) / zoomScale;
+      const contentOriginY = (contentTop - viewportRect.top - panY) / zoomScale;
+
+      const fitScale = computeFitScale(
+        contentWidth,
+        contentHeight,
+        viewportRect.width,
+        viewportRect.height,
+        ZOOM_FIT_PADDING,
+      );
+
+      setZoomScale(fitScale);
+      setPanX(viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale);
+      setPanY(viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale);
+    },
+    [viewportRef, zoomScale, panX, panY],
+  );
+
   // Click-and-drag pan over empty background. Only starts outside a node/its toolbar so it
   // doesn't fight their own click/hover interactions.
   const lastPointRef = useRef({ x: 0, y: 0 });
@@ -124,6 +168,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     canZoomOut: zoomScale > ZOOM_MIN_SCALE,
     zoomIn: () => zoomByButton(1),
     zoomOut: () => zoomByButton(-1),
+    fitToFrame,
     handlePointerDown,
   };
 }

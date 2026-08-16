@@ -13,3 +13,17 @@ export function computeZoomScale(currentScale: number, wheelDeltaY: number): num
 export function computeZoomScaleForButton(currentScale: number, direction: 1 | -1): number {
   return clampZoomScale(currentScale * Math.pow(ZOOM_BUTTON_SCALE_STEP, direction));
 }
+
+/** Scale that fits `contentWidth`×`contentHeight` inside `viewportWidth`×`viewportHeight` with
+ * `padding` px of clearance on every side, picking whichever dimension is more constraining. */
+export function computeFitScale(
+  contentWidth: number,
+  contentHeight: number,
+  viewportWidth: number,
+  viewportHeight: number,
+  padding: number,
+): number {
+  return clampZoomScale(
+    Math.min((viewportWidth - padding * 2) / contentWidth, (viewportHeight - padding * 2) / contentHeight),
+  );
+}
