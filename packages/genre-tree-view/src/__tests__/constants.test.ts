@@ -70,9 +70,11 @@ describe("calculateNodeDimensions", () => {
     expect(dims.HEIGHT).toBe(MIN_NODE_HEIGHT);
   });
 
-  it("is independent of the range's absolute magnitude — only relative position matters", () => {
-    const small = calculateNodeDimensions(5, { min: 0, max: 10 });
-    const large = calculateNodeDimensions(500, { min: 0, max: 1000 });
-    expect(small).toEqual(large);
+  it("scales logarithmically — equal ratios above the minimum grow size by roughly equal amounts", () => {
+    // Under linear scaling a value just 10x above a realistic track-count minimum would render
+    // barely above MIN_NODE_WIDTH in a [50, 10000] range. Log scaling keeps it well clear of MIN.
+    const range = { min: 50, max: 10000 };
+    const dims = calculateNodeDimensions(500, range);
+    expect(dims.WIDTH).toBeGreaterThan(MIN_NODE_WIDTH + (MAX_NODE_WIDTH - MIN_NODE_WIDTH) * 0.3);
   });
 });

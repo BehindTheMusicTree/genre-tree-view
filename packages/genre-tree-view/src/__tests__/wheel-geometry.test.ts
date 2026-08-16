@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeRotationForSelection, getChipAngle } from "../wheel-geometry";
+import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "../wheel-geometry";
 
 describe("getChipAngle", () => {
   it("spaces chips evenly around the full circle, starting at 0 for the first chip", () => {
@@ -15,6 +15,26 @@ describe("getChipAngle", () => {
         expect(getChipAngle(i, total)).toBe(i * (360 / total));
       }
     }
+  });
+});
+
+describe("calculateWheelRadius", () => {
+  it("falls back to the base radius when there's only one chip, with no neighbor to overlap", () => {
+    expect(calculateWheelRadius(1, 350, 260)).toBe(260);
+  });
+
+  it("falls back to the base radius when it's already big enough for the chip count/size", () => {
+    expect(calculateWheelRadius(4, 10, 260)).toBe(260);
+  });
+
+  it("grows past the base radius so adjacent max-width chips no longer overlap", () => {
+    const rootCount = 12;
+    const maxChipWidth = 350;
+    const radius = calculateWheelRadius(rootCount, maxChipWidth, 260);
+    expect(radius).toBeGreaterThan(260);
+
+    const chordBetweenNeighbors = 2 * radius * Math.sin(Math.PI / rootCount);
+    expect(chordBetweenNeighbors).toBeGreaterThanOrEqual(maxChipWidth);
   });
 });
 

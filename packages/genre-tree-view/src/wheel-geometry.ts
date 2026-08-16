@@ -6,6 +6,19 @@ export function getChipAngle(index: number, totalCount: number): number {
   return index * (360 / totalCount);
 }
 
+/** Minimum wheel radius so adjacent chips — each up to `maxChipWidth` wide in the worst case —
+ * don't overlap. The chord between two adjacent chip anchor points on the circle
+ * (2 * radius * sin(pi / rootCount)) must be at least `maxChipWidth` plus a small gap; solving
+ * for radius gives the minimum that keeps every pair of neighbors clear. Falls back to
+ * `baseRadius` when that's already big enough, or when there's only one chip and so no neighbor
+ * to overlap. */
+export function calculateWheelRadius(rootCount: number, maxChipWidth: number, baseRadius: number): number {
+  if (rootCount <= 1) return baseRadius;
+  const CHIP_GAP = 16;
+  const requiredRadius = (maxChipWidth + CHIP_GAP) / (2 * Math.sin(Math.PI / rootCount));
+  return Math.max(baseRadius, requiredRadius);
+}
+
 function mod360(value: number): number {
   return ((value % 360) + 360) % 360;
 }

@@ -5,7 +5,7 @@ import { MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTree } from "./GenreTree";
 import { groupNodesByRoot } from "./root-grouping";
-import { computeRotationForSelection, getChipAngle } from "./wheel-geometry";
+import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "./wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -13,11 +13,12 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  MAX_NODE_HEIGHT,
+  MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
-  WHEEL_VIEWPORT_HEIGHT,
 } from "./constants";
 
 export interface GenreTreeWheelProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
@@ -52,6 +53,17 @@ export function GenreTreeWheel({
   onUploadFiles,
 }: GenreTreeWheelProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
+
+  // The largest a chip can ever render is MAX_NODE_WIDTH (the root with the highest itemCount in
+  // range always sits at the top of the scale — see calculateNodeDimensions), so that's the
+  // width every neighboring pair of chips needs clearance for, regardless of which root actually
+  // ends up at that size. WHEEL_RADIUS is a floor: the wheel never shrinks below its default, only
+  // grows to fit more/larger chips.
+  const wheelRadius = useMemo(
+    () => calculateWheelRadius(groups.length, MAX_NODE_WIDTH, WHEEL_RADIUS),
+    [groups.length],
+  );
+  const wheelViewportHeight = wheelRadius * 2 + MAX_NODE_HEIGHT / 2;
 
   // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
   // against) reflects the full subtree total instead, mirroring the tree's own rollup in
@@ -118,8 +130,8 @@ export function GenreTreeWheel({
       className={["gtv-wheel-container", className].filter(Boolean).join(" ")}
       style={
         {
-          "--gtv-wheel-radius": `${WHEEL_RADIUS}px`,
-          "--gtv-wheel-viewport-height": `${WHEEL_VIEWPORT_HEIGHT}px`,
+          "--gtv-wheel-radius": `${wheelRadius}px`,
+          "--gtv-wheel-viewport-height": `${wheelViewportHeight}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
