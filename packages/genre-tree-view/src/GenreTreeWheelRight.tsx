@@ -3,7 +3,7 @@
 import { WheelCore } from "./GenreTreeWheelBase";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 
-export interface GenreTreeWheelProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
+export interface GenreTreeWheelRightProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
   nodes: GenreTreeNode[];
   /** Fired whenever the selected root changes — on mount with the default selection, and on every chip click. */
   onRootSelect?: (rootId: string) => void;
@@ -13,11 +13,11 @@ export interface GenreTreeWheelProps extends Omit<GenreTreeProps, "nodes" | "roo
 }
 
 /**
- * All root genres distributed evenly around a wheel hugging the bottom of its container.
- * Clicking a chip rotates the wheel so that root lands at the top-center, and swaps in its
- * subtree — rendered as a single vertical `<GenreTree>` growing upward from that anchor.
+ * All root genres distributed evenly around a wheel hugging the left edge of its container.
+ * Clicking a chip rotates the wheel so that root lands at the right-center, and swaps in its
+ * subtree — rendered as a single `<GenreTree>` growing rightward from that anchor.
  * Only the selected root's subtree is ever mounted.
  */
-export function GenreTreeWheel(props: GenreTreeWheelProps) {
-  return <WheelCore {...props} direction="bottom" />;
+export function GenreTreeWheelRight(props: GenreTreeWheelRightProps) {
+  return <WheelCore {...props} direction="left" />;
 }

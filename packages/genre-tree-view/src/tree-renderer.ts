@@ -37,6 +37,7 @@ interface SvgDimensions {
   svgWidth: number;
   svgHeight: number;
   highestVerticalCoordinate: number;
+  rootDepthOffset: number;
 }
 
 export interface RenderTreeCallbacks {
@@ -101,7 +102,47 @@ export function calculateSvgDimensions(
     // this function and the field isn't worth renaming just for that.
     const rootCenteringOffset = svgWidth / 2 - rootAnchorX;
 
-    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset };
+    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset: 0 };
+  }
+
+  if (orientation === "horizontal-anchored") {
+    const svgWidth =
+      maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
+
+    // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
+    // root's own breadth coordinate keeps the root exactly at svgHeight/2 — same technique as the
+    // vertical branch above, but on the Y (breadth) axis since depth grows along X here instead.
+    const rootHeight = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).HEIGHT;
+    const rootAnchorY = treeData.x! + rootHeight / 2;
+
+    const topmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
+    const bottommostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
+    const topHalfExtent =
+      rootAnchorY - topmostBreadthCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
+    const bottomHalfExtent =
+      bottommostBreadthCoordinate - rootAnchorY + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
+    const svgHeight = Math.max(topHalfExtent, bottomHalfExtent) * 2;
+
+    // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, same as
+    // the vertical branch above.
+    const rootCenteringOffset = svgHeight / 2 - rootAnchorY;
+
+    // A hidden root's own width is otherwise baked into every consumer's `d.x + width / 2`
+    // convention (see the comment on the vertical branch above) same as it is for a hidden root's
+    // breadth position — except here that convention pushes the root's rendered center *away*
+    // from the anchor (depth grows in +x, toward larger x) instead of into it, since the anchor
+    // sits at this axis's near/zero end rather than its far end the way the vertical branch's
+    // bottom-pinned anchor does. Pulling everything back by the root's own width before that
+    // `+ width / 2` is applied lands the root's rendered center exactly one half-width *behind*
+    // x=0 — i.e. inside the anchor's chip, matching the vertical branch's root landing inside its
+    // chip too. setupTreeLayout applies this shift to every node, not just the root: shifting only
+    // the root would leave the root→depth-1 link one rootWidth longer than every later
+    // depth-to-depth link, since a per-depth offset cancels out of a distance calculation only
+    // when it's the same on both ends.
+    const rootWidth = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).WIDTH;
+    const rootDepthOffset = hideRoot ? -rootWidth : 0;
+
+    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset };
   }
 
   const highestNodeVerticalCoordinate = d3Lib.min(nodes, (d) => d.x)!;
@@ -114,7 +155,7 @@ export function calculateSvgDimensions(
 
   const svgWidth = maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
-  return { svgWidth, svgHeight, highestVerticalCoordinate };
+  return { svgWidth, svgHeight, highestVerticalCoordinate, rootDepthOffset: 0 };
 }
 
 export function setupTreeLayout(
@@ -122,12 +163,27 @@ export function setupTreeLayout(
   treeData: D3Node,
   highestVerticalCoordinate: number,
   orientation: TreeOrientation = "horizontal",
+  rootDepthOffset = 0,
 ): D3Node {
   if (orientation === "vertical") {
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
       d.y = (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION;
+    });
+    return treeData;
+  }
+
+  if (orientation === "horizontal-anchored") {
+    // Applied to every node, not just the root: a root-only offset would leave the
+    // root→depth-1 gap one rootWidth wider than every later depth-to-depth gap, since it'd
+    // shift only one end of that first link. Shifting the whole depth axis instead keeps every
+    // gap the uniform HORIZONTAL_SEPARATION_BETWEEN_NODES, while still landing the root's own
+    // rendered center on the anchor (see the comment on rootDepthOffset above).
+    treeData.each(function (d) {
+      const tempX = d.x!;
+      d.x = d.y! + rootDepthOffset;
+      d.y = tempX + highestVerticalCoordinate;
     });
     return treeData;
   }
