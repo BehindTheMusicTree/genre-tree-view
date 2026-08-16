@@ -30,6 +30,21 @@ function getScale(div: HTMLElement) {
   return match ? Number(match[1]) : NaN;
 }
 
+// jsdom's getBoundingClientRect() always returns all-zero rects, which isn't enough to exercise
+// fit-to-frame's actual scale computation — this fakes real rects for specific elements, keyed by
+// identity since GenreTreeWheelRight has several DOM nodes of the same tag.
+const makeRect = (left: number, top: number, width: number, height: number): DOMRect => ({
+  left,
+  top,
+  right: left + width,
+  bottom: top + height,
+  width,
+  height,
+  x: left,
+  y: top,
+  toJSON: () => ({}),
+});
+
 describe("GenreTreeWheelRight", () => {
   it("hugs the left edge via the gtv-wheel-container--left modifier class", () => {
     const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
@@ -206,5 +221,39 @@ describe("GenreTreeWheelRight", () => {
 
     expect(emptyChip.style.width).not.toBe(flatChip.style.width);
     expect(parseFloat(emptyChip.style.width)).toBeGreaterThan(parseFloat(flatChip.style.width));
+  });
+
+  it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
+    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+    const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
+    const treeAnchor = container.querySelector(".gtv-wheel-tree-anchor") as HTMLElement;
+    const transformDiv = getTransformDiv(container);
+    const baseScale = getScale(transformDiv);
+
+    const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+      if (this === circle) return makeRect(0, 200, 1200, 1200);
+      if (this === treeAnchor) return makeRect(200, 0, 400, 200);
+      return makeRect(0, 0, 0, 0);
+    });
+
+    fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
+
+    expect(getScale(transformDiv)).toBeLessThan(baseScale);
+
+    rectSpy.mockRestore();
+  });
+
+  it("fit-to-frame is a no-op when no target element is measurable", () => {
+    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const transformDiv = getTransformDiv(container);
+    const baseScale = getScale(transformDiv);
+
+    fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
+
+    expect(getScale(transformDiv)).toBe(baseScale);
   });
 });

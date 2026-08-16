@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampZoomScale, computeZoomScale, computeZoomScaleForButton } from "../zoom-pan";
+import { clampZoomScale, computeFitScale, computeZoomScale, computeZoomScaleForButton } from "../zoom-pan";
 import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
 
 describe("clampZoomScale", () => {
@@ -52,5 +52,33 @@ describe("computeZoomScaleForButton", () => {
   it("clamps the result to the configured bounds", () => {
     expect(computeZoomScaleForButton(ZOOM_MAX_SCALE, 1)).toBe(ZOOM_MAX_SCALE);
     expect(computeZoomScaleForButton(ZOOM_MIN_SCALE, -1)).toBe(ZOOM_MIN_SCALE);
+  });
+});
+
+describe("computeFitScale", () => {
+  it("picks width as the constraining dimension when it fits less tightly", () => {
+    // scaleX = 1000/800 = 1.25, scaleY = 1000/200 = 5 — width wins.
+    expect(computeFitScale(800, 200, 1000, 1000, 0)).toBeCloseTo(1.25);
+  });
+
+  it("picks height as the constraining dimension when it fits less tightly", () => {
+    // scaleX = 1000/200 = 5, scaleY = 1000/800 = 1.25 — height wins.
+    expect(computeFitScale(200, 800, 1000, 1000, 0)).toBeCloseTo(1.25);
+  });
+
+  it("shrinks the effective viewport by padding on every side", () => {
+    expect(computeFitScale(100, 100, 200, 200, 0)).toBeCloseTo(2);
+    expect(computeFitScale(100, 100, 200, 200, 50)).toBeCloseTo(1);
+  });
+
+  it("clamps only the upper bound, never the lower one", () => {
+    // Content far smaller than the viewport clamps to ZOOM_MAX_SCALE — no point zooming in
+    // further than that just because there's little content.
+    expect(computeFitScale(1, 1, 1000, 1000, 0)).toBe(ZOOM_MAX_SCALE);
+    // Content far larger than the viewport must shrink below ZOOM_MIN_SCALE to actually fit —
+    // clamping it at ZOOM_MIN_SCALE here would render content too big for the viewport while
+    // still centering on the full bounding box, cropping it instead of fitting it.
+    expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeLessThan(ZOOM_MIN_SCALE);
+    expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeCloseTo(0.01);
   });
 });

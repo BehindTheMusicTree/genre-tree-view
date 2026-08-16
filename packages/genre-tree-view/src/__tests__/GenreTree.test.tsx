@@ -171,6 +171,21 @@ describe("GenreTree", () => {
       return match ? Number(match[1]) : NaN;
     };
 
+    // jsdom's getBoundingClientRect() always returns all-zero rects, which isn't enough to
+    // exercise fit-to-frame's actual scale computation — this fakes real rects for specific
+    // elements, keyed by identity since GenreTree has several DOM nodes of the same tag.
+    const makeRect = (left: number, top: number, width: number, height: number): DOMRect => ({
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    });
+
     it("ctrl+wheel scales the shared transform, anchored on the cursor", () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
@@ -300,6 +315,38 @@ describe("GenreTree", () => {
       expect(scrollBySpy).not.toHaveBeenCalled();
 
       scrollBySpy.mockRestore();
+    });
+
+    it("fit-to-frame button rescales the shared transform to fit content larger than the viewport", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const wrapper = container.firstChild as HTMLElement;
+      const svg = container.querySelector("svg") as SVGSVGElement;
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
+
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wrapper) return makeRect(0, 0, 800, 600);
+        if (this === svg) return makeRect(0, 0, 2000, 1500);
+        return makeRect(0, 0, 0, 0);
+      });
+
+      fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
+
+      expect(getScale(transformDiv)).toBeLessThan(baseScale);
+
+      rectSpy.mockRestore();
+    });
+
+    it("fit-to-frame is a no-op when the target element isn't measurable", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
+
+      fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
+
+      expect(getScale(transformDiv)).toBe(baseScale);
     });
   });
 });

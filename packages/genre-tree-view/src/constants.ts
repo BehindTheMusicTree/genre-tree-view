@@ -193,3 +193,6 @@ export const ZOOM_WHEEL_SCALE_SPEED = 0.0015;
 // ctrl+scroll/pinch, which some trackpad/OS/browser combinations never translate into a
 // ctrlKey wheel event at all.
 export const ZOOM_BUTTON_SCALE_STEP = 1.2;
+// Breathing room (px) kept around content when "fit to frame" computes a scale — content is
+// never scaled to touch the viewport's edges exactly.
+export const ZOOM_FIT_PADDING = 40;

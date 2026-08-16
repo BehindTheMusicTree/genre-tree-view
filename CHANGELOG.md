@@ -14,6 +14,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `GenreTreeWheel`.
 - `centerLabel` prop on `GenreTreeWheel` — an optional label (e.g. a brand name) centered on
   the wheel's pivot point, staying upright and fixed regardless of the wheel's rotation.
+- A "Fit to frame" button next to the zoom in/out controls on `GenreTree`, `GenreTreeWheel`, and
+  `GenreTreeWheelRight` — recenters and rescales the shared pan/zoom transform so all currently
+  rendered content fits inside the viewport with some padding.
 
 ### Changed
 
