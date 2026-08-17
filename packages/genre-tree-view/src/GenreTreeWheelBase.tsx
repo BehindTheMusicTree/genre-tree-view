@@ -7,6 +7,7 @@ import { GenreTree } from "./GenreTree";
 import { groupNodesByRoot } from "./root-grouping";
 import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "./wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
+import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
   calculateNodeDimensions,
@@ -276,7 +277,9 @@ export function WheelCore({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() => panZoom.fitToFrame([wheelCircleRef.current, treeAnchorRef.current])}
+          onClick={() =>
+            panZoom.fitToFrame([wheelCircleRef.current, ...queryTreeContentElements(treeAnchorRef.current)])
+          }
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />

@@ -9,6 +9,7 @@ import { calculateLocalRootDimensions } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { calculateWheelRadiusForAngles, computeRadialLayout } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
+import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
   calculateNodeDimensions,
@@ -298,7 +299,12 @@ export function WheelRadialCore({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() => panZoom.fitToFrame([wheelCircleRef.current, ...Object.values(anchorRefs.current)])}
+          onClick={() =>
+            panZoom.fitToFrame([
+              wheelCircleRef.current,
+              ...Object.values(anchorRefs.current).flatMap((el) => queryTreeContentElements(el)),
+            ])
+          }
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />

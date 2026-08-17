@@ -227,7 +227,6 @@ describe("GenreTreeWheelRight", () => {
     const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
-    const treeAnchor = container.querySelector(".gtv-wheel-tree-anchor") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -236,7 +235,7 @@ describe("GenreTreeWheelRight", () => {
     ) {
       if (this === wheelContainer) return makeRect(0, 0, 800, 600);
       if (this === circle) return makeRect(0, 200, 1200, 1200);
-      if (this === treeAnchor) return makeRect(200, 0, 400, 200);
+      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(200, 0, 400, 200);
       return makeRect(0, 0, 0, 0);
     });
 

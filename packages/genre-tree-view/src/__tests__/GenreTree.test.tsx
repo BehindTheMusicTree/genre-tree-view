@@ -320,7 +320,6 @@ describe("GenreTree", () => {
     it("fit-to-frame button rescales the shared transform to fit content larger than the viewport", () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
-      const svg = container.querySelector("svg") as SVGSVGElement;
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
 
@@ -328,7 +327,7 @@ describe("GenreTree", () => {
         this: Element,
       ) {
         if (this === wrapper) return makeRect(0, 0, 800, 600);
-        if (this === svg) return makeRect(0, 0, 2000, 1500);
+        if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(0, 0, 2000, 1500);
         return makeRect(0, 0, 0, 0);
       });
 
