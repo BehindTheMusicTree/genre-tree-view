@@ -46,6 +46,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   enough roots that a fixed radius would crowd their anchor points together — previously, with
   many roots and/or item counts large enough to push chips toward `MAX_NODE_WIDTH`, neighboring
   chips (and their labels) could overlap.
+- "Fit to frame" (on `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, and
+  `GenreTreeWheelRadial`) now measures only the rendered cards/links instead of the whole SVG's
+  declared bounds, which baked in space reserved for hover toolbars/menus — previously this left
+  large, asymmetric gaps around the tree and an off-center result. The computed scale is also
+  capped at 1 so fitting never zooms in past a tree's natural size, which could otherwise inflate
+  that reserved toolbar/menu space past its padding and clip it against the viewport.
 
 ## [0.5.0] - 2026-08-14
 
