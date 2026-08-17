@@ -34,6 +34,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   across the wide item-count ranges real track counts span (tens to tens of thousands) — a linear
   scale would flatten nearly every node down near the minimum size and let only the largest few
   stand out.
+- Depth-axis spacing (the gap between successive generations) reduced 20% for both `GenreTree`
+  orientations, so trees read more compactly without changing sibling/breadth spacing.
 
 ### Fixed
 
