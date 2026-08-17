@@ -243,7 +243,7 @@ describe("GenreTreeWheelRadial", () => {
     ) {
       if (this === wheelContainer) return makeRect(0, 0, 800, 600);
       if ((this as HTMLElement).classList?.contains("gtv-wheel-circle")) return makeRect(0, 200, 1200, 1200);
-      if ((this as HTMLElement).classList?.contains("gtv-wheel-radial-tree-anchor")) return makeRect(200, 0, 400, 200);
+      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(200, 0, 400, 200);
       return makeRect(0, 0, 0, 0);
     });
 

@@ -57,24 +57,30 @@ describe("computeZoomScaleForButton", () => {
 
 describe("computeFitScale", () => {
   it("picks width as the constraining dimension when it fits less tightly", () => {
-    // scaleX = 1000/800 = 1.25, scaleY = 1000/200 = 5 — width wins.
-    expect(computeFitScale(800, 200, 1000, 1000, 0)).toBeCloseTo(1.25);
+    // scaleX = 500/800 = 0.625, scaleY = 1000/200 = 5 — width wins. Kept below 1 so the scale=1
+    // cap doesn't mask which dimension actually won.
+    expect(computeFitScale(800, 200, 500, 1000, 0)).toBeCloseTo(0.625);
   });
 
   it("picks height as the constraining dimension when it fits less tightly", () => {
-    // scaleX = 1000/200 = 5, scaleY = 1000/800 = 1.25 — height wins.
-    expect(computeFitScale(200, 800, 1000, 1000, 0)).toBeCloseTo(1.25);
+    // scaleX = 1000/200 = 5, scaleY = 500/800 = 0.625 — height wins. Kept below 1 so the scale=1
+    // cap doesn't mask which dimension actually won.
+    expect(computeFitScale(200, 800, 1000, 500, 0)).toBeCloseTo(0.625);
   });
 
   it("shrinks the effective viewport by padding on every side", () => {
-    expect(computeFitScale(100, 100, 200, 200, 0)).toBeCloseTo(2);
-    expect(computeFitScale(100, 100, 200, 200, 50)).toBeCloseTo(1);
+    expect(computeFitScale(300, 300, 200, 200, 0)).toBeCloseTo(0.667, 2);
+    expect(computeFitScale(300, 300, 200, 200, 50)).toBeCloseTo(0.333, 2);
+  });
+
+  it("caps at 1 — never zooms in past the tree's natural size", () => {
+    // Content far smaller than the viewport would compute a scale > 1 (and even > ZOOM_MAX_SCALE)
+    // if left unbounded; capping at 1 avoids inflating the toolbar/menu clearance the layout
+    // reserves at natural size past what the fixed-px padding can still contain.
+    expect(computeFitScale(1, 1, 1000, 1000, 0)).toBe(1);
   });
 
   it("clamps only the upper bound, never the lower one", () => {
-    // Content far smaller than the viewport clamps to ZOOM_MAX_SCALE — no point zooming in
-    // further than that just because there's little content.
-    expect(computeFitScale(1, 1, 1000, 1000, 0)).toBe(ZOOM_MAX_SCALE);
     // Content far larger than the viewport must shrink below ZOOM_MIN_SCALE to actually fit —
     // clamping it at ZOOM_MIN_SCALE here would render content too big for the viewport while
     // still centering on the full bounding box, cropping it instead of fitting it.

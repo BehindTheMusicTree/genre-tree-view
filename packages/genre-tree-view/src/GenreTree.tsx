@@ -9,6 +9,7 @@ import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
 import { getGenreTreeColor, HOVER_BRIGHTNESS } from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
+import { queryTreeContentElements } from "./zoom-pan";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -203,7 +204,7 @@ export function GenreTree({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() => panZoom.fitToFrame([svgRef.current])}
+          onClick={() => panZoom.fitToFrame(queryTreeContentElements(svgRef.current))}
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />
