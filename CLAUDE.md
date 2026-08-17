@@ -74,7 +74,7 @@ and publishes to GitHub Packages on the pushed tag.
 ### Public surface
 
 `index.ts` is the sole export boundary: `GenreTree`, `GenreTreeWheel`, `getGenreTreeColor`,
-`WHEEL_DEFAULT_FRAME_HEIGHT`, `groupNodesByRoot`, and the public types (`GenreTreeNode`,
+`DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`, `groupNodesByRoot`, and the public types (`GenreTreeNode`,
 `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`, `GenreTreeWheelProps`,
 `GenreTreeRootGroup`). Anything not re-exported here is a private implementation detail — treat
 new internals as private unless a consumer need is established.

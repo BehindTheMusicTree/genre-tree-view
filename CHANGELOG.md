@@ -39,6 +39,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Replaced each node's small root-color accent dot with a subtle tint of that color across the
   whole node background, so a subtree's root color reads at a glance across the tree instead of
   needing a close look at each node's corner.
+- **Breaking:** `WHEEL_DEFAULT_FRAME_HEIGHT` renamed to `DEFAULT_FRAME_HEIGHT` (600 → 750) and
+  joined by a new `DEFAULT_FRAME_WIDTH` (1200) — the suggested size no longer names `GenreTreeWheel`
+  specifically, since it's a sensible fixed-size ancestor for any `GenreTree`/`GenreTreeWheel`
+  variant, not just the wheel.
 
 ### Fixed
 

@@ -191,11 +191,12 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 
-// Suggested height for the fixed-height ancestor GenreTreeWheel requires (see its own doc
-// comment): enough room for a typically-deep tree above the wheel strip. Not derived from
-// WHEEL_VIEWPORT_HEIGHT/WHEEL_RADIUS — those size the wheel-of-chips only, not the
-// variable-depth tree growing above it.
-export const WHEEL_DEFAULT_FRAME_HEIGHT = 600;
+// Suggested size for the fixed-size ancestor any GenreTree/GenreTreeWheel variant requires (see
+// GenreTreeWheel's own doc comment): enough room for a typically-deep tree, or the wheel's chip
+// strip plus a typically-deep tree above it. Not derived from WHEEL_VIEWPORT_HEIGHT/WHEEL_RADIUS
+// — those size the wheel-of-chips only, not the variable-depth tree growing above it.
+export const DEFAULT_FRAME_WIDTH = 1200;
+export const DEFAULT_FRAME_HEIGHT = 750;
 
 export const WHEEL_ROTATION_TRANSITION_MS = 500;
 export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";

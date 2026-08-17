@@ -5,7 +5,8 @@ import {
   GenreTreeWheelRadial,
   GenreTreeWheelRight,
   groupNodesByRoot,
-  WHEEL_DEFAULT_FRAME_HEIGHT,
+  DEFAULT_FRAME_WIDTH,
+  DEFAULT_FRAME_HEIGHT,
   type GenreTreeNode,
   type GenreTreePlayState,
 } from "@behindthemusictree/genre-tree-view";
@@ -351,7 +352,6 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
 const largeWheelNodes: GenreTreeNode[] = LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index));
 
 let nextId = 1;
-const STACKED_TREE_HEIGHT = 500;
 
 const TABS = [
   { id: "wheel", label: "Genre wheel" },
@@ -482,7 +482,14 @@ export function App() {
       </div>
 
       {activeTab === "wheel" && (
-        <div style={{ height: WHEEL_DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <div
+          style={{
+            width: DEFAULT_FRAME_WIDTH,
+            height: DEFAULT_FRAME_HEIGHT,
+            border: "1px solid #e4e4e7",
+            marginBottom: 32,
+          }}
+        >
           <GenreTreeWheel
             nodes={wheelNodes}
             {...wheelCallbacks}
@@ -493,7 +500,14 @@ export function App() {
       )}
 
       {activeTab === "wheel-right" && (
-        <div style={{ width: 800, height: 500, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <div
+          style={{
+            width: DEFAULT_FRAME_WIDTH,
+            height: DEFAULT_FRAME_HEIGHT,
+            border: "1px solid #e4e4e7",
+            marginBottom: 32,
+          }}
+        >
           <GenreTreeWheelRight
             nodes={wheelNodes}
             {...wheelCallbacks}
@@ -504,7 +518,14 @@ export function App() {
       )}
 
       {activeTab === "wheel-radial" && (
-        <div style={{ width: 800, height: 500, border: "1px solid #e4e4e7", marginBottom: 32 }}>
+        <div
+          style={{
+            width: DEFAULT_FRAME_WIDTH,
+            height: DEFAULT_FRAME_HEIGHT,
+            border: "1px solid #e4e4e7",
+            marginBottom: 32,
+          }}
+        >
           <GenreTreeWheelRadial
             nodes={wheelNodes}
             {...wheelCallbacks}
@@ -517,7 +538,10 @@ export function App() {
       {activeTab === "stacked" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 24 }}>
           {groups.map((group) => (
-            <div key={group.root.id} style={{ height: STACKED_TREE_HEIGHT, border: "1px solid #e4e4e7" }}>
+            <div
+              key={group.root.id}
+              style={{ width: DEFAULT_FRAME_WIDTH, height: DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7" }}
+            >
               <GenreTree nodes={group.nodes} {...sharedCallbacks} />
             </div>
           ))}
