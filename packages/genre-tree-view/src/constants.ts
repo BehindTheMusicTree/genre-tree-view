@@ -64,7 +64,7 @@ export function getGenreTreeColor(seed: string): string {
   return TREE_COLORS[index];
 }
 
-interface Dimensions {
+export interface Dimensions {
   WIDTH: number;
   HEIGHT: number;
 }

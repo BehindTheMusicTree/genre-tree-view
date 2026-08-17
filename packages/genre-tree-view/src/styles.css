@@ -392,6 +392,7 @@ g.node:hover {
 
 @media (prefers-reduced-motion: no-preference) {
   .gtv-wheel,
+  .gtv-wheel-slot,
   .gtv-wheel-chip {
     transition: transform var(--gtv-wheel-rotation-transition-ms, 500ms)
       var(--gtv-wheel-rotation-easing, ease);
@@ -444,5 +445,92 @@ g.node:hover {
   left: auto;
   right: 0;
   margin-left: 0;
+  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+}
+
+/* GenreTreeWheelRadial — full circle centered in the container, up to 4 roots developed
+   simultaneously at the cardinal points instead of one. The stage collapses to a single point
+   at the container's center (width/height both 0) rather than hugging an edge, so every
+   percentage-based child offset below resolves the same way the two edge-hugging variants'
+   already do against their own zero-size axis — see .gtv-wheel-stage / .gtv-wheel-tree-anchor
+   above for why "100%" of a zero-size containing block is just 0. */
+
+.gtv-wheel-container--radial .gtv-wheel-stage {
+  left: 50%;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+
+/* One anchor div per cardinal, all glued to the stage's single point by default (bottom/top/
+   left/right: 0) and pushed out to the circle's rim via the growth axis. Unlike the two
+   edge-hugging wheels, the radial stage's own zero point sits at the circle's CENTER (see
+   .gtv-wheel-container--radial .gtv-wheel-stage above), not already on the rim — so each
+   anchor's offset must cover the wheel radius itself, plus the mounted root's own chip
+   half-extent (the same per-side clearance the other wheels' tree-anchors add on top of their
+   already-on-the-rim zero point). Applied inline from JS via the matching offset property
+   (bottom/left/top/right) — simpler than a CSS var here since, unlike the rotating single-tree
+   wheels, these 4 anchors never share one value. */
+.gtv-wheel-radial-tree-anchor {
+  position: absolute;
+}
+
+.gtv-wheel-radial-tree-anchor--top {
+  left: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+
+.gtv-wheel-radial-tree-anchor--right {
+  left: 0;
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.gtv-wheel-radial-tree-anchor--bottom {
+  left: 0;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.gtv-wheel-radial-tree-anchor--left {
+  right: 0;
+  top: 0;
+  transform: translateY(-50%);
+}
+
+/* Focus+context treatment: the just-clicked (right-landing) tree stays at full opacity via
+   the absence of this class; the other 3 developed trees dim until hovered/focused so the
+   just-selected one reads as primary without hiding the rest of the context. */
+.gtv-wheel-radial-tree-anchor--secondary {
+  opacity: 0.68;
+  transition: opacity 150ms ease;
+}
+
+.gtv-wheel-radial-tree-anchor--secondary:hover,
+.gtv-wheel-radial-tree-anchor--secondary:focus-within {
+  opacity: 1;
+}
+
+.gtv-wheel-container--radial .gtv-wheel-circle {
+  top: 50%;
+  left: 50%;
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+}
+
+.gtv-wheel-container--radial .gtv-wheel-center-label {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gtv-wheel-container--radial .gtv-wheel {
+  top: 50%;
+  left: 50%;
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
 }

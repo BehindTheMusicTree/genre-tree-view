@@ -17,6 +17,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A "Fit to frame" button next to the zoom in/out controls on `GenreTree`, `GenreTreeWheel`, and
   `GenreTreeWheelRight` — recenters and rescales the shared pan/zoom transform so all currently
   rendered content fits inside the viewport with some padding.
+- `GenreTreeWheelRadial`, a fourth tree renderer: a full-circle wheel centered in its container
+  where up to 4 root genres are developed (their full subtree rendered) at once, one per cardinal
+  direction, instead of just one. Clicking any chip — developed or not — re-lays-out the whole
+  ring so that root lands on the right and recalculates the other 3 cardinals; the 3 non-clicked
+  developed trees render dimmed until hovered or focused. Shares the same props, callbacks, and
+  pan/zoom/fit-to-frame controls as the other wheel variants.
 
 ### Changed
 
