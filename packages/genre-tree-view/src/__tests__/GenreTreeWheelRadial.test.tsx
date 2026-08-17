@@ -31,6 +31,26 @@ const NODES_FIVE: GenreTreeNode[] = [
   { id: "e-child", parentId: "root-e", name: "Doom", itemCount: 0 },
 ];
 
+// 6 roots, ring order a..f — with the default top root (a, index 0), cardinal ring offsets are
+// [0,2,3,5] (getCardinalRingOffsets(6)), landing at 90deg (right): a=90, c=180, d=270, f=0(top),
+// with b/e as arc fillers at 135/315. Clicking b (topIndex -> 1) moves f from the top cardinal
+// (raw 0deg) to a filler slot at raw 315deg — a scenario that only a continuous-angle chip that
+// unwraps to -45deg (not 315deg) takes the correct short path for.
+const NODES_SIX: GenreTreeNode[] = [
+  { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+  { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
+  { id: "root-b", parentId: null, name: "Electronic", itemCount: 0 },
+  { id: "b-child", parentId: "root-b", name: "Techno", itemCount: 0 },
+  { id: "root-c", parentId: null, name: "Jazz", itemCount: 0 },
+  { id: "c-child", parentId: "root-c", name: "Bebop", itemCount: 0 },
+  { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
+  { id: "d-child", parentId: "root-d", name: "Bluegrass", itemCount: 0 },
+  { id: "root-e", parentId: null, name: "Metal", itemCount: 0 },
+  { id: "e-child", parentId: "root-e", name: "Doom", itemCount: 0 },
+  { id: "root-f", parentId: null, name: "Blues", itemCount: 0 },
+  { id: "f-child", parentId: "root-f", name: "Delta", itemCount: 0 },
+];
+
 function chipFor(container: HTMLElement, name: string) {
   return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find((el) =>
     el.textContent?.startsWith(name),
@@ -120,6 +140,19 @@ describe("GenreTreeWheelRadial", () => {
     // {2,3,0,1} = c,d,a,b — e (index 4) is the one that falls out of the cardinals.
     expect(chipFor(container, "Metal").className).not.toContain("gtv-wheel-chip--selected");
     expect(container.querySelector("#group-e-child")).toBeFalsy();
+  });
+
+  it("carries a chip's angle across the wrap point so it transitions the short way, not the raw re-wrapped angle", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_SIX} />);
+
+    // Initial layout (topIndex 0): Blues (f) is the top cardinal, raw/continuous angle 0deg.
+    expect(chipFor(container, "Blues").parentElement?.style.getPropertyValue("--gtv-chip-angle")).toBe("0deg");
+
+    // Clicking Electronic (b) moves the top cardinal off Blues; its new raw wrapped angle is
+    // 315deg, but the short path from its previous 0deg is -45deg, not +315deg.
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(chipFor(container, "Blues").parentElement?.style.getPropertyValue("--gtv-chip-angle")).toBe("-45deg");
   });
 
   it("fires onRootSelect on mount with the default root and again on click", () => {
