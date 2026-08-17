@@ -36,6 +36,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   stand out.
 - Depth-axis spacing (the gap between successive generations) reduced 20% for both `GenreTree`
   orientations, so trees read more compactly without changing sibling/breadth spacing.
+- **Breaking:** `WHEEL_DEFAULT_FRAME_HEIGHT` renamed to `DEFAULT_FRAME_HEIGHT` (600 → 750) and
+  joined by a new `DEFAULT_FRAME_WIDTH` (1200) — the suggested size no longer names `GenreTreeWheel`
+  specifically, since it's a sensible fixed-size ancestor for any `GenreTree`/`GenreTreeWheel`
+  variant, not just the wheel.
 
 ### Fixed
 
