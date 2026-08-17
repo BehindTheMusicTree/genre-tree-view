@@ -10,7 +10,7 @@ import {
   type NodeActionCallbacks,
 } from "../NodeHelper";
 import { getItemCountRange } from "../constants";
-import type { GenreTreeNode } from "../types";
+import type { GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
   document.body.innerHTML = "";
@@ -348,5 +348,25 @@ describe("addToolbarActions", () => {
     expect(deleteRow.className).toContain("gtv-menu-row--danger");
     deleteRow.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onDeleteRequest).toHaveBeenCalledWith(node);
+  });
+
+  it("floats the toolbar toward the leaves for all four orientations", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+
+    function toolbarPosition(orientation: TreeOrientation) {
+      const { svgEl, g } = createSvgGroup(node);
+      addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]), orientation);
+      const foreignObject = svgEl.querySelector('[id="toolbar-n1"] foreignObject')!;
+      return { x: Number(foreignObject.getAttribute("x")), y: Number(foreignObject.getAttribute("y")) };
+    }
+
+    // "horizontal"/"horizontal-anchored": depth grows right, so the toolbar sits to the right (x > 0).
+    expect(toolbarPosition("horizontal").x).toBeGreaterThan(0);
+    // "horizontal-anchored-flipped": depth grows left, so the toolbar sits to the left (x < 0).
+    expect(toolbarPosition("horizontal-anchored-flipped").x).toBeLessThan(0);
+    // "vertical": depth grows up, so the toolbar sits above the card (y < 0).
+    expect(toolbarPosition("vertical").y).toBeLessThan(0);
+    // "vertical-flipped": depth grows down, so the toolbar sits below the card (y > 0).
+    expect(toolbarPosition("vertical-flipped").y).toBeGreaterThan(0);
   });
 });

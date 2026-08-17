@@ -13,8 +13,34 @@ export type GenreTreePlayState = "playing" | "paused" | "loading";
  * upward from a bottom-anchored root — used by GenreTreeWheel. "horizontal-anchored" grows
  * rightward like "horizontal" but anchors the root at a fixed local coordinate
  * (0, svgHeight / 2) regardless of tree shape, instead of "horizontal"'s unanchored top-aligned
- * bounding box — used by GenreTreeWheelRight. */
-export type TreeOrientation = "horizontal" | "vertical" | "horizontal-anchored";
+ * bounding box — used by GenreTreeWheelRight. "vertical-flipped" mirrors "vertical": children
+ * grow downward from a top-anchored root. "horizontal-anchored-flipped" mirrors
+ * "horizontal-anchored": children grow leftward from a root anchored at (svgWidth, svgHeight / 2).
+ * The four anchored/mirrored variants are used by GenreTreeWheelRadial's top/right/bottom/left
+ * cardinals respectively (vertical / horizontal-anchored / vertical-flipped /
+ * horizontal-anchored-flipped). */
+export type TreeOrientation =
+  | "horizontal"
+  | "vertical"
+  | "horizontal-anchored"
+  | "vertical-flipped"
+  | "horizontal-anchored-flipped";
+
+/** True for the two orientations whose depth axis is Y (root-to-leaf grows vertically) rather
+ * than X. */
+export function isVerticalOrientation(orientation: TreeOrientation): boolean {
+  return orientation === "vertical" || orientation === "vertical-flipped";
+}
+
+/** +1 if depth increases in the positive direction of its axis (down for "vertical-flipped",
+ * right for "horizontal"/"horizontal-anchored"); -1 if it increases in the negative direction (up
+ * for "vertical", left for "horizontal-anchored-flipped"). Determines which side of a card is
+ * "toward the leaves" so the hover toolbar/hit-rect always extends that way, never toward the
+ * parent. */
+export function depthAxisSign(orientation: TreeOrientation): 1 | -1 {
+  if (orientation === "vertical" || orientation === "horizontal-anchored-flipped") return -1;
+  return 1;
+}
 
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];

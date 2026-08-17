@@ -4,7 +4,7 @@ import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload } from "re
 import { PiGraphFill } from "react-icons/pi";
 import * as d3 from "d3";
 
-import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
+import { depthAxisSign, GenreTreeNode, GenreTreePlayState, isVerticalOrientation, TreeOrientation } from "./types";
 import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
@@ -15,6 +15,8 @@ import {
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
   calculateNodeDimensions,
+  Dimensions,
+  getItemCountRange,
   ItemCountRange,
 } from "./constants";
 
@@ -56,6 +58,19 @@ export function buildTreeHierarchyStructure(d3Lib: typeof import("d3"), nodes: G
     .stratify<GenreTreeNode>()
     .id((d) => d.id)
     .parentId((d) => d.parentId)(aggregatedNodes);
+}
+
+/** A subtree's rolled-up root count is the sum of the whole subtree, so it's always that
+ * subtree's own local maximum — meaning tree-renderer always sizes a hidden root against its own
+ * subtree's item-count range, never the range a caller might be using to compare that root
+ * against sibling roots elsewhere (e.g. a wheel's cross-root chip-sizing scale). Callers that need
+ * to predict a hidden root's rendered width/height — to reserve matching clearance for it — must
+ * mirror this same rollup + local-range computation rather than reusing their own cross-root
+ * scale. */
+export function calculateLocalRootDimensions(d3Lib: typeof import("d3"), nodes: GenreTreeNode[]): Dimensions {
+  const root = buildTreeHierarchyStructure(d3Lib, nodes);
+  const range = getItemCountRange(root.descendants().map((d) => d.data));
+  return calculateNodeDimensions(root.data.itemCount, range);
 }
 
 /** Adds the "select as new parent" overlay to a node while a reparent is in progress. */
@@ -309,13 +324,23 @@ export function addToolbarActions(
   const toolbarWidth = buttonCount * TOOLBAR_BUTTON_SIZE + (buttonCount - 1) * TOOLBAR_GAP + 6;
   const toolbarHeight = TOOLBAR_BUTTON_SIZE + 6;
 
-  // In vertical orientation (the wheel), same-depth siblings sit tightly side by side with no
-  // reserved toolbar headroom on that axis (see SIBLING_SEPARATION_BETWEEN_NODES) — a right-side
+  // In vertical orientations (the wheels), same-depth siblings sit tightly side by side with no
+  // reserved toolbar headroom on that axis (see SIBLING_SEPARATION_BETWEEN_NODES) — a side
   // toolbar would overlap the next sibling's card. The depth axis (above/below) has the slack
-  // instead, so the toolbar floats above the card there, centered, out of the sibling row entirely.
-  const isVertical = orientation === "vertical";
-  const x = isVertical ? -toolbarWidth / 2 : dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP;
-  const y = isVertical ? -dimensions.HEIGHT / 2 - toolbarHeight - TOOLBAR_MENU_X_GAP : -TOOLBAR_BUTTON_SIZE / 2 - 3;
+  // instead, so the toolbar floats clear of the card there, centered, out of the sibling row
+  // entirely — on whichever side of the card is toward the leaves, per depthAxisSign.
+  const isVertical = isVerticalOrientation(orientation);
+  const sign = depthAxisSign(orientation);
+  const x = isVertical
+    ? -toolbarWidth / 2
+    : sign === 1
+      ? dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP
+      : -dimensions.WIDTH / 2 - TOOLBAR_MENU_X_GAP - toolbarWidth;
+  const y = isVertical
+    ? sign === -1
+      ? -dimensions.HEIGHT / 2 - toolbarHeight - TOOLBAR_MENU_X_GAP
+      : dimensions.HEIGHT / 2 + TOOLBAR_MENU_X_GAP
+    : -TOOLBAR_BUTTON_SIZE / 2 - 3;
 
   const group = nodeGroup.append("g").attr("id", "toolbar-" + node.id).attr("class", "gtv-actions-panel");
 
@@ -359,10 +384,12 @@ export function addToolbarActions(
       if (key === "__more") {
         d3Lib.select(this).on("click", (event: MouseEvent) => {
           event.stopPropagation();
-          // Below the toolbar for horizontal (toward empty space); above it for vertical, since
-          // below would fall back onto the card the toolbar is already floating clear of.
+          // Stacks further along whichever direction the toolbar itself already floats clear of
+          // the card, so the menu never falls back onto it.
           const menuY = isVertical
-            ? y - menuItemsHeight(overflowItems) - TOOLBAR_MENU_X_GAP
+            ? sign === -1
+              ? y - menuItemsHeight(overflowItems) - TOOLBAR_MENU_X_GAP
+              : y + toolbarHeight + TOOLBAR_MENU_X_GAP
             : y + TOOLBAR_BUTTON_SIZE + 8;
           toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, x, menuY, overflowItems);
         });

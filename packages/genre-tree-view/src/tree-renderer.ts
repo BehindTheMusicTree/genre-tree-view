@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-import { GenreTreeNode, GenreTreePlayState, TreeOrientation } from "./types";
+import { depthAxisSign, GenreTreeNode, GenreTreePlayState, isVerticalOrientation, TreeOrientation } from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
@@ -66,8 +66,9 @@ export function calculateSvgDimensions(
   const maxNodeDimensions = { WIDTH: MAX_NODE_WIDTH, HEIGHT: MAX_NODE_HEIGHT };
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
 
-  if (orientation === "vertical") {
-    // Root sits at the bottom edge, so only that one side needs toolbar/menu clearance — the
+  if (isVerticalOrientation(orientation)) {
+    // Root sits at the bottom edge ("vertical") or top edge ("vertical-flipped"), so only that
+    // one side needs toolbar/menu clearance — the
     // horizontal branch below reserves the same ACTIONS_OVERLAY_HEIGHT split in half across its
     // two ends (top and bottom margins), so match that per-side amount rather than the full budget.
     // A hidden root renders no card and no toolbar, so it needs neither its own height nor that
@@ -102,10 +103,21 @@ export function calculateSvgDimensions(
     // this function and the field isn't worth renaming just for that.
     const rootCenteringOffset = svgWidth / 2 - rootAnchorX;
 
-    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset: 0 };
+    // "vertical": root sits at the depth axis's far end (y = svgHeight); the universal
+    // `+ height / 2` rendering convention (see appendPaths/renderTree) then pulls a hidden root's
+    // link-anchor point back toward y = svgHeight, i.e. toward the anchor it needs to coincide
+    // with — no extra offset needed, same as "horizontal-anchored-flipped" below.
+    // "vertical-flipped": root sits at the depth axis's near end (y = 0) instead, so that same
+    // `+ height / 2` convention pushes a hidden root's anchor point *away* from y = 0 by exactly
+    // one half-height — the mirror of "horizontal-anchored" needing `-rootWidth`, this needs an
+    // analogous `-rootHeight` pulled back into the depth axis so the push lands exactly at y = 0.
+    const rootHeight = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).HEIGHT;
+    const rootDepthOffset = hideRoot ? -rootHeight : 0;
+
+    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset };
   }
 
-  if (orientation === "horizontal-anchored") {
+  if (orientation === "horizontal-anchored" || orientation === "horizontal-anchored-flipped") {
     const svgWidth =
       maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
@@ -164,25 +176,42 @@ export function setupTreeLayout(
   highestVerticalCoordinate: number,
   orientation: TreeOrientation = "horizontal",
   rootDepthOffset = 0,
+  svgWidth = 0,
 ): D3Node {
-  if (orientation === "vertical") {
+  if (isVerticalOrientation(orientation)) {
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
-      d.y = (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION;
+      // "vertical": root anchored at the bottom (depthAxisSign -1), depth grows toward y=0.
+      // "vertical-flipped": root anchored at the top (depthAxisSign +1), depth grows toward
+      // maximumLevel * SEPARATION.
+      d.y =
+        depthAxisSign(orientation) === -1
+          ? (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION
+          : d.depth * VERTICAL_ORIENTATION_DEPTH_SEPARATION + rootDepthOffset;
     });
     return treeData;
   }
 
-  if (orientation === "horizontal-anchored") {
+  if (orientation === "horizontal-anchored" || orientation === "horizontal-anchored-flipped") {
     // Applied to every node, not just the root: a root-only offset would leave the
     // root→depth-1 gap one rootWidth wider than every later depth-to-depth gap, since it'd
     // shift only one end of that first link. Shifting the whole depth axis instead keeps every
     // gap the uniform HORIZONTAL_SEPARATION_BETWEEN_NODES, while still landing the root's own
     // rendered center on the anchor (see the comment on rootDepthOffset above).
+    //
+    // "horizontal-anchored-flipped" mirrors this around svgWidth instead of 0 — but unlike the
+    // non-flipped case, rootDepthOffset must NOT be applied here at all. The `+ width / 2`
+    // rendering convention (see renderTree) always shifts a node's center in the +x direction
+    // regardless of growth direction, so for the non-flipped anchor (depth grows toward +x) that
+    // convention pulls a hidden root's shifted position *back toward* the anchor, and
+    // rootDepthOffset must overshoot past it to land half a width behind. For the flipped anchor
+    // (depth grows toward -x), that same convention already pushes a hidden root's position
+    // *away from* the anchor by exactly one half-width on its own — applying rootDepthOffset on
+    // top double-counts that shift and pulls the root a full extra width off the anchor.
     treeData.each(function (d) {
       const tempX = d.x!;
-      d.x = d.y! + rootDepthOffset;
+      d.x = orientation === "horizontal-anchored" ? d.y! + rootDepthOffset : svgWidth - d.y!;
       d.y = tempX + highestVerticalCoordinate;
     });
     return treeData;
@@ -201,10 +230,9 @@ export function createTreeLayout(
   root: D3Node,
   orientation: TreeOrientation = "horizontal",
 ): D3Node {
-  const nodeSize: [number, number] =
-    orientation === "vertical"
-      ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION]
-      : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
+  const nodeSize: [number, number] = isVerticalOrientation(orientation)
+    ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION]
+    : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
   // d3's default separation() doubles the gap between same-depth nodes that don't share a
   // parent, which compounds up the tree for deeply-branching data and produces gaps several
   // times wider than the nodeSize slot itself. Every node already reserves its own slot via
@@ -300,10 +328,13 @@ export function renderTree(
   // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
   // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
   // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
-  // In vertical orientation the toolbar floats above the card instead of to its right (see
-  // addToolbarActions), so the gap a resting cursor can jitter across is the vertical one above
-  // the card, not the horizontal one beside it — extend the hit area upward instead of rightward.
-  const isVertical = orientation === "vertical";
+  // The toolbar always floats toward the leaves (see addToolbarActions/depthAxisSign), so the
+  // gap a resting cursor can jitter across — and thus the direction the hit area must extend
+  // past the card — depends on both the growth axis (isVertical) and its sign: up for
+  // "vertical", down for "vertical-flipped", right for "horizontal"/"horizontal-anchored", left
+  // for "horizontal-anchored-flipped".
+  const isVertical = isVerticalOrientation(orientation);
+  const sign = depthAxisSign(orientation);
   const toolbarClearance = TOOLBAR_BUTTON_SIZE + 6 + TOOLBAR_MENU_X_GAP;
   nodes
     .append("rect")
@@ -316,10 +347,17 @@ export function renderTree(
       "height",
       (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT + (isVertical ? toolbarClearance : 0),
     )
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
+    .attr(
+      "x",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2 -
+        (!isVertical && sign === -1 ? ACTIONS_OVERLAY_WIDTH : 0),
+    )
     .attr(
       "y",
-      (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2 - (isVertical ? toolbarClearance : 0),
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2 -
+        (isVertical && sign === -1 ? toolbarClearance : 0),
     )
     .attr("fill", "transparent")
     .attr("pointer-events", "all");

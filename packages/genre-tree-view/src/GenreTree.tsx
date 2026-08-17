@@ -63,6 +63,7 @@ export function GenreTree({
       highestVerticalCoordinate,
       orientation,
       rootDepthOffset,
+      width,
     );
 
     return {
