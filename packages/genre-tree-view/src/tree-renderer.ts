@@ -10,7 +10,6 @@ import {
   ACTIONS_OVERLAY_HEIGHT,
   TOOLBAR_BUTTON_SIZE,
   TOOLBAR_MENU_X_GAP,
-  SURFACE_FILL,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   ROOT_BORDER_WIDTH,
@@ -18,13 +17,12 @@ import {
   ELEVATION,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
-  PER_TREE_ACCENT_DOT,
-  ACCENT_DOT_SIZE,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getItemCountRange,
+  tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import { appendPaths } from "./d3-helper/d3-path-helper";
@@ -371,19 +369,10 @@ export function renderTree(
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .attr("rx", CORNER_RADIUS)
     .attr("ry", CORNER_RADIUS)
-    .attr("fill", SURFACE_FILL)
+    .attr("fill", tintSurface(rootColor))
     .attr("stroke", SURFACE_BORDER_COLOR)
     .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH))
     .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
-
-  if (PER_TREE_ACCENT_DOT) {
-    nodes
-      .append("circle")
-      .attr("cx", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2 + 12)
-      .attr("cy", 0)
-      .attr("r", ACCENT_DOT_SIZE)
-      .attr("fill", rootColor);
-  }
 
   nodes
     .append("foreignObject")

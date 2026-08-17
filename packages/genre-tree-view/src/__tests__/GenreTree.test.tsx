@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTree } from "../GenreTree";
-import { getGenreTreeColor } from "../constants";
+import { getGenreTreeColor, tintSurface } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -23,14 +23,14 @@ describe("GenreTree", () => {
 
   it("uses the deterministic root-seeded color when rootColor is not provided", () => {
     const { container } = render(<GenreTree nodes={TREE} />);
-    const dot = container.querySelector("#group-root circle") as SVGCircleElement;
-    expect(dot.getAttribute("fill")).toBe(getGenreTreeColor("root"));
+    const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;
+    expect(rect.getAttribute("fill")).toBe(tintSurface(getGenreTreeColor("root")));
   });
 
   it("uses the explicit rootColor prop when provided", () => {
     const { container } = render(<GenreTree nodes={TREE} rootColor="#123456" />);
-    const dot = container.querySelector("#group-root circle") as SVGCircleElement;
-    expect(dot.getAttribute("fill")).toBe("#123456");
+    const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;
+    expect(rect.getAttribute("fill")).toBe(tintSurface("#123456"));
   });
 
   it("scopes the shadow filter id per instance so two trees never collide", () => {

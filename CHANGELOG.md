@@ -36,6 +36,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   stand out.
 - Depth-axis spacing (the gap between successive generations) reduced 20% for both `GenreTree`
   orientations, so trees read more compactly without changing sibling/breadth spacing.
+- Replaced each node's small root-color accent dot with a subtle tint of that color across the
+  whole node background, so a subtree's root color reads at a glance across the tree instead of
+  needing a close look at each node's corner.
 
 ### Fixed
 
