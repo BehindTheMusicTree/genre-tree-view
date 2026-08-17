@@ -37,6 +37,11 @@ export const HOVER_BRIGHTNESS = 0.97;
 export const PER_TREE_ACCENT_DOT = true;
 export const ACCENT_DOT_SIZE = 4;
 
+// Portion of a tree's root color mixed into SURFACE_FILL for its nodes' background tint (see
+// tintSurface) — matches ACCENT_TINT_FILL's 0.08 alpha above so both read as the same "subtle
+// wash" strength.
+export const ROOT_TINT_RATIO = 0.08;
+
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
 // Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
@@ -51,6 +56,16 @@ export const TREE_COLORS = [
   "#059669", // Emerald
   "#EA580C", // Orange
 ];
+
+/** Blends `hex` into SURFACE_FILL at `ratio` (0-1) and returns an opaque hex color — used for a
+ * node's root-color background tint. Opaque (rather than an rgba fill) so the tint reads the
+ * same regardless of what the host page renders behind the tree. */
+export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): string {
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  const mix = (value: number) => Math.round(value * ratio + 255 * (1 - ratio));
+  const toHex = (value: number) => value.toString(16).padStart(2, "0");
+  return `#${toHex(mix(channel(1)))}${toHex(mix(channel(3)))}${toHex(mix(channel(5)))}`;
+}
 
 /** Deterministically maps a seed string (e.g. a root node id) to a color in the default palette. */
 export function getGenreTreeColor(seed: string): string {
