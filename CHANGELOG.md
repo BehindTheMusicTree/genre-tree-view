@@ -52,6 +52,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   large, asymmetric gaps around the tree and an off-center result. The computed scale is also
   capped at 1 so fitting never zooms in past a tree's natural size, which could otherwise inflate
   that reserved toolbar/menu space past its padding and clip it against the viewport.
+- `GenreTreeWheelRadial` chips now transition to their new angle along their own shortest path —
+  previously a chip landing on a cardinal's raw `[0, 360)`-wrapped angle (e.g. back to 0deg at the
+  top) always animated counterclockwise, even when the ring conceptually rotated clockwise, since
+  the browser interpolates the literal `rotate()` value with no wraparound awareness.
 
 ## [0.5.0] - 2026-08-14
 

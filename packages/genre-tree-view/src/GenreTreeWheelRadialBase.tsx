@@ -7,7 +7,7 @@ import * as d3 from "d3";
 import { GenreTree } from "./GenreTree";
 import { calculateLocalRootDimensions } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
-import { calculateWheelRadiusForAngles, computeRadialLayout } from "./radial-wheel-geometry";
+import { calculateWheelRadiusForAngles, computeRadialLayout, RadialSlot } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
@@ -35,6 +35,24 @@ export interface WheelRadialCoreProps extends Omit<GenreTreeProps, "nodes" | "ro
 // The wheel always lands the just-clicked root on the right (matches GenreTreeWheelRight's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
 const LANDING_ANGLE = 90;
+
+// Unwraps computeRadialLayout's [0, 360)-wrapped angles into each root's own continuous
+// (possibly >360 or negative) angle, nearest to its `previous` value — see the doc comment where
+// this is used in WheelRadialCore for why plain wrapped angles cause a wrong-direction transition.
+function computeContinuousAngles(
+  groups: GenreTreeRootGroup[],
+  layout: RadialSlot[],
+  previous: Map<string, number>,
+): Map<string, number> {
+  const angles = new Map<string, number>();
+  groups.forEach((group, index) => {
+    const rawAngle = layout[index]?.angle ?? 0;
+    const previousAngle = previous.get(group.root.id);
+    const laps = previousAngle === undefined ? 0 : Math.round((previousAngle - rawAngle) / 360);
+    angles.set(group.root.id, rawAngle + 360 * laps);
+  });
+  return angles;
+}
 
 type CardinalDirection = "top" | "right" | "bottom" | "left";
 
@@ -69,8 +87,11 @@ const CARDINAL_OFFSET_PROP: Record<CardinalDirection, "top" | "right" | "bottom"
  * of them — one per cardinal direction — developed (full subtree mounted) at once. Clicking any
  * chip, developed or not, re-lays-out the whole ring so that root lands on the right and
  * recalculates the other 3 cardinals from scratch; the 3 non-clicked developed trees render
- * dimmed, brightening on hover/focus. Unlike `WheelCore`, there's no rotation to animate — every
- * root's angle is recomputed fresh from `(groups.length, topIndex, LANDING_ANGLE)` each render.
+ * dimmed, brightening on hover/focus. Unlike `WheelCore`, there's no single wheel-wide rotation
+ * to animate — every root's angle is recomputed fresh from `(groups.length, topIndex,
+ * LANDING_ANGLE)` each render, then unwrapped per chip (see `continuousAngleByRootId`) so each
+ * chip's own CSS transition always takes its own shortest path instead of snapping through a
+ * 360deg/0deg wraparound.
  */
 export function WheelRadialCore({
   nodes,
@@ -110,6 +131,23 @@ export function WheelRadialCore({
     () => computeRadialLayout(groups.length, topIndex, LANDING_ANGLE),
     [groups.length, topIndex],
   );
+
+  // computeRadialLayout always returns angles wrapped to [0, 360) — re-rendering with a fresh
+  // wrapped value on every selection change means a chip landing back near 0deg (top) has to
+  // transition from e.g. 270deg down through 90/0, i.e. always counterclockwise, regardless of
+  // which way the ring conceptually just turned. Track each chip's own last displayed (unwrapped)
+  // angle and add/subtract full turns so its CSS transition always takes its own shortest path.
+  // Recomputed by comparing against `layout` right in the render body (React's sanctioned
+  // "adjusting state during render" pattern — see the React docs on storing info from previous
+  // renders) rather than in an effect, so there's no extra committed frame with stale angles.
+  const [angleMemo, setAngleMemo] = useState(() => ({
+    layout,
+    angles: computeContinuousAngles(groups, layout, new Map()),
+  }));
+  if (angleMemo.layout !== layout) {
+    setAngleMemo({ layout, angles: computeContinuousAngles(groups, layout, angleMemo.angles) });
+  }
+  const continuousAngleByRootId = angleMemo.angles;
 
   const wheelRadius = useMemo(
     () => calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS),
@@ -242,7 +280,7 @@ export function WheelRadialCore({
           <div className="gtv-wheel">
             {groups.map((group, index) => {
               const slot = layout[index];
-              const angle = slot?.angle ?? 0;
+              const angle = continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const selected = slot?.isCardinal ?? false;
               const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
