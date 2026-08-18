@@ -416,7 +416,9 @@ g.node:hover {
   border-radius: 8px;
   border: 1px solid #e4e4e7;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.12);
+  /* blur radius is 4px (not 2px) to match the node card's feDropShadow: CSS box-shadow's blur
+     radius maps to an SVG stdDeviation of half itself, and the card's filter uses stdDeviation=2. */
+  box-shadow: 0 1px 4px rgba(24, 24, 27, 0.12);
   color: #18181b;
   cursor: pointer;
 }

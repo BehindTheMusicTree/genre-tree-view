@@ -97,6 +97,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   geometry and rasterizes its subtree into it, cropping away a descendant's separately-declared
   wider filter region. Fixed by giving the hover effect its own SVG filter with the same generous
   region as the shadow's.
+- A wheel root chip's shadow now visually matches a tree node card's own shadow instead of
+  rendering noticeably tighter/harder. CSS `box-shadow`'s blur radius maps to half that value as
+  the equivalent SVG Gaussian `stdDeviation`, so the chip's `2px` blur was only as soft as an
+  `stdDeviation` of `1` — half as soft as the card's `feDropShadow`, which uses `stdDeviation: 2`.
+  Fixed by doubling the chip's blur radius to `4px` to match.
 
 ## [0.5.0] - 2026-08-14
 
