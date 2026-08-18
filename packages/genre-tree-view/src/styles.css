@@ -90,7 +90,10 @@ g.node:hover {
    the hovered node identifiable while the toolbar covers its own label. Rounded on top only and
    flush against the card's own top edge (no gap) so it reads as part of the card rather than a
    separate floating pill; background matches the card's own fill (--gtv-node-fill, the same
-   variable .gtv-toolbar reads) for visual continuity with the surface it's attached to. No
+   variable .gtv-toolbar reads) for visual continuity with the surface it's attached to. Text
+   color reads --gtv-hover-label-color (defaults dark) since a selected wheel chip's background
+   is the root's solid accent color rather than a light tint, and needs white text to stay
+   readable, matching .gtv-wheel-chip--selected's own color. No
    sizing/position here: SVG usage sets width/height:100% inline (fills its foreignObject, see
    addHoverNameLabel in NodeHelper.tsx); wheel usage is positioned via .gtv-wheel-chip-hover-label
    below. Deliberately not pointer-events:none — see the hover-hit-testing notes next to its two
@@ -109,7 +112,7 @@ g.node:hover {
   font-size: 12px;
   font-weight: 500;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: #18181b;
+  color: var(--gtv-hover-label-color, #18181b);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

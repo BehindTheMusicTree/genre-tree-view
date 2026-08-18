@@ -303,6 +303,7 @@ export function WheelRadialCore({
                           width: dimensions.WIDTH,
                           height: HOVER_LABEL_HEIGHT,
                           "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
+                          "--gtv-hover-label-color": selected ? "#ffffff" : "#18181b",
                         } as React.CSSProperties
                       }
                     >
