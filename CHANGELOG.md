@@ -47,6 +47,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   joined by a new `DEFAULT_FRAME_WIDTH` (1200) — the suggested size no longer names `GenreTreeWheel`
   specifically, since it's a sensible fixed-size ancestor for any `GenreTree`/`GenreTreeWheel`
   variant, not just the wheel.
+- A node's action toolbar now overlays the card/chip itself on hover, masking its label with the
+  card's own fill via a shared `--gtv-node-fill` CSS variable, instead of floating beside it —
+  keeping the tree's layout footprint the same whether or not a toolbar is showing.
 
 ### Fixed
 
