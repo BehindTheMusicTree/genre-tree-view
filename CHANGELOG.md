@@ -59,6 +59,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   rounded rectangles.
 - The card's/chip's own top border also disappears while its hover label is attached, so the two
   merge into one shape with no line at the seam.
+- A selected wheel chip's hover label now borders itself in the chip's own accent color instead
+  of a fixed gray, so the label blends into the chip's solid fill the same way the chip's own
+  border already does — previously the gray border stood out as a visible seam against the
+  chip's saturated color.
 
 ### Fixed
 

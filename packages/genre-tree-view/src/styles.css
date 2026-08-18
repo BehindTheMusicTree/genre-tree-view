@@ -93,7 +93,11 @@ g.node:hover {
    variable .gtv-toolbar reads) for visual continuity with the surface it's attached to. Text
    color reads --gtv-hover-label-color (defaults dark) since a selected wheel chip's background
    is the root's solid accent color rather than a light tint, and needs white text to stay
-   readable, matching .gtv-wheel-chip--selected's own color. No sizing/position/font-size here:
+   readable, matching .gtv-wheel-chip--selected's own color. Border color likewise reads
+   --gtv-hover-label-border-color (defaults to the same gray as an unselected chip/node's own
+   border) so a selected chip's tab can blend its border into its accent fill exactly like
+   .gtv-wheel-chip--selected does — otherwise the gray default reads as a separate outlined box
+   stacked on a solid-colored chip. No sizing/position/font-size here:
    both call sites set width/height and font-size inline (matching the card's/chip's own
    item-count-scaled font size, see calculateNodeFontSize) — SVG usage fills its foreignObject
    (see addHoverNameLabel in NodeHelper.tsx), wheel usage is positioned via
@@ -106,7 +110,7 @@ g.node:hover {
   box-sizing: border-box;
   padding: 2px 8px;
   background: var(--gtv-node-fill, #ffffff);
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--gtv-hover-label-border-color, #e4e4e7);
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   filter: drop-shadow(0 -1px 3px rgba(24, 24, 27, 0.12));

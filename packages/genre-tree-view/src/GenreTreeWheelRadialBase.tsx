@@ -305,6 +305,7 @@ export function WheelRadialCore({
                           fontSize,
                           "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
                           "--gtv-hover-label-color": selected ? "#ffffff" : "#18181b",
+                          "--gtv-hover-label-border-color": selected ? chipColor : "#e4e4e7",
                         } as React.CSSProperties
                       }
                     >
