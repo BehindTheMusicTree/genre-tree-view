@@ -69,6 +69,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   previously a chip landing on a cardinal's raw `[0, 360)`-wrapped angle (e.g. back to 0deg at the
   top) always animated counterclockwise, even when the ring conceptually rotated clockwise, since
   the browser interpolates the literal `rotate()` value with no wraparound awareness.
+- Wheel root chips (`GenreTreeWheel` and `GenreTreeWheelRadial`) now show the same play/upload/add
+  sub-genre/rename/reparent/delete toolbar on hover that a node's SVG card would — previously the
+  root's toolbar disappeared entirely once its card was replaced by a chip.
 
 ## [0.5.0] - 2026-08-14
 
