@@ -14,6 +14,7 @@ import {
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
   calculateNodeDimensions,
+  calculateNodeFontSize,
   Dimensions,
   getItemCountRange,
   HOVER_LABEL_HEIGHT,
@@ -249,6 +250,7 @@ export function addHoverNameLabel(
   if (!nodeGroup.select("#hover-label-" + node.id).empty()) return;
 
   const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(node.itemCount, itemCountRange);
   const group = nodeGroup.append("g").attr("id", "hover-label-" + node.id).attr("class", "gtv-hover-label-group");
 
   group
@@ -257,7 +259,10 @@ export function addHoverNameLabel(
     .attr("y", -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT)
     .attr("width", dimensions.WIDTH)
     .attr("height", HOVER_LABEL_HEIGHT)
-    .html(() => `<div class="gtv-hover-label" style="width:100%;height:100%">${node.name}</div>`);
+    .html(
+      () =>
+        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,
+    );
 
   return group;
 }

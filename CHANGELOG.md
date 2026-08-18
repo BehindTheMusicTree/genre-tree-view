@@ -53,6 +53,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A node's action toolbar now overlays the card/chip itself on hover, masking its label with the
   card's own fill via a shared `--gtv-node-fill` CSS variable, instead of floating beside it —
   keeping the tree's layout footprint the same whether or not a toolbar is showing.
+- The hover name label's font size now matches its card's/chip's own item-count-scaled size
+  instead of a fixed size, and the card's/chip's top corners square off while the label is
+  attached so the two read as one continuous rounded shape instead of a seam between two stacked
+  rounded rectangles.
 
 ### Fixed
 

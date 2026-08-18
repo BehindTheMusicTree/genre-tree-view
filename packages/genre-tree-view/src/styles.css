@@ -93,11 +93,12 @@ g.node:hover {
    variable .gtv-toolbar reads) for visual continuity with the surface it's attached to. Text
    color reads --gtv-hover-label-color (defaults dark) since a selected wheel chip's background
    is the root's solid accent color rather than a light tint, and needs white text to stay
-   readable, matching .gtv-wheel-chip--selected's own color. No
-   sizing/position here: SVG usage sets width/height:100% inline (fills its foreignObject, see
-   addHoverNameLabel in NodeHelper.tsx); wheel usage is positioned via .gtv-wheel-chip-hover-label
-   below. Deliberately not pointer-events:none — see the hover-hit-testing notes next to its two
-   call sites. */
+   readable, matching .gtv-wheel-chip--selected's own color. No sizing/position/font-size here:
+   both call sites set width/height and font-size inline (matching the card's/chip's own
+   item-count-scaled font size, see calculateNodeFontSize) — SVG usage fills its foreignObject
+   (see addHoverNameLabel in NodeHelper.tsx), wheel usage is positioned via
+   .gtv-wheel-chip-hover-label below. Deliberately not pointer-events:none — see the
+   hover-hit-testing notes next to its two call sites. */
 .gtv-hover-label {
   display: flex;
   align-items: center;
@@ -109,7 +110,6 @@ g.node:hover {
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   filter: drop-shadow(0 -1px 3px rgba(24, 24, 27, 0.12));
-  font-size: 12px;
   font-weight: 500;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--gtv-hover-label-color, #18181b);
@@ -463,6 +463,14 @@ g.node:hover {
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-label {
   opacity: 1;
+}
+
+/* Squares the chip's own top corners while its name tab is showing, so the tab (rounded on top)
+   and the chip (rounded on bottom) read as one taller shape instead of two stacked rounded
+   rectangles with a visible seam. */
+.gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -23,7 +23,7 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths } from "./d3-helper/d3-path-helper";
+import { appendPaths, roundedRectPath } from "./d3-helper/d3-path-helper";
 import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -333,14 +333,17 @@ export function renderTree(
     .attr("pointer-events", "all");
 
   nodes
-    .append("rect")
+    .append("path")
     .attr("class", "gtv-node-rect")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
-    .attr("rx", CORNER_RADIUS)
-    .attr("ry", CORNER_RADIUS)
+    .attr("d", (d) => {
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+        tl: CORNER_RADIUS,
+        tr: CORNER_RADIUS,
+        br: CORNER_RADIUS,
+        bl: CORNER_RADIUS,
+      });
+    })
     .attr("fill", tintSurface(rootColor))
     .attr("stroke", SURFACE_BORDER_COLOR)
     .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH))
@@ -369,6 +372,22 @@ export function renderTree(
       >;
 
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+
+      // Squares the card's top corners while its hover tab is attached, so the tab (rounded on
+      // top) and the card (rounded on bottom) read as one taller shape instead of two stacked
+      // rounded rectangles with a visible seam.
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      group
+        .select<SVGPathElement>(".gtv-node-rect")
+        .attr(
+          "d",
+          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+            tl: 0,
+            tr: 0,
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
 
       addToolbarActions(
         d3Lib,
@@ -425,6 +444,19 @@ export function renderTree(
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
           d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+
+          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+          group
+            .select<SVGPathElement>(".gtv-node-rect")
+            .attr(
+              "d",
+              roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+                tl: CORNER_RADIUS,
+                tr: CORNER_RADIUS,
+                br: CORNER_RADIUS,
+                bl: CORNER_RADIUS,
+              }),
+            );
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
