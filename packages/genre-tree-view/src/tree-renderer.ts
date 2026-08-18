@@ -13,6 +13,7 @@ import {
   ROOT_BORDER_WIDTH,
   CORNER_RADIUS,
   ELEVATION,
+  HOVER_BRIGHTNESS,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
   MAX_NODE_WIDTH,
@@ -271,9 +272,16 @@ export function renderTree(
   // `id`/`url(#...)` reference, which arbitrary GenreTreeNode.id strings are not safe for.
   const safeRootId = treeData.data.id.replace(/[^a-zA-Z0-9_-]/g, "_");
   const shadowFilterId = `gtv-card-shadow-${safeRootId}`;
+  // g.node:hover's own brightness effect (styles.css) needs a filter with a region this
+  // generous too — a plain CSS `brightness()` on the node group computes a tight, UA-sized
+  // filter region from the group's own geometry, and rasterizing the group into that region
+  // silently clips the card's `.gtv-node-rect`'s own feDropShadow above, since that shadow
+  // paints outside the rect's box. Giving this filter the same -50%/200% region as the shadow
+  // filter avoids that clip.
+  const hoverBrightnessFilterId = `gtv-hover-brightness-${safeRootId}`;
   if (ELEVATION) {
-    const filter = svg
-      .append("defs")
+    const defs = svg.append("defs");
+    const filter = defs
       .append("filter")
       .attr("id", shadowFilterId)
       .attr("x", "-50%")
@@ -287,6 +295,18 @@ export function renderTree(
       .attr("stdDeviation", 2)
       .attr("flood-color", TEXT_COLOR)
       .attr("flood-opacity", 0.12);
+
+    const hoverFilter = defs
+      .append("filter")
+      .attr("id", hoverBrightnessFilterId)
+      .attr("x", "-50%")
+      .attr("y", "-50%")
+      .attr("width", "200%")
+      .attr("height", "200%");
+    const brightnessTransfer = hoverFilter.append("feComponentTransfer");
+    (["feFuncR", "feFuncG", "feFuncB"] as const).forEach((fn) => {
+      brightnessTransfer.append(fn).attr("type", "linear").attr("slope", HOVER_BRIGHTNESS);
+    });
   }
 
   addGrid(svg, svgWidth, svgHeight, true);
@@ -317,6 +337,13 @@ export function renderTree(
     // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
     // label beneath it with the card's own fill instead of a hardcoded color.
     .style("--gtv-node-fill", tintSurface(rootColor));
+
+  // See hoverBrightnessFilterId above — lets g.node:hover's own filter reference this root's
+  // wide-region SVG filter instead of the plain CSS brightness() function that clips the card's
+  // shadow. Left unset (falling back to the CSS var()'s own default) when elevation is off.
+  if (ELEVATION) {
+    nodes.style("--gtv-hover-filter", `url(#${hoverBrightnessFilterId})`);
+  }
 
   // Invisible hit-region spanning the node body, appended before any visible content so painted
   // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap

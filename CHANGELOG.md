@@ -91,6 +91,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Wheel root chips (`GenreTreeWheel` and `GenreTreeWheelRadial`) now show the same play/upload/add
   sub-genre/rename/reparent/delete toolbar on hover that a node's SVG card would — previously the
   root's toolbar disappeared entirely once its card was replaced by a chip.
+- A tree node's card no longer loses its elevation shadow while hovered. The hover brightness
+  effect on the node's group was clipping the card rect's own `feDropShadow`, since a plain CSS
+  `brightness()` filter on an ancestor computes a tight filter region from that ancestor's own
+  geometry and rasterizes its subtree into it, cropping away a descendant's separately-declared
+  wider filter region. Fixed by giving the hover effect its own SVG filter with the same generous
+  region as the shadow's.
 
 ## [0.5.0] - 2026-08-14
 
