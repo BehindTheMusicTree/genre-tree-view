@@ -236,29 +236,20 @@ export function WheelCore({
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
                   <div className="gtv-wheel-chip-anchor">
-                    <div
-                      className="gtv-hover-label gtv-wheel-chip-hover-label"
-                      style={
-                        {
-                          width: dimensions.WIDTH,
-                          height: HOVER_LABEL_HEIGHT,
-                          fontSize,
-                          "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
-                          "--gtv-hover-label-color": selected ? "#ffffff" : "#18181b",
-                          "--gtv-hover-label-border-color": selected ? chipColor : "#e4e4e7",
-                        } as React.CSSProperties
-                      }
-                    >
-                      {group.root.name}
-                    </div>
                     <button
                       type="button"
                       className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
                       style={
                         {
                           width: dimensions.WIDTH,
-                          height: dimensions.HEIGHT,
+                          // Height comes from --gtv-wheel-chip-base-height (see .gtv-wheel-chip in
+                          // styles.css), not an inline `height`/`minHeight` — an inline `height` always
+                          // wins the cascade over the CSS class's `height: calc(...)` hover override
+                          // (inline style beats any stylesheet rule), silently pinning the box and
+                          // breaking the hover growth again, same failure mode as before.
+                          "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
+                          "--gtv-hover-label-height": `${HOVER_LABEL_HEIGHT}px`,
                           // Unselected roots have no mounted subtree here — the ring chip is their
                           // only surface, so give it the same root-color wash tree nodes get (see
                           // tintSurface) instead of leaving it plain white.
@@ -269,6 +260,9 @@ export function WheelCore({
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
+                        {group.root.name}
+                      </span>
+                      <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
                         {group.root.name}
                       </span>
                     </button>

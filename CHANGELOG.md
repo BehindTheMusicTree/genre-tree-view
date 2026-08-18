@@ -102,13 +102,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the equivalent SVG Gaussian `stdDeviation`, so the chip's `2px` blur was only as soft as an
   `stdDeviation` of `1` — half as soft as the card's `feDropShadow`, which uses `stdDeviation: 2`.
   Fixed by doubling the chip's blur radius to `4px` to match.
-- A selected wheel chip's hover name tab no longer shows a visible seam against the chip below
-  it. The chip and tab are two separately-composited boxes (the tab sits on its own layer via
-  `transform`) that only touched at a fractional-pixel boundary, and each layer's edge is
-  anti-aliased independently, producing a hairline seam even with identical fill color and no
-  shadow difference between them. Fixed by overlapping the tab 1px into the chip instead of
-  sitting exactly flush, removing the boundary that got anti-aliased; also squared off and
-  clipped the chip's own shadow at its top edge so it can no longer bleed onto the tab above it.
+- A wheel chip's hover name label no longer shows a visible seam against the chip below it.
+  Rather than stacking the label as a second, separately-composited box next to the chip (which
+  always leaves an anti-aliased boundary between the two layers, however closely they're
+  aligned), the chip's own box now grows upward on hover to make room for the label — a single
+  continuously-painted shape with one shadow and no boundary to seam. The chip's rendered height
+  is driven by a CSS custom property so it stays an explicit, determinate value in both states
+  (required for the growth to work, and for the label/accent-dot children's own sizing/position
+  to resolve correctly against it); the accent dot's position is pinned to a fixed offset from
+  the chip's bottom edge rather than a percentage from center, since only the top edge moves when
+  the chip grows.
 
 ## [0.5.0] - 2026-08-14
 

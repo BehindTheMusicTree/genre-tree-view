@@ -206,11 +206,10 @@ describe("GenreTreeWheel", () => {
     expect(onAddChild).toHaveBeenCalledWith("root-a");
   });
 
-  it("renders a floating name label for each root chip", () => {
+  it("renders a hover-revealed name label inside each root chip", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
 
-    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
-    expect(rockAnchor.querySelector(".gtv-wheel-chip-hover-label")!.textContent).toBe("Rock");
+    expect(chipFor(container, "Rock").querySelector(".gtv-wheel-chip-hover-name")!.textContent).toBe("Rock");
   });
 
   it("sizes a root's chip from its whole subtree's item count, not just its own", () => {

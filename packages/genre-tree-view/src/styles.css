@@ -88,27 +88,22 @@ g.node:hover {
   }
 }
 
-/* Small tab showing a node's/chip's name, attached flush to the top of its card/chip while the
-   hover toolbar (see .gtv-toolbar / .gtv-wheel-chip-toolbar) masks the label underneath — keeps
-   the hovered node identifiable while the toolbar covers its own label. Rounded on top only and
-   flush against the card's own top edge (no gap) so it reads as part of the card rather than a
-   separate floating pill; background matches the card's own fill (--gtv-node-fill, the same
-   variable .gtv-toolbar reads) for visual continuity with the surface it's attached to. Text
-   color reads --gtv-hover-label-color (defaults dark) since a selected wheel chip's background
-   is the root's solid accent color rather than a light tint, and needs white text to stay
-   readable, matching .gtv-wheel-chip--selected's own color. Border color likewise reads
-   --gtv-hover-label-border-color (defaults to the same gray as an unselected chip/node's own
-   border) so a selected chip's tab can blend its border into its accent fill exactly like
-   .gtv-wheel-chip--selected does — otherwise the gray default reads as a separate outlined box
-   stacked on a solid-colored chip. No own shadow, deliberately: a blurred drop-shadow still
-   spreads toward the edge it's offset away from, so even a negative y-offset bled a soft line
-   onto the card/chip flush below it — the merged shape's own elevation comes from that card's/
-   chip's shadow alone. No sizing/position/font-size here:
-   both call sites set width/height and font-size inline (matching the card's/chip's own
-   item-count-scaled font size, see calculateNodeFontSize) — SVG usage fills its foreignObject
-   (see addHoverNameLabel in NodeHelper.tsx), wheel usage is positioned via
-   .gtv-wheel-chip-hover-label below. Deliberately not pointer-events:none — see the
-   hover-hit-testing notes next to its two call sites. */
+/* Small tab showing a node's name, attached flush to the top of its card while the hover toolbar
+   (see .gtv-toolbar) masks the label underneath — keeps the hovered node identifiable while the
+   toolbar covers its own label. Rounded on top only and flush against the card's own top edge (no
+   gap) so it reads as part of the card rather than a separate floating pill; background matches
+   the card's own fill (--gtv-node-fill, the same variable .gtv-toolbar reads) for visual
+   continuity with the surface it's attached to. No own shadow, deliberately: a blurred
+   drop-shadow still spreads toward the edge it's offset away from, so even a negative y-offset
+   bled a soft line onto the card flush below it — the merged shape's own elevation comes from
+   that card's shadow alone. No sizing/position/font-size here: the call site sets width/height
+   and font-size inline (matching the card's own item-count-scaled font size, see
+   calculateNodeFontSize) and fills its foreignObject (see addHoverNameLabel in NodeHelper.tsx).
+   Deliberately not pointer-events:none — see the hover-hit-testing note next to its call site.
+   The wheel chip's own name label is a different mechanism entirely (see .gtv-wheel-chip-hover
+   below): the chip grows to reveal it rather than stacking a second element on top, since two
+   separately composited boxes meeting at a fractional-pixel boundary produced a visible seam no
+   matter how tightly they were aligned. */
 .gtv-hover-label {
   display: flex;
   align-items: center;
@@ -116,12 +111,12 @@ g.node:hover {
   box-sizing: border-box;
   padding: 2px 8px;
   background: var(--gtv-node-fill, #ffffff);
-  border: 1px solid var(--gtv-hover-label-border-color, #e4e4e7);
+  border: 1px solid #e4e4e7;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   font-weight: 500;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: var(--gtv-hover-label-color, #18181b);
+  color: #18181b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -410,11 +405,21 @@ g.node:hover {
 
 /* Sized and styled to match a tree node card exactly (same corner radius, border, shadow, and
    .gtv-node-label typography) so a root reads the same whether it's shown here or promoted to the
-   actual root node. */
+   actual root node. padding-top/margin-top start at 0 and both move together on hover (see
+   .gtv-wheel-chip-anchor:hover below) — a matched pair rather than two independent properties.
+   height is pinned to --gtv-wheel-chip-base-height (set inline, see GenreTreeWheelBase.tsx/
+   GenreTreeWheelRadialBase.tsx) rather than left as `auto`/`min-height` — padding-top only grows
+   a box's border-box when height is already an explicit, determinate value; against `auto` it
+   would instead just add to the content the box already sizes itself around, and against
+   `min-height` it can settle back to the min without ever growing. Being explicit here also keeps
+   .gtv-node-label's height:100% and .gtv-wheel-chip-dot's bottom offset (both below) resolving
+   against a determinate containing-block height in both hover states. */
 .gtv-wheel-chip {
   position: relative;
   box-sizing: border-box;
+  height: var(--gtv-wheel-chip-base-height);
   padding: 0;
+  margin-top: 0;
   border-radius: 8px;
   border: 1px solid #e4e4e7;
   background: #ffffff;
@@ -458,46 +463,64 @@ g.node:hover {
   }
 }
 
-/* Name tab for a wheel root chip (see .gtv-hover-label above) — sits flush against the top of
-   .gtv-wheel-chip-anchor's own box (sized only by its in-flow <button>, see the comment on
-   .gtv-wheel-chip-anchor), so unlike .gtv-wheel-chip-toolbar it doesn't overlap the clickable
-   button and doesn't need pointer-events:none to let clicks fall through. Left at its default
-   (auto) deliberately: if it were none, resting the pointer on the visible tab would hit-test
-   past .gtv-wheel-chip-anchor entirely, :hover would stop matching, and the toolbar+label would
-   vanish out from under the cursor. Overlaps the chip by 1px (rather than sitting exactly
-   flush) because two same-color boxes that only touch at a fractional-pixel boundary still get a
-   hairline anti-aliased seam between their separately composited layers (this one is on its own
-   layer via `transform`) — same fill color, 1px overlap, no boundary left to alias. */
-.gtv-wheel-chip-hover-label {
-  position: absolute;
-  bottom: calc(100% - 1px);
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  cursor: default;
-}
-
-.gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-label {
-  opacity: 1;
-}
-
-/* Squares the chip's own top corners and drops its top border while its name tab is showing (the
-   tab itself already omits its own border-bottom, see .gtv-hover-label), so the tab (rounded on
-   top) and the chip (rounded on bottom) read as one taller shape instead of two stacked rounded
-   rectangles with a visible seam/border line between them. Also clips the chip's own box-shadow
-   at its top edge: a blurred shadow still spreads past the edge it's offset away from, so even
-   with a downward offset it bled a couple px above the chip's top edge and landed on the tab
-   flush above it — clip-path cuts that bled sliver off while leaving the bottom/side shadow (the
-   merged shape's real elevation) untouched. */
+/* Reveals a wheel root chip's name on hover by growing the chip's own box upward (padding-top),
+   not by stacking a second element above it — two independently composited boxes meeting at a
+   fractional-pixel boundary still show a hairline anti-aliased seam between them no matter how
+   tightly they're aligned or overlapped (border-radius, border, and box-shadow all stay on this
+   one continuously-painted box instead, so there's no boundary left to seam). margin-top cancels
+   the padding out of .gtv-wheel-chip-anchor's own flow-height (sized only by this in-flow
+   <button>'s margin box, see the comment on .gtv-wheel-chip-anchor) — height grows by
+   --gtv-hover-label-height and shifts up by the same amount, so the anchor's own box, and thus
+   the chip's fixed point on the wheel circle, is unaffected. --gtv-hover-label-height is set
+   inline per chip (see GenreTreeWheelBase.tsx/GenreTreeWheelRadialBase.tsx) from the same
+   HOVER_LABEL_HEIGHT constant the SVG-side label uses, so both stay in sync. */
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  border-top-color: transparent;
-  clip-path: inset(0 -20px -20px -20px);
+  height: calc(var(--gtv-wheel-chip-base-height) + var(--gtv-hover-label-height, 22px));
+  padding-top: var(--gtv-hover-label-height, 22px);
+  margin-top: calc(-1 * var(--gtv-hover-label-height, 22px));
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .gtv-wheel-chip-hover-label {
+  .gtv-wheel-chip {
+    transition:
+      height 120ms ease,
+      padding-top 120ms ease,
+      margin-top 120ms ease;
+  }
+}
+
+/* The chip's name, revealed in the headroom padding-top opens up above the chip's existing
+   (unmoved — box-sizing: border-box keeps the content-box, and thus the flex-centered dot/label
+   below, fixed in place) content. pointer-events: none so hovering this text hit-tests through to
+   the <button> beneath it rather than to itself — harmless either way for :hover (this text is a
+   descendant of the button, which drives .gtv-wheel-chip-anchor:hover directly), but this also
+   lets a click land here and select the root, same as clicking anywhere else on the chip. */
+.gtv-wheel-chip-hover-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--gtv-hover-label-height, 22px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 8px;
+  font-weight: 500;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-name {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip-hover-name {
     transition: opacity 120ms ease;
   }
 }
@@ -513,13 +536,18 @@ g.node:hover {
   width: max-content;
 }
 
+/* Anchored from the bottom via a fixed px offset derived from --gtv-wheel-chip-base-height,
+   not `top: 50%` — the chip's border-box grows *upward* on hover (padding-top/margin-top above),
+   so its top edge moves but its bottom edge doesn't; a percentage `top` recomputes against the
+   grown padding-box height and visibly drifts, while this offset stays put across hover states,
+   matching the unmoved content-box the dot needs to stay centered in (base_height/2, minus half
+   the dot's own 8px so its center, not its top edge, lands there). */
 .gtv-wheel-chip-dot {
   position: absolute;
   left: 8px;
-  top: 50%;
+  bottom: calc(var(--gtv-wheel-chip-base-height) / 2 - 4px);
   width: 8px;
   height: 8px;
-  transform: translateY(-50%);
   border-radius: 50%;
   background: var(--gtv-chip-color, currentColor);
 }
