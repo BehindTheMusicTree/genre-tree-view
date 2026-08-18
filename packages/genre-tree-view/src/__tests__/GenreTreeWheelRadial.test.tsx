@@ -146,13 +146,17 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_SIX} />);
 
     // Initial layout (topIndex 0): Blues (f) is the top cardinal, raw/continuous angle 0deg.
-    expect(chipFor(container, "Blues").parentElement?.style.getPropertyValue("--gtv-chip-angle")).toBe("0deg");
+    expect(
+      chipFor(container, "Blues").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+    ).toBe("0deg");
 
     // Clicking Electronic (b) moves the top cardinal off Blues; its new raw wrapped angle is
     // 315deg, but the short path from its previous 0deg is -45deg, not +315deg.
     fireEvent.click(chipFor(container, "Electronic"));
 
-    expect(chipFor(container, "Blues").parentElement?.style.getPropertyValue("--gtv-chip-angle")).toBe("-45deg");
+    expect(
+      chipFor(container, "Blues").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+    ).toBe("-45deg");
   });
 
   it("fires onRootSelect on mount with the default root and again on click", () => {
@@ -263,6 +267,21 @@ describe("GenreTreeWheelRadial", () => {
     fireEvent.click(playButton);
 
     expect(onPlayPause).toHaveBeenCalledWith("a-child");
+  });
+
+  it("renders a toolbar for each root chip and routes its actions through the forwarded callbacks", () => {
+    const onPlayPause = vi.fn();
+    const onAddChild = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadial nodes={NODES_FIVE} onPlayPause={onPlayPause} onAddChild={onAddChild} />,
+    );
+
+    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
+    fireEvent.click(rockAnchor.querySelector('[aria-label="Play"]') as HTMLButtonElement);
+    expect(onPlayPause).toHaveBeenCalledWith("root-a");
+
+    fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
+    expect(onAddChild).toHaveBeenCalledWith("root-a");
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and every mounted anchor", () => {

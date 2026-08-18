@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTree } from "./GenreTree";
+import { NodeToolbar } from "./NodeToolbar";
 import { groupNodesByRoot } from "./root-grouping";
 import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "./wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
@@ -233,27 +234,45 @@ export function WheelCore({
                   className="gtv-wheel-slot"
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
-                  <button
-                    type="button"
-                    className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
-                    style={
-                      {
-                        width: dimensions.WIDTH,
-                        height: dimensions.HEIGHT,
-                        "--gtv-chip-color": chipColor,
-                        // Unselected roots have no mounted subtree here — the ring chip is their
-                        // only surface, so give it the same root-color wash tree nodes get (see
-                        // tintSurface) instead of leaving it plain white.
-                        ...(!selected && { background: tintSurface(chipColor) }),
-                      } as React.CSSProperties
-                    }
-                    onClick={() => handleChipClick(group.root.id, angle)}
-                  >
-                    {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                    <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
-                      {group.root.name}
-                    </span>
-                  </button>
+                  <div className="gtv-wheel-chip-anchor">
+                    <button
+                      type="button"
+                      className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
+                      style={
+                        {
+                          width: dimensions.WIDTH,
+                          height: dimensions.HEIGHT,
+                          "--gtv-chip-color": chipColor,
+                          // Unselected roots have no mounted subtree here — the ring chip is their
+                          // only surface, so give it the same root-color wash tree nodes get (see
+                          // tintSurface) instead of leaving it plain white.
+                          ...(!selected && { background: tintSurface(chipColor) }),
+                        } as React.CSSProperties
+                      }
+                      onClick={() => handleChipClick(group.root.id, angle)}
+                    >
+                      {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
+                      <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
+                        {group.root.name}
+                      </span>
+                    </button>
+                    {/* stopPropagation: keeps toolbar-button clicks from also landing on
+                        panZoom's pointerdown-drag tracking on the container behind it. */}
+                    <div className="gtv-wheel-chip-toolbar" onPointerDown={(event) => event.stopPropagation()}>
+                      <NodeToolbar
+                        node={group.root}
+                        itemCount={aggregatedItemCount}
+                        playingNodeId={playingNodeId}
+                        playState={playState}
+                        onPlayPause={onPlayPause}
+                        onAddChild={onAddChild}
+                        onRenameRequest={onRenameRequest}
+                        onDeleteRequest={onDeleteRequest}
+                        onReparentRequest={onReparentRequest}
+                        onUploadFiles={onUploadFiles}
+                      />
+                    </div>
+                  </div>
                 </div>
               );
             })}
