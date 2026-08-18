@@ -291,7 +291,7 @@ export function renderTree(
     filter
       .append("feDropShadow")
       .attr("dx", 0)
-      .attr("dy", 1)
+      .attr("dy", 0)
       .attr("stdDeviation", 2)
       .attr("flood-color", TEXT_COLOR)
       .attr("flood-opacity", 0.12);

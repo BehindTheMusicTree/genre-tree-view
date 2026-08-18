@@ -112,6 +112,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   to resolve correctly against it); the accent dot's position is pinned to a fixed offset from
   the chip's bottom edge rather than a percentage from center, since only the top edge moves when
   the chip grows.
+- Both a tree node card's shadow and a wheel chip's shadow now fall evenly on all sides instead of
+  reading noticeably stronger along the bottom edge and barely visible along the top. Both had a
+  1px downward offset (the card's `feDropShadow` `dy`, the chip's `box-shadow` y-offset) that was
+  more visible now that a hovered chip is taller. Fixed by dropping the offset to 0 on both, kept
+  in sync since the chip's shadow is designed to match the card's.
 
 ## [0.5.0] - 2026-08-14
 
