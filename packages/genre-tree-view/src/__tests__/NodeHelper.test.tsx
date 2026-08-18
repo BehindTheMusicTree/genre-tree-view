@@ -10,7 +10,7 @@ import {
   type MenuActionItem,
   type NodeActionCallbacks,
 } from "../NodeHelper";
-import { calculateNodeDimensions, getItemCountRange, HOVER_LABEL_GAP, HOVER_LABEL_HEIGHT } from "../constants";
+import { calculateNodeDimensions, getItemCountRange, HOVER_LABEL_HEIGHT } from "../constants";
 import type { GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
@@ -429,7 +429,7 @@ describe("addHoverNameLabel", () => {
       height: Number(foreignObject.getAttribute("height")),
     }).toEqual({
       x: -dimensions.WIDTH / 2,
-      y: -dimensions.HEIGHT / 2 - HOVER_LABEL_GAP - HOVER_LABEL_HEIGHT,
+      y: -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT,
       width: dimensions.WIDTH,
       height: HOVER_LABEL_HEIGHT,
     });
