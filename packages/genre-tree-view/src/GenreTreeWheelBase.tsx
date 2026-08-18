@@ -17,6 +17,7 @@ import {
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  tintSurface,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -222,6 +223,7 @@ export function WheelCore({
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
+              const chipColor = getGenreTreeColor(group.root.id);
               const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
               const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
@@ -238,7 +240,11 @@ export function WheelCore({
                       {
                         width: dimensions.WIDTH,
                         height: dimensions.HEIGHT,
-                        "--gtv-chip-color": getGenreTreeColor(group.root.id),
+                        "--gtv-chip-color": chipColor,
+                        // Unselected roots have no mounted subtree here — the ring chip is their
+                        // only surface, so give it the same root-color wash tree nodes get (see
+                        // tintSurface) instead of leaving it plain white.
+                        ...(!selected && { background: tintSurface(chipColor) }),
                       } as React.CSSProperties
                     }
                     onClick={() => handleChipClick(group.root.id, angle)}

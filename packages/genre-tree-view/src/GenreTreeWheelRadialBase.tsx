@@ -18,6 +18,7 @@ import {
   getItemCountRange,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  tintSurface,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -282,6 +283,7 @@ export function WheelRadialCore({
               const slot = layout[index];
               const angle = continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const selected = slot?.isCardinal ?? false;
+              const chipColor = getGenreTreeColor(group.root.id);
               const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
               const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
@@ -298,7 +300,12 @@ export function WheelRadialCore({
                       {
                         width: dimensions.WIDTH,
                         height: dimensions.HEIGHT,
-                        "--gtv-chip-color": getGenreTreeColor(group.root.id),
+                        "--gtv-chip-color": chipColor,
+                        // Non-cardinal roots aren't developed as a full subtree, so the ring chip
+                        // is their only surface — give it the same root-color wash tree nodes get
+                        // (see tintSurface) instead of leaving it plain white. Cardinal chips keep
+                        // the solid fill from .gtv-wheel-chip--selected below.
+                        ...(!selected && { background: tintSurface(chipColor) }),
                       } as React.CSSProperties
                     }
                     onClick={() => handleChipClick(group.root.id)}
