@@ -191,6 +191,21 @@ describe("GenreTreeWheel", () => {
     expect(onPlayPause).toHaveBeenCalledWith("a-child");
   });
 
+  it("renders a toolbar for each root chip and routes its actions through the forwarded callbacks", () => {
+    const onPlayPause = vi.fn();
+    const onAddChild = vi.fn();
+    const { container } = render(
+      <GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} onAddChild={onAddChild} />,
+    );
+
+    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
+    fireEvent.click(rockAnchor.querySelector('[aria-label="Play"]') as HTMLButtonElement);
+    expect(onPlayPause).toHaveBeenCalledWith("root-a");
+
+    fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
+    expect(onAddChild).toHaveBeenCalledWith("root-a");
+  });
+
   it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
     // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
     // chip should size (and scale the shared range) off that aggregated total, not read as 0.
