@@ -15,6 +15,7 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  HOVER_LABEL_HEIGHT,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
@@ -237,7 +238,13 @@ export function WheelCore({
                   <div className="gtv-wheel-chip-anchor">
                     <div
                       className="gtv-hover-label gtv-wheel-chip-hover-label"
-                      style={{ width: dimensions.WIDTH } as React.CSSProperties}
+                      style={
+                        {
+                          width: dimensions.WIDTH,
+                          height: HOVER_LABEL_HEIGHT,
+                          "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
+                        } as React.CSSProperties
+                      }
                     >
                       {group.root.name}
                     </div>
