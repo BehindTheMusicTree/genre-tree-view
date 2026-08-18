@@ -8,8 +8,6 @@ import {
   SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
-  TOOLBAR_BUTTON_SIZE,
-  TOOLBAR_MENU_X_GAP,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   ROOT_BORDER_WIDTH,
@@ -315,48 +313,22 @@ export function renderTree(
       const translateX = d.x! + dimensions.WIDTH / 2;
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
-    });
+    })
+    // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
+    // label beneath it with the card's own fill instead of a hardcoded color.
+    .style("--gtv-node-fill", tintSurface(rootColor));
 
-  // Invisible hit-region spanning the node body plus the reserved toolbar/menu area to its
-  // right, appended before any visible content so painted siblings (rect, label, toolbar)
-  // take pointer-event priority over it wherever they overlap it. Without this, the group's
-  // mouseenter/mouseleave below is governed only by the union of whichever painted children
-  // currently exist — the ~4px unpainted gap between the node's rect and the toolbar's
-  // foreignObject (TOOLBAR_MENU_X_GAP) sits right where a resting cursor tends to land, and
-  // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
-  // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
-  // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
-  // The toolbar always floats toward the leaves (see addToolbarActions/depthAxisSign), so the
-  // gap a resting cursor can jitter across — and thus the direction the hit area must extend
-  // past the card — depends on both the growth axis (isVertical) and its sign: up for
-  // "vertical", down for "vertical-flipped", right for "horizontal"/"horizontal-anchored", left
-  // for "horizontal-anchored-flipped".
-  const isVertical = isVerticalOrientation(orientation);
-  const sign = depthAxisSign(orientation);
-  const toolbarClearance = TOOLBAR_BUTTON_SIZE + 6 + TOOLBAR_MENU_X_GAP;
+  // Invisible hit-region spanning the node body, appended before any visible content so painted
+  // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap
+  // it. <g> itself paints nothing, so without this the group's mouseenter/mouseleave below would
+  // be governed only by the union of whichever painted children currently exist.
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr(
-      "width",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH + (isVertical ? 0 : ACTIONS_OVERLAY_WIDTH),
-    )
-    .attr(
-      "height",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT + (isVertical ? toolbarClearance : 0),
-    )
-    .attr(
-      "x",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2 -
-        (!isVertical && sign === -1 ? ACTIONS_OVERLAY_WIDTH : 0),
-    )
-    .attr(
-      "y",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2 -
-        (isVertical && sign === -1 ? toolbarClearance : 0),
-    )
+    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
+    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
+    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
+    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 

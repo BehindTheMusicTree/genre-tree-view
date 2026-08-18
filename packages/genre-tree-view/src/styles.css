@@ -85,20 +85,22 @@ g.node:hover {
   }
 }
 
-/* The toolbar's inline icon row and its overflow menu — a light, card-styled
-   actions affordance shown on node hover. */
+/* The toolbar's inline icon row and its overflow menu, shown on node hover. The row itself
+   overlays the node's own card in place of its label — sized to the card and backed by the
+   card's own fill (see --gtv-node-fill in tree-renderer.ts) so it masks the label beneath it
+   without stacking a second card on top. */
 
 .gtv-toolbar {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
+  width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 3px;
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
+  padding: 0 4px;
+  background: var(--gtv-node-fill, #ffffff);
   border-radius: 8px;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
 }
 
 .gtv-toolbar-btn {
@@ -379,14 +381,17 @@ g.node:hover {
 
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
    have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
-   hideRoot, see WheelCore). Hidden until the pointer is over the chip or the toolbar itself —
-   :hover bubbles from the open overflow menu too, since it renders as a descendant here rather
-   than being re-parented like the SVG version's. */
+   hideRoot, see WheelCore). Overlays the chip exactly (rather than the chip's own <button>,
+   which can't validly host nested interactive elements) and masks its label via the chip's own
+   fill, forwarded as --gtv-node-fill inline (see .gtv-toolbar). Hidden until the pointer is over
+   the chip or the toolbar itself — :hover bubbles from the open overflow menu too, since it
+   renders as a descendant here rather than being re-parented like the SVG version's.
+   pointer-events stays none on this whole layer (only its buttons opt back in below) so the
+   masked, non-button areas of the overlay still let clicks fall through to the chip's own
+   <button> underneath — otherwise hovering to reveal the toolbar would block selecting the root. */
 .gtv-wheel-chip-toolbar {
   position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  inset: 0;
   z-index: 2;
   opacity: 0;
   pointer-events: none;
@@ -394,6 +399,10 @@ g.node:hover {
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {
   opacity: 1;
+}
+
+.gtv-wheel-chip-toolbar .gtv-toolbar-btn,
+.gtv-wheel-chip-toolbar .gtv-toolbar-overflow {
   pointer-events: auto;
 }
 

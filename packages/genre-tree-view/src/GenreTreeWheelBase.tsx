@@ -257,8 +257,15 @@ export function WheelCore({
                       </span>
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
-                        panZoom's pointerdown-drag tracking on the container behind it. */}
-                    <div className="gtv-wheel-chip-toolbar" onPointerDown={(event) => event.stopPropagation()}>
+                        panZoom's pointerdown-drag tracking on the container behind it.
+                        --gtv-node-fill: same var .gtv-toolbar reads in the SVG tree, so the
+                        overlay masks the chip's label with the chip's own fill instead of a
+                        hardcoded color. */}
+                    <div
+                      className="gtv-wheel-chip-toolbar"
+                      style={{ "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor) } as React.CSSProperties}
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
                       <NodeToolbar
                         node={group.root}
                         itemCount={aggregatedItemCount}
