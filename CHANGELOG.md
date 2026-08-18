@@ -63,6 +63,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of a fixed gray, so the label blends into the chip's solid fill the same way the chip's own
   border already does — previously the gray border stood out as a visible seam against the
   chip's saturated color.
+- A selected wheel chip's hover toolbar icons are now white to match its label text, instead of
+  staying the fixed gray used elsewhere — previously the gray icons had low contrast against the
+  chip's solid accent fill.
 
 ### Fixed
 

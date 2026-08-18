@@ -276,10 +276,16 @@ export function WheelCore({
                         panZoom's pointerdown-drag tracking on the container behind it.
                         --gtv-node-fill: same var .gtv-toolbar reads in the SVG tree, so the
                         overlay masks the chip's label with the chip's own fill instead of a
-                        hardcoded color. */}
+                        hardcoded color. --gtv-toolbar-icon-color matches the chip's own label
+                        color so the icons stay legible against a selected chip's solid fill. */}
                     <div
                       className="gtv-wheel-chip-toolbar"
-                      style={{ "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor) } as React.CSSProperties}
+                      style={
+                        {
+                          "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
+                          "--gtv-toolbar-icon-color": selected ? "#ffffff" : "#52525b",
+                        } as React.CSSProperties
+                      }
                       onPointerDown={(event) => event.stopPropagation()}
                     >
                       <NodeToolbar

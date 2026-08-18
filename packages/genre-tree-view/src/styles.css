@@ -125,7 +125,9 @@ g.node:hover {
 /* The toolbar's inline icon row and its overflow menu, shown on node hover. The row itself
    overlays the node's own card in place of its label — sized to the card and backed by the
    card's own fill (see --gtv-node-fill in tree-renderer.ts) so it masks the label beneath it
-   without stacking a second card on top. */
+   without stacking a second card on top. Icon color reads --gtv-toolbar-icon-color (defaults to
+   the same gray as .gtv-node-label) so it matches the label's own text color on a selected
+   wheel chip's solid accent fill instead of staying gray against white text. */
 
 .gtv-toolbar {
   display: flex;
@@ -150,7 +152,7 @@ g.node:hover {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #52525b;
+  color: var(--gtv-toolbar-icon-color, #52525b);
   cursor: pointer;
 }
 
@@ -166,7 +168,7 @@ g.node:hover {
 
 .gtv-toolbar-btn--disabled:hover {
   background-color: transparent;
-  color: #52525b;
+  color: var(--gtv-toolbar-icon-color, #52525b);
 }
 
 .gtv-menu-card {
