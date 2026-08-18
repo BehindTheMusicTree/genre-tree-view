@@ -57,6 +57,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instead of a fixed size, and the card's/chip's top corners square off while the label is
   attached so the two read as one continuous rounded shape instead of a seam between two stacked
   rounded rectangles.
+- The card's/chip's own top border also disappears while its hover label is attached, so the two
+  merge into one shape with no line at the seam.
 
 ### Fixed
 

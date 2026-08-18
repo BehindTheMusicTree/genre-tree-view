@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import * as d3 from "d3";
-import { appendPaths } from "../d3-helper/d3-path-helper";
+import { appendPaths, openBottomBorderPath, roundedRectPath } from "../d3-helper/d3-path-helper";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { createTreeLayout } from "../tree-renderer";
 import { CONNECTOR_COLOR, CONNECTOR_WIDTH, getItemCountRange } from "../constants";
@@ -57,5 +57,31 @@ describe("appendPaths", () => {
     paths.each(function () {
       expect(d3.select(this).attr("d")).toBeTruthy();
     });
+  });
+});
+
+describe("roundedRectPath", () => {
+  it("emits an arc command for each non-zero corner", () => {
+    const d = roundedRectPath(0, 0, 100, 50, { tl: 8, tr: 8, br: 8, bl: 8 });
+    expect(d.match(/A /g)).toHaveLength(4);
+    expect(d.endsWith("Z")).toBe(true);
+  });
+
+  it("omits the arc command for a zero-radius corner", () => {
+    const d = roundedRectPath(0, 0, 100, 50, { tl: 0, tr: 0, br: 8, bl: 8 });
+    expect(d.match(/A /g)).toHaveLength(2);
+  });
+});
+
+describe("openBottomBorderPath", () => {
+  it("emits an arc command for each non-zero bottom corner and no closing Z", () => {
+    const d = openBottomBorderPath(0, 0, 100, 50, { br: 8, bl: 8 });
+    expect(d.match(/A /g)).toHaveLength(2);
+    expect(d.endsWith("Z")).toBe(false);
+  });
+
+  it("omits the arc command for a zero-radius bottom corner", () => {
+    const d = openBottomBorderPath(0, 0, 100, 50, { br: 0, bl: 0 });
+    expect(d.match(/A /g)).toBeNull();
   });
 });

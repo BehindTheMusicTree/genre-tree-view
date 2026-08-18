@@ -23,7 +23,7 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths, roundedRectPath } from "./d3-helper/d3-path-helper";
+import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -332,6 +332,10 @@ export function renderTree(
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
+  // Fill and border are separate paths (rather than one path with both fill and stroke) so that
+  // hovering a node can drop just its border's top edge (to merge visually with its hover tab
+  // above, which already omits its own border-bottom) without needing a stroke API that can
+  // fill without stroking. See the mouseover/mouseleave-timeout handlers below.
   nodes
     .append("path")
     .attr("class", "gtv-node-rect")
@@ -345,9 +349,23 @@ export function renderTree(
       });
     })
     .attr("fill", tintSurface(rootColor))
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH))
     .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
+
+  nodes
+    .append("path")
+    .attr("class", "gtv-node-border")
+    .attr("d", (d) => {
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+        tl: CORNER_RADIUS,
+        tr: CORNER_RADIUS,
+        br: CORNER_RADIUS,
+        bl: CORNER_RADIUS,
+      });
+    })
+    .attr("fill", "none")
+    .attr("stroke", SURFACE_BORDER_COLOR)
+    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
 
   nodes
     .append("foreignObject")
@@ -384,6 +402,15 @@ export function renderTree(
           roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
             tl: 0,
             tr: 0,
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
+      group
+        .select<SVGPathElement>(".gtv-node-border")
+        .attr(
+          "d",
+          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
             br: CORNER_RADIUS,
             bl: CORNER_RADIUS,
           }),
@@ -448,6 +475,17 @@ export function renderTree(
           const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
           group
             .select<SVGPathElement>(".gtv-node-rect")
+            .attr(
+              "d",
+              roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+                tl: CORNER_RADIUS,
+                tr: CORNER_RADIUS,
+                br: CORNER_RADIUS,
+                bl: CORNER_RADIUS,
+              }),
+            );
+          group
+            .select<SVGPathElement>(".gtv-node-border")
             .attr(
               "d",
               roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {

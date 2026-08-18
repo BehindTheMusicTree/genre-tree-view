@@ -35,6 +35,31 @@ export function roundedRectPath(x: number, y: number, width: number, height: num
     .join(" ");
 }
 
+// Traces only the right, bottom, and left edges of a rect (skipping the top edge entirely,
+// unclosed) so a node card's border can merge with its hover tab above it instead of drawing a
+// visible line across the seam. Assumes the top corners are already square (radius 0) — see the
+// mouseover/mouseleave-timeout handlers in tree-renderer.ts, which only swap to this path once
+// the fill path's top corners are squared too.
+export function openBottomBorderPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  corners: Pick<RoundedRectCorners, "br" | "bl">,
+) {
+  const { br, bl } = corners;
+  return [
+    `M ${x + width} ${y}`,
+    `V ${y + height - br}`,
+    br ? `A ${br} ${br} 0 0 1 ${x + width - br} ${y + height}` : "",
+    `H ${x + bl}`,
+    bl ? `A ${bl} ${bl} 0 0 1 ${x} ${y + height - bl}` : "",
+    `V ${y}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function appendPaths(
   d3Lib: typeof import("d3"),
   svg: D3Selection,

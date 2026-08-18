@@ -465,12 +465,14 @@ g.node:hover {
   opacity: 1;
 }
 
-/* Squares the chip's own top corners while its name tab is showing, so the tab (rounded on top)
-   and the chip (rounded on bottom) read as one taller shape instead of two stacked rounded
-   rectangles with a visible seam. */
+/* Squares the chip's own top corners and drops its top border while its name tab is showing (the
+   tab itself already omits its own border-bottom, see .gtv-hover-label), so the tab (rounded on
+   top) and the chip (rounded on bottom) read as one taller shape instead of two stacked rounded
+   rectangles with a visible seam/border line between them. */
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+  border-top-color: transparent;
 }
 
 @media (prefers-reduced-motion: no-preference) {
