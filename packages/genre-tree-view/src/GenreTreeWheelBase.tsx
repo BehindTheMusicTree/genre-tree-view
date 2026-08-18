@@ -235,6 +235,12 @@ export function WheelCore({
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
                   <div className="gtv-wheel-chip-anchor">
+                    <div
+                      className="gtv-hover-label gtv-wheel-chip-hover-label"
+                      style={{ width: dimensions.WIDTH } as React.CSSProperties}
+                    >
+                      {group.root.name}
+                    </div>
                     <button
                       type="button"
                       className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}

@@ -105,6 +105,12 @@ export const TOOLBAR_MENU_X_GAP = 4;
 export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 
+// A node's floating hover-name label (see addHoverNameLabel), shown above the card while the
+// toolbar overlay masks the card's own label. Sized independently of ACTIONS_OVERLAY_* above —
+// those protect the overflow menu's much larger footprint, this protects a single line of text.
+export const HOVER_LABEL_HEIGHT = 22;
+export const HOVER_LABEL_GAP = 6;
+
 // Layout slot size, not a rendered node's actual size (see calculateNodeDimensions) — every
 // node's slot has to fit the largest a node can render at, or a high-itemCount node overflows
 // its neighbors' slots and overlaps them.

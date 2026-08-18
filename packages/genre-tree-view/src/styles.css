@@ -85,6 +85,31 @@ g.node:hover {
   }
 }
 
+/* Small floating pill showing a node's/chip's name above its card while the hover toolbar
+   (see .gtv-toolbar / .gtv-wheel-chip-toolbar) masks the label underneath — keeps the hovered
+   node identifiable while the toolbar covers its own label. No sizing/position here: SVG usage
+   sets width/height:100% inline (fills its foreignObject, see addHoverNameLabel in
+   NodeHelper.tsx); wheel usage is positioned via .gtv-wheel-chip-hover-label below. Deliberately
+   not pointer-events:none — see the hover-hit-testing notes next to its two call sites. */
+.gtv-hover-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 2px 8px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
+  font-size: 12px;
+  font-weight: 500;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #18181b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* The toolbar's inline icon row and its overflow menu, shown on node hover. The row itself
    overlays the node's own card in place of its label — sized to the card and backed by the
    card's own fill (see --gtv-node-fill in tree-renderer.ts) so it masks the label beneath it
@@ -408,6 +433,33 @@ g.node:hover {
 
 @media (prefers-reduced-motion: no-preference) {
   .gtv-wheel-chip-toolbar {
+    transition: opacity 120ms ease;
+  }
+}
+
+/* Floating name pill for a wheel root chip (see .gtv-hover-label above) — sits entirely above
+   .gtv-wheel-chip-anchor's own box (sized only by its in-flow <button>, see the comment on
+   .gtv-wheel-chip-anchor), so unlike .gtv-wheel-chip-toolbar it doesn't overlap the clickable
+   button and doesn't need pointer-events:none to let clicks fall through. Left at its default
+   (auto) deliberately: if it were none, resting the pointer on the visible pill would hit-test
+   past .gtv-wheel-chip-anchor entirely, :hover would stop matching, and the toolbar+label would
+   vanish out from under the cursor. */
+.gtv-wheel-chip-hover-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  opacity: 0;
+  cursor: default;
+}
+
+.gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-label {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip-hover-label {
     transition: opacity 120ms ease;
   }
 }

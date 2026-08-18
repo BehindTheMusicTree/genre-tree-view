@@ -16,6 +16,8 @@ import {
   calculateNodeDimensions,
   Dimensions,
   getItemCountRange,
+  HOVER_LABEL_GAP,
+  HOVER_LABEL_HEIGHT,
   ItemCountRange,
 } from "./constants";
 
@@ -232,6 +234,33 @@ export function toggleLightActionsMenu(
   d3Lib.select(window).on(`click.${menuId}`, () => closeLightActionsMenu(d3Lib, menuId));
 
   return menuGroup;
+}
+
+/** A small pill showing the node's name, floated just above the card while addToolbarActions'
+ *  overlay is masking the card's own label underneath — keeps the hovered node identifiable
+ *  without permanently reserving space for it. Position-only: local (x, y) inside the node's own
+ *  <g> is already screen-space "above" regardless of orientation (node boxes are never rotated),
+ *  so unlike addToolbarActions this needs no orientation parameter. */
+export function addHoverNameLabel(
+  d3Lib: typeof import("d3"),
+  node: GenreTreeNode,
+  nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+  itemCountRange: ItemCountRange,
+) {
+  if (!nodeGroup.select("#hover-label-" + node.id).empty()) return;
+
+  const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
+  const group = nodeGroup.append("g").attr("id", "hover-label-" + node.id).attr("class", "gtv-hover-label-group");
+
+  group
+    .append("foreignObject")
+    .attr("x", -dimensions.WIDTH / 2)
+    .attr("y", -dimensions.HEIGHT / 2 - HOVER_LABEL_GAP - HOVER_LABEL_HEIGHT)
+    .attr("width", dimensions.WIDTH)
+    .attr("height", HOVER_LABEL_HEIGHT)
+    .html(() => `<div class="gtv-hover-label" style="width:100%;height:100%">${node.name}</div>`);
+
+  return group;
 }
 
 /** The common actions as an inline icon row on the node itself (single hover stage, no

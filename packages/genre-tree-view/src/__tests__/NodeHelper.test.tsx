@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as d3 from "d3";
 import {
+  addHoverNameLabel,
   addReparentTargetOverlay,
   addToolbarActions,
   buildTreeHierarchyStructure,
@@ -9,7 +10,7 @@ import {
   type MenuActionItem,
   type NodeActionCallbacks,
 } from "../NodeHelper";
-import { calculateNodeDimensions, getItemCountRange } from "../constants";
+import { calculateNodeDimensions, getItemCountRange, HOVER_LABEL_GAP, HOVER_LABEL_HEIGHT } from "../constants";
 import type { GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
@@ -399,5 +400,47 @@ describe("addToolbarActions", () => {
     expect(menuY("vertical")).toBeLessThan(-dimensions.HEIGHT / 2);
     // "vertical-flipped": depth grows down, so the menu pops out below the card (y > bottom edge).
     expect(menuY("vertical-flipped")).toBeGreaterThan(dimensions.HEIGHT / 2);
+  });
+});
+
+describe("addHoverNameLabel", () => {
+  it("is idempotent: a second call with a label already present is a no-op", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+    const { g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    expect(g.selectAll("#hover-label-n1").size()).toBe(1);
+  });
+
+  it("positions the foreignObject centered above the card", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+    const dimensions = calculateNodeDimensions(node.itemCount, getItemCountRange([node]));
+    const { svgEl, g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    const foreignObject = svgEl.querySelector('[id="hover-label-n1"] foreignObject')!;
+    expect({
+      x: Number(foreignObject.getAttribute("x")),
+      y: Number(foreignObject.getAttribute("y")),
+      width: Number(foreignObject.getAttribute("width")),
+      height: Number(foreignObject.getAttribute("height")),
+    }).toEqual({
+      x: -dimensions.WIDTH / 2,
+      y: -dimensions.HEIGHT / 2 - HOVER_LABEL_GAP - HOVER_LABEL_HEIGHT,
+      width: dimensions.WIDTH,
+      height: HOVER_LABEL_HEIGHT,
+    });
+  });
+
+  it("renders the node's name as the label text", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "Progressive House", itemCount: 5 };
+    const { svgEl, g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    expect(svgEl.querySelector('[id="hover-label-n1"] .gtv-hover-label')!.textContent).toBe("Progressive House");
   });
 });

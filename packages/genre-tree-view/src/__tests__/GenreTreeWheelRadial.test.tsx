@@ -284,6 +284,13 @@ describe("GenreTreeWheelRadial", () => {
     expect(onAddChild).toHaveBeenCalledWith("root-a");
   });
 
+  it("renders a floating name label for each root chip", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+
+    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
+    expect(rockAnchor.querySelector(".gtv-wheel-chip-hover-label")!.textContent).toBe("Rock");
+  });
+
   it("fit-to-frame button rescales the shared transform to fit the circle and every mounted anchor", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

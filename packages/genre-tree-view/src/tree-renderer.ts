@@ -24,7 +24,7 @@ import {
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import { appendPaths } from "./d3-helper/d3-path-helper";
-import { addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
+import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -368,6 +368,8 @@ export function renderTree(
         unknown
       >;
 
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+
       addToolbarActions(
         d3Lib,
         d.data,
@@ -422,6 +424,7 @@ export function renderTree(
         // here would delete the kebab that anchors the still-open menu.
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+          d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.

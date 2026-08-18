@@ -91,6 +91,12 @@ describe("GenreTree", () => {
       fireEvent.click(enabledButton);
       expect(onPlayPause).toHaveBeenCalledWith("root");
     });
+
+    it("shows the node's name as a floating label alongside the toolbar", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      playButton(container, "root");
+      expect(container.querySelector("#hover-label-root .gtv-hover-label")!.textContent).toBe("Root");
+    });
   });
 
   it("routes a file selection through selectingFileNodeIdRef to onUploadFiles", () => {

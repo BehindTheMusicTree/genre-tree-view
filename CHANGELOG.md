@@ -23,6 +23,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ring so that root lands on the right and recalculates the other 3 cardinals; the 3 non-clicked
   developed trees render dimmed until hovered or focused. Shares the same props, callbacks, and
   pan/zoom/fit-to-frame controls as the other wheel variants.
+- A floating name label above a node's card or a wheel root chip while hovered — since the hover
+  toolbar overlay now masks the card/chip's own label underneath, the label keeps the hovered
+  node identifiable across `GenreTree` and all wheel variants.
 
 ### Changed
 
