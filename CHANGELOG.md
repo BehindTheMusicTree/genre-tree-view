@@ -102,6 +102,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the equivalent SVG Gaussian `stdDeviation`, so the chip's `2px` blur was only as soft as an
   `stdDeviation` of `1` — half as soft as the card's `feDropShadow`, which uses `stdDeviation: 2`.
   Fixed by doubling the chip's blur radius to `4px` to match.
+- A selected wheel chip's hover name tab no longer shows a visible seam against the chip below
+  it. The chip and tab are two separately-composited boxes (the tab sits on its own layer via
+  `transform`) that only touched at a fractional-pixel boundary, and each layer's edge is
+  anti-aliased independently, producing a hairline seam even with identical fill color and no
+  shadow difference between them. Fixed by overlapping the tab 1px into the chip instead of
+  sitting exactly flush, removing the boundary that got anti-aliased; also squared off and
+  clipped the chip's own shadow at its top edge so it can no longer bleed onto the tab above it.
 
 ## [0.5.0] - 2026-08-14
 

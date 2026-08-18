@@ -100,7 +100,10 @@ g.node:hover {
    --gtv-hover-label-border-color (defaults to the same gray as an unselected chip/node's own
    border) so a selected chip's tab can blend its border into its accent fill exactly like
    .gtv-wheel-chip--selected does — otherwise the gray default reads as a separate outlined box
-   stacked on a solid-colored chip. No sizing/position/font-size here:
+   stacked on a solid-colored chip. No own shadow, deliberately: a blurred drop-shadow still
+   spreads toward the edge it's offset away from, so even a negative y-offset bled a soft line
+   onto the card/chip flush below it — the merged shape's own elevation comes from that card's/
+   chip's shadow alone. No sizing/position/font-size here:
    both call sites set width/height and font-size inline (matching the card's/chip's own
    item-count-scaled font size, see calculateNodeFontSize) — SVG usage fills its foreignObject
    (see addHoverNameLabel in NodeHelper.tsx), wheel usage is positioned via
@@ -116,7 +119,6 @@ g.node:hover {
   border: 1px solid var(--gtv-hover-label-border-color, #e4e4e7);
   border-bottom: none;
   border-radius: 8px 8px 0 0;
-  filter: drop-shadow(0 -1px 3px rgba(24, 24, 27, 0.12));
   font-weight: 500;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--gtv-hover-label-color, #18181b);
@@ -462,10 +464,13 @@ g.node:hover {
    button and doesn't need pointer-events:none to let clicks fall through. Left at its default
    (auto) deliberately: if it were none, resting the pointer on the visible tab would hit-test
    past .gtv-wheel-chip-anchor entirely, :hover would stop matching, and the toolbar+label would
-   vanish out from under the cursor. */
+   vanish out from under the cursor. Overlaps the chip by 1px (rather than sitting exactly
+   flush) because two same-color boxes that only touch at a fractional-pixel boundary still get a
+   hairline anti-aliased seam between their separately composited layers (this one is on its own
+   layer via `transform`) — same fill color, 1px overlap, no boundary left to alias. */
 .gtv-wheel-chip-hover-label {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% - 1px);
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
@@ -479,11 +484,16 @@ g.node:hover {
 /* Squares the chip's own top corners and drops its top border while its name tab is showing (the
    tab itself already omits its own border-bottom, see .gtv-hover-label), so the tab (rounded on
    top) and the chip (rounded on bottom) read as one taller shape instead of two stacked rounded
-   rectangles with a visible seam/border line between them. */
+   rectangles with a visible seam/border line between them. Also clips the chip's own box-shadow
+   at its top edge: a blurred shadow still spreads past the edge it's offset away from, so even
+   with a downward offset it bled a couple px above the chip's top edge and landed on the tab
+   flush above it — clip-path cuts that bled sliver off while leaving the bottom/side shadow (the
+   merged shape's real elevation) untouched. */
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   border-top-color: transparent;
+  clip-path: inset(0 -20px -20px -20px);
 }
 
 @media (prefers-reduced-motion: no-preference) {
