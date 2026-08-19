@@ -126,6 +126,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   silhouette once before blurring — the seam has no interior corner left to kink around. (The
   wheel chip's hover label was already immune to this — it's not a separate element, see the
   entry above.)
+- A tree node's hover name label still showed a faint hairline seam against the card below it
+  even after the shared-filter fix above. The label (an HTML `foreignObject`) and the card (an
+  SVG `path`) are rasterized by two independent engines, so butting them exactly edge-to-edge
+  leaves each side's own anti-aliasing sampling the boundary separately, however pixel-identical
+  their position and fill color are. Fixed by extending the label's `foreignObject` 1px into the
+  card's region — same fill color, so invisible — turning the touching boundary into an
+  overlapping one with no seam left to sample.
 
 ## [0.5.0] - 2026-08-14
 

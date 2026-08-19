@@ -10,7 +10,12 @@ import {
   type MenuActionItem,
   type NodeActionCallbacks,
 } from "../NodeHelper";
-import { calculateNodeDimensions, getItemCountRange, HOVER_LABEL_HEIGHT } from "../constants";
+import {
+  calculateNodeDimensions,
+  getItemCountRange,
+  HOVER_LABEL_CARD_OVERLAP,
+  HOVER_LABEL_HEIGHT,
+} from "../constants";
 import type { GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
@@ -431,7 +436,7 @@ describe("addHoverNameLabel", () => {
       x: -dimensions.WIDTH / 2,
       y: -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT,
       width: dimensions.WIDTH,
-      height: HOVER_LABEL_HEIGHT,
+      height: HOVER_LABEL_HEIGHT + HOVER_LABEL_CARD_OVERLAP,
     });
   });
 

@@ -111,6 +111,12 @@ export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 // of text. No gap constant: the tab sits flush against the card's top edge, not floating above it.
 export const HOVER_LABEL_HEIGHT = 22;
 
+// The label's foreignObject (HTML) and the card's rect (SVG path) are rasterized by separate
+// engines, so even with pixel-identical position and fill color, butting them exactly edge-to-edge
+// leaves a faint hairline seam from each side's independent anti-aliasing. Extending the label 1px
+// into the card hides that seam under an identical-color overlap instead of a touching boundary.
+export const HOVER_LABEL_CARD_OVERLAP = 1;
+
 // Layout slot size, not a rendered node's actual size (see calculateNodeDimensions) — every
 // node's slot has to fit the largest a node can render at, or a high-itemCount node overflows
 // its neighbors' slots and overlaps them.

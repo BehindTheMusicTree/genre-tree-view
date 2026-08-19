@@ -17,6 +17,7 @@ import {
   calculateNodeFontSize,
   Dimensions,
   getItemCountRange,
+  HOVER_LABEL_CARD_OVERLAP,
   HOVER_LABEL_HEIGHT,
   ItemCountRange,
 } from "./constants";
@@ -258,7 +259,7 @@ export function addHoverNameLabel(
     .attr("x", -dimensions.WIDTH / 2)
     .attr("y", -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT)
     .attr("width", dimensions.WIDTH)
-    .attr("height", HOVER_LABEL_HEIGHT)
+    .attr("height", HOVER_LABEL_HEIGHT + HOVER_LABEL_CARD_OVERLAP)
     .html(
       () =>
         `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,
