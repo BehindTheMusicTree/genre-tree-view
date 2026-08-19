@@ -138,6 +138,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the card. Extended the 1px overlap to all three touching sides. Also reduced the shared
   `feDropShadow`'s `stdDeviation` from `2` to `1`, tightening the card/label union's shadow now
   that the union silhouette itself is 1px larger on every side than before.
+- Mounting a tree node's hover name label changed the look of the card's own elevation shadow
+  while hovered, since the label was appended into the same filtered `<g>` as the card (see the
+  shared-filter entry above) and `feDropShadow` re-blurs whatever silhouette that `<g>` currently
+  contains. Reverted: the label now mounts as a sibling of the card's filtered group instead of
+  inside it, so the card's shadow renders identically whether or not it's hovered. The
+  color-match + overlap fix above still hides the seam between the two, independent of the
+  shadow.
 
 ## [0.5.0] - 2026-08-14
 
