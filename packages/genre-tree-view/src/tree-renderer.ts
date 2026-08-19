@@ -416,7 +416,13 @@ export function renderTree(
         unknown
       >;
 
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+      // Same filter as .gtv-node-rect below, so the label's own soft-edged shadow lines up with
+      // the card's along their shared, aligned contour instead of the label reading as a
+      // crisp-edged cutout against the card's blurred one.
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange)?.attr(
+        "filter",
+        ELEVATION ? `url(#${shadowFilterId})` : null,
+      );
 
       // Squares the card's top corners while its hover tab is attached, so the tab (rounded on
       // top) and the card (rounded on bottom) read as one taller shape instead of two stacked

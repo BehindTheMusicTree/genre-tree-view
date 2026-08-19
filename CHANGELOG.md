@@ -117,6 +117,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   1px downward offset (the card's `feDropShadow` `dy`, the chip's `box-shadow` y-offset) that was
   more visible now that a hovered chip is taller. Fixed by dropping the offset to 0 on both, kept
   in sync since the chip's shadow is designed to match the card's.
+- A tree node's hover name label no longer shows a visible seam against the card below it. The
+  card's `feDropShadow` filter was applied only to the card's own path, so its soft blurred edge
+  stopped abruptly where the (unfiltered, crisp-edged) label began, right at the card's now-square
+  top corners. Fixed by applying the same shadow filter to the label, so both elements' aligned,
+  adjoining edges read as one continuous blurred contour. (The wheel chip's hover label was already
+  immune to this — it's not a separate element, see the entry above.)
 
 ## [0.5.0] - 2026-08-14
 
