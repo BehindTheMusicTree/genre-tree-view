@@ -133,6 +133,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   their position and fill color are. Fixed by extending the label's `foreignObject` 1px into the
   card's region — same fill color, so invisible — turning the touching boundary into an
   overlapping one with no seam left to sample.
+- The overlap fix above only extended the label into the card on the bottom edge, leaving the
+  same hairline seam still visible along the label's left and right edges where it also touches
+  the card. Extended the 1px overlap to all three touching sides. Also reduced the shared
+  `feDropShadow`'s `stdDeviation` from `2` to `1`, tightening the card/label union's shadow now
+  that the union silhouette itself is 1px larger on every side than before.
 
 ## [0.5.0] - 2026-08-14
 

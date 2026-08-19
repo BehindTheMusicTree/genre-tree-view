@@ -433,9 +433,9 @@ describe("addHoverNameLabel", () => {
       width: Number(foreignObject.getAttribute("width")),
       height: Number(foreignObject.getAttribute("height")),
     }).toEqual({
-      x: -dimensions.WIDTH / 2,
+      x: -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP,
       y: -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT,
-      width: dimensions.WIDTH,
+      width: dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2,
       height: HOVER_LABEL_HEIGHT + HOVER_LABEL_CARD_OVERLAP,
     });
   });

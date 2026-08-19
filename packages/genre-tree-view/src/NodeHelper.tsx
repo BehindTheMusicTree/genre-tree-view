@@ -256,9 +256,9 @@ export function addHoverNameLabel(
 
   group
     .append("foreignObject")
-    .attr("x", -dimensions.WIDTH / 2)
+    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP)
     .attr("y", -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT)
-    .attr("width", dimensions.WIDTH)
+    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2)
     .attr("height", HOVER_LABEL_HEIGHT + HOVER_LABEL_CARD_OVERLAP)
     .html(
       () =>
