@@ -56,24 +56,11 @@
   margin-left: 0.5rem;
 }
 
-/* Applied to the node group (not the rect) so it composes with, rather than overrides, the
-   rect's own `filter="url(#...)"` elevation shadow attribute. Reads --gtv-hover-filter (set in
-   tree-renderer.ts) when elevation is on: a wide-region SVG filter is required here, not the
-   plain brightness() fallback below, because rasterizing this group into a CSS filter's
-   tightly-computed region clips the child rect's own shadow, which paints outside its box. */
-g.node:hover {
-  filter: var(--gtv-hover-filter, brightness(var(--gtv-hover-brightness, 1.05)));
-}
-
 .gtv-actions-panel {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  g.node {
-    transition: filter 150ms ease;
-  }
-
   .gtv-actions-panel {
     animation: gtv-fade-in 150ms ease;
   }

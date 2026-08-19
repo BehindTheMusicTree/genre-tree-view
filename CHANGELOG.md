@@ -145,6 +145,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   inside it, so the card's shadow renders identically whether or not it's hovered. The
   color-match + overlap fix above still hides the seam between the two, independent of the
   shadow.
+- A tree node's card shadow still visibly changed on hover after the fix above, from two
+  remaining causes unrelated to the label. First, `.gtv-node-rect`/`.gtv-node-border` squared
+  off their top corners on hover (see the "square off"/"top border also disappears" entries
+  above) so the card's `feDropShadow` re-blurred a different silhouette while hovered. Second,
+  the `g.node:hover` brightness filter — even confined to its own generous filter region (see the
+  "no longer loses its elevation shadow" entry above) — still rasterized and darkened the card's
+  already-shadowed pixels along with everything else in the group, since it wraps the whole node
+  rather than excluding the shadow. Fixed by removing both: the card and its border now stay
+  fully rounded through hover instead of squaring off, and the hover brightness effect (SVG
+  filter and CSS `brightness()` fallback alike, plus the now-unused `HOVER_BRIGHTNESS` constant)
+  is removed entirely, so a card's shape and color are pixel-identical whether hovered or not.
 
 ## [0.5.0] - 2026-08-14
 

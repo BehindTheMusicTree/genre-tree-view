@@ -31,9 +31,6 @@ export const TOOLBAR_GAP = 2;
 export const MENU_ROW_HEIGHT = 30;
 export const MENU_WIDTH = 130;
 
-// <1 darkens on hover (light surfaces), >1 lightens on hover (dark surfaces).
-export const HOVER_BRIGHTNESS = 0.97;
-
 export const PER_TREE_ACCENT_DOT = true;
 export const ACCENT_DOT_SIZE = 4;
 

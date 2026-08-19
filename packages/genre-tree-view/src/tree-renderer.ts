@@ -13,7 +13,6 @@ import {
   ROOT_BORDER_WIDTH,
   CORNER_RADIUS,
   ELEVATION,
-  HOVER_BRIGHTNESS,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
   MAX_NODE_WIDTH,
@@ -24,7 +23,7 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
+import { appendPaths, roundedRectPath } from "./d3-helper/d3-path-helper";
 import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -272,13 +271,6 @@ export function renderTree(
   // `id`/`url(#...)` reference, which arbitrary GenreTreeNode.id strings are not safe for.
   const safeRootId = treeData.data.id.replace(/[^a-zA-Z0-9_-]/g, "_");
   const shadowFilterId = `gtv-card-shadow-${safeRootId}`;
-  // g.node:hover's own brightness effect (styles.css) needs a filter with a region this
-  // generous too — a plain CSS `brightness()` on the node group computes a tight, UA-sized
-  // filter region from the group's own geometry, and rasterizing the group into that region
-  // silently clips the card's `.gtv-node-rect`'s own feDropShadow above, since that shadow
-  // paints outside the rect's box. Giving this filter the same -50%/200% region as the shadow
-  // filter avoids that clip.
-  const hoverBrightnessFilterId = `gtv-hover-brightness-${safeRootId}`;
   if (ELEVATION) {
     const defs = svg.append("defs");
     const filter = defs
@@ -295,18 +287,6 @@ export function renderTree(
       .attr("stdDeviation", 1)
       .attr("flood-color", TEXT_COLOR)
       .attr("flood-opacity", 0.12);
-
-    const hoverFilter = defs
-      .append("filter")
-      .attr("id", hoverBrightnessFilterId)
-      .attr("x", "-50%")
-      .attr("y", "-50%")
-      .attr("width", "200%")
-      .attr("height", "200%");
-    const brightnessTransfer = hoverFilter.append("feComponentTransfer");
-    (["feFuncR", "feFuncG", "feFuncB"] as const).forEach((fn) => {
-      brightnessTransfer.append(fn).attr("type", "linear").attr("slope", HOVER_BRIGHTNESS);
-    });
   }
 
   addGrid(svg, svgWidth, svgHeight, true);
@@ -337,13 +317,6 @@ export function renderTree(
     // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
     // label beneath it with the card's own fill instead of a hardcoded color.
     .style("--gtv-node-fill", tintSurface(rootColor));
-
-  // See hoverBrightnessFilterId above — lets g.node:hover's own filter reference this root's
-  // wide-region SVG filter instead of the plain CSS brightness() function that clips the card's
-  // shadow. Left unset (falling back to the CSS var()'s own default) when elevation is off.
-  if (ELEVATION) {
-    nodes.style("--gtv-hover-filter", `url(#${hoverBrightnessFilterId})`);
-  }
 
   // Invisible hit-region spanning the node body, appended before any visible content so painted
   // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap
@@ -430,31 +403,6 @@ export function renderTree(
       // hovered or not.
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
 
-      // Squares the card's top corners while its hover tab is attached, so the tab (rounded on
-      // top) and the card (rounded on bottom) read as one taller shape instead of two stacked
-      // rounded rectangles with a visible seam.
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      group
-        .select<SVGPathElement>(".gtv-node-rect")
-        .attr(
-          "d",
-          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-            tl: 0,
-            tr: 0,
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          }),
-        );
-      group
-        .select<SVGPathElement>(".gtv-node-border")
-        .attr(
-          "d",
-          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          }),
-        );
-
       addToolbarActions(
         d3Lib,
         d.data,
@@ -510,30 +458,6 @@ export function renderTree(
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
           d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
-
-          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-          group
-            .select<SVGPathElement>(".gtv-node-rect")
-            .attr(
-              "d",
-              roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-                tl: CORNER_RADIUS,
-                tr: CORNER_RADIUS,
-                br: CORNER_RADIUS,
-                bl: CORNER_RADIUS,
-              }),
-            );
-          group
-            .select<SVGPathElement>(".gtv-node-border")
-            .attr(
-              "d",
-              roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-                tl: CORNER_RADIUS,
-                tr: CORNER_RADIUS,
-                br: CORNER_RADIUS,
-                bl: CORNER_RADIUS,
-              }),
-            );
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
