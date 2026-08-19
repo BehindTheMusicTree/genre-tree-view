@@ -156,6 +156,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   fully rounded through hover instead of squaring off, and the hover brightness effect (SVG
   filter and CSS `brightness()` fallback alike, plus the now-unused `HOVER_BRIGHTNESS` constant)
   is removed entirely, so a card's shape and color are pixel-identical whether hovered or not.
+- A card's elevation shadow was still reported as visibly changing on hover after all of the
+  above fixes, despite the card's own rect path, border path, and shadow filter provably being
+  unchanged before/after hover under both DOM-level and real-mouse-driven checks. Rather than
+  continue chasing an unreproduced cause, the `ELEVATION` flag in `constants.ts` is temporarily
+  set to `false`, disabling the card's `feDropShadow` filter entirely — cards render with no
+  elevation shadow for now, on any renderer, hovered or not.
 
 ## [0.5.0] - 2026-08-14
 

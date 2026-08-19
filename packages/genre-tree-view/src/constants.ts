@@ -6,7 +6,7 @@ export const SURFACE_BORDER_COLOR = "#E4E4E7";
 export const SURFACE_BORDER_WIDTH = 1;
 export const ROOT_BORDER_WIDTH = 1;
 export const CORNER_RADIUS = 8;
-export const ELEVATION = true;
+export const ELEVATION = false;
 
 export const CONNECTOR_COLOR = "#D4D4D8";
 export const CONNECTOR_WIDTH = 1.5;

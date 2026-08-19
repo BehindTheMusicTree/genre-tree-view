@@ -33,13 +33,13 @@ describe("GenreTree", () => {
     expect(rect.getAttribute("fill")).toBe(tintSurface("#123456"));
   });
 
-  it("scopes the shadow filter id per instance so two trees never collide", () => {
+  it("renders no shadow filter for either instance while ELEVATION is disabled", () => {
     const otherTree: GenreTreeNode[] = [{ id: "other-root", parentId: null, name: "Other", itemCount: 1 }];
     const first = render(<GenreTree nodes={TREE} />);
     const second = render(<GenreTree nodes={otherTree} />);
 
-    expect(first.container.querySelector("filter#gtv-card-shadow-root")).toBeTruthy();
-    expect(second.container.querySelector("filter#gtv-card-shadow-other-root")).toBeTruthy();
+    expect(first.container.querySelector("filter#gtv-card-shadow-root")).toBeFalsy();
+    expect(second.container.querySelector("filter#gtv-card-shadow-other-root")).toBeFalsy();
 
     first.unmount();
     second.unmount();

@@ -317,7 +317,7 @@ describe("renderTree", () => {
     ).toThrow("SVG reference is null");
   });
 
-  it("renders one g.node per descendant with a sanitized-id-scoped shadow filter", () => {
+  it("renders one g.node per descendant and skips the shadow filter while ELEVATION is disabled", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     document.body.appendChild(svgEl);
@@ -328,10 +328,10 @@ describe("renderTree", () => {
     expect(svgEl.querySelectorAll("g.node").length).toBe(2);
     expect(svgEl.querySelector("#group-root")).toBeTruthy();
     expect(svgEl.querySelector("#group-child")).toBeTruthy();
-    expect(svgEl.querySelector("filter#gtv-card-shadow-root")).toBeTruthy();
+    expect(svgEl.querySelector("filter#gtv-card-shadow-root")).toBeFalsy();
   });
 
-  it("sanitizes ids containing unsafe characters for the shadow filter id", () => {
+  it("does not scope a shadow filter id while ELEVATION is disabled, even for unsafe-character ids", () => {
     const nodes: GenreTreeNode[] = [{ id: "root id/with:chars", parentId: null, name: "Root", itemCount: 0 }];
     const { treeData, svgWidth, svgHeight } = buildTreeData(nodes);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -340,7 +340,7 @@ describe("renderTree", () => {
 
     renderTree(d3, svgRef, treeData, svgWidth, svgHeight, null, [], "#4F46E5", baseCallbacks());
 
-    expect(svgEl.querySelector("filter#gtv-card-shadow-root_id_with_chars")).toBeTruthy();
+    expect(svgEl.querySelector("filter#gtv-card-shadow-root_id_with_chars")).toBeFalsy();
   });
 
   it("marks forbidden nodes with gtv-node--forbidden and a muted label", () => {
