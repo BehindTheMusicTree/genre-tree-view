@@ -395,10 +395,10 @@ export function addToolbarActions(
 
   group
     .append("foreignObject")
-    .attr("x", -dimensions.WIDTH / 2)
-    .attr("y", -dimensions.HEIGHT / 2)
-    .attr("width", dimensions.WIDTH)
-    .attr("height", dimensions.HEIGHT)
+    .attr("x", -dimensions.WIDTH / 2 + 1)
+    .attr("y", -dimensions.HEIGHT / 2 + 1)
+    .attr("width", dimensions.WIDTH - 2)
+    .attr("height", dimensions.HEIGHT - 2)
     .html(() => `<div class="gtv-toolbar">${buttonsHtml}${kebabHtml}</div>`)
     .selectAll<HTMLButtonElement, unknown>(".gtv-toolbar-btn")
     .each(function () {

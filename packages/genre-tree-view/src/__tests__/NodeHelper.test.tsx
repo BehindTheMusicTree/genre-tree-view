@@ -356,7 +356,7 @@ describe("addToolbarActions", () => {
     expect(onDeleteRequest).toHaveBeenCalledWith(node);
   });
 
-  it("overlays the toolbar on the card itself, for all four orientations", () => {
+  it("overlays the toolbar on the card itself, inset 1px on every side, for all four orientations", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
     const dimensions = calculateNodeDimensions(node.itemCount, getItemCountRange([node]));
 
@@ -374,10 +374,10 @@ describe("addToolbarActions", () => {
 
     for (const orientation of ["horizontal", "horizontal-anchored-flipped", "vertical", "vertical-flipped"] as const) {
       expect(toolbarBounds(orientation)).toEqual({
-        x: -dimensions.WIDTH / 2,
-        y: -dimensions.HEIGHT / 2,
-        width: dimensions.WIDTH,
-        height: dimensions.HEIGHT,
+        x: -dimensions.WIDTH / 2 + 1,
+        y: -dimensions.HEIGHT / 2 + 1,
+        width: dimensions.WIDTH - 2,
+        height: dimensions.HEIGHT - 2,
       });
     }
   });

@@ -165,6 +165,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A wheel root chip still showed a shadow after the `ELEVATION` flag above was disabled, since
   `.gtv-wheel-chip`'s `box-shadow` was a separate, always-on CSS rule rather than driven by that
   flag. Removed the chip's `box-shadow` so it matches the card's shadow-free state.
+- The node toolbar's overlay exactly matched the card's own bounds, so it could visually crowd
+  the card's border. Inset the toolbar's `foreignObject` 1px on every side (2px smaller in both
+  width and height) so the card's border shows fully around it while the toolbar is shown.
 
 ## [0.5.0] - 2026-08-14
 
