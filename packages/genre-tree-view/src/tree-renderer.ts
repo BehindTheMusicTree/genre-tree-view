@@ -363,7 +363,19 @@ export function renderTree(
   // hovering a node can drop just its border's top edge (to merge visually with its hover tab
   // above, which already omits its own border-bottom) without needing a stroke API that can
   // fill without stroking. See the mouseover/mouseleave-timeout handlers below.
-  nodes
+  //
+  // The card path and (once hovered) the hover label are both appended into this wrapping <g>
+  // rather than each carrying its own filter, and the filter lives on the <g> alone. feDropShadow
+  // blurs each *filtered element's own* rendered silhouette independently — two adjacent shapes
+  // that each carry the same filter still each wrap their own real corner where they meet, which
+  // shows up as a small kink instead of one smooth edge. Filtering the shared group blurs the
+  // union silhouette once, so the seam has no corner left to kink around.
+  const cardShadowGroups = nodes
+    .append("g")
+    .attr("class", "gtv-card-shadow-group")
+    .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
+
+  cardShadowGroups
     .append("path")
     .attr("class", "gtv-node-rect")
     .attr("d", (d) => {
@@ -375,8 +387,7 @@ export function renderTree(
         bl: CORNER_RADIUS,
       });
     })
-    .attr("fill", tintSurface(rootColor))
-    .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
+    .attr("fill", tintSurface(rootColor));
 
   nodes
     .append("path")
@@ -416,13 +427,11 @@ export function renderTree(
         unknown
       >;
 
-      // Same filter as .gtv-node-rect below, so the label's own soft-edged shadow lines up with
-      // the card's along their shared, aligned contour instead of the label reading as a
-      // crisp-edged cutout against the card's blurred one.
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange)?.attr(
-        "filter",
-        ELEVATION ? `url(#${shadowFilterId})` : null,
-      );
+      // Appended into .gtv-card-shadow-group (not this node <g> directly) so the label shares the
+      // card's shadow filter as one union silhouette instead of getting its own separately
+      // blurred corner at the seam — see the comment on cardShadowGroups above.
+      const shadowGroup = group.select<SVGGElement>(".gtv-card-shadow-group");
+      addHoverNameLabel(d3Lib, d.data, shadowGroup, itemCountRange);
 
       // Squares the card's top corners while its hover tab is attached, so the tab (rounded on
       // top) and the card (rounded on bottom) read as one taller shape instead of two stacked
