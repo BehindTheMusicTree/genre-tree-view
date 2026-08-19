@@ -162,6 +162,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   continue chasing an unreproduced cause, the `ELEVATION` flag in `constants.ts` is temporarily
   set to `false`, disabling the card's `feDropShadow` filter entirely — cards render with no
   elevation shadow for now, on any renderer, hovered or not.
+- A wheel root chip still showed a shadow after the `ELEVATION` flag above was disabled, since
+  `.gtv-wheel-chip`'s `box-shadow` was a separate, always-on CSS rule rather than driven by that
+  flag. Removed the chip's `box-shadow` so it matches the card's shadow-free state.
 
 ## [0.5.0] - 2026-08-14
 

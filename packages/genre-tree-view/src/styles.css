@@ -390,7 +390,7 @@
   pointer-events: auto;
 }
 
-/* Sized and styled to match a tree node card exactly (same corner radius, border, shadow, and
+/* Sized and styled to match a tree node card exactly (same corner radius, border, and
    .gtv-node-label typography) so a root reads the same whether it's shown here or promoted to the
    actual root node. padding-top/margin-top start at 0 and both move together on hover (see
    .gtv-wheel-chip-anchor:hover below) — a matched pair rather than two independent properties.
@@ -410,9 +410,6 @@
   border-radius: 8px;
   border: 1px solid #e4e4e7;
   background: #ffffff;
-  /* blur radius is 4px (not 2px) to match the node card's feDropShadow: CSS box-shadow's blur
-     radius maps to an SVG stdDeviation of half itself, and the card's filter uses stdDeviation=2. */
-  box-shadow: 0 0 4px rgba(24, 24, 27, 0.12);
   color: #18181b;
   cursor: pointer;
 }
@@ -453,8 +450,8 @@
 /* Reveals a wheel root chip's name on hover by growing the chip's own box upward (padding-top),
    not by stacking a second element above it — two independently composited boxes meeting at a
    fractional-pixel boundary still show a hairline anti-aliased seam between them no matter how
-   tightly they're aligned or overlapped (border-radius, border, and box-shadow all stay on this
-   one continuously-painted box instead, so there's no boundary left to seam). margin-top cancels
+   tightly they're aligned or overlapped (border-radius and border both stay on this one
+   continuously-painted box instead, so there's no boundary left to seam). margin-top cancels
    the padding out of .gtv-wheel-chip-anchor's own flow-height (sized only by this in-flow
    <button>'s margin box, see the comment on .gtv-wheel-chip-anchor) — height grows by
    --gtv-hover-label-height and shifts up by the same amount, so the anchor's own box, and thus
