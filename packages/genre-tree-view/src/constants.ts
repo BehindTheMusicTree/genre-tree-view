@@ -200,6 +200,18 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 
+// Miniature subtree preview shown for non-cardinal (filler) roots on the radial wheel — the full,
+// unclipped GenreTree, scaled down and rendered as a dim grayscale "shadow" (see
+// .gtv-wheel-radial-mini-tree in styles.css) rather than a real interactive one. Since it's no
+// longer clipped to a small box, overlapping a neighboring chip/preview/cardinal tree is expected
+// and accepted — the heavy dimming plus the cardinal trees' higher stacking order keep it from
+// competing with anything the user is meant to actually read.
+export const WHEEL_MINI_TREE_SCALE = 0.45;
+
+// Widens the gaps between depth levels in the mini-tree shadow previews (3x the normal spacing),
+// so nested nodes stay legible even at WHEEL_MINI_TREE_SCALE's small size.
+export const WHEEL_MINI_TREE_DEPTH_SPACING_SCALE = 3;
+
 // Suggested size for the fixed-size ancestor any GenreTree/GenreTreeWheel variant requires (see
 // GenreTreeWheel's own doc comment): enough room for a typically-deep tree, or the wheel's chip
 // strip plus a typically-deep tree above it. Not derived from WHEEL_VIEWPORT_HEIGHT/WHEEL_RADIUS

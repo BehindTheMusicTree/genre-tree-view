@@ -26,6 +26,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A name label attached to the top of a node's card or a wheel root chip while hovered — since
   the hover toolbar overlay now masks the card/chip's own label underneath, the label keeps the
   hovered node identifiable across `GenreTree` and all wheel variants.
+- `GenreTreeWheelRadial`'s non-cardinal (filler) roots now render their full subtree as a dim,
+  unclipped grayscale "shadow" preview instead of no tree at all, so the ring hints at every
+  root's shape, not just the 4 developed ones. Hovering a filler's preview brightens it to full
+  color and greys out the 4 cardinal trees so it reads as the current focus. Backed by a new
+  `depthSpacingScale` prop on `GenreTree` (default `1`, no behavior change for existing callers)
+  that widens the gap between depth levels, used here to keep the shrunk previews' nested nodes
+  legible.
 
 ### Changed
 

@@ -635,8 +635,16 @@
    already-on-the-rim zero point). Applied inline from JS via the matching offset property
    (bottom/left/top/right) — simpler than a CSS var here since, unlike the rotating single-tree
    wheels, these 4 anchors never share one value. */
+/* z-index: 1 (vs. the mini-tree previews' auto stacking, see .gtv-wheel-radial-mini-tree below)
+   guarantees a real cardinal tree always paints over a filler root's ghost preview where their
+   unclipped extents overlap, regardless of DOM order. */
 .gtv-wheel-radial-tree-anchor {
   position: absolute;
+  z-index: 1;
+  filter: grayscale(0);
+  transition:
+    opacity 150ms ease,
+    filter 150ms ease;
 }
 
 .gtv-wheel-radial-tree-anchor--top {
@@ -674,6 +682,70 @@
 .gtv-wheel-radial-tree-anchor--secondary:hover,
 .gtv-wheel-radial-tree-anchor--secondary:focus-within {
   opacity: 1;
+}
+
+/* Full, unclipped, non-interactive subtree preview for a non-cardinal (filler) root — a sibling of
+   .gtv-wheel-chip-anchor inside the same (rotated) .gtv-wheel-slot. Unlike the chip, it does NOT
+   counter-rotate: it inherits the slot's rotate(chipAngle) so the tree's growth axis leans outward
+   along the same center-to-root angle the chip sits at, rather than always pointing straight up
+   (individual node cards are kept upright separately — see the counter-rotation rule below).
+   bottom: 0 + left: 50% anchors the tree's root to the slot's ring position (--gtv-wheel-slot is a
+   zero-size box, so top/bottom coincide there); transform-origin: bottom center keeps that anchor
+   point fixed as --gtv-mini-tree-scale changes. Rendered at full size rather than clipped to a small
+   box — grayscale + low opacity read it as a background "shadow" so it doesn't compete for
+   attention with the chip or any real tree it happens to overlap (see the z-index on
+   .gtv-wheel-radial-tree-anchor above, which keeps real cardinal trees on top of these regardless).
+   pointer-events: none keeps it purely decorative; the chip button beneath still handles
+   selection. */
+.gtv-wheel-radial-mini-tree {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scale(var(--gtv-mini-tree-scale, 0.45));
+  transform-origin: bottom center;
+  pointer-events: none;
+  opacity: 0.16;
+  filter: grayscale(1);
+  transition:
+    opacity 150ms ease,
+    filter 150ms ease;
+}
+
+/* The mini tree's own SVG node markup has no class hook on its outer content besides these three
+   (see tree-renderer.ts: the card's shadow group, its border path, and the label's foreignObject
+   — all three already centered on their node's own (0,0) local origin, with no transform of their
+   own). Counter-rotating just these three, in place, keeps every node's card and label upright and
+   horizontal — per the design decision that only the tree's growth axis should follow the ring
+   angle, never an individual node's own content — while their shared ancestor <g class="node">
+   keeps carrying the (unrotated) translate(x, y) that lays the tree out along that leaning axis.
+   transform-box: fill-box pins the rotation's pivot to each element's own bounding box center
+   instead of the whole embedded SVG's viewport origin (view-box, the CSS default for SVG shapes),
+   which would otherwise swing every node around a shared point far outside itself. */
+.gtv-wheel-radial-mini-tree .gtv-card-shadow-group,
+.gtv-wheel-radial-mini-tree .gtv-node-border,
+.gtv-wheel-radial-mini-tree foreignObject {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(calc(-1 * var(--gtv-chip-angle, 0deg)));
+}
+
+/* :hover on .gtv-wheel-slot bubbles from its descendants — including the chip button, which sits
+   in flow above this preview — even though the slot itself is a zero-size box, so hovering a
+   filler root's chip also brightens its own mini tree. */
+.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree {
+  opacity: 0.85;
+  filter: grayscale(0);
+}
+
+/* Hovering a filler's mini tree puts the wheel in "focus" mode: the 4 real cardinal trees grey
+   out so the hovered shadow preview reads as the thing being looked at, instead of competing with
+   fully-colored trees elsewhere on the ring. :has(.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree)
+   is only ever true while hovering a non-cardinal slot, since cardinal slots never render a mini
+   tree to match against. */
+.gtv-wheel-container--radial .gtv-wheel-stage:has(.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree)
+  .gtv-wheel-radial-tree-anchor {
+  opacity: 0.16;
+  filter: grayscale(1);
 }
 
 .gtv-wheel-container--radial .gtv-wheel-circle {

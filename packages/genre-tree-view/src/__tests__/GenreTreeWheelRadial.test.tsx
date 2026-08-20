@@ -33,9 +33,10 @@ const NODES_FIVE: GenreTreeNode[] = [
 
 // 6 roots, ring order a..f — with the default top root (a, index 0), cardinal ring offsets are
 // [0,2,3,5] (getCardinalRingOffsets(6)), landing at 90deg (right): a=90, c=180, d=270, f=0(top),
-// with b/e as arc fillers at 135/315. Clicking b (topIndex -> 1) moves f from the top cardinal
-// (raw 0deg) to a filler slot at raw 315deg — a scenario that only a continuous-angle chip that
-// unwraps to -45deg (not 315deg) takes the correct short path for.
+// with b/e as arc fillers biased toward the horizontal end (raw ~144.69/~305.31deg, not the even
+// 135/315deg midpoints). Clicking b (topIndex -> 1) moves f from the top cardinal (raw 0deg) to a
+// filler slot at raw ~305.31deg — a scenario that only a continuous-angle chip that unwraps to
+// ~-54.69deg (not ~305.31deg) takes the correct short path for.
 const NODES_SIX: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
   { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
@@ -101,7 +102,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-c-child")).toBeTruthy();
   });
 
-  it("develops exactly 4 roots when there are 5 or more, leaving the rest as plain chips", () => {
+  it("develops exactly 4 roots when there are 5 or more, leaving the rest as a chip plus a mini-tree preview", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(5);
@@ -110,7 +111,23 @@ describe("GenreTreeWheelRadial", () => {
       expect(chipFor(container, name).className).toContain("gtv-wheel-chip--selected");
     }
     expect(chipFor(container, "Jazz").className).not.toContain("gtv-wheel-chip--selected");
-    expect(container.querySelector("#group-c-child")).toBeFalsy();
+    // Jazz (the one filler root) isn't a full mounted subtree (no .gtv-wheel-radial-tree-anchor),
+    // but does get a miniature preview, which renders the same descendant markup.
+    expect(container.querySelector("#group-c-child")).toBeTruthy();
+  });
+
+  it("mounts a miniature preview tree only for non-cardinal (filler) roots, not the 4 developed cardinals", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-radial-mini-tree").length).toBe(1);
+    expect(
+      chipFor(container, "Jazz").closest(".gtv-wheel-slot")?.querySelector(".gtv-wheel-radial-mini-tree"),
+    ).toBeTruthy();
+    for (const name of ["Rock", "Electronic", "Folk", "Metal"]) {
+      expect(
+        chipFor(container, name).closest(".gtv-wheel-slot")?.querySelector(".gtv-wheel-radial-mini-tree"),
+      ).toBeFalsy();
+    }
   });
 
   it("the just-clicked root lands on the right at full opacity; the other developed roots are secondary", () => {
@@ -129,7 +146,9 @@ describe("GenreTreeWheelRadial", () => {
   it("clicking an undeveloped chip develops it and re-lays-out the ring so it lands on the right", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
-    expect(container.querySelector("#group-c-child")).toBeFalsy();
+    // Not yet a full subtree — only the miniature preview renders its child.
+    expect(container.querySelector(".gtv-wheel-radial-tree-anchor #group-c-child")).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-radial-mini-tree #group-c-child")).toBeTruthy();
 
     fireEvent.click(chipFor(container, "Jazz"));
 
@@ -137,9 +156,11 @@ describe("GenreTreeWheelRadial", () => {
     expect(rightAnchor.querySelector("#group-c-child")).toBeTruthy();
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
     // With clickedIndex=2 (c), cardinal ring offsets [0,1,3,4] resolve to ring indices
-    // {2,3,0,1} = c,d,a,b — e (index 4) is the one that falls out of the cardinals.
+    // {2,3,0,1} = c,d,a,b — e (index 4) is the one that falls out of the cardinals, gaining a
+    // miniature preview instead of a full subtree.
     expect(chipFor(container, "Metal").className).not.toContain("gtv-wheel-chip--selected");
-    expect(container.querySelector("#group-e-child")).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-radial-tree-anchor #group-e-child")).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-radial-mini-tree #group-e-child")).toBeTruthy();
   });
 
   it("carries a chip's angle across the wrap point so it transitions the short way, not the raw re-wrapped angle", () => {
@@ -150,13 +171,14 @@ describe("GenreTreeWheelRadial", () => {
       chipFor(container, "Blues").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
     ).toBe("0deg");
 
-    // Clicking Electronic (b) moves the top cardinal off Blues; its new raw wrapped angle is
-    // 315deg, but the short path from its previous 0deg is -45deg, not +315deg.
+    // Clicking Electronic (b) moves the top cardinal off Blues, making it an arc filler biased
+    // toward the horizontal end (raw ~305.31deg), but the short path from its previous 0deg is
+    // ~-54.69deg, not the raw +305.31deg.
     fireEvent.click(chipFor(container, "Electronic"));
 
     expect(
       chipFor(container, "Blues").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
-    ).toBe("-45deg");
+    ).toBe("-54.69371559464622deg");
   });
 
   it("fires onRootSelect on mount with the default root and again on click", () => {

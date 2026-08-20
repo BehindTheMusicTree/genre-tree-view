@@ -20,6 +20,8 @@ import {
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   tintSurface,
+  WHEEL_MINI_TREE_DEPTH_SPACING_SCALE,
+  WHEEL_MINI_TREE_SCALE,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -356,6 +358,22 @@ export function WheelRadialCore({
                       />
                     </div>
                   </div>
+                  {!selected && (
+                    <div
+                      className="gtv-wheel-radial-mini-tree"
+                      style={{ "--gtv-mini-tree-scale": WHEEL_MINI_TREE_SCALE } as React.CSSProperties}
+                    >
+                      <GenreTree
+                        key={group.root.id}
+                        nodes={group.nodes}
+                        orientation="vertical"
+                        hideRoot
+                        interactive={false}
+                        rootColor={chipColor}
+                        depthSpacingScale={WHEEL_MINI_TREE_DEPTH_SPACING_SCALE}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
