@@ -54,6 +54,7 @@ export function calculateSvgDimensions(
   treeData: D3Node,
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
+  depthSpacingScale = 1,
 ): SvgDimensions {
   const nodes = treeData.descendants();
   const itemCountRange = getItemCountRange(nodes.map((d) => d.data));
@@ -61,6 +62,8 @@ export function calculateSvgDimensions(
   // (see calculateNodeDimensions), so the layout budget can use those constants directly.
   const maxNodeDimensions = { WIDTH: MAX_NODE_WIDTH, HEIGHT: MAX_NODE_HEIGHT };
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
+  const depthSeparation = VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
+  const depthSeparationHorizontal = HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale;
 
   if (isVerticalOrientation(orientation)) {
     // Root sits at the bottom edge ("vertical") or top edge ("vertical-flipped"), so only that
@@ -70,8 +73,8 @@ export function calculateSvgDimensions(
     // A hidden root renders no card and no toolbar, so it needs neither its own height nor that
     // clearance — the svg's bottom edge instead lands exactly on the root's anchor point.
     const svgHeight = hideRoot
-      ? maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION
-      : maximumLevel * VERTICAL_ORIENTATION_DEPTH_SEPARATION + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
+      ? maximumLevel * depthSeparation
+      : maximumLevel * depthSeparation + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
@@ -114,8 +117,7 @@ export function calculateSvgDimensions(
   }
 
   if (orientation === "horizontal-anchored" || orientation === "horizontal-anchored-flipped") {
-    const svgWidth =
-      maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
+    const svgWidth = maximumLevel * depthSeparationHorizontal + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate keeps the root exactly at svgHeight/2 — same technique as the
@@ -161,7 +163,7 @@ export function calculateSvgDimensions(
     lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
   const svgHeight = lowestVerticalCoordinate - highestVerticalCoordinate;
 
-  const svgWidth = maximumLevel * HORIZONTAL_SEPARATION_BETWEEN_NODES + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
+  const svgWidth = maximumLevel * depthSeparationHorizontal + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
   return { svgWidth, svgHeight, highestVerticalCoordinate, rootDepthOffset: 0 };
 }
@@ -173,9 +175,11 @@ export function setupTreeLayout(
   orientation: TreeOrientation = "horizontal",
   rootDepthOffset = 0,
   svgWidth = 0,
+  depthSpacingScale = 1,
 ): D3Node {
   if (isVerticalOrientation(orientation)) {
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
+    const depthSeparation = VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
       // "vertical": root anchored at the bottom (depthAxisSign -1), depth grows toward y=0.
@@ -183,8 +187,8 @@ export function setupTreeLayout(
       // maximumLevel * SEPARATION.
       d.y =
         depthAxisSign(orientation) === -1
-          ? (maximumLevel - d.depth) * VERTICAL_ORIENTATION_DEPTH_SEPARATION
-          : d.depth * VERTICAL_ORIENTATION_DEPTH_SEPARATION + rootDepthOffset;
+          ? (maximumLevel - d.depth) * depthSeparation
+          : d.depth * depthSeparation + rootDepthOffset;
     });
     return treeData;
   }
@@ -225,10 +229,11 @@ export function createTreeLayout(
   d3Lib: typeof import("d3"),
   root: D3Node,
   orientation: TreeOrientation = "horizontal",
+  depthSpacingScale = 1,
 ): D3Node {
   const nodeSize: [number, number] = isVerticalOrientation(orientation)
-    ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION]
-    : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES];
+    ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale]
+    : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale];
   // d3's default separation() doubles the gap between same-depth nodes that don't share a
   // parent, which compounds up the tree for deeply-branching data and produces gaps several
   // times wider than the nodeSize slot itself. Every node already reserves its own slot via

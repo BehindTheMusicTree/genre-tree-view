@@ -65,12 +65,12 @@ describe("computeRadialLayout", () => {
     }
   });
 
-  it("places 4 cardinals and spaces the remaining root(s) within their arc for rootCount 5", () => {
+  it("places 4 cardinals and spaces the remaining root(s) within their arc, biased toward the horizontal end, for rootCount 5", () => {
     const layout = computeRadialLayout(5, 0, 0);
     expect(layout).toEqual([
       { rootIndex: 0, angle: 0, isCardinal: true },
       { rootIndex: 1, angle: 90, isCardinal: true },
-      { rootIndex: 2, angle: 135, isCardinal: false },
+      { rootIndex: 2, angle: expect.closeTo(125.306, 3), isCardinal: false },
       { rootIndex: 3, angle: 180, isCardinal: true },
       { rootIndex: 4, angle: 270, isCardinal: true },
     ]);
@@ -87,10 +87,10 @@ describe("computeRadialLayout", () => {
     expect(byIndex[3]).toEqual({ rootIndex: 3, angle: 90, isCardinal: true });
     expect(byIndex[0]).toEqual({ rootIndex: 0, angle: 180, isCardinal: true });
     expect(byIndex[1]).toEqual({ rootIndex: 1, angle: 270, isCardinal: true });
-    expect(byIndex[4]).toEqual({ rootIndex: 4, angle: 135, isCardinal: false });
+    expect(byIndex[4]).toEqual({ rootIndex: 4, angle: expect.closeTo(125.306, 3), isCardinal: false });
   });
 
-  it("spaces two non-cardinal roots evenly within a single arc for rootCount 6", () => {
+  it("spaces two non-cardinal roots within a single arc for rootCount 6, biased toward the horizontal end", () => {
     const layout = computeRadialLayout(6, 0, 0);
     const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
       acc[slot.rootIndex] = slot;
@@ -101,11 +101,11 @@ describe("computeRadialLayout", () => {
     expect(byIndex[2]).toEqual({ rootIndex: 2, angle: 90, isCardinal: true });
     expect(byIndex[3]).toEqual({ rootIndex: 3, angle: 180, isCardinal: true });
     expect(byIndex[5]).toEqual({ rootIndex: 5, angle: 270, isCardinal: true });
-    expect(byIndex[1]).toEqual({ rootIndex: 1, angle: 45, isCardinal: false });
-    expect(byIndex[4]).toEqual({ rootIndex: 4, angle: 225, isCardinal: false });
+    expect(byIndex[1]).toEqual({ rootIndex: 1, angle: expect.closeTo(54.694, 3), isCardinal: false });
+    expect(byIndex[4]).toEqual({ rootIndex: 4, angle: expect.closeTo(234.694, 3), isCardinal: false });
   });
 
-  it("spaces three non-cardinal roots (one per arc) for rootCount 7", () => {
+  it("spaces three non-cardinal roots (one per arc) for rootCount 7, biased toward the horizontal end", () => {
     const layout = computeRadialLayout(7, 0, 0);
     const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
       acc[slot.rootIndex] = slot;
@@ -116,9 +116,9 @@ describe("computeRadialLayout", () => {
     expect(byIndex[2]).toEqual({ rootIndex: 2, angle: 90, isCardinal: true });
     expect(byIndex[4]).toEqual({ rootIndex: 4, angle: 180, isCardinal: true });
     expect(byIndex[5]).toEqual({ rootIndex: 5, angle: 270, isCardinal: true });
-    expect(byIndex[1]).toEqual({ rootIndex: 1, angle: 45, isCardinal: false });
-    expect(byIndex[3]).toEqual({ rootIndex: 3, angle: 135, isCardinal: false });
-    expect(byIndex[6]).toEqual({ rootIndex: 6, angle: 315, isCardinal: false });
+    expect(byIndex[1]).toEqual({ rootIndex: 1, angle: expect.closeTo(54.694, 3), isCardinal: false });
+    expect(byIndex[3]).toEqual({ rootIndex: 3, angle: expect.closeTo(125.306, 3), isCardinal: false });
+    expect(byIndex[6]).toEqual({ rootIndex: 6, angle: expect.closeTo(305.306, 3), isCardinal: false });
   });
 
   it("produces exactly one entry per ring index, all cardinal angles at 90-degree multiples, for N up to 13", () => {
