@@ -66,6 +66,12 @@ describe("GenreTreeWheelRight", () => {
     expect(container.querySelector("#group-root-c")).toBeFalsy();
   });
 
+  it("renders a hover-revealed name label inside each root chip", () => {
+    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+
+    expect(chipFor(container, "Rock").querySelector(".gtv-wheel-chip-hover-name")!.textContent).toBe("Rock");
+  });
+
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
     render(<GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} />);

@@ -6,7 +6,7 @@ export const SURFACE_BORDER_COLOR = "#E4E4E7";
 export const SURFACE_BORDER_WIDTH = 1;
 export const ROOT_BORDER_WIDTH = 1;
 export const CORNER_RADIUS = 8;
-export const ELEVATION = true;
+export const ELEVATION = false;
 
 export const CONNECTOR_COLOR = "#D4D4D8";
 export const CONNECTOR_WIDTH = 1.5;
@@ -30,9 +30,6 @@ export const TOOLBAR_GAP = 2;
 
 export const MENU_ROW_HEIGHT = 30;
 export const MENU_WIDTH = 130;
-
-// <1 darkens on hover (light surfaces), >1 lightens on hover (dark surfaces).
-export const HOVER_BRIGHTNESS = 0.97;
 
 export const PER_TREE_ACCENT_DOT = true;
 export const ACCENT_DOT_SIZE = 4;
@@ -104,6 +101,18 @@ export const MAX_NODE_FONT_SIZE = 18;
 export const TOOLBAR_MENU_X_GAP = 4;
 export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
+
+// A node's hover-name label (see addHoverNameLabel), attached like a tab to the top of the card
+// while the toolbar overlay masks the card's own label, sized equal to the node's own height
+// (calculateNodeDimensions) so it scales with it instead of a fixed height. No gap constant: the
+// tab sits flush against the card's top edge, not floating above it.
+
+// The label's foreignObject (HTML) and the card's rect (SVG path) are rasterized by separate
+// engines, so even with pixel-identical position and fill color, butting them exactly edge-to-edge
+// leaves a faint hairline seam from each side's independent anti-aliasing. Extending the label 1px
+// into the card on every touching side (left, right, and bottom) hides that seam under an
+// identical-color overlap instead of a touching boundary.
+export const HOVER_LABEL_CARD_OVERLAP = 1;
 
 // Layout slot size, not a rendered node's actual size (see calculateNodeDimensions) — every
 // node's slot has to fit the largest a node can render at, or a high-itemCount node overflows

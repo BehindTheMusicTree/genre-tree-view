@@ -206,6 +206,12 @@ describe("GenreTreeWheel", () => {
     expect(onAddChild).toHaveBeenCalledWith("root-a");
   });
 
+  it("renders a hover-revealed name label inside each root chip", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+
+    expect(chipFor(container, "Rock").querySelector(".gtv-wheel-chip-hover-name")!.textContent).toBe("Rock");
+  });
+
   it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
     // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
     // chip should size (and scale the shared range) off that aggregated total, not read as 0.

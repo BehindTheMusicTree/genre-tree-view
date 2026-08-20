@@ -33,13 +33,13 @@ describe("GenreTree", () => {
     expect(rect.getAttribute("fill")).toBe(tintSurface("#123456"));
   });
 
-  it("scopes the shadow filter id per instance so two trees never collide", () => {
+  it("renders no shadow filter for either instance while ELEVATION is disabled", () => {
     const otherTree: GenreTreeNode[] = [{ id: "other-root", parentId: null, name: "Other", itemCount: 1 }];
     const first = render(<GenreTree nodes={TREE} />);
     const second = render(<GenreTree nodes={otherTree} />);
 
-    expect(first.container.querySelector("filter#gtv-card-shadow-root")).toBeTruthy();
-    expect(second.container.querySelector("filter#gtv-card-shadow-other-root")).toBeTruthy();
+    expect(first.container.querySelector("filter#gtv-card-shadow-root")).toBeFalsy();
+    expect(second.container.querySelector("filter#gtv-card-shadow-other-root")).toBeFalsy();
 
     first.unmount();
     second.unmount();
@@ -90,6 +90,12 @@ describe("GenreTree", () => {
       const enabledButton = playButton(container, "root");
       fireEvent.click(enabledButton);
       expect(onPlayPause).toHaveBeenCalledWith("root");
+    });
+
+    it("shows the node's name as a floating label alongside the toolbar", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      playButton(container, "root");
+      expect(container.querySelector("#hover-label-root .gtv-hover-label")!.textContent).toBe("Root");
     });
   });
 

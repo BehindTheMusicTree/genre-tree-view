@@ -10,13 +10,14 @@ import {
   ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
   TOOLBAR_BUTTON_SIZE,
-  TOOLBAR_GAP,
   TOOLBAR_MENU_X_GAP,
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
   calculateNodeDimensions,
+  calculateNodeFontSize,
   Dimensions,
   getItemCountRange,
+  HOVER_LABEL_CARD_OVERLAP,
   ItemCountRange,
 } from "./constants";
 
@@ -235,6 +236,37 @@ export function toggleLightActionsMenu(
   return menuGroup;
 }
 
+/** A small tab showing the node's name, attached flush to the top of the card while
+ *  addToolbarActions' overlay is masking the card's own label underneath — keeps the hovered
+ *  node identifiable without permanently reserving space for it. Position-only: local (x, y)
+ *  inside the node's own <g> is already screen-space "above" regardless of orientation (node
+ *  boxes are never rotated), so unlike addToolbarActions this needs no orientation parameter. */
+export function addHoverNameLabel(
+  d3Lib: typeof import("d3"),
+  node: GenreTreeNode,
+  nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+  itemCountRange: ItemCountRange,
+) {
+  if (!nodeGroup.select("#hover-label-" + node.id).empty()) return;
+
+  const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(node.itemCount, itemCountRange);
+  const group = nodeGroup.append("g").attr("id", "hover-label-" + node.id).attr("class", "gtv-hover-label-group");
+
+  group
+    .append("foreignObject")
+    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP + 0.5)
+    .attr("y", -dimensions.HEIGHT / 2 - dimensions.HEIGHT)
+    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2 - 1)
+    .attr("height", dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP)
+    .html(
+      () =>
+        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,
+    );
+
+  return group;
+}
+
 /** The common actions as an inline icon row on the node itself (single hover stage, no
  *  menu at all), with a kebab overflow for the rest. */
 export function addToolbarActions(
@@ -320,27 +352,16 @@ export function addToolbarActions(
       ]
     : [];
 
-  const buttonCount = primaryItems.length + (overflowItems.length > 0 ? 1 : 0);
-  const toolbarWidth = buttonCount * TOOLBAR_BUTTON_SIZE + (buttonCount - 1) * TOOLBAR_GAP + 6;
-  const toolbarHeight = TOOLBAR_BUTTON_SIZE + 6;
-
-  // In vertical orientations (the wheels), same-depth siblings sit tightly side by side with no
-  // reserved toolbar headroom on that axis (see SIBLING_SEPARATION_BETWEEN_NODES) — a side
-  // toolbar would overlap the next sibling's card. The depth axis (above/below) has the slack
-  // instead, so the toolbar floats clear of the card there, centered, out of the sibling row
-  // entirely — on whichever side of the card is toward the leaves, per depthAxisSign.
+  // The overflow menu still pops out clear of the card, toward the leaves, exactly as before —
+  // only the button row itself moved (see the foreignObject below, which now overlays the card
+  // instead of floating beside it) — so isVertical/sign still pick the menu's popout side.
   const isVertical = isVerticalOrientation(orientation);
   const sign = depthAxisSign(orientation);
-  const x = isVertical
-    ? -toolbarWidth / 2
+  const menuX = isVertical
+    ? -MENU_WIDTH / 2
     : sign === 1
       ? dimensions.WIDTH / 2 + TOOLBAR_MENU_X_GAP
-      : -dimensions.WIDTH / 2 - TOOLBAR_MENU_X_GAP - toolbarWidth;
-  const y = isVertical
-    ? sign === -1
-      ? -dimensions.HEIGHT / 2 - toolbarHeight - TOOLBAR_MENU_X_GAP
-      : dimensions.HEIGHT / 2 + TOOLBAR_MENU_X_GAP
-    : -TOOLBAR_BUTTON_SIZE / 2 - 3;
+      : -dimensions.WIDTH / 2 - TOOLBAR_MENU_X_GAP - MENU_WIDTH;
 
   const group = nodeGroup.append("g").attr("id", "toolbar-" + node.id).attr("class", "gtv-actions-panel");
 
@@ -373,10 +394,10 @@ export function addToolbarActions(
 
   group
     .append("foreignObject")
-    .attr("x", x)
-    .attr("y", y)
-    .attr("width", toolbarWidth)
-    .attr("height", toolbarHeight)
+    .attr("x", -dimensions.WIDTH / 2 + 1)
+    .attr("y", -dimensions.HEIGHT / 2 + 1)
+    .attr("width", dimensions.WIDTH - 2)
+    .attr("height", dimensions.HEIGHT - 2)
     .html(() => `<div class="gtv-toolbar">${buttonsHtml}${kebabHtml}</div>`)
     .selectAll<HTMLButtonElement, unknown>(".gtv-toolbar-btn")
     .each(function () {
@@ -384,14 +405,13 @@ export function addToolbarActions(
       if (key === "__more") {
         d3Lib.select(this).on("click", (event: MouseEvent) => {
           event.stopPropagation();
-          // Stacks further along whichever direction the toolbar itself already floats clear of
-          // the card, so the menu never falls back onto it.
+          // Pops out clear of the card, toward the leaves, so it never falls back onto it.
           const menuY = isVertical
             ? sign === -1
-              ? y - menuItemsHeight(overflowItems) - TOOLBAR_MENU_X_GAP
-              : y + toolbarHeight + TOOLBAR_MENU_X_GAP
-            : y + TOOLBAR_BUTTON_SIZE + 8;
-          toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, x, menuY, overflowItems);
+              ? -dimensions.HEIGHT / 2 - TOOLBAR_MENU_X_GAP - menuItemsHeight(overflowItems)
+              : dimensions.HEIGHT / 2 + TOOLBAR_MENU_X_GAP
+            : TOOLBAR_BUTTON_SIZE / 2 + TOOLBAR_MENU_X_GAP;
+          toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, menuX, menuY, overflowItems);
         });
         return;
       }

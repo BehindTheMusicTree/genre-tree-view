@@ -301,8 +301,14 @@ export function WheelRadialCore({
                       style={
                         {
                           width: dimensions.WIDTH,
-                          height: dimensions.HEIGHT,
+                          // Height comes from --gtv-wheel-chip-base-height (see .gtv-wheel-chip in
+                          // styles.css), not an inline `height`/`minHeight` — an inline `height` always
+                          // wins the cascade over the CSS class's `height: calc(...)` hover override
+                          // (inline style beats any stylesheet rule), silently pinning the box and
+                          // breaking the hover growth again, same failure mode as before.
+                          "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
+                          "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                           // Non-cardinal roots aren't developed as a full subtree, so the ring chip
                           // is their only surface — give it the same root-color wash tree nodes get
                           // (see tintSurface) instead of leaving it plain white. Cardinal chips keep
@@ -316,10 +322,26 @@ export function WheelRadialCore({
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
+                        {group.root.name}
+                      </span>
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
-                        panZoom's pointerdown-drag tracking on the container behind it. */}
-                    <div className="gtv-wheel-chip-toolbar" onPointerDown={(event) => event.stopPropagation()}>
+                        panZoom's pointerdown-drag tracking on the container behind it.
+                        --gtv-node-fill: same var .gtv-toolbar reads in the SVG tree, so the
+                        overlay masks the chip's label with the chip's own fill instead of a
+                        hardcoded color. --gtv-toolbar-icon-color matches the chip's own label
+                        color so the icons stay legible against a selected chip's solid fill. */}
+                    <div
+                      className="gtv-wheel-chip-toolbar"
+                      style={
+                        {
+                          "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
+                          "--gtv-toolbar-icon-color": selected ? "#ffffff" : "#52525b",
+                        } as React.CSSProperties
+                      }
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
                       <NodeToolbar
                         node={group.root}
                         itemCount={aggregatedItemCount}

@@ -7,7 +7,7 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
-import { getGenreTreeColor, HOVER_BRIGHTNESS } from "./constants";
+import { getGenreTreeColor } from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 
@@ -155,7 +155,7 @@ export function GenreTree({
     // No own viewport, transform, or controls — an ancestor (e.g. GenreTreeWheel's shared stage)
     // supplies the entire pan/zoom transform for this tree and whatever else it's paired with.
     return (
-      <div className={className} style={{ "--gtv-hover-brightness": HOVER_BRIGHTNESS } as React.CSSProperties}>
+      <div className={className}>
         {fileInput}
         {svg}
       </div>
@@ -167,7 +167,6 @@ export function GenreTree({
       ref={viewportRef}
       className={className}
       style={{
-        "--gtv-hover-brightness": HOVER_BRIGHTNESS,
         position: "relative",
         overflow: "hidden",
         width: "100%",

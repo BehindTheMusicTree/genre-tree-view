@@ -8,8 +8,6 @@ import {
   SIBLING_SEPARATION_BETWEEN_NODES,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
-  TOOLBAR_BUTTON_SIZE,
-  TOOLBAR_MENU_X_GAP,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   ROOT_BORDER_WIDTH,
@@ -25,8 +23,8 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths } from "./d3-helper/d3-path-helper";
-import { addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
+import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
+import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -274,8 +272,8 @@ export function renderTree(
   const safeRootId = treeData.data.id.replace(/[^a-zA-Z0-9_-]/g, "_");
   const shadowFilterId = `gtv-card-shadow-${safeRootId}`;
   if (ELEVATION) {
-    const filter = svg
-      .append("defs")
+    const defs = svg.append("defs");
+    const filter = defs
       .append("filter")
       .attr("id", shadowFilterId)
       .attr("x", "-50%")
@@ -285,8 +283,8 @@ export function renderTree(
     filter
       .append("feDropShadow")
       .attr("dx", 0)
-      .attr("dy", 1)
-      .attr("stdDeviation", 2)
+      .attr("dy", 0)
+      .attr("stdDeviation", 1)
       .attr("flood-color", TEXT_COLOR)
       .attr("flood-opacity", 0.12);
   }
@@ -315,64 +313,68 @@ export function renderTree(
       const translateX = d.x! + dimensions.WIDTH / 2;
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
-    });
+    })
+    // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
+    // label beneath it with the card's own fill instead of a hardcoded color.
+    .style("--gtv-node-fill", tintSurface(rootColor));
 
-  // Invisible hit-region spanning the node body plus the reserved toolbar/menu area to its
-  // right, appended before any visible content so painted siblings (rect, label, toolbar)
-  // take pointer-event priority over it wherever they overlap it. Without this, the group's
-  // mouseenter/mouseleave below is governed only by the union of whichever painted children
-  // currently exist — the ~4px unpainted gap between the node's rect and the toolbar's
-  // foreignObject (TOOLBAR_MENU_X_GAP) sits right where a resting cursor tends to land, and
-  // ordinary hand/trackpad jitter crossing that gap repeatedly toggles the group's hover
-  // state, flickering the toolbar in and out as it gets removed and re-added. A static rect
-  // that always covers the gap keeps the group continuously "hovered" so it can't toggle.
-  // The toolbar always floats toward the leaves (see addToolbarActions/depthAxisSign), so the
-  // gap a resting cursor can jitter across — and thus the direction the hit area must extend
-  // past the card — depends on both the growth axis (isVertical) and its sign: up for
-  // "vertical", down for "vertical-flipped", right for "horizontal"/"horizontal-anchored", left
-  // for "horizontal-anchored-flipped".
-  const isVertical = isVerticalOrientation(orientation);
-  const sign = depthAxisSign(orientation);
-  const toolbarClearance = TOOLBAR_BUTTON_SIZE + 6 + TOOLBAR_MENU_X_GAP;
+  // Invisible hit-region spanning the node body, appended before any visible content so painted
+  // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap
+  // it. <g> itself paints nothing, so without this the group's mouseenter/mouseleave below would
+  // be governed only by the union of whichever painted children currently exist.
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr(
-      "width",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH + (isVertical ? 0 : ACTIONS_OVERLAY_WIDTH),
-    )
-    .attr(
-      "height",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT + (isVertical ? toolbarClearance : 0),
-    )
-    .attr(
-      "x",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2 -
-        (!isVertical && sign === -1 ? ACTIONS_OVERLAY_WIDTH : 0),
-    )
-    .attr(
-      "y",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2 -
-        (isVertical && sign === -1 ? toolbarClearance : 0),
-    )
-    .attr("fill", "transparent")
-    .attr("pointer-events", "all");
-
-  nodes
-    .append("rect")
-    .attr("class", "gtv-node-rect")
     .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
     .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
     .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
-    .attr("rx", CORNER_RADIUS)
-    .attr("ry", CORNER_RADIUS)
-    .attr("fill", tintSurface(rootColor))
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH))
+    .attr("fill", "transparent")
+    .attr("pointer-events", "all");
+
+  // Fill and border are separate paths (rather than one path with both fill and stroke) so that
+  // hovering a node can drop just its border's top edge (to merge visually with its hover tab
+  // above, which already omits its own border-bottom) without needing a stroke API that can
+  // fill without stroking. See the mouseover/mouseleave-timeout handlers below.
+  //
+  // The card path is wrapped in its own <g> so the elevation filter has a stable target: the
+  // hover label is appended outside this group (see the mouseover handler below), so mounting or
+  // unmounting it on hover never changes what the filter blurs — the card's shadow always looks
+  // the same, hovered or not.
+  const cardShadowGroups = nodes
+    .append("g")
+    .attr("class", "gtv-card-shadow-group")
     .attr("filter", ELEVATION ? `url(#${shadowFilterId})` : null);
+
+  cardShadowGroups
+    .append("path")
+    .attr("class", "gtv-node-rect")
+    .attr("d", (d) => {
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+        tl: CORNER_RADIUS,
+        tr: CORNER_RADIUS,
+        br: CORNER_RADIUS,
+        bl: CORNER_RADIUS,
+      });
+    })
+    .attr("fill", tintSurface(rootColor));
+
+  nodes
+    .append("path")
+    .attr("class", "gtv-node-border")
+    .attr("d", (d) => {
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+        tl: CORNER_RADIUS,
+        tr: CORNER_RADIUS,
+        br: CORNER_RADIUS,
+        bl: CORNER_RADIUS,
+      });
+    })
+    .attr("fill", "none")
+    .attr("stroke", SURFACE_BORDER_COLOR)
+    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
 
   nodes
     .append("foreignObject")
@@ -395,6 +397,37 @@ export function renderTree(
         HTMLElement,
         unknown
       >;
+
+      // Square off the top corners while the hover label sits on top of them — the label only
+      // overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS, so the
+      // card's own rounded corners would otherwise show through beneath the label's straight
+      // bottom edge.
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      group
+        .select<SVGPathElement>(".gtv-node-rect")
+        .attr(
+          "d",
+          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+            tl: 0,
+            tr: 0,
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
+      group
+        .select<SVGPathElement>(".gtv-node-border")
+        .attr(
+          "d",
+          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
+
+      // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
+      // never changes the card's own filtered silhouette — the card's shadow must look identical
+      // hovered or not.
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
 
       addToolbarActions(
         d3Lib,
@@ -450,6 +483,18 @@ export function renderTree(
         // here would delete the kebab that anchors the still-open menu.
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
+          d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+
+          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+          const fullyRounded = roundedRectPath(
+            -dimensions.WIDTH / 2,
+            -dimensions.HEIGHT / 2,
+            dimensions.WIDTH,
+            dimensions.HEIGHT,
+            { tl: CORNER_RADIUS, tr: CORNER_RADIUS, br: CORNER_RADIUS, bl: CORNER_RADIUS },
+          );
+          group.select<SVGPathElement>(".gtv-node-rect").attr("d", fullyRounded);
+          group.select<SVGPathElement>(".gtv-node-border").attr("d", fullyRounded);
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.

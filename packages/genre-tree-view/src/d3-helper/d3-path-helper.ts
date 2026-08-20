@@ -7,6 +7,59 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 type D3Link = d3.HierarchyLink<GenreTreeNode>;
 
+export interface RoundedRectCorners {
+  tl: number;
+  tr: number;
+  br: number;
+  bl: number;
+}
+
+// SVG <rect> only takes one uniform rx/ry pair, so a node card needs a <path> instead to square
+// off just its top corners while its hover tab is attached (see tree-renderer.ts's mouseover/
+// mouseleave-timeout handlers), and stay fully rounded otherwise.
+export function roundedRectPath(x: number, y: number, width: number, height: number, corners: RoundedRectCorners) {
+  const { tl, tr, br, bl } = corners;
+  return [
+    `M ${x + tl} ${y}`,
+    `H ${x + width - tr}`,
+    tr ? `A ${tr} ${tr} 0 0 1 ${x + width} ${y + tr}` : "",
+    `V ${y + height - br}`,
+    br ? `A ${br} ${br} 0 0 1 ${x + width - br} ${y + height}` : "",
+    `H ${x + bl}`,
+    bl ? `A ${bl} ${bl} 0 0 1 ${x} ${y + height - bl}` : "",
+    `V ${y + tl}`,
+    tl ? `A ${tl} ${tl} 0 0 1 ${x + tl} ${y}` : "",
+    "Z",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+// Traces only the right, bottom, and left edges of a rect (skipping the top edge entirely,
+// unclosed) so a node card's border can merge with its hover tab above it instead of drawing a
+// visible line across the seam. Assumes the top corners are already square (radius 0) — see the
+// mouseover/mouseleave-timeout handlers in tree-renderer.ts, which only swap to this path once
+// the fill path's top corners are squared too.
+export function openBottomBorderPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  corners: Pick<RoundedRectCorners, "br" | "bl">,
+) {
+  const { br, bl } = corners;
+  return [
+    `M ${x + width} ${y}`,
+    `V ${y + height - br}`,
+    br ? `A ${br} ${br} 0 0 1 ${x + width - br} ${y + height}` : "",
+    `H ${x + bl}`,
+    bl ? `A ${bl} ${bl} 0 0 1 ${x} ${y + height - bl}` : "",
+    `V ${y}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function appendPaths(
   d3Lib: typeof import("d3"),
   svg: D3Selection,

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as d3 from "d3";
 import {
+  addHoverNameLabel,
   addReparentTargetOverlay,
   addToolbarActions,
   buildTreeHierarchyStructure,
@@ -9,7 +10,11 @@ import {
   type MenuActionItem,
   type NodeActionCallbacks,
 } from "../NodeHelper";
-import { getItemCountRange } from "../constants";
+import {
+  calculateNodeDimensions,
+  getItemCountRange,
+  HOVER_LABEL_CARD_OVERLAP,
+} from "../constants";
 import type { GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
@@ -350,23 +355,96 @@ describe("addToolbarActions", () => {
     expect(onDeleteRequest).toHaveBeenCalledWith(node);
   });
 
-  it("floats the toolbar toward the leaves for all four orientations", () => {
+  it("overlays the toolbar on the card itself, inset 1px on every side, for all four orientations", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+    const dimensions = calculateNodeDimensions(node.itemCount, getItemCountRange([node]));
 
-    function toolbarPosition(orientation: TreeOrientation) {
+    function toolbarBounds(orientation: TreeOrientation) {
       const { svgEl, g } = createSvgGroup(node);
       addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]), orientation);
       const foreignObject = svgEl.querySelector('[id="toolbar-n1"] foreignObject')!;
-      return { x: Number(foreignObject.getAttribute("x")), y: Number(foreignObject.getAttribute("y")) };
+      return {
+        x: Number(foreignObject.getAttribute("x")),
+        y: Number(foreignObject.getAttribute("y")),
+        width: Number(foreignObject.getAttribute("width")),
+        height: Number(foreignObject.getAttribute("height")),
+      };
     }
 
-    // "horizontal"/"horizontal-anchored": depth grows right, so the toolbar sits to the right (x > 0).
-    expect(toolbarPosition("horizontal").x).toBeGreaterThan(0);
-    // "horizontal-anchored-flipped": depth grows left, so the toolbar sits to the left (x < 0).
-    expect(toolbarPosition("horizontal-anchored-flipped").x).toBeLessThan(0);
-    // "vertical": depth grows up, so the toolbar sits above the card (y < 0).
-    expect(toolbarPosition("vertical").y).toBeLessThan(0);
-    // "vertical-flipped": depth grows down, so the toolbar sits below the card (y > 0).
-    expect(toolbarPosition("vertical-flipped").y).toBeGreaterThan(0);
+    for (const orientation of ["horizontal", "horizontal-anchored-flipped", "vertical", "vertical-flipped"] as const) {
+      expect(toolbarBounds(orientation)).toEqual({
+        x: -dimensions.WIDTH / 2 + 1,
+        y: -dimensions.HEIGHT / 2 + 1,
+        width: dimensions.WIDTH - 2,
+        height: dimensions.HEIGHT - 2,
+      });
+    }
+  });
+
+  it("still pops the overflow menu out toward the leaves, clear of the card, for all four orientations", () => {
+    const itemCountRange = getItemCountRange([{ itemCount: 5 }]);
+    const dimensions = calculateNodeDimensions(5, itemCountRange);
+
+    // Distinct id per call: toggleLightActionsMenu's open/close check is a global "#id"
+    // lookup, so reusing one id across calls in this test would make the second call see
+    // the first call's still-mounted menu and toggle it closed instead of opening a new one.
+    function menuY(orientation: TreeOrientation) {
+      const node: GenreTreeNode = { id: `n1-${orientation}`, parentId: null, name: "N1", itemCount: 5 };
+      const { svgEl, g } = createSvgGroup(node);
+      addToolbarActions(d3, node, g, baseCallbacks(), itemCountRange, orientation);
+      const kebab = svgEl.querySelector('[data-menu-key="__more"]') as HTMLButtonElement;
+      kebab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      const foreignObject = svgEl.querySelector(`#overflow-menu-${node.id} foreignObject`)!;
+      return Number(foreignObject.getAttribute("y"));
+    }
+
+    // "horizontal"/"horizontal-anchored": pops below the card's vertical center.
+    expect(menuY("horizontal")).toBeGreaterThan(0);
+    // "vertical": depth grows up, so the menu pops out above the card (y < top edge).
+    expect(menuY("vertical")).toBeLessThan(-dimensions.HEIGHT / 2);
+    // "vertical-flipped": depth grows down, so the menu pops out below the card (y > bottom edge).
+    expect(menuY("vertical-flipped")).toBeGreaterThan(dimensions.HEIGHT / 2);
+  });
+});
+
+describe("addHoverNameLabel", () => {
+  it("is idempotent: a second call with a label already present is a no-op", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+    const { g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    expect(g.selectAll("#hover-label-n1").size()).toBe(1);
+  });
+
+  it("positions the foreignObject centered above the card", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
+    const dimensions = calculateNodeDimensions(node.itemCount, getItemCountRange([node]));
+    const { svgEl, g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    const foreignObject = svgEl.querySelector('[id="hover-label-n1"] foreignObject')!;
+    expect({
+      x: Number(foreignObject.getAttribute("x")),
+      y: Number(foreignObject.getAttribute("y")),
+      width: Number(foreignObject.getAttribute("width")),
+      height: Number(foreignObject.getAttribute("height")),
+    }).toEqual({
+      x: -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP + 0.5,
+      y: -dimensions.HEIGHT / 2 - dimensions.HEIGHT,
+      width: dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2 - 1,
+      height: dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP,
+    });
+  });
+
+  it("renders the node's name as the label text", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "Progressive House", itemCount: 5 };
+    const { svgEl, g } = createSvgGroup(node);
+
+    addHoverNameLabel(d3, node, g, getItemCountRange([node]));
+
+    expect(svgEl.querySelector('[id="hover-label-n1"] .gtv-hover-label')!.textContent).toBe("Progressive House");
   });
 });
