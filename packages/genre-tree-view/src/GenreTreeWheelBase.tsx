@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
+import * as d3 from "d3";
 
 import { GenreTree } from "./GenreTree";
+import { calculateLocalRootDimensions } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import { groupNodesByRoot } from "./root-grouping";
 import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "./wheel-geometry";
@@ -148,11 +150,18 @@ export function WheelCore({
   // the chip overlap the tree's near edge — offsetting the anchor by the chip's own half-extent
   // along the growth axis clears it, so the root->depth1 gap reads the same as any other
   // consecutive-depth gap.
+  //
+  // This must match the hidden root's own rendered half-width/half-height inside its mounted
+  // <GenreTree> — tree-renderer sizes that root off an item-count range local to just this one
+  // subtree, not the cross-root `rootItemCountRange` the visible chip above is deliberately scaled
+  // against, so it's computed separately here via the same rollup+range pipeline (see
+  // GenreTreeWheelRadialBase for the equivalent radial-wheel computation). Reusing the cross-root
+  // scale instead under-reserves clearance for any root that isn't the wheel's single largest,
+  // making the tree's links draw into the chip instead of stopping at its edge.
   const rootChipHalfExtent = selectedGroup
     ? (direction === "left"
-        ? calculateNodeDimensions(aggregatedRootItemCountById.get(selectedGroup.root.id)!, rootItemCountRange).WIDTH
-        : calculateNodeDimensions(aggregatedRootItemCountById.get(selectedGroup.root.id)!, rootItemCountRange)
-            .HEIGHT) / 2
+        ? calculateLocalRootDimensions(d3, selectedGroup.nodes).WIDTH
+        : calculateLocalRootDimensions(d3, selectedGroup.nodes).HEIGHT) / 2
     : 0;
 
   const handleChipClick = (rootId: string, angle: number) => {

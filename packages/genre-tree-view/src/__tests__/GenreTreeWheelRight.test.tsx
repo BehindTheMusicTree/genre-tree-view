@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
+import * as d3 from "d3";
 import { GenreTreeWheelRight } from "../GenreTreeWheelRight";
+import { calculateLocalRootDimensions } from "../NodeHelper";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -227,6 +229,27 @@ describe("GenreTreeWheelRight", () => {
 
     expect(emptyChip.style.width).not.toBe(flatChip.style.width);
     expect(parseFloat(emptyChip.style.width)).toBeGreaterThan(parseFloat(flatChip.style.width));
+  });
+
+  it("reserves anchor clearance from the selected root's own local subtree size, not the cross-root chip scale", () => {
+    // root-a (selected by default, index 0) has a much smaller subtree than root-b — under the
+    // cross-root scale used to size the chips, root-a's chip would be near MIN_NODE_WIDTH, but the
+    // hidden root inside its own mounted <GenreTree> always renders at its *local* max regardless of
+    // how it compares to root-b. Reserving clearance off the cross-root scale (the bug) would
+    // under-reserve space for it, drawing the tree's links into the chip instead of stopping at its
+    // edge.
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Small", itemCount: 1 },
+      { id: "a-child", parentId: "root-a", name: "SmallChild", itemCount: 1 },
+      { id: "root-b", parentId: null, name: "Big", itemCount: 500 },
+      { id: "b-child", parentId: "root-b", name: "BigChild", itemCount: 500 },
+    ];
+    const { container } = render(<GenreTreeWheelRight nodes={nodes} />);
+    const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
+
+    const expectedHalfExtent = calculateLocalRootDimensions(d3, [nodes[0], nodes[1]]).WIDTH / 2;
+
+    expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-width")).toBe(`${expectedHalfExtent}px`);
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
