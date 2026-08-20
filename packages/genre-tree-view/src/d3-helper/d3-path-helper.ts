@@ -60,6 +60,15 @@ export function openBottomBorderPath(
     .join(" ");
 }
 
+// Traces only the left and right edges of a rect, as two independent open subpaths, so a node
+// card's border can merge with hover tabs above *and* below it at once instead of drawing visible
+// lines across either seam. Assumes all four corners are already square (radius 0) — see the
+// mouseover/mouseleave-timeout handlers in tree-renderer.ts, which square every corner once both
+// the name and count hover labels are attached.
+export function openTopAndBottomBorderPath(x: number, y: number, width: number, height: number) {
+  return `M ${x} ${y} V ${y + height} M ${x + width} ${y} V ${y + height}`;
+}
+
 export function appendPaths(
   d3Lib: typeof import("d3"),
   svg: D3Selection,

@@ -26,6 +26,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A name label attached to the top of a node's card or a wheel root chip while hovered — since
   the hover toolbar overlay now masks the card/chip's own label underneath, the label keeps the
   hovered node identifiable across `GenreTree` and all wheel variants.
+- A second label, symmetrical to the name label, attached to the bottom of a node's card while
+  hovered — shows the node's item count next to a music-note icon.
 
 ### Changed
 

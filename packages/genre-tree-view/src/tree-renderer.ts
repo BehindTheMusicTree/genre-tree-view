@@ -23,8 +23,8 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
-import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
+import { appendPaths, openTopAndBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
+import { addHoverCountLabel, addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -398,10 +398,10 @@ export function renderTree(
         unknown
       >;
 
-      // Square off the top corners while the hover label sits on top of them — the label only
-      // overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS, so the
-      // card's own rounded corners would otherwise show through beneath the label's straight
-      // bottom edge.
+      // Square off every corner while the name and count hover labels sit on top of them — each
+      // label only overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS,
+      // so the card's own rounded corners would otherwise show through beneath the labels'
+      // straight edges.
       const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
       group
         .select<SVGPathElement>(".gtv-node-rect")
@@ -410,24 +410,22 @@ export function renderTree(
           roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
             tl: 0,
             tr: 0,
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
+            br: 0,
+            bl: 0,
           }),
         );
       group
         .select<SVGPathElement>(".gtv-node-border")
         .attr(
           "d",
-          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          }),
+          openTopAndBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT),
         );
 
-      // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
+      // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the labels
       // never changes the card's own filtered silhouette — the card's shadow must look identical
       // hovered or not.
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+      addHoverCountLabel(d3Lib, d.data, group, itemCountRange);
 
       addToolbarActions(
         d3Lib,
@@ -484,6 +482,7 @@ export function renderTree(
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
           d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+          d3Lib.select<SVGGElement, unknown>("#hover-count-label-" + d.data.id).remove();
 
           const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
           const fullyRounded = roundedRectPath(

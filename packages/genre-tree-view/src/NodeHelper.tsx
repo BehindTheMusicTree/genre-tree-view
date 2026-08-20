@@ -1,6 +1,6 @@
 import ReactDOMServer from "react-dom/server";
 import { MdMoreVert, MdModeEdit } from "react-icons/md";
-import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload } from "react-icons/fa";
+import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload, FaMusic } from "react-icons/fa";
 import { PiGraphFill } from "react-icons/pi";
 import * as d3 from "d3";
 
@@ -262,6 +262,39 @@ export function addHoverNameLabel(
     .html(
       () =>
         `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,
+    );
+
+  return group;
+}
+
+/** Symmetrical counterpart to addHoverNameLabel: a small tab showing the node's track count,
+ *  attached flush to the bottom of the card on the same hover. Position-only, same rationale as
+ *  addHoverNameLabel above. */
+export function addHoverCountLabel(
+  d3Lib: typeof import("d3"),
+  node: GenreTreeNode,
+  nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+  itemCountRange: ItemCountRange,
+) {
+  if (!nodeGroup.select("#hover-count-label-" + node.id).empty()) return;
+
+  const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(node.itemCount, itemCountRange);
+  const iconHtml = ReactDOMServer.renderToString(<FaMusic className="gtv-icon" size={Math.round(fontSize * 0.75)} />);
+  const group = nodeGroup
+    .append("g")
+    .attr("id", "hover-count-label-" + node.id)
+    .attr("class", "gtv-hover-label-group");
+
+  group
+    .append("foreignObject")
+    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP + 0.5)
+    .attr("y", dimensions.HEIGHT / 2 - HOVER_LABEL_CARD_OVERLAP)
+    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2 - 1)
+    .attr("height", dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP)
+    .html(
+      () =>
+        `<div class="gtv-hover-count-label" style="width:100%;height:100%;font-size:${fontSize}px">${iconHtml}<span>${node.itemCount}</span></div>`,
     );
 
   return group;
