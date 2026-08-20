@@ -23,7 +23,7 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths, roundedRectPath } from "./d3-helper/d3-path-helper";
+import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -398,6 +398,32 @@ export function renderTree(
         unknown
       >;
 
+      // Square off the top corners while the hover label sits on top of them — the label only
+      // overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS, so the
+      // card's own rounded corners would otherwise show through beneath the label's straight
+      // bottom edge.
+      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      group
+        .select<SVGPathElement>(".gtv-node-rect")
+        .attr(
+          "d",
+          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+            tl: 0,
+            tr: 0,
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
+      group
+        .select<SVGPathElement>(".gtv-node-border")
+        .attr(
+          "d",
+          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+            br: CORNER_RADIUS,
+            bl: CORNER_RADIUS,
+          }),
+        );
+
       // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
       // never changes the card's own filtered silhouette — the card's shadow must look identical
       // hovered or not.
@@ -458,6 +484,17 @@ export function renderTree(
         if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
           d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+
+          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+          const fullyRounded = roundedRectPath(
+            -dimensions.WIDTH / 2,
+            -dimensions.HEIGHT / 2,
+            dimensions.WIDTH,
+            dimensions.HEIGHT,
+            { tl: CORNER_RADIUS, tr: CORNER_RADIUS, br: CORNER_RADIUS, bl: CORNER_RADIUS },
+          );
+          group.select<SVGPathElement>(".gtv-node-rect").attr("d", fullyRounded);
+          group.select<SVGPathElement>(".gtv-node-border").attr("d", fullyRounded);
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.

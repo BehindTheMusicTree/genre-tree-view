@@ -15,7 +15,6 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
-  HOVER_LABEL_HEIGHT,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
@@ -249,7 +248,7 @@ export function WheelCore({
                           // breaking the hover growth again, same failure mode as before.
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
-                          "--gtv-hover-label-height": `${HOVER_LABEL_HEIGHT}px`,
+                          "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                           // Unselected roots have no mounted subtree here — the ring chip is their
                           // only surface, so give it the same root-color wash tree nodes get (see
                           // tintSurface) instead of leaving it plain white.

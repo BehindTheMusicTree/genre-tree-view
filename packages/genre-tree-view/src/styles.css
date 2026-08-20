@@ -96,7 +96,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding: 2px 8px;
+  padding: 0.25em 8px 0;
+  line-height: 1;
   background: var(--gtv-node-fill, #ffffff);
   border: 1px solid #e4e4e7;
   border-bottom: none;
@@ -416,8 +417,10 @@
 
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
    have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
-   hideRoot, see WheelCore). Overlays the chip exactly (rather than the chip's own <button>,
-   which can't validly host nested interactive elements) and masks its label via the chip's own
+   hideRoot, see WheelCore). Overlays the chip inset 1px on every side (mirroring the SVG side's
+   foreignObject inset, see addToolbarActions) so the chip's own border shows fully around it,
+   rather than the chip's own <button>, which can't validly host nested interactive elements) and
+   masks its label via the chip's own
    fill, forwarded as --gtv-node-fill inline (see .gtv-toolbar). Hidden until the pointer is over
    the chip or the toolbar itself — :hover bubbles from the open overflow menu too, since it
    renders as a descendant here rather than being re-parented like the SVG version's.
@@ -426,7 +429,7 @@
    <button> underneath — otherwise hovering to reveal the toolbar would block selecting the root. */
 .gtv-wheel-chip-toolbar {
   position: absolute;
-  inset: 0;
+  inset: 1px;
   z-index: 2;
   opacity: 0;
   pointer-events: none;
@@ -457,7 +460,7 @@
    --gtv-hover-label-height and shifts up by the same amount, so the anchor's own box, and thus
    the chip's fixed point on the wheel circle, is unaffected. --gtv-hover-label-height is set
    inline per chip (see GenreTreeWheelBase.tsx/GenreTreeWheelRadialBase.tsx) from the same
-   HOVER_LABEL_HEIGHT constant the SVG-side label uses, so both stay in sync. */
+   dimensions.HEIGHT the SVG-side label uses, so both scale with the node in sync. */
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
   height: calc(var(--gtv-wheel-chip-base-height) + var(--gtv-hover-label-height, 22px));
   padding-top: var(--gtv-hover-label-height, 22px);

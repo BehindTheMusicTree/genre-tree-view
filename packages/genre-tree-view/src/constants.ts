@@ -103,10 +103,9 @@ export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
 
 // A node's hover-name label (see addHoverNameLabel), attached like a tab to the top of the card
-// while the toolbar overlay masks the card's own label. Sized independently of ACTIONS_OVERLAY_*
-// above — those protect the overflow menu's much larger footprint, this protects a single line
-// of text. No gap constant: the tab sits flush against the card's top edge, not floating above it.
-export const HOVER_LABEL_HEIGHT = 22;
+// while the toolbar overlay masks the card's own label, sized equal to the node's own height
+// (calculateNodeDimensions) so it scales with it instead of a fixed height. No gap constant: the
+// tab sits flush against the card's top edge, not floating above it.
 
 // The label's foreignObject (HTML) and the card's rect (SVG path) are rasterized by separate
 // engines, so even with pixel-identical position and fill color, butting them exactly edge-to-edge

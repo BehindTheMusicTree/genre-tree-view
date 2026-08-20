@@ -18,7 +18,6 @@ import {
   Dimensions,
   getItemCountRange,
   HOVER_LABEL_CARD_OVERLAP,
-  HOVER_LABEL_HEIGHT,
   ItemCountRange,
 } from "./constants";
 
@@ -256,10 +255,10 @@ export function addHoverNameLabel(
 
   group
     .append("foreignObject")
-    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP)
-    .attr("y", -dimensions.HEIGHT / 2 - HOVER_LABEL_HEIGHT)
-    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2)
-    .attr("height", HOVER_LABEL_HEIGHT + HOVER_LABEL_CARD_OVERLAP)
+    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP + 0.5)
+    .attr("y", -dimensions.HEIGHT / 2 - dimensions.HEIGHT)
+    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2 - 1)
+    .attr("height", dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP)
     .html(
       () =>
         `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,

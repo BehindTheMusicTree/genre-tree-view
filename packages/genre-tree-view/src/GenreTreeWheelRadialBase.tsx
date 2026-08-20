@@ -17,7 +17,6 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
-  HOVER_LABEL_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   tintSurface,
@@ -309,7 +308,7 @@ export function WheelRadialCore({
                           // breaking the hover growth again, same failure mode as before.
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
-                          "--gtv-hover-label-height": `${HOVER_LABEL_HEIGHT}px`,
+                          "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                           // Non-cardinal roots aren't developed as a full subtree, so the ring chip
                           // is their only surface — give it the same root-color wash tree nodes get
                           // (see tintSurface) instead of leaving it plain white. Cardinal chips keep
