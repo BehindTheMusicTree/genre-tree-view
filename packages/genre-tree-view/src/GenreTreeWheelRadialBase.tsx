@@ -5,7 +5,7 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { GenreTree } from "./GenreTree";
-import { calculateLocalRootDimensions } from "./NodeHelper";
+import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { calculateWheelRadiusForAngles, computeRadialLayout, RadialSlot } from "./radial-wheel-geometry";
@@ -230,14 +230,17 @@ export function WheelRadialCore({
             const group = cardinalByDirection[direction];
             if (!group) return null;
 
-            // The anchor's clearance from the wheel's center must match the hidden root's own
-            // rendered half-width/half-height inside its mounted <GenreTree> — tree-renderer
-            // sizes that root off an item-count range local to just this one subtree, not the
-            // cross-root `rootItemCountRange` the visible ring chip below is deliberately scaled
-            // against, so it's computed separately here via the same rollup+range pipeline.
-            const localRootDimensions = calculateLocalRootDimensions(d3, group.nodes);
-            const chipHalfExtent =
-              (direction === "top" || direction === "bottom" ? localRootDimensions.HEIGHT : localRootDimensions.WIDTH) / 2;
+            // See calculateRootAnchorClearance's doc comment (and GenreTreeWheelBase for the
+            // equivalent bottom/left-hugging wheel computation) for why the anchor's clearance
+            // from the wheel's center needs both the hidden root's own local half-extent and the
+            // visible ring chip's cross-root display half-extent, not just one or the other.
+            const chipHalfExtent = calculateRootAnchorClearance(
+              d3,
+              group.nodes,
+              aggregatedRootItemCountById.get(group.root.id)!,
+              rootItemCountRange,
+              direction === "top" || direction === "bottom" ? "HEIGHT" : "WIDTH",
+            );
             const secondary = direction !== "right";
 
             return (

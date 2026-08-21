@@ -76,10 +76,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `GenreTreeWheel` and `GenreTreeWheelRight` now reserve the selected root's tree-anchor clearance
-  from that root's own local subtree size instead of the cross-root chip scale — previously, for
-  any selected root that wasn't the wheel's single largest, this under-reserved space and drew the
-  tree's branch links into the root chip instead of stopping at its edge.
+- `GenreTreeWheel`, `GenreTreeWheelRight`, and `GenreTreeWheelRadial` now reserve the selected/
+  cardinal root's tree-anchor clearance as the sum of that root's own local subtree half-extent and
+  its cross-root chip display half-extent, via a new shared `calculateRootAnchorClearance` helper —
+  previously each wheel variant computed this independently and used only one of the two half-extents,
+  so the tree's branch links always converged on the root chip's own center instead of stopping at
+  its edge, for every selection in every wheel variant.
 - A node's item count (and everything sized from it — box dimensions, label font size, wheel
   chip size) now rolls up its descendants' counts instead of reporting only its own, so a node's
   effective count is always at least the sum of its children's. Previously a genre with items only
