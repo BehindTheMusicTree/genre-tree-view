@@ -27,9 +27,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the hover toolbar overlay now masks the card/chip's own label underneath, the label keeps the
   hovered node identifiable across `GenreTree` and all wheel variants.
 - `GenreTreeWheelRadial`'s non-cardinal (filler) roots now render their full subtree as a dim,
-  unclipped grayscale "shadow" preview instead of no tree at all, so the ring hints at every
-  root's shape, not just the 4 developed ones. Hovering a filler's preview brightens it to full
-  color and greys out the 4 cardinal trees so it reads as the current focus. Backed by a new
+  unclipped "shadow" preview instead of no tree at all, so the ring hints at every root's shape,
+  not just the 4 developed ones, in that root's own color. Hovering a filler's preview raises its
+  opacity to read as the current focus, and greys out the 4 cardinal trees. Backed by a new
   `depthSpacingScale` prop on `GenreTree` (default `1`, no behavior change for existing callers)
   that widens the gap between depth levels, used here to keep the shrunk previews' nested nodes
   legible.
@@ -50,9 +50,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   whole node background, so a subtree's root color reads at a glance across the tree instead of
   needing a close look at each node's corner.
 - Unselected root chips in `GenreTreeWheel`/`GenreTreeWheelRight`, and non-cardinal root chips in
-  `GenreTreeWheelRadial`, now carry the same subtle root-color background tint as tree nodes
-  instead of staying plain white — previously only the selected/cardinal chips read as tied to a
-  root color.
+  `GenreTreeWheelRadial`, now render the same solid root color as their selected/cardinal
+  counterpart instead of staying plain white — so a root's color reads identically everywhere it
+  appears, whether selected or not.
 - **Breaking:** `WHEEL_DEFAULT_FRAME_HEIGHT` renamed to `DEFAULT_FRAME_HEIGHT` (600 → 750) and
   joined by a new `DEFAULT_FRAME_WIDTH` (1200) — the suggested size no longer names `GenreTreeWheel`
   specifically, since it's a sensible fixed-size ancestor for any `GenreTree`/`GenreTreeWheel`
