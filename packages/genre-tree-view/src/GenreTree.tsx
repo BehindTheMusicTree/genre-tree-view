@@ -71,7 +71,7 @@ export function GenreTree({
 
     return {
       treeData: reshapedTreeData,
-      resolvedRootColor: rootColor ?? getGenreTreeColor(nodes[0]?.id ?? ""),
+      resolvedRootColor: rootColor ?? getGenreTreeColor(root.data.id),
       svgWidth: width,
       svgHeight: height,
     };

@@ -20,7 +20,6 @@ import {
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
-  tintSurface,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -257,10 +256,6 @@ export function WheelCore({
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
                           "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
-                          // Unselected roots have no mounted subtree here — the ring chip is their
-                          // only surface, so give it the same root-color wash tree nodes get (see
-                          // tintSurface) instead of leaving it plain white.
-                          ...(!selected && { background: tintSurface(chipColor) }),
                         } as React.CSSProperties
                       }
                       onClick={() => handleChipClick(group.root.id, angle)}
@@ -277,14 +272,15 @@ export function WheelCore({
                         panZoom's pointerdown-drag tracking on the container behind it.
                         --gtv-node-fill: same var .gtv-toolbar reads in the SVG tree, so the
                         overlay masks the chip's label with the chip's own fill instead of a
-                        hardcoded color. --gtv-toolbar-icon-color matches the chip's own label
-                        color so the icons stay legible against a selected chip's solid fill. */}
+                        hardcoded color. Every chip has the same solid fill now (see
+                        .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
+                        unconditionally to stay legible against it. */}
                     <div
                       className="gtv-wheel-chip-toolbar"
                       style={
                         {
-                          "--gtv-node-fill": selected ? chipColor : tintSurface(chipColor),
-                          "--gtv-toolbar-icon-color": selected ? "#ffffff" : "#52525b",
+                          "--gtv-node-fill": chipColor,
+                          "--gtv-toolbar-icon-color": "#ffffff",
                         } as React.CSSProperties
                       }
                       onPointerDown={(event) => event.stopPropagation()}
