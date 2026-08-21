@@ -74,6 +74,26 @@ export function calculateLocalRootDimensions(d3Lib: typeof import("d3"), nodes: 
   return calculateNodeDimensions(root.data.itemCount, range);
 }
 
+/** A wheel's tree-anchor clearance along one axis: how far past its own wheel-anchor point a
+ * hidden root's mounted subtree needs to be pushed so its root->depth1 links stop at the visible
+ * chip's outer edge instead of drawing across it. Two half-extents stack, not one — the hidden
+ * root's own local half-extent (its link endpoint sits at its own invisible box's *center*, per
+ * appendPaths' `d.x + WIDTH/2` convention, so clearing the box at all takes a full local
+ * half-extent) plus the visible chip's own cross-root display half-extent (clearing the box only
+ * reaches the chip's *center*, since that's where the anchor and the chip are both pinned — a
+ * second half-extent, this time the chip's own displayed size, is what reaches its actual edge). */
+export function calculateRootAnchorClearance(
+  d3Lib: typeof import("d3"),
+  nodes: GenreTreeNode[],
+  aggregatedItemCount: number,
+  rootItemCountRange: ItemCountRange,
+  axis: keyof Dimensions,
+): number {
+  const localExtent = calculateLocalRootDimensions(d3Lib, nodes)[axis];
+  const displayExtent = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange)[axis];
+  return (localExtent + displayExtent) / 2;
+}
+
 /** Adds the "select as new parent" overlay to a node while a reparent is in progress. */
 export function addReparentTargetOverlay(
   d3Lib: typeof import("d3"),

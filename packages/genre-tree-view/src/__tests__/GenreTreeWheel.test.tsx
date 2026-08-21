@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
-import { calculateLocalRootDimensions } from "../NodeHelper";
+import { calculateRootAnchorClearance } from "../NodeHelper";
+import { getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -247,7 +248,8 @@ describe("GenreTreeWheel", () => {
     const { container } = render(<GenreTreeWheel nodes={nodes} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
 
-    const expectedHalfExtent = calculateLocalRootDimensions(d3, [nodes[0], nodes[1]]).HEIGHT / 2;
+    const rootItemCountRange = getItemCountRange([{ itemCount: 2 }, { itemCount: 1000 }]);
+    const expectedHalfExtent = calculateRootAnchorClearance(d3, [nodes[0], nodes[1]], 2, rootItemCountRange, "HEIGHT");
 
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-height")).toBe(`${expectedHalfExtent}px`);
   });

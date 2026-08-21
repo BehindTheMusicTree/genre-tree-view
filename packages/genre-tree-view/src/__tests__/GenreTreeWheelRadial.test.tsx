@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
+import * as d3 from "d3";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
+import { calculateRootAnchorClearance } from "../NodeHelper";
+import { calculateWheelRadiusForAngles, computeRadialLayout } from "../radial-wheel-geometry";
+import { getItemCountRange, MAX_NODE_WIDTH, WHEEL_RADIUS } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -100,6 +104,31 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-a-child")).toBeTruthy();
     expect(container.querySelector("#group-b-child")).toBeTruthy();
     expect(container.querySelector("#group-c-child")).toBeTruthy();
+  });
+
+  it("reserves cardinal anchor clearance from both the selected root's local subtree size and its own cross-root chip scale", () => {
+    // root-a (default top root, lands at the "right" cardinal) has a much smaller subtree than
+    // root-b — under the cross-root scale used to size the chips, root-a's chip would be near
+    // MIN_NODE_WIDTH, but the hidden root inside its own mounted <GenreTree> always renders at its
+    // *local* max regardless of how it compares to root-b. Reserving clearance from only the local
+    // half-extent (the bug) lands the tree's root->depth1 links exactly on the chip's own center
+    // instead of at its edge — the extra cross-root chip half-extent term is what reaches the edge.
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Small", itemCount: 1 },
+      { id: "a-child", parentId: "root-a", name: "SmallChild", itemCount: 1 },
+      { id: "root-b", parentId: null, name: "Big", itemCount: 500 },
+      { id: "b-child", parentId: "root-b", name: "BigChild", itemCount: 500 },
+    ];
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
+
+    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
+
+    const layout = computeRadialLayout(2, 0, 90);
+    const wheelRadius = calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS);
+    const rootItemCountRange = getItemCountRange([{ itemCount: 2 }, { itemCount: 1000 }]);
+    const expectedClearance = calculateRootAnchorClearance(d3, [nodes[0], nodes[1]], 2, rootItemCountRange, "WIDTH");
+
+    expect(rightAnchor.style.left).toBe(`${wheelRadius + expectedClearance}px`);
   });
 
   it("develops exactly 4 roots when there are 5 or more, leaving the rest as a chip plus a mini-tree preview", () => {
