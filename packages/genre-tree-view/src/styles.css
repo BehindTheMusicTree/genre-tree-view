@@ -410,8 +410,8 @@
   margin-top: 0;
   border-radius: 8px;
   border: 1px solid #e4e4e7;
-  background: #ffffff;
-  color: #18181b;
+  background: var(--gtv-chip-color, #ffffff);
+  color: #ffffff;
   cursor: pointer;
 }
 
@@ -692,9 +692,10 @@
    bottom: 0 + left: 50% anchors the tree's root to the slot's ring position (--gtv-wheel-slot is a
    zero-size box, so top/bottom coincide there); transform-origin: bottom center keeps that anchor
    point fixed as --gtv-mini-tree-scale changes. Rendered at full size rather than clipped to a small
-   box — grayscale + low opacity read it as a background "shadow" so it doesn't compete for
-   attention with the chip or any real tree it happens to overlap (see the z-index on
-   .gtv-wheel-radial-tree-anchor above, which keeps real cardinal trees on top of these regardless).
+   box — low opacity reads it as a background "shadow" so it doesn't compete for attention with
+   the chip or any real tree it happens to overlap (see the z-index on .gtv-wheel-radial-tree-anchor
+   above, which keeps real cardinal trees on top of these regardless). No grayscale here: a root's
+   color must stay the same whether it's shown as the cardinal tree or this filler preview.
    pointer-events: none keeps it purely decorative; the chip button beneath still handles
    selection. */
 .gtv-wheel-radial-mini-tree {
@@ -704,11 +705,8 @@
   transform: translateX(-50%) scale(var(--gtv-mini-tree-scale, 0.45));
   transform-origin: bottom center;
   pointer-events: none;
-  opacity: 0.16;
-  filter: grayscale(1);
-  transition:
-    opacity 150ms ease,
-    filter 150ms ease;
+  opacity: 0.55;
+  transition: opacity 150ms ease;
 }
 
 /* The mini tree's own SVG node markup has no class hook on its outer content besides these three
@@ -729,12 +727,36 @@
   transform: rotate(calc(-1 * var(--gtv-chip-angle, 0deg)));
 }
 
+/* Labels stay hidden at rest so the shadow preview reads as a plain grey tree shape, not a wall
+   of tiny unreadable text at this scale — they only appear once hovered (see the hover rule
+   below), matching the same reveal-on-hover treatment as the chip name/toolbar. */
+.gtv-wheel-radial-mini-tree .gtv-node-label {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+/* tree-renderer.ts sets stroke-width as an inline SVG style (CONNECTOR_WIDTH, 1.5), which beats
+   any non-!important stylesheet rule regardless of selector specificity — !important is the only
+   way to thin the branches for this preview-only state without threading a new prop through the
+   shared rendering pipeline just for a decorative shadow tree. */
+.gtv-wheel-radial-mini-tree .gtv-link {
+  stroke-width: 1px !important;
+  transition: stroke-width 150ms ease;
+}
+
 /* :hover on .gtv-wheel-slot bubbles from its descendants — including the chip button, which sits
    in flow above this preview — even though the slot itself is a zero-size box, so hovering a
    filler root's chip also brightens its own mini tree. */
 .gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree {
   opacity: 0.85;
-  filter: grayscale(0);
+}
+
+.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree .gtv-node-label {
+  opacity: 1;
+}
+
+.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree .gtv-link {
+  stroke-width: 1.5px !important;
 }
 
 /* Hovering a filler's mini tree puts the wheel in "focus" mode: the 4 real cardinal trees grey

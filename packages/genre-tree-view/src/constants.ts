@@ -206,7 +206,7 @@ export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 // longer clipped to a small box, overlapping a neighboring chip/preview/cardinal tree is expected
 // and accepted — the heavy dimming plus the cardinal trees' higher stacking order keep it from
 // competing with anything the user is meant to actually read.
-export const WHEEL_MINI_TREE_SCALE = 0.45;
+export const WHEEL_MINI_TREE_SCALE = 0.675;
 
 // Widens the gaps between depth levels in the mini-tree shadow previews (3x the normal spacing),
 // so nested nodes stay legible even at WHEEL_MINI_TREE_SCALE's small size.
