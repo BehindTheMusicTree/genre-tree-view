@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/genre-tree-view",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "Reusable, presentational D3-based genre/hierarchy tree visualization component for React",
   "repository": {
     "type": "git",
