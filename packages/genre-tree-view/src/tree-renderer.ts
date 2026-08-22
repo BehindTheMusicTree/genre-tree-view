@@ -1,6 +1,13 @@
 import * as d3 from "d3";
 
-import { depthAxisSign, GenreTreeNode, GenreTreePlayState, isVerticalOrientation, TreeOrientation } from "./types";
+import {
+  depthAxisSign,
+  GenreTreeAction,
+  GenreTreeNode,
+  GenreTreePlayState,
+  isVerticalOrientation,
+  TreeOrientation,
+} from "./types";
 import {
   HORIZONTAL_SEPARATION_BETWEEN_NODES,
   VERTICAL_SEPARATION_BETWEEN_NODES,
@@ -43,8 +50,7 @@ export interface RenderTreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  selectingFileNodeIdRef: React.MutableRefObject<string | null>;
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
 }
@@ -440,8 +446,7 @@ export function renderTree(
         group,
         {
           onPlayPause,
-          fileInputRef: callbacks.fileInputRef,
-          selectingFileNodeIdRef: callbacks.selectingFileNodeIdRef,
+          additionalActions: callbacks.additionalActions,
           onAddChild,
           onRenameRequest,
           onDeleteRequest,

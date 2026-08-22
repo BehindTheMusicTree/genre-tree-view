@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { NodeToolbar } from "../NodeToolbar";
-import type { GenreTreeNode } from "../types";
+import type { GenreTreeAction, GenreTreeNode } from "../types";
 
 afterEach(() => {
   cleanup();
@@ -51,9 +51,8 @@ describe("NodeToolbar", () => {
     expect(container.querySelector('[aria-label="Play"]')).toBeTruthy();
   });
 
-  it("omits upload/add/overflow controls when the node is not actionable", () => {
+  it("omits add/overflow controls when the node is not actionable", () => {
     const { container } = render(<NodeToolbar node={{ ...NODE, actionable: false }} />);
-    expect(container.querySelector('[aria-label="Upload files"]')).toBeFalsy();
     expect(container.querySelector('[aria-label="Add sub-genre"]')).toBeFalsy();
     expect(container.querySelector('[aria-label="More actions"]')).toBeFalsy();
   });
@@ -65,32 +64,85 @@ describe("NodeToolbar", () => {
     expect(onAddChild).toHaveBeenCalledWith("root-a");
   });
 
-  it("forwards selected files to onUploadFiles and resets the input", () => {
-    const onUploadFiles = vi.fn();
-    const { container } = render(<NodeToolbar node={NODE} onUploadFiles={onUploadFiles} />);
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(["x"], "song.mp3");
-    Object.defineProperty(input, "files", { value: [file], configurable: true });
-    fireEvent.change(input);
-    expect(onUploadFiles).toHaveBeenCalledWith("root-a", [file]);
-    expect(input.value).toBe("");
+  it("renders a primary-placement additional action inline and invokes onClick with the node", () => {
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+      placement: "primary",
+    };
+    const { container } = render(<NodeToolbar node={NODE} additionalActions={() => [action]} />);
+    fireEvent.click(container.querySelector('[aria-label="Custom"]') as HTMLButtonElement);
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), NODE);
   });
 
-  it("does not call onUploadFiles when the change event carries no files", () => {
-    const onUploadFiles = vi.fn();
-    const { container } = render(<NodeToolbar node={NODE} onUploadFiles={onUploadFiles} />);
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    Object.defineProperty(input, "files", { value: [], configurable: true });
-    fireEvent.change(input);
-    expect(onUploadFiles).not.toHaveBeenCalled();
+  it("disables a primary-placement action when enabled(node) returns false", () => {
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+      enabled: () => false,
+      placement: "primary",
+    };
+    const { container } = render(<NodeToolbar node={NODE} additionalActions={() => [action]} />);
+    const button = container.querySelector('[aria-label="Custom"]') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
   });
 
-  it("clicking Upload files delegates to the hidden file input", () => {
-    const { container } = render(<NodeToolbar node={NODE} />);
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    const clickSpy = vi.spyOn(input, "click");
-    fireEvent.click(container.querySelector('[aria-label="Upload files"]') as HTMLButtonElement);
-    expect(clickSpy).toHaveBeenCalled();
+  it("applies the danger class to an overflow-placement action when danger is true", () => {
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick: vi.fn(),
+      danger: true,
+    };
+    const { container } = render(<NodeToolbar node={NODE} additionalActions={() => [action]} />);
+    fireEvent.click(container.querySelector('[aria-label="More actions"]') as HTMLButtonElement);
+    const row = Array.from(container.querySelectorAll(".gtv-menu-row")).find((el) =>
+      el.textContent?.includes("Custom"),
+    ) as HTMLButtonElement;
+    expect(row.className).toContain("gtv-menu-row--danger");
+  });
+
+  it("disables an overflow-placement action when enabled(node) returns false", () => {
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick: vi.fn(),
+      enabled: () => false,
+    };
+    const { container } = render(<NodeToolbar node={NODE} additionalActions={() => [action]} />);
+    fireEvent.click(container.querySelector('[aria-label="More actions"]') as HTMLButtonElement);
+    const row = Array.from(container.querySelectorAll(".gtv-menu-row")).find((el) =>
+      el.textContent?.includes("Custom"),
+    ) as HTMLButtonElement;
+    expect(row.disabled).toBe(true);
+  });
+
+  it("renders an overflow-placement additional action in the overflow menu and invokes onClick with the node", () => {
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+    };
+    const { container } = render(<NodeToolbar node={NODE} additionalActions={() => [action]} />);
+    expect(container.querySelector('[aria-label="Custom"]')).toBeFalsy();
+
+    fireEvent.click(container.querySelector('[aria-label="More actions"]') as HTMLButtonElement);
+    const overflowButton = Array.from(container.querySelectorAll(".gtv-menu-row")).find((el) =>
+      el.textContent?.includes("Custom"),
+    ) as HTMLButtonElement;
+    expect(overflowButton).toBeTruthy();
+    fireEvent.click(overflowButton);
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), NODE);
   });
 
   it("toggles the overflow menu open and closed", () => {

@@ -110,7 +110,7 @@ export function WheelRadialCore({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
-  onUploadFiles,
+  additionalActions,
 }: WheelRadialCoreProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
@@ -273,7 +273,7 @@ export function WheelRadialCore({
                   onDeleteRequest={onDeleteRequest}
                   onReparentRequest={onReparentRequest}
                   onReparent={onReparent}
-                  onUploadFiles={onUploadFiles}
+                  additionalActions={additionalActions}
                 />
               </div>
             );
@@ -352,7 +352,7 @@ export function WheelRadialCore({
                         onRenameRequest={onRenameRequest}
                         onDeleteRequest={onDeleteRequest}
                         onReparentRequest={onReparentRequest}
-                        onUploadFiles={onUploadFiles}
+                        additionalActions={additionalActions}
                       />
                     </div>
                   </div>

@@ -15,7 +15,7 @@ import {
   getItemCountRange,
   HOVER_LABEL_CARD_OVERLAP,
 } from "../constants";
-import type { GenreTreeNode, TreeOrientation } from "../types";
+import type { GenreTreeAction, GenreTreeNode, TreeOrientation } from "../types";
 
 afterEach(() => {
   document.body.innerHTML = "";
@@ -35,8 +35,6 @@ function createSvgGroup(node: GenreTreeNode) {
 
 function baseCallbacks(overrides: Partial<NodeActionCallbacks> = {}): NodeActionCallbacks {
   return {
-    fileInputRef: { current: null },
-    selectingFileNodeIdRef: { current: null },
     ...overrides,
   };
 }
@@ -225,18 +223,16 @@ describe("addToolbarActions", () => {
     addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
 
     expect(svgEl.querySelector('[data-menu-key="play"]')).toBeTruthy();
-    expect(svgEl.querySelector('[data-menu-key="upload"]')).toBeFalsy();
     expect(svgEl.querySelector('[data-menu-key="add"]')).toBeFalsy();
     expect(svgEl.querySelector('[data-menu-key="__more"]')).toBeFalsy();
   });
 
-  it("renders upload/add and a kebab when actionable", () => {
+  it("renders add and a kebab when actionable", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 5 };
     const { svgEl, g } = createSvgGroup(node);
 
     addToolbarActions(d3, node, g, baseCallbacks(), getItemCountRange([node]));
 
-    expect(svgEl.querySelector('[data-menu-key="upload"]')).toBeTruthy();
     expect(svgEl.querySelector('[data-menu-key="add"]')).toBeTruthy();
     expect(svgEl.querySelector('[data-menu-key="__more"]')).toBeTruthy();
   });
@@ -286,26 +282,59 @@ describe("addToolbarActions", () => {
     expect(playButton.title).toBe("Loading...");
   });
 
-  it("clicking upload sets selectingFileNodeIdRef and triggers the hidden file input", () => {
+  it("renders a primary-placement additional action inline and invokes onClick with the node", () => {
     const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 3 };
     const { svgEl, g } = createSvgGroup(node);
-    const fileInput = document.createElement("input");
-    const clickSpy = vi.spyOn(fileInput, "click");
-    const selectingFileNodeIdRef = { current: null as string | null };
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+      placement: "primary",
+    };
 
     addToolbarActions(
       d3,
       node,
       g,
-      baseCallbacks({ fileInputRef: { current: fileInput }, selectingFileNodeIdRef }),
+      baseCallbacks({ additionalActions: () => [action] }),
       getItemCountRange([node]),
     );
 
-    const uploadButton = svgEl.querySelector('[data-menu-key="upload"]') as HTMLButtonElement;
-    uploadButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const customButton = svgEl.querySelector('[data-menu-key="custom"]') as HTMLButtonElement;
+    expect(customButton).toBeTruthy();
+    customButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), node);
+  });
 
-    expect(selectingFileNodeIdRef.current).toBe("n1");
-    expect(clickSpy).toHaveBeenCalled();
+  it("renders an overflow-placement additional action in the kebab menu and invokes onClick with the node", () => {
+    const node: GenreTreeNode = { id: "n1", parentId: null, name: "N1", itemCount: 3 };
+    const { svgEl, g } = createSvgGroup(node);
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+    };
+
+    addToolbarActions(
+      d3,
+      node,
+      g,
+      baseCallbacks({ additionalActions: () => [action] }),
+      getItemCountRange([node]),
+    );
+
+    expect(svgEl.querySelector('[data-menu-key="custom"]')).toBeFalsy();
+    const kebab = svgEl.querySelector('[data-menu-key="__more"]') as HTMLButtonElement;
+    kebab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    const customRow = svgEl.querySelector('[data-menu-key="custom"]') as HTMLButtonElement;
+    expect(customRow).toBeTruthy();
+    customRow.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), node);
   });
 
   it("clicking add calls onAddChild with the node id", () => {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTree } from "../GenreTree";
 import { getGenreTreeColor, tintSurface } from "../constants";
-import type { GenreTreeNode } from "../types";
+import type { GenreTreeAction, GenreTreeNode } from "../types";
 
 afterEach(() => {
   cleanup();
@@ -99,34 +99,46 @@ describe("GenreTree", () => {
     });
   });
 
-  it("routes a file selection through selectingFileNodeIdRef to onUploadFiles", () => {
-    const onUploadFiles = vi.fn();
-    const { container } = render(<GenreTree nodes={TREE} onUploadFiles={onUploadFiles} />);
+  it("renders a primary-placement additional action inline and invokes onClick with the node", () => {
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+      placement: "primary",
+    };
+    const { container } = render(<GenreTree nodes={TREE} additionalActions={() => [action]} />);
 
     const nodeGroup = container.querySelector("#group-root") as SVGGElement;
     fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const uploadButton = container.querySelector('#toolbar-root [data-menu-key="upload"]') as HTMLButtonElement;
-    fireEvent.click(uploadButton);
+    const customButton = container.querySelector('#toolbar-root [data-menu-key="custom"]') as HTMLButtonElement;
+    fireEvent.click(customButton);
 
-    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(["content"], "sample.mp3", { type: "audio/mpeg" });
-    Object.defineProperty(fileInput, "files", { value: [file] });
-    fireEvent.change(fileInput);
-
-    expect(onUploadFiles).toHaveBeenCalledWith("root", [file]);
-    expect(fileInput.value).toBe("");
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root" }));
   });
 
-  it("does not call onUploadFiles when no node id was recorded", () => {
-    const onUploadFiles = vi.fn();
-    const { container } = render(<GenreTree nodes={TREE} onUploadFiles={onUploadFiles} />);
+  it("renders an overflow-placement additional action in the kebab menu and invokes onClick with the node", () => {
+    const onClick = vi.fn();
+    const action: GenreTreeAction = {
+      key: "custom",
+      icon: () => null,
+      label: () => "Custom",
+      onClick,
+    };
+    const { container } = render(<GenreTree nodes={TREE} additionalActions={() => [action]} />);
 
-    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(["content"], "sample.mp3", { type: "audio/mpeg" });
-    Object.defineProperty(fileInput, "files", { value: [file] });
-    fireEvent.change(fileInput);
+    const nodeGroup = container.querySelector("#group-root") as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    expect(container.querySelector('#toolbar-root [data-menu-key="custom"]')).toBeFalsy();
 
-    expect(onUploadFiles).not.toHaveBeenCalled();
+    const kebab = container.querySelector('#toolbar-root [data-menu-key="__more"]') as HTMLButtonElement;
+    fireEvent.click(kebab);
+    const customRow = container.querySelector('[data-menu-key="custom"]') as HTMLButtonElement;
+    expect(customRow).toBeTruthy();
+    fireEvent.click(customRow);
+
+    expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root" }));
   });
 
   describe("reparenting flow", () => {
