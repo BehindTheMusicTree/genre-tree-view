@@ -408,10 +408,28 @@ function createNodeCallbacks(
       setReparentingNodeId(null);
       appendLog(`reparented ${nodeId} -> ${newParentId}`);
     },
-    onUploadFiles: (nodeId: string, files: File[]) => {
-      setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, itemCount: n.itemCount + files.length } : n)));
-      appendLog(`uploaded ${files.length} file(s) to ${nodeId}`);
-    },
+    additionalActions: (node: GenreTreeNode) => [
+      {
+        key: "upload",
+        icon: () => "↑",
+        label: () => "Upload files",
+        placement: "primary" as const,
+        onClick: () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.multiple = true;
+          input.onchange = () => {
+            const files = Array.from(input.files ?? []);
+            if (files.length === 0) return;
+            setNodes((prev) =>
+              prev.map((n) => (n.id === node.id ? { ...n, itemCount: n.itemCount + files.length } : n)),
+            );
+            appendLog(`uploaded ${files.length} file(s) to ${node.id}`);
+          };
+          input.click();
+        },
+      },
+    ],
   };
 }
 

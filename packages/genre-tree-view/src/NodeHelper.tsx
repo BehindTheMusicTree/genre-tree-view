@@ -1,10 +1,17 @@
 import ReactDOMServer from "react-dom/server";
 import { MdMoreVert, MdModeEdit } from "react-icons/md";
-import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload } from "react-icons/fa";
+import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner } from "react-icons/fa";
 import { PiGraphFill } from "react-icons/pi";
 import * as d3 from "d3";
 
-import { depthAxisSign, GenreTreeNode, GenreTreePlayState, isVerticalOrientation, TreeOrientation } from "./types";
+import {
+  depthAxisSign,
+  GenreTreeAction,
+  GenreTreeNode,
+  GenreTreePlayState,
+  isVerticalOrientation,
+  TreeOrientation,
+} from "./types";
 import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
@@ -25,14 +32,27 @@ type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
 export interface NodeActionCallbacks {
   onPlayPause?: (nodeId: string) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  selectingFileNodeIdRef: React.MutableRefObject<string | null>;
   onAddChild?: (parentId: string) => void;
   onRenameRequest?: (node: GenreTreeNode) => void;
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
+}
+
+/** Adapts a consumer-facing `GenreTreeAction` (keyed off the plain `GenreTreeNode`) into the
+ * `MenuActionItem` shape the toolbar/menu renderers use internally (keyed off the D3 hierarchy
+ * node) — structurally compatible aside from that one indirection. */
+function toMenuActionItem(action: GenreTreeAction): MenuActionItem {
+  return {
+    key: action.key,
+    icon: (d) => action.icon(d.data),
+    label: (d) => action.label(d.data),
+    onClick: (event, d) => action.onClick(event as unknown as React.MouseEvent, d.data),
+    enabled: action.enabled ? (d) => action.enabled!(d.data) : undefined,
+    danger: action.danger,
+  };
 }
 
 /** Builds the hierarchical tree structure from a flat node list. A node's itemCount must be
@@ -299,11 +319,13 @@ export function addToolbarActions(
 ) {
   if (!nodeGroup.select("#toolbar-" + node.id).empty()) return;
 
-  const { onPlayPause, fileInputRef, selectingFileNodeIdRef, onAddChild, onRenameRequest, onDeleteRequest } =
-    callbacks;
+  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest } = callbacks;
   const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
   const isActionable = node.actionable !== false;
   const datum = nodeGroup.datum() as D3Node;
+  const extraActions = callbacks.additionalActions?.(node) ?? [];
+  const extraPrimaryItems = extraActions.filter((a) => a.placement === "primary").map(toMenuActionItem);
+  const extraOverflowItems = extraActions.filter((a) => a.placement !== "primary").map(toMenuActionItem);
 
   const primaryItems: MenuActionItem[] = [
     {
@@ -329,21 +351,12 @@ export function addToolbarActions(
   if (isActionable) {
     primaryItems.push(
       {
-        key: "upload",
-        icon: () => <FaFileUpload className="gtv-icon" size={12} />,
-        label: () => "Upload files",
-        onClick: (event, d) => {
-          event.stopPropagation();
-          selectingFileNodeIdRef.current = d.data.id;
-          fileInputRef.current?.click();
-        },
-      },
-      {
         key: "add",
         icon: () => <FaPlus className="gtv-icon" size={12} />,
         label: () => "Add sub-genre",
         onClick: (_event, d) => onAddChild?.(d.data.id),
       },
+      ...extraPrimaryItems,
     );
   }
 
@@ -361,6 +374,7 @@ export function addToolbarActions(
           label: () => "Change parent",
           onClick: (_event, d) => callbacks.onReparentRequest?.(d.data),
         },
+        ...extraOverflowItems,
         {
           key: "delete",
           icon: () => <FaTrashAlt className="gtv-icon" size={13} />,

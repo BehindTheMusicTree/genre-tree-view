@@ -22,8 +22,6 @@ function buildTreeData(nodes: GenreTreeNode[]) {
 function baseCallbacks(overrides: Partial<RenderTreeCallbacks> = {}): RenderTreeCallbacks {
   return {
     onReparentTargetSelect: vi.fn(),
-    fileInputRef: { current: null },
-    selectingFileNodeIdRef: { current: null },
     ...overrides,
   };
 }

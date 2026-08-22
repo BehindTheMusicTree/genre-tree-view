@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface GenreTreeNode {
   id: string;
   parentId: string | null;
@@ -42,6 +44,18 @@ export function depthAxisSign(orientation: TreeOrientation): 1 | -1 {
   return 1;
 }
 
+export interface GenreTreeAction {
+  key: string;
+  icon: (node: GenreTreeNode) => ReactNode;
+  label: (node: GenreTreeNode) => string;
+  onClick: (event: React.MouseEvent, node: GenreTreeNode) => void;
+  enabled?: (node: GenreTreeNode) => boolean;
+  danger?: boolean;
+  /** "primary" = inline icon-row action (old upload slot); "overflow" = kebab-menu action
+   * (old rename/delete slot). Defaults to "overflow". */
+  placement?: "primary" | "overflow";
+}
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   className?: string;
@@ -63,7 +77,10 @@ export interface GenreTreeProps {
   onReparentRequest?: (node: GenreTreeNode) => void;
   /** Fired when the user picks a target node while `reparentingNodeId` is set. */
   onReparent?: (nodeId: string, newParentId: string) => void | Promise<void>;
-  onUploadFiles?: (nodeId: string, files: File[]) => void;
+  /** Extra actions rendered alongside the built-in play/add-child/rename/delete/reparent set —
+   * placement "primary" renders inline on the node (the upload slot from earlier versions used),
+   * "overflow" (the default) renders in the kebab menu alongside rename/delete. */
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** When true (the default), GenreTree owns its own pan/zoom viewport, zoom buttons, and
    * wheel/drag listeners. Set to false to render just the bare SVG at its natural size with none
    * of that — used by GenreTreeWheel, which applies one shared pan/zoom transform to the tree and

@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { MdMoreVert, MdModeEdit } from "react-icons/md";
-import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner, FaFileUpload } from "react-icons/fa";
+import { FaPlus, FaTrashAlt, FaPlay, FaPause, FaSpinner } from "react-icons/fa";
 import { PiGraphFill } from "react-icons/pi";
 
-import { GenreTreeNode, GenreTreePlayState } from "./types";
+import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 
 export interface NodeToolbarProps {
   node: GenreTreeNode;
@@ -21,11 +21,11 @@ export interface NodeToolbarProps {
   onRenameRequest?: (node: GenreTreeNode) => void;
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
-  onUploadFiles?: (nodeId: string, files: File[]) => void;
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   className?: string;
 }
 
-/** The same play/upload/add-child/rename/reparent/delete actions `addToolbarActions` renders
+/** The same play/add-child/rename/reparent/delete/extra actions `addToolbarActions` renders
  * onto a tree node's SVG card, as a plain React widget — for surfaces outside the SVG tree (the
  * wheel's root chips) that don't carry a mounted node for `addToolbarActions` to attach to. */
 export function NodeToolbar({
@@ -38,12 +38,14 @@ export function NodeToolbar({
   onRenameRequest,
   onDeleteRequest,
   onReparentRequest,
-  onUploadFiles,
+  additionalActions,
   className,
 }: NodeToolbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isActionable = node.actionable !== false;
+  const extraActions = additionalActions?.(node) ?? [];
+  const primaryExtraActions = extraActions.filter((a) => a.placement === "primary");
+  const overflowExtraActions = extraActions.filter((a) => a.placement !== "primary");
   const isPlayable = itemCount > 0;
   const isThisPlaying = playingNodeId === node.id;
   const playLabel = isThisPlaying && playState === "playing" ? "Pause" : isThisPlaying && playState === "loading" ? "Loading..." : "Play";
@@ -55,12 +57,6 @@ export function NodeToolbar({
     ) : (
       <FaPlay className="gtv-icon" size={12} />
     );
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) onUploadFiles?.(node.id, Array.from(files));
-    event.target.value = "";
-  };
 
   return (
     <div className={["gtv-toolbar", className].filter(Boolean).join(" ")}>
@@ -77,16 +73,6 @@ export function NodeToolbar({
 
       {isActionable && (
         <>
-          <input type="file" multiple ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
-          <button
-            type="button"
-            className="gtv-toolbar-btn"
-            title="Upload files"
-            aria-label="Upload files"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FaFileUpload className="gtv-icon" size={12} />
-          </button>
           <button
             type="button"
             className="gtv-toolbar-btn"
@@ -96,6 +82,23 @@ export function NodeToolbar({
           >
             <FaPlus className="gtv-icon" size={12} />
           </button>
+          {primaryExtraActions.map((action) => {
+            const enabled = action.enabled ? action.enabled(node) : true;
+            const label = action.label(node);
+            return (
+              <button
+                key={action.key}
+                type="button"
+                className={`gtv-toolbar-btn${!enabled ? " gtv-toolbar-btn--disabled" : ""}`}
+                title={label}
+                aria-label={label}
+                disabled={!enabled}
+                onClick={(event) => action.onClick(event, node)}
+              >
+                {action.icon(node)}
+              </button>
+            );
+          })}
           <div className="gtv-toolbar-overflow">
             <button
               type="button"
@@ -134,6 +137,24 @@ export function NodeToolbar({
                   </span>
                   <span className="gtv-menu-row-label">Change parent</span>
                 </button>
+                {overflowExtraActions.map((action) => {
+                  const enabled = action.enabled ? action.enabled(node) : true;
+                  return (
+                    <button
+                      key={action.key}
+                      type="button"
+                      className={`gtv-menu-row${action.danger ? " gtv-menu-row--danger" : ""}${!enabled ? " gtv-menu-row--disabled" : ""}`}
+                      disabled={!enabled}
+                      onClick={(event) => {
+                        setMenuOpen(false);
+                        action.onClick(event, node);
+                      }}
+                    >
+                      <span className="gtv-menu-row-icon">{action.icon(node)}</span>
+                      <span className="gtv-menu-row-label">{action.label(node)}</span>
+                    </button>
+                  );
+                })}
                 <div className="gtv-menu-divider" />
                 <button
                   type="button"

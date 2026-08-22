@@ -4,7 +4,13 @@ export { GenreTreeWheelRight } from "./GenreTreeWheelRight";
 export { GenreTreeWheelRadial } from "./GenreTreeWheelRadial";
 export { getGenreTreeColor, DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT } from "./constants";
 export { groupNodesByRoot } from "./root-grouping";
-export type { GenreTreeNode, GenreTreeProps, GenreTreePlayState, TreeOrientation } from "./types";
+export type {
+  GenreTreeNode,
+  GenreTreeProps,
+  GenreTreePlayState,
+  TreeOrientation,
+  GenreTreeAction,
+} from "./types";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";
 export type { GenreTreeWheelRightProps } from "./GenreTreeWheelRight";
 export type { GenreTreeWheelRadialProps } from "./GenreTreeWheelRadial";

@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** removed `onUploadFiles` from `GenreTreeProps` (and the hardcoded upload button/
+  hidden file input it powered) in favor of a generic `additionalActions` prop:
+  `additionalActions?: (node: GenreTreeNode) => GenreTreeAction[]`. Each `GenreTreeAction` supplies
+  its own `icon`, `label`, `onClick`, optional `enabled`/`danger`, and a `placement` of `"primary"`
+  (inline icon-row button — upload's old slot) or `"overflow"` (kebab-menu row, the default).
+  Consumers that need file selection should build their own `<input type="file">` inside the
+  action's `onClick` closure, which already has the right node bound.
+
 ### Added
 
 - `GenreTreeWheelRight`, a third tree renderer alongside `GenreTree` and `GenreTreeWheel`: a

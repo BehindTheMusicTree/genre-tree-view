@@ -60,7 +60,7 @@ export function WheelCore({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
-  onUploadFiles,
+  additionalActions,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation = direction === "left" ? "horizontal-anchored" : "vertical";
   // CSS `rotate()` + `translateY(-radius)` convention: local angle 0°=top, 90°=right, 180°=bottom,
@@ -218,7 +218,7 @@ export function WheelCore({
                 onDeleteRequest={onDeleteRequest}
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
-                onUploadFiles={onUploadFiles}
+                additionalActions={additionalActions}
               />
             </div>
           )}
@@ -295,7 +295,7 @@ export function WheelCore({
                         onRenameRequest={onRenameRequest}
                         onDeleteRequest={onDeleteRequest}
                         onReparentRequest={onReparentRequest}
-                        onUploadFiles={onUploadFiles}
+                        additionalActions={additionalActions}
                       />
                     </div>
                   </div>
