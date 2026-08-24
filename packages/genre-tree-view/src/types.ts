@@ -7,6 +7,10 @@ export interface GenreTreeNode {
   itemCount: number;
   /** Whether add-child, rename, delete and reparent actions apply to this node. Defaults to true. */
   actionable?: boolean;
+  /** Meaningful only for a root's direct children: "core" (default when unset) marks the
+   * required non-pop branch, "pop" marks the optional pop/crossover branch. Ignored everywhere
+   * else. Only interpreted by GenreTreeWheelRadialPopCore. */
+  side?: "core" | "pop";
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";

@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `side?: "core" | "pop"` on `GenreTreeNode` — marks one of a root's two direct children as its
+  optional "pop" branch (the other, unmarked or explicitly `"core"`, is required).
+- `GenreTreeWheelRadialPopCore`, a fifth tree renderer: `GenreTreeWheelRadial` for forests using
+  the new `side` field. Each developed cardinal's outward subtree renders only its core branch;
+  if that root also has a pop branch, that subtree renders as a full interactive tree fanned out
+  inside the wheel's own circle instead of being hidden. The circle grows as needed to fit the
+  largest developed pop subtree.
+
 ### Fixed
 
 - `GenreTreeWheelRadial`: a filler (non-selected) root chip's decorative mini-tree preview no

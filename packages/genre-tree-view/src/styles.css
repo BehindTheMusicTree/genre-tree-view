@@ -329,6 +329,31 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: hosts each developed cardinal's pop subtree, rendered
+   directly via d3 (pop-core-radial-layout.ts) rather than as nested <GenreTree> instances like
+   the cardinal anchors — positioned exactly like .gtv-wheel-circle above (both are centered on
+   the same wheel pivot) so pop-core-radial-layout's polar-projected coordinates, whose origin is
+   the wheel's own center, land in the right place without any extra JS-computed offset. */
+.gtv-wheel-pop-layer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  overflow: visible;
+}
+
+.gtv-wheel-container--radial .gtv-wheel-pop-layer {
+  top: 50%;
+  left: 50%;
+  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+}
+
+/* .gtv-wheel-pop-sector / .gtv-wheel-pop-sector--{top,right,bottom,left}: one <g> per developed
+   cardinal with a pop branch, applied in pop-core-radial-layout.ts's caller. Plain grouping hooks,
+   not currently styled — reserved for any future per-direction treatment (e.g. dimming on hover
+   like the ring's own mini-tree previews). */
+
 /* Optional decorative label centered on the wheel's pivot point — a sibling of .gtv-wheel
    (not nested inside it) so it stays upright and fixed regardless of --gtv-wheel-rotation.
    `top: var(--gtv-wheel-radius)` places it at the circle's actual center, since .gtv-wheel's
