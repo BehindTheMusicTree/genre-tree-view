@@ -399,10 +399,10 @@ const largeWheelNodes: GenreTreeNode[] = [
 let nextId = 1;
 
 const TABS = [
+  { id: "wheel-radial-pop-core", label: "Genre wheel (radial, pop/core)" },
   { id: "wheel", label: "Genre wheel" },
   { id: "wheel-right", label: "Genre wheel (right)" },
   { id: "wheel-radial", label: "Genre wheel (radial)" },
-  { id: "wheel-radial-pop-core", label: "Genre wheel (radial, pop/core)" },
   { id: "stacked", label: "Stacked trees" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -480,7 +480,7 @@ function createNodeCallbacks(
 }
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<TabId>("wheel");
+  const [activeTab, setActiveTab] = useState<TabId>("wheel-radial-pop-core");
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);

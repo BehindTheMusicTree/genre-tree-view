@@ -193,12 +193,15 @@ export function WheelRadialPopCoreCore({
     [groups, aggregatedRootItemCountById],
   );
 
-  const centerNodeDimensions = useMemo(
-    () => calculateNodeDimensions(centerNode.itemCount, rootItemCountRange),
-    [centerNode, rootItemCountRange],
-  );
+  // Center root node ("Pop") renders at 2x the chip size normal itemCount scaling would give it,
+  // so it reads as the wheel's focal point rather than blending in with the ring chips.
+  const CENTER_NODE_SCALE = 2;
+  const centerNodeDimensions = useMemo(() => {
+    const base = calculateNodeDimensions(centerNode.itemCount, rootItemCountRange);
+    return { WIDTH: base.WIDTH * CENTER_NODE_SCALE, HEIGHT: base.HEIGHT * CENTER_NODE_SCALE };
+  }, [centerNode, rootItemCountRange]);
   const centerNodeFontSize = useMemo(
-    () => calculateNodeFontSize(centerNode.itemCount, rootItemCountRange),
+    () => calculateNodeFontSize(centerNode.itemCount, rootItemCountRange) * CENTER_NODE_SCALE,
     [centerNode, rootItemCountRange],
   );
   const centerNodeColor = useMemo(() => getGenreTreeColor(centerNode.id), [centerNode]);
