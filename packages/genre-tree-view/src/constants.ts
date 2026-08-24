@@ -91,8 +91,6 @@ export const MIN_NODE_WIDTH = 180;
 export const MAX_NODE_WIDTH = 700;
 export const MIN_NODE_HEIGHT = 35;
 export const MAX_NODE_HEIGHT = 120;
-export const MIN_NODE_FONT_SIZE = 12;
-export const MAX_NODE_FONT_SIZE = 18;
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
@@ -184,12 +182,20 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
   };
 }
 
-/** Same interpolation as calculateNodeDimensions, mapped onto [MIN_NODE_FONT_SIZE,
- * MAX_NODE_FONT_SIZE] instead — keeps the label's font size in step with its node's box size. */
+// The node-height fraction its font size renders at, interpolated by the same log-scaled t as
+// calculateNodeDimensions — small nodes get a smaller fraction of their (already small) height so
+// their label doesn't dominate the card, while the largest nodes reach a full half.
+const MIN_NODE_FONT_HEIGHT_RATIO = 0.3;
+const MAX_NODE_FONT_HEIGHT_RATIO = 0.5;
+
+/** A fraction of the node's own box height — keeps the label's font size proportional to its
+ * node's rendered size, rather than interpolated separately over its own min/max range. */
 export function calculateNodeFontSize(itemCount: number, range: ItemCountRange): number {
   const t = logarithmicPosition(itemCount, range);
+  const { HEIGHT } = calculateNodeDimensions(itemCount, range);
+  const ratio = MIN_NODE_FONT_HEIGHT_RATIO + t * (MAX_NODE_FONT_HEIGHT_RATIO - MIN_NODE_FONT_HEIGHT_RATIO);
 
-  return Math.round(MIN_NODE_FONT_SIZE + t * (MAX_NODE_FONT_SIZE - MIN_NODE_FONT_SIZE));
+  return Math.round(HEIGHT * ratio);
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
