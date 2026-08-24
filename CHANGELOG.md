@@ -20,11 +20,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   interactive chip, styled the same as the ring's own root chips, and that root is excluded from
   the ring's own chips.
 
+### Changed
+
+- `MAX_NODE_WIDTH`/`MAX_NODE_HEIGHT` doubled (350→700 / 60→120) and `WHEEL_POP_CORE_RADIUS`
+  grown (420→945) so `GenreTreeWheelRadialPopCore`'s wheel and node cards read at a larger scale.
+- Node label font size is now derived directly from each node's own rendered box height (a ratio
+  that grows with the node's log-scaled item-count position, from 0.3x at the smallest to 0.5x at
+  the largest) instead of a separate, disconnected min/max font range — keeps labels proportional
+  to their node regardless of how node sizing itself is tuned.
+
 ### Fixed
 
 - `GenreTreeWheelRadial`: a filler (non-selected) root chip's decorative mini-tree preview no
   longer paints over its own chip label — `.gtv-wheel-chip-anchor` now stays above its
   `.gtv-wheel-radial-mini-tree` sibling regardless of DOM order.
+- `GenreTreeWheelRadialPopCore`: a pop subtree now grows outward from its cardinal root toward the
+  wheel's center instead of the reverse; the center "Pop" root node is now centered on the wheel's
+  pivot and styled to match the ring's own chips; node labels render with `line-height: 1` so
+  large font sizes stay vertically centered instead of skewed by the browser's default line-height.
 
 ## [1.0.0] - 2026-08-22
 
