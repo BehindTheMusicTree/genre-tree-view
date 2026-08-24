@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { clampZoomScale, computeFitScale, computeZoomScale, computeZoomScaleForButton } from "../zoom-pan";
+import {
+  clampZoomScale,
+  computeFitScale,
+  computeZoomScale,
+  computeZoomScaleForButton,
+  queryTreeContentElements,
+} from "../zoom-pan";
 import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
 
 describe("clampZoomScale", () => {
@@ -86,5 +92,22 @@ describe("computeFitScale", () => {
     // still centering on the full bounding box, cropping it instead of fitting it.
     expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeLessThan(ZOOM_MIN_SCALE);
     expect(computeFitScale(10000, 10000, 100, 100, 0)).toBeCloseTo(0.01);
+  });
+});
+
+describe("queryTreeContentElements", () => {
+  it("returns an empty array when the container is null or undefined", () => {
+    expect(queryTreeContentElements(null)).toEqual([]);
+    expect(queryTreeContentElements(undefined)).toEqual([]);
+  });
+
+  it("collects nodes and links matching TREE_CONTENT_SELECTOR under the container", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `
+      <div class="gtv-node-rect"></div>
+      <div class="gtv-link"></div>
+      <div class="gtv-hover-hit-area"></div>
+    `;
+    expect(queryTreeContentElements(container)).toHaveLength(2);
   });
 });

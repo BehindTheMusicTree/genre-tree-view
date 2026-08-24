@@ -84,4 +84,9 @@ describe("openBottomBorderPath", () => {
     const d = openBottomBorderPath(0, 0, 100, 50, { br: 0, bl: 0 });
     expect(d.match(/A /g)).toBeNull();
   });
+
+  it("emits an arc for only the non-zero corner when the two bottom corners differ", () => {
+    expect(openBottomBorderPath(0, 0, 100, 50, { br: 8, bl: 0 }).match(/A /g)).toHaveLength(1);
+    expect(openBottomBorderPath(0, 0, 100, 50, { br: 0, bl: 8 }).match(/A /g)).toHaveLength(1);
+  });
 });

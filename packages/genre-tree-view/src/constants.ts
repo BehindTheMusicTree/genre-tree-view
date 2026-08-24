@@ -88,9 +88,9 @@ export const RECT_BASE_DIMENSIONS: Dimensions = {
 
 // Dynamic sizing configuration
 export const MIN_NODE_WIDTH = 180;
-export const MAX_NODE_WIDTH = 350;
+export const MAX_NODE_WIDTH = 700;
 export const MIN_NODE_HEIGHT = 35;
-export const MAX_NODE_HEIGHT = 60;
+export const MAX_NODE_HEIGHT = 120;
 export const MIN_NODE_FONT_SIZE = 12;
 export const MAX_NODE_FONT_SIZE = 18;
 
@@ -199,6 +199,17 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
 // half-height keeps every chip fully on screen, not just the ones nearest the top.
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
+
+// GenreTreeWheelRadialPopCore tokens. This renderer's circle must fit a full interactive pop
+// subtree inside it (not just chip clearance like the plain wheel), so it starts from a bigger
+// base floor than WHEEL_RADIUS even when no cardinal has a pop side — leaving room to grow
+// further per calculatePopSubtreeRadialExtent (pop-core-radial-layout.ts) once one does.
+export const WHEEL_POP_CORE_RADIUS = 945;
+
+// Radial (depth-axis) step for a pop subtree's polar layout — analogous to
+// VERTICAL_ORIENTATION_DEPTH_SEPARATION for the cartesian renderers, but expressed directly as a
+// radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
+export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
 
 // Miniature subtree preview shown for non-cardinal (filler) roots on the radial wheel — the full,
 // unclipped GenreTree, scaled down and rendered as a dim grayscale "shadow" (see
