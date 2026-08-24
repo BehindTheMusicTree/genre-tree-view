@@ -386,6 +386,10 @@
    effect when it lived on .gtv-wheel-chip directly. */
 .gtv-wheel-chip-anchor {
   position: absolute;
+  /* Stays above this slot's own .gtv-wheel-radial-mini-tree sibling (a later, otherwise-higher-
+     painting sibling on the radial wheel) so a filler root's ghost preview never crosses its own
+     chip's label — same reasoning as .gtv-wheel-radial-tree-anchor's z-index above. */
+  z-index: 2;
   transform: translate(-50%, -50%)
     rotate(calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg))));
   pointer-events: auto;
