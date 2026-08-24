@@ -38,6 +38,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   wheel's center instead of the reverse; the center "Pop" root node is now centered on the wheel's
   pivot and styled to match the ring's own chips; node labels render with `line-height: 1` so
   large font sizes stay vertically centered instead of skewed by the browser's default line-height.
+- Zoom-out floor (`ZOOM_MIN_SCALE` 0.25→0.05) lowered to match the smaller "fit to frame" scale
+  that large trees now need after the node-size increase above — the zoom-out button no longer
+  greys out before the whole tree is visible.
 
 ## [1.0.0] - 2026-08-22
 
