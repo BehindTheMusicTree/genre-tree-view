@@ -241,7 +241,7 @@ export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 // Zoom/pan tokens (see zoom-pan.ts). Bounds keep the tree from shrinking past legibility or
 // growing so large that a single wheel tick jumps an unreasonable amount.
-export const ZOOM_MIN_SCALE = 0.25;
+export const ZOOM_MIN_SCALE = 0.05;
 export const ZOOM_MAX_SCALE = 3;
 // Exponent multiplier applied to a wheel event's deltaY — small because deltaY is typically
 // tens to hundreds of pixels per tick, and exp() amplifies fast.
