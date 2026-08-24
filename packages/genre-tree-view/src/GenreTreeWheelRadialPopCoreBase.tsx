@@ -43,7 +43,7 @@ export interface WheelRadialPopCoreProps extends Omit<GenreTreeProps, "nodes" | 
 // The wheel's pivot point renders this specific root (by name) as a full interactive node
 // instead of a plain label, and it's excluded from the ring's own chips — see the "Mainstream
 // pop" node lookup in WheelRadialPopCoreCore for the fail-fast validation this name is tied to.
-const CENTER_NODE_NAME = "Mainstream pop";
+const CENTER_NODE_NAME = "Pop";
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
@@ -192,6 +192,16 @@ export function WheelRadialPopCoreCore({
       getItemCountRange(groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id)! }))),
     [groups, aggregatedRootItemCountById],
   );
+
+  const centerNodeDimensions = useMemo(
+    () => calculateNodeDimensions(centerNode.itemCount, rootItemCountRange),
+    [centerNode, rootItemCountRange],
+  );
+  const centerNodeFontSize = useMemo(
+    () => calculateNodeFontSize(centerNode.itemCount, rootItemCountRange),
+    [centerNode, rootItemCountRange],
+  );
+  const centerNodeColor = useMemo(() => getGenreTreeColor(centerNode.id), [centerNode]);
 
   const cardinalByDirection = useMemo(() => {
     const map: Partial<Record<CardinalDirection, GenreTreeRootGroup>> = {};
@@ -381,22 +391,50 @@ export function WheelRadialPopCoreCore({
           <svg ref={popSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
 
           <div className="gtv-wheel-center-node">
-            <GenreTree
-              key={centerNode.id}
-              nodes={[centerNode]}
-              interactive={false}
-              rootColor={getGenreTreeColor(centerNode.id)}
-              playingNodeId={playingNodeId}
-              playState={playState}
-              reparentingNodeId={reparentingNodeId}
-              onPlayPause={onPlayPause}
-              onAddChild={onAddChild}
-              onRenameRequest={onRenameRequest}
-              onDeleteRequest={onDeleteRequest}
-              onReparentRequest={onReparentRequest}
-              onReparent={onReparent}
-              additionalActions={additionalActions}
-            />
+            <div className="gtv-wheel-chip-anchor">
+              <div
+                className="gtv-wheel-chip"
+                style={
+                  {
+                    width: centerNodeDimensions.WIDTH,
+                    "--gtv-wheel-chip-base-height": `${centerNodeDimensions.HEIGHT}px`,
+                    "--gtv-chip-color": centerNodeColor,
+                    "--gtv-hover-label-height": `${centerNodeDimensions.HEIGHT}px`,
+                  } as React.CSSProperties
+                }
+              >
+                {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
+                <span className="gtv-node-label gtv-node-label--root" style={{ fontSize: centerNodeFontSize }}>
+                  {centerNode.name}
+                </span>
+                <span className="gtv-wheel-chip-hover-name" style={{ fontSize: centerNodeFontSize }}>
+                  {centerNode.name}
+                </span>
+              </div>
+              <div
+                className="gtv-wheel-chip-toolbar"
+                style={
+                  {
+                    "--gtv-node-fill": centerNodeColor,
+                    "--gtv-toolbar-icon-color": "#ffffff",
+                  } as React.CSSProperties
+                }
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <NodeToolbar
+                  node={centerNode}
+                  itemCount={centerNode.itemCount}
+                  playingNodeId={playingNodeId}
+                  playState={playState}
+                  onPlayPause={onPlayPause}
+                  onAddChild={onAddChild}
+                  onRenameRequest={onRenameRequest}
+                  onDeleteRequest={onDeleteRequest}
+                  onReparentRequest={onReparentRequest}
+                  additionalActions={additionalActions}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="gtv-wheel">

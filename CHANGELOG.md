@@ -14,9 +14,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   if that root also has a pop branch, that subtree renders as a full interactive tree fanned out
   inside the wheel's own circle instead of being hidden. The circle grows as needed to fit the
   largest developed pop subtree. Unlike the other three wheel renderers, it takes no `centerLabel`
-  prop — its pivot point instead renders the `nodes` root named exactly `"Mainstream pop"` (which
-  must exist and have no children, or the component throws) as a full interactive node, and that
-  root is excluded from the ring's own chips.
+  prop — its pivot point instead renders the `nodes` root named exactly `"Pop"` (which must exist
+  and have no children, or the component throws) as a full interactive chip, styled the same as
+  the ring's own root chips, and that root is excluded from the ring's own chips.
 
 ### Fixed
 

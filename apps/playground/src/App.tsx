@@ -269,7 +269,7 @@ const LARGE_ROOTS: LargeRootDef[] = [
     ],
   },
   {
-    name: "Pop",
+    name: "Pop Music",
     subgenres: [
       "Synth-pop",
       "Dance-pop",
@@ -391,9 +391,9 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
 
 const largeWheelNodes: GenreTreeNode[] = [
   ...LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index)),
-  // Required by GenreTreeWheelRadialPopCore: a childless root named "Mainstream pop", rendered
-  // at the wheel's pivot point instead of a plain center label.
-  { id: "mainstream-pop", parentId: null, name: "Mainstream pop", itemCount: 4200 },
+  // Required by GenreTreeWheelRadialPopCore: a childless root named "Pop", rendered at the
+  // wheel's pivot point instead of a plain center label.
+  { id: "pop", parentId: null, name: "Pop", itemCount: 4200 },
 ];
 
 let nextId = 1;

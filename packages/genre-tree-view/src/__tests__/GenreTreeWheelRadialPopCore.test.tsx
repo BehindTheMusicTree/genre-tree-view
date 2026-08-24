@@ -9,9 +9,9 @@ afterEach(() => {
 });
 
 const CENTER_NODE: GenreTreeNode = {
-  id: "mainstream-pop",
+  id: "pop",
   parentId: null,
-  name: "Mainstream pop",
+  name: "Pop",
   itemCount: 10,
 };
 
@@ -35,28 +35,29 @@ function chipFor(container: HTMLElement, name: string) {
 }
 
 describe("GenreTreeWheelRadialPopCore", () => {
-  it("renders the 'Mainstream pop' root interactively at the wheel's center, excluded from the ring", () => {
+  it("renders the 'Pop' root interactively at the wheel's center, styled as a chip, excluded from the ring", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const centerNode = container.querySelector(".gtv-wheel-center-node") as HTMLElement;
-    expect(centerNode.querySelector("#group-mainstream-pop")).toBeTruthy();
-    expect(chipFor(container, "Mainstream pop")).toBeUndefined();
+    expect(centerNode.querySelector(".gtv-wheel-chip")).toBeTruthy();
+    expect(centerNode.textContent).toContain("Pop");
+    expect(chipFor(container, "Rock").closest(".gtv-wheel-center-node")).toBeNull();
   });
 
-  it("throws when nodes has no root named 'Mainstream pop'", () => {
-    const nodesWithoutCenter = NODES_WITH_POP.filter((node) => node.id !== "mainstream-pop");
+  it("throws when nodes has no root named 'Pop'", () => {
+    const nodesWithoutCenter = NODES_WITH_POP.filter((node) => node.id !== "pop");
     expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodesWithoutCenter} />)).toThrow(
-      /requires a root node named "Mainstream pop"/,
+      /requires a root node named "Pop"/,
     );
   });
 
-  it("throws when the 'Mainstream pop' root has children", () => {
+  it("throws when the 'Pop' root has children", () => {
     const nodesWithChild: GenreTreeNode[] = [
       ...NODES_WITH_POP,
-      { id: "mainstream-pop-child", parentId: "mainstream-pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
     ];
     expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodesWithChild} />)).toThrow(
-      /"Mainstream pop" root must not have children/,
+      /"Pop" root must not have children/,
     );
   });
 
@@ -92,13 +93,11 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const onPlayPause = vi.fn();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
 
-    const centerGroup = container.querySelector("#group-mainstream-pop") as SVGGElement;
-    fireEvent.mouseOver(centerGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const centerPlayButton = container.querySelector(
-      '#toolbar-mainstream-pop [data-menu-key="play"]',
-    ) as HTMLButtonElement;
-    fireEvent.click(centerPlayButton);
-    expect(onPlayPause).toHaveBeenCalledWith("mainstream-pop");
+    const centerAnchor = container.querySelector(
+      ".gtv-wheel-center-node .gtv-wheel-chip-anchor",
+    ) as HTMLElement;
+    fireEvent.click(centerAnchor.querySelector('[aria-label="Play"]') as HTMLButtonElement);
+    expect(onPlayPause).toHaveBeenCalledWith("pop");
 
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
     fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
@@ -271,9 +270,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector("#select-as-new-parent-group-a-pop")).toBeFalsy();
   });
 
-  it("renders no chips and mounts no anchors when nodes only contains the required center root", () => {
+  it("renders only the center chip and mounts no anchors when nodes only contains the required center root", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={[CENTER_NODE]} />);
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(1);
+    expect(container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip")).toBeTruthy();
     expect(container.querySelectorAll(".gtv-wheel-radial-tree-anchor").length).toBe(0);
   });
 });
