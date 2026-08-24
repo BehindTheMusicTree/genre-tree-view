@@ -38,9 +38,12 @@ export interface WheelRadialPopCoreProps extends Omit<GenreTreeProps, "nodes" | 
   /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
    * and on every chip click. */
   onRootSelect?: (rootId: string) => void;
-  /** Optional label centered on the wheel's pivot point, e.g. a brand name. */
-  centerLabel?: string;
 }
+
+// The wheel's pivot point renders this specific root (by name) as a full interactive node
+// instead of a plain label, and it's excluded from the ring's own chips — see the "Mainstream
+// pop" node lookup in WheelRadialPopCoreCore for the fail-fast validation this name is tied to.
+const CENTER_NODE_NAME = "Mainstream pop";
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
@@ -111,7 +114,6 @@ export function WheelRadialPopCoreCore({
   nodes,
   className,
   onRootSelect,
-  centerLabel,
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -123,7 +125,16 @@ export function WheelRadialPopCoreCore({
   onReparent,
   additionalActions,
 }: WheelRadialPopCoreProps) {
-  const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
+  const centerNode = nodes.find((node) => node.parentId === null && node.name === CENTER_NODE_NAME);
+  if (!centerNode) {
+    throw new Error(`GenreTreeWheelRadialPopCore requires a root node named "${CENTER_NODE_NAME}"`);
+  }
+  if (nodes.some((node) => node.parentId === centerNode.id)) {
+    throw new Error(`GenreTreeWheelRadialPopCore's "${CENTER_NODE_NAME}" root must not have children`);
+  }
+
+  const ringNodes = useMemo(() => nodes.filter((node) => node.id !== centerNode.id), [nodes, centerNode]);
+  const groups = useMemo(() => groupNodesByRoot(ringNodes), [ringNodes]);
 
   const splitByRootId = useMemo(
     () => new Map(groups.map((group) => [group.root.id, splitRootGroupBySide(group)])),
@@ -369,7 +380,24 @@ export function WheelRadialPopCoreCore({
 
           <svg ref={popSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
 
-          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
+          <div className="gtv-wheel-center-node">
+            <GenreTree
+              key={centerNode.id}
+              nodes={[centerNode]}
+              interactive={false}
+              rootColor={getGenreTreeColor(centerNode.id)}
+              playingNodeId={playingNodeId}
+              playState={playState}
+              reparentingNodeId={reparentingNodeId}
+              onPlayPause={onPlayPause}
+              onAddChild={onAddChild}
+              onRenameRequest={onRenameRequest}
+              onDeleteRequest={onDeleteRequest}
+              onReparentRequest={onReparentRequest}
+              onReparent={onReparent}
+              additionalActions={additionalActions}
+            />
+          </div>
 
           <div className="gtv-wheel">
             {groups.map((group, index) => {

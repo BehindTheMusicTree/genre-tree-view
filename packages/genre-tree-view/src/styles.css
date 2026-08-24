@@ -379,6 +379,18 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: hosts the wheel's required "Mainstream pop" root, rendered as
+   a full interactive GenreTree node (not a plain label like .gtv-wheel-center-label above) at the
+   wheel's pivot point. Same positioning reasoning as .gtv-wheel-center-label — a sibling of
+   .gtv-wheel so it stays upright regardless of --gtv-wheel-rotation — but sized to the node's own
+   card instead of a fixed label width, since it renders through the normal node-card pipeline. */
+.gtv-wheel-center-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 /* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Positioned so
    its own top edge sits at the stage's anchor point, horizontally centered — the same point the
    tree anchors its root to above. */

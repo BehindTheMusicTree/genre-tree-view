@@ -35,7 +35,10 @@ pnpm workspace with two members:
     the wheel's own circle (in the cardinal's own quadrant) via a self-contained polar layout —
     `pop-core-radial-layout.ts` — instead of the cartesian `tree-renderer.ts` pipeline the other
     renderers share. The circle grows past its normal chip-clearance floor to fit the largest
-    developed pop subtree.
+    developed pop subtree. Unlike the other three renderers (which take an optional `centerLabel`
+    string), its wheel's pivot point renders a full interactive `<GenreTree>` node for the root
+    named exactly `"Mainstream pop"` — required to exist among `nodes` with no children, or the
+    component throws — and that root is excluded from the ring's own chips.
   - `GenreTreeWheel` and `GenreTreeWheelRight` share their rotation/mounting logic via
     `GenreTreeWheelBase.tsx`'s `WheelCore`, parameterized by a `direction` prop. `GenreTreeWheelRadial`
     and `GenreTreeWheelRadialPopCore` are separate, near-identical components (`WheelRadialCore` /

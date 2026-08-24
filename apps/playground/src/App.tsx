@@ -389,7 +389,12 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
   return nodes;
 }
 
-const largeWheelNodes: GenreTreeNode[] = LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index));
+const largeWheelNodes: GenreTreeNode[] = [
+  ...LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index)),
+  // Required by GenreTreeWheelRadialPopCore: a childless root named "Mainstream pop", rendered
+  // at the wheel's pivot point instead of a plain center label.
+  { id: "mainstream-pop", parentId: null, name: "Mainstream pop", itemCount: 4200 },
+];
 
 let nextId = 1;
 
@@ -606,7 +611,6 @@ export function App() {
           <GenreTreeWheelRadialPopCore
             nodes={wheelNodes}
             {...wheelCallbacks}
-            centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
           />
         </div>
