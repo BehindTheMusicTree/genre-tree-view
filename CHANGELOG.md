@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeWheelRadial`: a filler (non-selected) root chip's decorative mini-tree preview no
+  longer paints over its own chip label — `.gtv-wheel-chip-anchor` now stays above its
+  `.gtv-wheel-radial-mini-tree` sibling regardless of DOM order.
+
 ## [1.0.0] - 2026-08-22
 
 ### Changed
