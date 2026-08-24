@@ -14,8 +14,8 @@ if [[ "$BUMP" != "patch" && "$BUMP" != "minor" && "$BUMP" != "major" ]]; then
 fi
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "main" ]]; then
-  echo "Error: releases must be cut from main (currently on '$BRANCH')"
+if [[ "$BRANCH" != release/* ]]; then
+  echo "Error: releases must be cut from a release/* branch (currently on '$BRANCH')"
   exit 1
 fi
 
@@ -47,9 +47,13 @@ fs.writeFileSync('CHANGELOG.md', s);
 
 git add packages/genre-tree-view/package.json pnpm-lock.yaml CHANGELOG.md
 git commit -m "chore: release $NEW_VERSION"
-git tag -a "v$NEW_VERSION" -m "v$NEW_VERSION"
-git push --follow-tags
+git push -u origin "$BRANCH"
 
 echo ""
-echo "Released v$NEW_VERSION ($OLD_VERSION -> $NEW_VERSION)"
-echo "Publishing to GitHub Packages will start automatically."
+echo "Bumped $OLD_VERSION -> $NEW_VERSION on '$BRANCH' and pushed."
+echo ""
+echo "Next steps:"
+echo "  1. Open a PR from '$BRANCH' into main and merge it."
+echo "  2. On main, tag the merge commit: git tag -a v$NEW_VERSION -m v$NEW_VERSION && git push origin v$NEW_VERSION"
+echo "     (this triggers publish.yml to build and publish to GitHub Packages)"
+echo "  3. Merge '$BRANCH' (or main) back into develop so it picks up the version bump."

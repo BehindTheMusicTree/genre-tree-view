@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `@behindthemusictree/genre-tree-view` — a reusable, presentational D3-based tree visualization
 component for React, published to GitHub Packages. It renders a flat `GenreTreeNode[]` as an
 interactive genre/hierarchy tree via callback props (`onPlayPause`, `onAddChild`,
-`onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `onUploadFiles`). All
+`onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `additionalActions`). All
 data fetching, mutations, and popups/dialogs are the consumer's responsibility — this package
 owns rendering only.
 
@@ -40,44 +40,18 @@ pnpm --filter @behindthemusictree/genre-tree-view test -- <pattern>   # single t
 Coverage thresholds are enforced at 95% (lines/branches/functions/statements) in
 `vitest.config.ts`, excluding `src/index.ts` and `src/types.ts`.
 
-Release (from `main`, clean working tree only): `pnpm release -- <patch|minor|major>`. Bumps the
-package version, updates `CHANGELOG.md`, commits, tags, and pushes — `publish.yml` then builds
-and publishes to GitHub Packages on the pushed tag.
+Release: cut a `release/x.y.z` branch off `develop`, then run
+`pnpm release -- <patch|minor|major>` on it. Bumps the package version, updates `CHANGELOG.md`,
+commits, and pushes the branch — merging into `main` and tagging triggers `publish.yml` to build
+and publish to GitHub Packages. See `CONTRIBUTING.md` for the full branching model and release
+flow.
 
 ## Architecture
 
-### Two renderers sharing one tree engine
-
-- `GenreTree.tsx` renders one connected hierarchy as an interactive D3/SVG tree. It owns pan/zoom
-  (`use-pan-zoom.ts`) and zoom buttons when `interactive` is true (the default); when `false`, it
-  renders the bare SVG at natural size with no viewport/listeners of its own.
-- `GenreTreeWheel.tsx` distributes all root genres around a wheel hugging the bottom of its
-  container. Clicking a chip rotates the wheel so that root lands top-center and swaps in a
-  single `GenreTree` (with `interactive={false}`) rendering that root's subtree, oriented
-  `"vertical"` (growing upward from the anchor) instead of the default `"horizontal"`. The wheel
-  applies one shared pan/zoom transform to itself and the mounted tree together, rather than the
-  tree owning an independent one. Only the selected root's subtree is ever mounted.
-- Both renderers pull from the same tree-building/layout pipeline:
-  - `NodeHelper.tsx` — `buildTreeHierarchyStructure` turns the flat `GenreTreeNode[]` into a d3
-    hierarchy.
-  - `tree-renderer.ts` — layout (`createTreeLayout`, `setupTreeLayout`), SVG sizing
-    (`calculateSvgDimensions`), and DOM rendering (`renderTree`) for the `<GenreTree>` SVG.
-  - `d3-helper/d3-grid-helper.ts` and `d3-helper/d3-path-helper.ts` — lower-level D3 grid/path
-    geometry helpers used by the renderer.
-  - `root-grouping.ts` — `groupNodesByRoot` partitions the flat node list into per-root subtrees
-    for the wheel.
-  - `wheel-geometry.ts` — chip placement and rotation math (`calculateWheelRadius`,
-    `computeRotationForSelection`, `getChipAngle`) for `GenreTreeWheel`.
-  - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
-    wheel radius, rotation easing/timing) consumed by both renderers.
-
-### Public surface
-
-`index.ts` is the sole export boundary: `GenreTree`, `GenreTreeWheel`, `getGenreTreeColor`,
-`DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`, `groupNodesByRoot`, and the public types (`GenreTreeNode`,
-`GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`, `GenreTreeWheelProps`,
-`GenreTreeRootGroup`). Anything not re-exported here is a private implementation detail — treat
-new internals as private unless a consumer need is established.
+Four renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`)
+share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
+breakdown of modules and the public export surface — keep that file in sync with this one instead
+of duplicating details here.
 
 ### Extraction context
 
