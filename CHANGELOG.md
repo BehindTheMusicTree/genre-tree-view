@@ -12,11 +12,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `GenreTreeWheelRadialPopCore`, a fifth tree renderer: `GenreTreeWheelRadial` for forests using
   the new `side` field. Each developed cardinal's outward subtree renders only its core branch;
   if that root also has a pop branch, that subtree renders as a full interactive tree fanned out
-  inside the wheel's own circle instead of being hidden. The circle grows as needed to fit the
-  largest developed pop subtree. Unlike the other three wheel renderers, it takes no `centerLabel`
-  prop — its pivot point instead renders the `nodes` root named exactly `"Pop"` (which must exist
-  and have no children, or the component throws) as a full interactive chip, styled the same as
-  the ring's own root chips, and that root is excluded from the ring's own chips.
+  inside the wheel's own circle instead of being hidden — the pop child sits at the outer ring next
+  to its cardinal root chip, and each generation below it steps inward toward the wheel's center.
+  The circle grows as needed to fit the largest developed pop subtree. Unlike the other three wheel
+  renderers, it takes no `centerLabel` prop — its pivot point instead renders the `nodes` root named
+  exactly `"Pop"` (which must exist and have no children, or the component throws) as a full
+  interactive chip, styled the same as the ring's own root chips, and that root is excluded from
+  the ring's own chips.
 
 ### Fixed
 

@@ -12,24 +12,27 @@ const popRock: GenreTreeNode[] = [
 ];
 
 describe("computePopRadialLayout", () => {
-  it("places the pop child (depth 0) exactly one radial step from center, on the wedge's center angle", () => {
+  it("places the pop child (depth 0) at the subtree's outermost radial step, on the wedge's center angle", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0);
     const popChild = laidOut.descendants().find((d) => d.data.id === "rock-pop")!;
+    const maxDepth = hierarchy.height;
+    const outermostRadius = (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
 
-    expect(Math.hypot(popChild.x!, popChild.y!)).toBeCloseTo(POP_TREE_DEPTH_RADIAL_SPACING, 5);
+    expect(Math.hypot(popChild.x!, popChild.y!)).toBeCloseTo(outermostRadius, 5);
     // wedge centered on 0deg (top): projects to (0, -radius).
     expect(popChild.x!).toBeCloseTo(0, 5);
-    expect(popChild.y!).toBeCloseTo(-POP_TREE_DEPTH_RADIAL_SPACING, 5);
+    expect(popChild.y!).toBeCloseTo(-outermostRadius, 5);
   });
 
-  it("places every node at a radius proportional to (depth + 1)", () => {
+  it("places every node at a radius proportional to (maxDepth - depth + 1), deepest nodes closest to center", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const laidOut = computePopRadialLayout(d3, hierarchy, 90);
+    const maxDepth = hierarchy.height;
 
     laidOut.each((d) => {
       const radius = Math.hypot(d.x!, d.y!);
-      expect(radius).toBeCloseTo((d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
+      expect(radius).toBeCloseTo((maxDepth - d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
     });
   });
 

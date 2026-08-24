@@ -67,9 +67,10 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node): number {
  *
  * Angle spread across siblings/cousins uses d3's own tidy-tree balancing (`d3.tree()`), the same
  * technique the cartesian renderers rely on, just fed a 1-D angular size instead of a 2-D pixel
- * one. Radius is NOT taken from that layout's own y — it's fixed per depth
- * (`(depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING`), so every cardinal's pop subtree starts one ring
- * out from the wheel's center rather than every quadrant's root landing on the same point.
+ * one. Radius is NOT taken from that layout's own y — it's fixed per depth, counting down from the
+ * subtree's own deepest ring (`(height + 1) * POP_TREE_DEPTH_RADIAL_SPACING`) as depth increases,
+ * so the pop child (depth 0) lands right at that outer ring — next to the cardinal root chip it
+ * branches from — and each generation below it steps inward, toward the wheel's own center.
  */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
@@ -78,6 +79,7 @@ export function computePopRadialLayout(
 ): D3Node {
   const wedgeSpanRad = (POP_WEDGE_SPAN_DEGREES * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
+  const maxDepth = hierarchy.height;
 
   const treeLayout = d3Lib
     .tree<GenreTreeNode>()
@@ -87,7 +89,7 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = (d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
+    const radius = (maxDepth - d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
