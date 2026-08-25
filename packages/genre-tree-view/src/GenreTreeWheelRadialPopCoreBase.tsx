@@ -243,7 +243,7 @@ export function WheelRadialPopCoreCore({
     () => calculateNodeFontSize(centerNode.itemCount, rootItemCountRange) * CENTER_NODE_SCALE,
     [centerNode, rootItemCountRange],
   );
-  const centerNodeColor = useMemo(() => getGenreTreeColor(centerNode.id), [centerNode]);
+  const centerNodeColor = "#ffffff";
   // Collapsed, the center chip reads as a circular pivot rather than a rectangular card like the
   // ring chips — a perfect circle needs equal width/height, so pick the larger of the two.
   const centerChipDiameter = Math.max(centerNodeDimensions.WIDTH, centerNodeDimensions.HEIGHT);
@@ -540,6 +540,13 @@ export function WheelRadialPopCoreCore({
             />
           )}
 
+          {isPopExpanded && centerSubtreeHierarchy && (
+            <div
+              className="gtv-wheel-middle-circle"
+              style={{ "--gtv-wheel-middle-radius": `${middleCircleFloor}px` } as React.CSSProperties}
+            />
+          )}
+
           <svg
             ref={popSvgRef}
             className="gtv-wheel-pop-layer"
@@ -550,7 +557,9 @@ export function WheelRadialPopCoreCore({
           <div className="gtv-wheel-center-node">
             <div className="gtv-wheel-chip-anchor">
               <div
-                className={["gtv-wheel-chip", !isPopExpanded && "gtv-wheel-chip--circle"].filter(Boolean).join(" ")}
+                className={["gtv-wheel-chip", "gtv-wheel-chip--center", !isPopExpanded && "gtv-wheel-chip--circle"]
+                  .filter(Boolean)
+                  .join(" ")}
                 style={
                   isPopExpanded
                     ? ({
@@ -584,7 +593,6 @@ export function WheelRadialPopCoreCore({
                 style={
                   {
                     "--gtv-node-fill": centerNodeColor,
-                    "--gtv-toolbar-icon-color": "#ffffff",
                   } as React.CSSProperties
                 }
                 onPointerDown={(event) => event.stopPropagation()}
