@@ -184,6 +184,21 @@ export function WheelRadialCore({
     if (effectiveTopRootId) onRootSelectRef.current?.(effectiveTopRootId);
   }, [effectiveTopRootId]);
 
+  // Starts the view fit to the wheel + rendered subtrees instead of at scale 1 / pan (0, 0) —
+  // guarded so it only fires once anchored content has actually rendered, and never again
+  // afterward so it doesn't fight the user's own pan/zoom on later selections.
+  const hasInitialFitRef = useRef(false);
+  useEffect(() => {
+    if (hasInitialFitRef.current) return;
+    const elements = [
+      wheelCircleRef.current,
+      ...Object.values(anchorRefs.current).flatMap((el) => queryTreeContentElements(el)),
+    ];
+    if (!elements.some(Boolean)) return;
+    hasInitialFitRef.current = true;
+    panZoom.fitToFrame(elements);
+  });
+
   const cardinalByDirection = useMemo(() => {
     const map: Partial<Record<CardinalDirection, GenreTreeRootGroup>> = {};
     layout.forEach((slot, index) => {

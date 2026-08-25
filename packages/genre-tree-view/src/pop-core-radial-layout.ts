@@ -52,10 +52,14 @@ export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTre
 /** The outer radius (px, from the wheel's center) a pop subtree needs to render without
  * overlapping the wheel's own edge — driven by its deepest node's ring plus that node's own
  * half-width and a fixed outer margin. Used to grow the wheel's circle to fit whichever developed
- * cardinal's pop subtree reaches furthest. */
-export function calculatePopSubtreeRadialExtent(hierarchy: D3Node): number {
+ * cardinal's pop subtree reaches furthest.
+ *
+ * `innerRadiusFloor` shifts the whole subtree outward by that amount (mirroring
+ * `computePopRadialLayout`'s own offset) so the returned extent still reflects where the subtree's
+ * outermost node actually lands once it's been pushed clear of the middle circle. */
+export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, innerRadiusFloor = 0): number {
   const maxDepth = hierarchy.height;
-  return (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
+  return innerRadiusFloor + (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
 }
 
 /**
@@ -71,11 +75,19 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node): number {
  * subtree's own deepest ring (`(height + 1) * POP_TREE_DEPTH_RADIAL_SPACING`) as depth increases,
  * so the pop child (depth 0) lands right at that outer ring — next to the cardinal root chip it
  * branches from — and each generation below it steps inward, toward the wheel's own center.
+ *
+ * `innerRadiusFloor` shifts the entire subtree outward so its deepest node never crosses into the
+ * center Mainstream Pop node's own circle — every generation keeps its normal
+ * `POP_TREE_DEPTH_RADIAL_SPACING` gap from its neighbors, just measured from that floor instead of
+ * from the wheel's true center. Callers must grow the wheel radius to match (see
+ * `calculatePopSubtreeRadialExtent`'s own `innerRadiusFloor` param) so the shifted-out subtree still
+ * fits inside the wheel's edge.
  */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   wedgeCenterAngleDegrees: number,
+  innerRadiusFloor = 0,
 ): D3Node {
   const wedgeSpanRad = (POP_WEDGE_SPAN_DEGREES * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
@@ -89,12 +101,61 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = (maxDepth - d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
+    const radius = innerRadiusFloor + (maxDepth - d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
 
   return hierarchy;
+}
+
+/**
+ * Lays out the center "Mainstream Pop" node's own subtree in polar coordinates, full-circle
+ * (unlike `computePopRadialLayout`'s 80deg wedge — the center node has no single cardinal
+ * direction to anchor to). `hierarchy` must be rooted at the center node itself: depth 0 (the
+ * center node) is pinned to the wheel's true origin and excluded from angular layout; depth 1
+ * (its direct children) land on the `mainstreamPopRootCircleRadius` ring — the "mainstream pop
+ * root circle" — spread around the full circle proportional to each child's own subtree size
+ * (d3.tree's default separation, unlike the wedge layout's forced-equal `.separation(() => 1)`);
+ * each deeper generation steps outward by `depthSpacing`.
+ */
+export function computeCenterRadialLayout(
+  d3Lib: typeof import("d3"),
+  hierarchy: D3Node,
+  mainstreamPopRootCircleRadius: number,
+  depthSpacing: number,
+): D3Node {
+  const treeLayout = d3Lib.tree<GenreTreeNode>().size([2 * Math.PI, 1]);
+  treeLayout(hierarchy);
+
+  hierarchy.each((d) => {
+    if (d.depth === 0) {
+      d.x = 0;
+      d.y = 0;
+      return;
+    }
+    const angleRad = d.x!;
+    const radius = mainstreamPopRootCircleRadius + (d.depth - 1) * depthSpacing;
+    d.x = radius * Math.sin(angleRad);
+    d.y = -radius * Math.cos(angleRad);
+  });
+
+  return hierarchy;
+}
+
+/** The "mainstream pop outer circle" radius (px, from the wheel's center) the center "Mainstream
+ * Pop" node's own subtree needs to render without overlapping the wheel's own edge (the "core
+ * root circle") — driven by its deepest node's ring plus that node's own half-width and a fixed
+ * outer margin. Only meaningful when the center node actually has children (`hierarchy.height >=
+ * 1`). */
+export function calculateMainstreamPopOuterCircleRadius(
+  hierarchy: D3Node,
+  mainstreamPopRootCircleRadius: number,
+  depthSpacing: number,
+): number {
+  return (
+    mainstreamPopRootCircleRadius + (hierarchy.height - 1) * depthSpacing + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN
+  );
 }
 
 export interface RenderPopSubtreeCallbacks {
@@ -127,10 +188,17 @@ export function renderPopSubtree(
   reparentingNodeId: string | null,
   reparentForbiddenIds: string[],
   callbacks: RenderPopSubtreeCallbacks,
+  skipRootNode = false,
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const itemCountRange = getItemCountRange(hierarchy.descendants().map((d) => d.data));
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
+  // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
+  // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
+  // Links are untouched: hierarchy.links() only ever contains depth0→depth1+ edges (a hierarchy
+  // root has no incoming link), and the link from the center out to each depth-1 child is still
+  // wanted.
+  const drawnNodes = skipRootNode ? hierarchy.descendants().filter((d) => d.depth > 0) : hierarchy.descendants();
 
   svg
     .selectAll("path.gtv-link")
@@ -146,7 +214,7 @@ export function renderPopSubtree(
 
   const nodes = svg
     .selectAll<SVGGElement, D3Node>("g.node")
-    .data(hierarchy.descendants())
+    .data(drawnNodes)
     .enter()
     .append("g")
     .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))

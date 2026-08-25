@@ -1,6 +1,13 @@
 import * as d3 from "d3";
 import { describe, expect, it } from "vitest";
-import { buildPopHierarchy, calculatePopSubtreeRadialExtent, computePopRadialLayout } from "../pop-core-radial-layout";
+import {
+  buildPopHierarchy,
+  calculateMainstreamPopOuterCircleRadius,
+  calculatePopSubtreeRadialExtent,
+  computeCenterRadialLayout,
+  computePopRadialLayout,
+} from "../pop-core-radial-layout";
+import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH } from "../constants";
 import type { GenreTreeNode } from "../types";
 
@@ -76,5 +83,80 @@ describe("calculatePopSubtreeRadialExtent", () => {
     const maxDepth = hierarchy.height;
 
     expect(extent).toBeCloseTo((maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24, 5);
+  });
+});
+
+const centerWithSubtree: GenreTreeNode[] = [
+  { id: "pop", parentId: null, name: "Pop", itemCount: 0 },
+  { id: "pop-a", parentId: "pop", name: "Pop A", itemCount: 0 },
+  { id: "pop-b", parentId: "pop", name: "Pop B", itemCount: 0 },
+  { id: "pop-a-1", parentId: "pop-a", name: "Pop A 1", itemCount: 0 },
+];
+
+describe("computeCenterRadialLayout", () => {
+  it("pins the depth-0 center node exactly at the origin", () => {
+    const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
+    const laidOut = computeCenterRadialLayout(d3, hierarchy, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const center = laidOut.descendants().find((d) => d.data.id === "pop")!;
+
+    expect(center.x!).toBeCloseTo(0, 5);
+    expect(center.y!).toBeCloseTo(0, 5);
+  });
+
+  it("places depth-1 nodes exactly on innerRadius, and each deeper generation one depthSpacing further out", () => {
+    const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
+    const innerRadius = 100;
+    const laidOut = computeCenterRadialLayout(d3, hierarchy, innerRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+
+    laidOut.each((d) => {
+      if (d.depth === 0) return;
+      const radius = Math.hypot(d.x!, d.y!);
+      expect(radius).toBeCloseTo(innerRadius + (d.depth - 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
+    });
+  });
+
+  it("spreads depth-1 siblings proportional to their own subtree size rather than equally", () => {
+    const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
+    const laidOut = computeCenterRadialLayout(d3, hierarchy, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const [a, b] = hierarchy.children!;
+
+    // pop-a has a child (pop-a-1), pop-b doesn't: d3.tree's default separation should not split the
+    // full circle evenly between them.
+    const nodeA = laidOut.descendants().find((d) => d.data.id === a.data.id)!;
+    const nodeB = laidOut.descendants().find((d) => d.data.id === b.data.id)!;
+    const angleA = Math.atan2(nodeA.x!, -nodeA.y!);
+    const angleB = Math.atan2(nodeB.x!, -nodeB.y!);
+
+    expect(angleA).not.toBeCloseTo(angleB - Math.PI, 5);
+  });
+});
+
+describe("calculateMainstreamPopOuterCircleRadius", () => {
+  it("grows with the subtree's depth", () => {
+    const shallow = buildTreeHierarchyStructure(d3, [
+      { id: "pop", parentId: null, name: "Pop", itemCount: 0 },
+      { id: "pop-a", parentId: "pop", name: "Pop A", itemCount: 0 },
+    ]);
+    const deep = buildTreeHierarchyStructure(d3, centerWithSubtree);
+
+    const shallowExtent = calculateMainstreamPopOuterCircleRadius(shallow, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const deepExtent = calculateMainstreamPopOuterCircleRadius(deep, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+
+    expect(deepExtent).toBeGreaterThan(shallowExtent);
+  });
+
+  it("matches the mainstreamPopRootCircleRadius + (height - 1) * depthSpacing + half node width + margin formula", () => {
+    const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
+    const mainstreamPopRootCircleRadius = 100;
+    const extent = calculateMainstreamPopOuterCircleRadius(
+      hierarchy,
+      mainstreamPopRootCircleRadius,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
+
+    expect(extent).toBeCloseTo(
+      mainstreamPopRootCircleRadius + (hierarchy.height - 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
+      5,
+    );
   });
 });

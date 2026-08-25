@@ -16,9 +16,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   to its cardinal root chip, and each generation below it steps inward toward the wheel's center.
   The circle grows as needed to fit the largest developed pop subtree. Unlike the other three wheel
   renderers, it takes no `centerLabel` prop — its pivot point instead renders the `nodes` root named
-  exactly `"Pop"` (which must exist and have no children, or the component throws) as a full
-  interactive chip, styled the same as the ring's own root chips, and that root is excluded from
-  the ring's own chips.
+  exactly `"Mainstream Pop"` (which must exist, or the component throws) as a full interactive
+  chip, styled the same as the ring's own root chips, and that root (plus its own descendants, if
+  any) is excluded from the ring's own chips. The center node's own subtree, if it has one, is
+  hidden by default and toggles open/closed via a dedicated floating button: expanded, it spreads
+  full-circle around the center chip (deeper generations radiating further out), and the wheel's
+  own edge grows to keep clear of it.
+- A "Fit to frame" pass now runs automatically on the first render of `GenreTree`, `GenreTreeWheel`,
+  `GenreTreeWheelRight`, `GenreTreeWheelRadial`, and `GenreTreeWheelRadialPopCore` — once, before
+  any user interaction — instead of starting every tree at scale 1 / pan (0, 0) regardless of size.
 
 ### Changed
 
