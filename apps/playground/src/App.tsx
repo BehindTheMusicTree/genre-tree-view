@@ -305,7 +305,14 @@ const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
 // ("core") spine — Classical is deliberately omitted so the pop-core wheel demo shows a root
 // with no pop subtree, per the feature's "pop is optional" requirement.
 const POP_BRANCHES: Record<string, string[]> = {
-  Rock: ["Pop Rock", "Soft Rock Radio", "Adult Contemporary Rock"],
+  Rock: [
+    "Pop Rock",
+    "Soft Rock Radio",
+    "Adult Contemporary Rock",
+    "Arena Rock Radio",
+    "Power Pop Rock",
+    "Yacht Rock Revival",
+  ],
   Electronic: ["Pop EDM", "Radio Trance", "Commercial Dance"],
   Jazz: ["Smooth Jazz Pop", "Jazz Standards", "Easy Listening Jazz"],
   "Hip-Hop": ["Pop Rap", "Radio Rap", "Crossover Hip Hop", "Party Rap"],
@@ -391,9 +398,23 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
 
 const largeWheelNodes: GenreTreeNode[] = [
   ...LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index)),
-  // Required by GenreTreeWheelRadialPopCore: a childless root named "Pop", rendered at the
-  // wheel's pivot point instead of a plain center label.
-  { id: "pop", parentId: null, name: "Pop", itemCount: 4200 },
+  // Required by GenreTreeWheelRadialPopCore: a root named "Mainstream Pop", rendered at the
+  // wheel's pivot point instead of a plain center label. Its own subtree (below) is hidden until
+  // the center chip is clicked.
+  { id: "pop", parentId: null, name: "Mainstream Pop", itemCount: 4200 },
+  { id: "pop-radio", parentId: "pop", name: "Radio Hits", itemCount: 900 },
+  { id: "pop-charts", parentId: "pop", name: "Chart Toppers", itemCount: 600 },
+  { id: "pop-teen", parentId: "pop", name: "Teen Pop", itemCount: 150 },
+  { id: "pop-radio-top40", parentId: "pop-radio", name: "Top 40", itemCount: 300 },
+  { id: "pop-radio-throwback", parentId: "pop-radio", name: "Throwback Radio", itemCount: 200 },
+  { id: "pop-charts-viral", parentId: "pop-charts", name: "Viral Hits", itemCount: 100 },
+  // Deep enough (depth 5 under "pop") that its outer-circle extent exceeds every ring root's own
+  // pop-wedge extent above, so expanding this subtree visibly grows the wheel in the playground —
+  // with only the earlier, shallower nodes, the ring roots' own pop wedges always stayed larger and
+  // the wheel never grew regardless of this subtree's expand state.
+  { id: "pop-radio-top40-viral", parentId: "pop-radio-top40", name: "Viral 40", itemCount: 150 },
+  { id: "pop-radio-top40-tiktok", parentId: "pop-radio-top40-viral", name: "TikTok Hits", itemCount: 100 },
+  { id: "pop-radio-top40-trending", parentId: "pop-radio-top40-tiktok", name: "Trending Now", itemCount: 60 },
 ];
 
 let nextId = 1;

@@ -11,7 +11,7 @@ afterEach(() => {
 const CENTER_NODE: GenreTreeNode = {
   id: "pop",
   parentId: null,
-  name: "Pop",
+  name: "Mainstream Pop",
   itemCount: 10,
 };
 
@@ -35,30 +35,83 @@ function chipFor(container: HTMLElement, name: string) {
 }
 
 describe("GenreTreeWheelRadialPopCore", () => {
-  it("renders the 'Pop' root interactively at the wheel's center, styled as a chip, excluded from the ring", () => {
+  it("renders the 'Mainstream Pop' root interactively at the wheel's center, styled as a chip, excluded from the ring", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const centerNode = container.querySelector(".gtv-wheel-center-node") as HTMLElement;
     expect(centerNode.querySelector(".gtv-wheel-chip")).toBeTruthy();
-    expect(centerNode.textContent).toContain("Pop");
+    expect(centerNode.textContent).toContain("Mainstream Pop");
     expect(chipFor(container, "Rock").closest(".gtv-wheel-center-node")).toBeNull();
   });
 
-  it("throws when nodes has no root named 'Pop'", () => {
+  it("throws when nodes has no root named 'Mainstream Pop'", () => {
     const nodesWithoutCenter = NODES_WITH_POP.filter((node) => node.id !== "pop");
     expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodesWithoutCenter} />)).toThrow(
-      /requires a root node named "Pop"/,
+      /requires a root node named "Mainstream Pop"/,
     );
   });
 
-  it("throws when the 'Pop' root has children", () => {
+  it("keeps the center node's own subtree hidden until the floating toggle button is clicked, then reveals and re-hides it on toggle", () => {
+    const nodesWithCenterChildren: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-grandchild", parentId: "pop-child", name: "Top 40", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} />);
+
+    expect(container.querySelector(".gtv-wheel-center-sector")).toBeFalsy();
+    expect(container.querySelector("#group-pop-child")).toBeFalsy();
+
+    const toggleButton = container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]');
+    expect(toggleButton).toBeTruthy();
+    fireEvent.click(toggleButton!);
+    expect(container.querySelector(".gtv-wheel-center-sector")).toBeTruthy();
+    expect(container.querySelector("#group-pop-child")).toBeTruthy();
+    expect(container.querySelector("#group-pop-grandchild")).toBeTruthy();
+    // The center node's own dedicated chip renders it, so its own subtree layer must not draw a
+    // second card for it.
+    expect(container.querySelector(".gtv-wheel-center-sector #group-pop")).toBeFalsy();
+
+    const hideButton = container.querySelector('[aria-label="Hide Mainstream Pop sub-genres"]');
+    expect(hideButton).toBeTruthy();
+    fireEvent.click(hideButton!);
+    expect(container.querySelector(".gtv-wheel-center-sector")).toBeFalsy();
+    expect(container.querySelector("#group-pop-child")).toBeFalsy();
+  });
+
+  it("grows the wheel's outer circle to fit the center subtree once expanded, and shrinks back on collapse", () => {
+    const deepCenterNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-grandchild", parentId: "pop-child", name: "Top 40", itemCount: 1 },
+      { id: "pop-great-grandchild", parentId: "pop-grandchild", name: "Deep Cuts", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={deepCenterNodes} />);
+    const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+    const collapsedRadius = parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
+
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+    const expandedRadius = parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
+    expect(expandedRadius).toBeGreaterThan(collapsedRadius);
+
+    fireEvent.click(container.querySelector('[aria-label="Hide Mainstream Pop sub-genres"]')!);
+    const recollapsedRadius = parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
+    expect(recollapsedRadius).toBe(collapsedRadius);
+  });
+
+  it("does not throw and stays collapsed by default when the 'Mainstream Pop' root has children but the toggle button is never clicked", () => {
     const nodesWithChild: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
     ];
-    expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodesWithChild} />)).toThrow(
-      /"Pop" root must not have children/,
-    );
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChild} />);
+    expect(container.querySelector("#group-pop-child")).toBeFalsy();
+  });
+
+  it("does not render the pop-subtree toggle button when the 'Mainstream Pop' root has no children", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+    expect(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-center-sector")).toBeFalsy();
   });
 
   it("develops the cardinal roots' core branches and renders their pop branch inside the wheel's own circle", () => {

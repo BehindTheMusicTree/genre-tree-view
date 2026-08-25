@@ -38,8 +38,20 @@ pnpm workspace with two members:
     developed pop subtree. Unlike the other three renderers (which take an optional `centerLabel`
     string), its wheel's pivot point renders a full interactive chip — the same
     `.gtv-wheel-chip-anchor`/`.gtv-wheel-chip` markup and styling as a ring root chip — for the
-    root named exactly `"Pop"` — required to exist among `nodes` with no children, or the
-    component throws — and that root is excluded from the ring's own chips.
+    root named exactly `"Mainstream Pop"` — required to exist among `nodes`, or the component
+    throws — and that root (plus its own descendants, if any) is excluded from the ring's own
+    chips. The center "Mainstream Pop" node may have its own subtree: hidden by default, it
+    toggles open/closed via a dedicated floating button stacked above the zoom controls in the
+    bottom-left corner (rendered only when the center node has a subtree; local component state,
+    not exposed via props) — the center chip itself is not clickable. When expanded, its direct
+    children spread around a full-circle invisible **mainstream pop root circle** proportional to
+    each child's own subtree size, with deeper descendants radiating further out and staying
+    within the **mainstream pop outer circle**, via `computeCenterRadialLayout` in
+    `pop-core-radial-layout.ts` — the same node/link rendering (`renderPopSubtree`) as the cardinal
+    pop wedges, just laid out over the full circle instead of an 80° wedge. The wheel's own edge —
+    the **core root circle**, where ring root chips sit — grows to keep a gap past that subtree's
+    outer radius (`MAINSTREAM_POP_ROOT_CIRCLE_GAP` / `MAINSTREAM_POP_OUTER_CIRCLE_GAP` in
+    `constants.ts`).
   - `GenreTreeWheel` and `GenreTreeWheelRight` share their rotation/mounting logic via
     `GenreTreeWheelBase.tsx`'s `WheelCore`, parameterized by a `direction` prop. `GenreTreeWheelRadial`
     and `GenreTreeWheelRadialPopCore` are separate, near-identical components (`WheelRadialCore` /

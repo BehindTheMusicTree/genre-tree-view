@@ -227,11 +227,17 @@
    combinations never translate into a ctrlKey wheel event at all. Positioned absolutely against
    GenreTree's own viewport (the pan/zoom transform lives on a separate inner element, so this
    stays fixed in the corner regardless of pan/zoom state). */
-.gtv-zoom-controls {
+.gtv-wheel-floating-controls {
   position: absolute;
   bottom: 12px;
   left: 12px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gtv-zoom-controls {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -271,6 +277,11 @@
 .gtv-zoom-btn--disabled:hover {
   background-color: transparent;
   color: #52525b;
+}
+
+.gtv-zoom-btn--selected {
+  background-color: #f4f4f5;
+  color: #18181b;
 }
 
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
@@ -460,6 +471,13 @@
   cursor: pointer;
 }
 
+/* GenreTreeWheelRadialPopCore's center chip, collapsed: a circular pivot instead of a
+   rectangular card — width/height are set equal inline (see centerChipDiameter) so this actually
+   renders as a circle rather than an ellipse. */
+.gtv-wheel-chip--circle {
+  border-radius: 50%;
+}
+
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
    have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
    hideRoot, see WheelCore). Overlays the chip inset 1px on every side (mirroring the SVG side's
@@ -482,6 +500,13 @@
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {
   opacity: 1;
+}
+
+/* On GenreTreeWheelRadialPopCore's collapsed center chip, the toolbar overlay would otherwise
+   paint its .gtv-toolbar child's fixed 8px corners past the chip's own circular border on hover —
+   round it to match so the chip still reads as a circle while hovered. */
+.gtv-wheel-chip-toolbar--circle .gtv-toolbar {
+  border-radius: 50%;
 }
 
 .gtv-wheel-chip-toolbar .gtv-toolbar-btn,
@@ -521,6 +546,17 @@
   }
 }
 
+/* The circular center chip (collapsed GenreTreeWheelRadialPopCore pivot) has no headroom to grow
+   into without becoming an ellipse, so it opts out of the grow-on-hover mechanism above (this
+   selector's higher specificity wins over .gtv-wheel-chip-anchor:hover .gtv-wheel-chip) — the
+   circle stays a fixed size on hover, and its hover-name label is repositioned in place instead
+   (see .gtv-wheel-chip--circle .gtv-wheel-chip-hover-name below). */
+.gtv-wheel-chip-anchor:hover .gtv-wheel-chip--circle {
+  height: var(--gtv-wheel-chip-base-height);
+  padding-top: 0;
+  margin-top: 0;
+}
+
 /* The chip's name, revealed in the headroom padding-top opens up above the chip's existing
    (unmoved — box-sizing: border-box keeps the content-box, and thus the flex-centered dot/label
    below, fixed in place) content. pointer-events: none so hovering this text hit-tests through to
@@ -549,6 +585,21 @@
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-name {
   opacity: 1;
+}
+
+/* Inside the fixed-size circle chip, the name can't be revealed in headroom above the chip (none
+   grows in — see .gtv-wheel-chip-anchor:hover .gtv-wheel-chip--circle above), so it sits at a
+   fixed offset from the circle's own top edge instead, above where the toolbar's buttons are
+   centered. z-index lifts it above .gtv-wheel-chip-toolbar's opaque background (z-index: 2), which
+   would otherwise mask it the way it masks the chip's own centered label. */
+.gtv-wheel-chip--circle .gtv-wheel-chip-hover-name {
+  /* A fixed px offset sat right at the circle's own curve, where the chord is narrow and the text
+     reads cramped against the top edge — a percentage instead lands proportionally further down
+     (scaling with centerChipDiameter) into the circle's wider middle, well clear of the toolbar
+     button row still centered at 50%. */
+  top: 25%;
+  height: auto;
+  z-index: 3;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -820,6 +871,23 @@
   left: 50%;
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+}
+
+/* Marks just the outer edge of the developed cardinals' own pop wedges (`maxPopExtent`) — distinct
+   from .gtv-wheel-circle (the whole wheel's edge, e.g. chip clearance floor) since the pop region
+   can sit well inside it. Dashed so the two boundaries stay visually distinguishable when they
+   coincide. */
+.gtv-wheel-container--radial .gtv-wheel-pop-outer-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
+  height: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
+  margin-left: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
+  margin-top: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
+  border-radius: 50%;
+  border: 2px dashed #6366f1;
+  pointer-events: none;
 }
 
 .gtv-wheel-container--radial .gtv-wheel-center-label {

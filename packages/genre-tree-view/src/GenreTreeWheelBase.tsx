@@ -132,6 +132,18 @@ export function WheelCore({
     if (effectiveRootId) onRootSelectRef.current?.(effectiveRootId);
   }, [effectiveRootId]);
 
+  // Starts the view fit to the wheel + selected subtree instead of at scale 1 / pan (0, 0) —
+  // guarded so it only fires once the tree anchor has actually rendered content, and never again
+  // afterward so it doesn't fight the user's own pan/zoom on later selections.
+  const hasInitialFitRef = useRef(false);
+  useEffect(() => {
+    if (hasInitialFitRef.current) return;
+    const elements = [wheelCircleRef.current, ...queryTreeContentElements(treeAnchorRef.current)];
+    if (!elements.some(Boolean)) return;
+    hasInitialFitRef.current = true;
+    panZoom.fitToFrame(elements);
+  });
+
   const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
   // Root chip size is proportional to itemCount relative to the other roots on the wheel, not
