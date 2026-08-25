@@ -572,6 +572,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -590,6 +591,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -608,6 +610,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -626,6 +629,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -642,7 +646,12 @@ export function App() {
           {groups.map((group) => (
             <div
               key={group.root.id}
-              style={{ width: DEFAULT_FRAME_WIDTH, height: DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7" }}
+              style={{
+                width: DEFAULT_FRAME_WIDTH,
+                height: DEFAULT_FRAME_HEIGHT,
+                border: "1px solid #e4e4e7",
+                background: "#f4f4f5",
+              }}
             >
               <GenreTree nodes={group.nodes} {...sharedCallbacks} />
             </div>

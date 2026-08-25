@@ -478,6 +478,13 @@
   border-radius: 50%;
 }
 
+/* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
+   text and thin border used for colored chips would be invisible / too subtle here. */
+.gtv-wheel-chip--center {
+  border-width: 2px;
+  color: #27272a;
+}
+
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
    have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
    hideRoot, see WheelCore). Overlays the chip inset 1px on every side (mirroring the SVG side's
@@ -875,8 +882,8 @@
 
 /* Marks just the outer edge of the developed cardinals' own pop wedges (`maxPopExtent`) — distinct
    from .gtv-wheel-circle (the whole wheel's edge, e.g. chip clearance floor) since the pop region
-   can sit well inside it. Dashed so the two boundaries stay visually distinguishable when they
-   coincide. */
+   can sit well inside it. Same border treatment as .gtv-wheel-circle so both boundaries read as
+   the same kind of trait. */
 .gtv-wheel-container--radial .gtv-wheel-pop-outer-circle {
   position: absolute;
   top: 50%;
@@ -886,7 +893,26 @@
   margin-left: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
   margin-top: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
   border-radius: 50%;
-  border: 2px dashed #6366f1;
+  border: 1px solid #e4e4e7;
+  /* Tint ratio toward the outside page background (#f4f4f5): 0 = white, 1 = same grey as outside.
+     .gtv-wheel-middle-circle renders on top with a solid white fill, so this grey only shows
+     through the annulus between the two circles. Tune the ratio to taste. */
+  --gtv-wheel-annulus-tint-ratio: 0.4;
+  background: color-mix(in srgb, #f4f4f5 calc(var(--gtv-wheel-annulus-tint-ratio) * 100%), #ffffff);
+  pointer-events: none;
+}
+
+.gtv-wheel-container--radial .gtv-wheel-middle-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  height: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  margin-left: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  margin-top: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  border-radius: 50%;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
   pointer-events: none;
 }
 
