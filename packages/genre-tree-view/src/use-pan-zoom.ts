@@ -98,6 +98,11 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
       const viewportRect = viewport.getBoundingClientRect();
       if (viewportRect.width <= 0 || viewportRect.height <= 0) return;
+      // computeFitScale subtracts ZOOM_FIT_PADDING*2 from each dimension and deliberately never
+      // clamps its lower bound (see zoom-pan.ts) — a viewport too small to hold the padding alone
+      // would drive the result negative, mirroring/flinging the tree out of frame. Bail out rather
+      // than fit into a viewport that can't even fit the padding.
+      if (viewportRect.width <= ZOOM_FIT_PADDING * 2 || viewportRect.height <= ZOOM_FIT_PADDING * 2) return;
 
       const rects = present.map((el) => el.getBoundingClientRect());
       const contentLeft = Math.min(...rects.map((r) => r.left));
