@@ -10,9 +10,18 @@ export interface PopCoreSplit {
 }
 
 /**
- * Splits one root group's nodes into its core and pop branches, per the root's two direct
- * children's `side` field ("pop" for the optional branch; unset/"core" for the required one).
- * A root with only one child (no pop side) yields an empty `popNodes`.
+ * Splits one root group's nodes into its core and pop branches, per the root's direct children's
+ * `side` field ("pop" for the optional branch; unset/"core" for the required one).
+ *
+ * A root must have at most one direct child not flagged `side: "pop"` — that child (if any) is
+ * "the" core child. A root with only one direct child (no pop side) yields an empty `popNodes`. A
+ * root with zero direct children yields both `coreNodes` (just the root) and `popNodes` empty.
+ *
+ * Fails fast: if a root has more than one direct child that isn't the pop child, there is no
+ * single unambiguous core branch to render, so this throws rather than silently picking one and
+ * dropping the rest. Callers should let this propagate (per this component's established
+ * fail-fast convention for malformed `nodes` input, e.g. the "Mainstream Pop" root check in
+ * `GenreTreeWheelRadialPopCoreBase.tsx`) rather than catching it to recover a partial render.
  */
 export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
   const { root, nodes } = group;
@@ -20,7 +29,16 @@ export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
   const directChildren = nodes.filter((node) => node.parentId === root.id);
 
   const popChild = directChildren.find((node) => node.side === "pop");
-  const coreChild = directChildren.find((node) => node.id !== popChild?.id);
+  const coreCandidates = directChildren.filter((node) => node.id !== popChild?.id);
+  if (coreCandidates.length > 1) {
+    throw new Error(
+      `splitRootGroupBySide: root "${root.name}" (${root.id}) has ${coreCandidates.length} ` +
+        `non-pop direct children, expected at most 1: ${coreCandidates
+          .map((node) => `"${node.name}" (${node.id})`)
+          .join(", ")}`,
+    );
+  }
+  const coreChild = coreCandidates[0];
 
   const collectSubtree = (startId: string | undefined): GenreTreeNode[] => {
     if (startId === undefined) return [];

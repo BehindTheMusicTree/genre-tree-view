@@ -73,7 +73,8 @@ pnpm workspace with two members:
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
     wheel radius, rotation easing/timing) consumed by all renderers.
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
-    and pop branches (`GenreTreeWheelRadialPopCore` only).
+    and pop branches (`GenreTreeWheelRadialPopCore` only); a root must have at most one non-pop
+    direct child, or it throws (fail-fast — no silently dropping ambiguous data).
   - `pop-core-radial-layout.ts` — self-contained polar tree layout/render module (angle + radius
     per node, node/link DOM construction) for pop subtrees fanned out inside the wheel's circle
     (`GenreTreeWheelRadialPopCore` only); reuses `NodeHelper.tsx`'s position-agnostic per-node
