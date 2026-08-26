@@ -167,7 +167,13 @@ export function calculateSvgDimensions(
   const lowestNodeVerticalCoordinate = d3Lib.max(nodes, (d) => d.x)!;
   const lowestVerticalCoordinate =
     lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
-  const svgHeight = lowestVerticalCoordinate - highestVerticalCoordinate;
+  // When every node shares the same breadth coordinate (a single root, or a childless/straight
+  // chain), the spread above collapses to just ACTIONS_OVERLAY_HEIGHT, dropping the node's own
+  // height from the sum entirely. Floor at a single node's full footprint so the card always fits.
+  const svgHeight = Math.max(
+    lowestVerticalCoordinate - highestVerticalCoordinate,
+    maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT,
+  );
 
   const svgWidth = maximumLevel * depthSeparationHorizontal + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
 
