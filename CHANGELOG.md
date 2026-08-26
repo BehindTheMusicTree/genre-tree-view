@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-08-27
+
 ### Fixed
 
 - `GenreTree`'s initial "fit to screen" no longer produces a negative zoom scale when the
