@@ -3,6 +3,7 @@ import {
   GenreTree,
   GenreTreeWheel,
   GenreTreeWheelRadial,
+  GenreTreeWheelRadialPopCore,
   GenreTreeWheelRight,
   groupNodesByRoot,
   DEFAULT_FRAME_WIDTH,
@@ -268,7 +269,7 @@ const LARGE_ROOTS: LargeRootDef[] = [
     ],
   },
   {
-    name: "Pop",
+    name: "Pop Music",
     subgenres: [
       "Synth-pop",
       "Dance-pop",
@@ -300,10 +301,31 @@ const LARGE_ROOT_TARGET_DEPTHS = [5, 8, 3, 10, 4, 9, 6, 7];
 // out of 5 total children) so no node always branches the same amount.
 const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
 
+// Small crossover subgenre sets used to give most roots a "pop" branch alongside their main
+// ("core") spine — Classical is deliberately omitted so the pop-core wheel demo shows a root
+// with no pop subtree, per the feature's "pop is optional" requirement.
+const POP_BRANCHES: Record<string, string[]> = {
+  Rock: [
+    "Pop Rock",
+    "Soft Rock Radio",
+    "Adult Contemporary Rock",
+    "Arena Rock Radio",
+    "Power Pop Rock",
+    "Yacht Rock Revival",
+  ],
+  Electronic: ["Pop EDM", "Radio Trance", "Commercial Dance"],
+  Jazz: ["Smooth Jazz Pop", "Jazz Standards", "Easy Listening Jazz"],
+  "Hip-Hop": ["Pop Rap", "Radio Rap", "Crossover Hip Hop", "Party Rap"],
+  Folk: ["Folk Pop", "Radio Folk"],
+  Metal: ["Pop Metal", "Radio Rock Metal", "Alt Metal Crossover"],
+  Pop: ["Mainstream Pop", "Adult Pop", "Pop Radio Hits"],
+};
+
 /** One root plus its real subgenres, built as a spine of LARGE_ROOT_TARGET_DEPTHS[rootIndex]
- * nodes (fixing the max depth) with the remaining subgenres attached breadth-first onto any
- * node below that depth, capping every node at 5 children total so branching stays varied
- * without ever exceeding the depth target. */
+ * nodes (fixing the max depth, and marked `side: "core"`) with the remaining subgenres attached
+ * breadth-first onto any node below that depth, capping every node at 5 children total so
+ * branching stays varied without ever exceeding the depth target. Roots listed in POP_BRANCHES
+ * also get a second, shallow direct child marked `side: "pop"`. */
 function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNode[] {
   const rootId = `large-root-${rootIndex}`;
   const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: root.name, itemCount: 0 }];
@@ -318,7 +340,13 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
   for (let d = 0; d < targetDepth; d++) {
     const name = remaining.shift()!;
     const id = `${rootId}-${nodes.length}`;
-    nodes.push({ id, parentId: spineTail, name, itemCount: demoItemCount(nodes.length) });
+    nodes.push({
+      id,
+      parentId: spineTail,
+      name,
+      itemCount: demoItemCount(nodes.length),
+      ...(d === 0 ? { side: "core" as const } : {}),
+    });
     depthOf.set(id, d + 1);
     childCountOf.set(id, 0);
     childCountOf.set(spineTail, (childCountOf.get(spineTail) ?? 0) + 1);
@@ -346,14 +374,53 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
     // chance instead of permanently starving (which would silently drop leftover names).
     if (capacity - count > 0 && parentDepth < targetDepth) queue.push(parentId);
   }
+
+  const popNames = POP_BRANCHES[root.name];
+  if (popNames) {
+    const popRootId = `${rootId}-pop`;
+    nodes.push({
+      id: popRootId,
+      parentId: rootId,
+      name: `${root.name} (Pop)`,
+      itemCount: demoItemCount(nodes.length),
+      side: "pop",
+    });
+    let popParentId = popRootId;
+    for (const name of popNames) {
+      const id = `${rootId}-${nodes.length}`;
+      nodes.push({ id, parentId: popParentId, name, itemCount: demoItemCount(nodes.length) });
+      popParentId = id;
+    }
+  }
+
   return nodes;
 }
 
-const largeWheelNodes: GenreTreeNode[] = LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index));
+const largeWheelNodes: GenreTreeNode[] = [
+  ...LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index)),
+  // Required by GenreTreeWheelRadialPopCore: a root named "Mainstream Pop", rendered at the
+  // wheel's pivot point instead of a plain center label. Its own subtree (below) is hidden until
+  // the center chip is clicked.
+  { id: "pop", parentId: null, name: "Mainstream Pop", itemCount: 4200 },
+  { id: "pop-radio", parentId: "pop", name: "Radio Hits", itemCount: 900 },
+  { id: "pop-charts", parentId: "pop", name: "Chart Toppers", itemCount: 600 },
+  { id: "pop-teen", parentId: "pop", name: "Teen Pop", itemCount: 150 },
+  { id: "pop-radio-top40", parentId: "pop-radio", name: "Top 40", itemCount: 300 },
+  { id: "pop-radio-throwback", parentId: "pop-radio", name: "Throwback Radio", itemCount: 200 },
+  { id: "pop-charts-viral", parentId: "pop-charts", name: "Viral Hits", itemCount: 100 },
+  // Deep enough (depth 5 under "pop") that its outer-circle extent exceeds every ring root's own
+  // pop-wedge extent above, so expanding this subtree visibly grows the wheel in the playground —
+  // with only the earlier, shallower nodes, the ring roots' own pop wedges always stayed larger and
+  // the wheel never grew regardless of this subtree's expand state.
+  { id: "pop-radio-top40-viral", parentId: "pop-radio-top40", name: "Viral 40", itemCount: 150 },
+  { id: "pop-radio-top40-tiktok", parentId: "pop-radio-top40-viral", name: "TikTok Hits", itemCount: 100 },
+  { id: "pop-radio-top40-trending", parentId: "pop-radio-top40-tiktok", name: "Trending Now", itemCount: 60 },
+];
 
 let nextId = 1;
 
 const TABS = [
+  { id: "wheel-radial-pop-core", label: "Genre wheel (radial, pop/core)" },
   { id: "wheel", label: "Genre wheel" },
   { id: "wheel-right", label: "Genre wheel (right)" },
   { id: "wheel-radial", label: "Genre wheel (radial)" },
@@ -434,7 +501,7 @@ function createNodeCallbacks(
 }
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<TabId>("wheel");
+  const [activeTab, setActiveTab] = useState<TabId>("wheel-radial-pop-core");
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
@@ -505,6 +572,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -523,6 +591,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -541,6 +610,7 @@ export function App() {
             width: DEFAULT_FRAME_WIDTH,
             height: DEFAULT_FRAME_HEIGHT,
             border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
             marginBottom: 32,
           }}
         >
@@ -553,12 +623,35 @@ export function App() {
         </div>
       )}
 
+      {activeTab === "wheel-radial-pop-core" && (
+        <div
+          style={{
+            width: DEFAULT_FRAME_WIDTH,
+            height: DEFAULT_FRAME_HEIGHT,
+            border: "1px solid #e4e4e7",
+            background: "#f4f4f5",
+            marginBottom: 32,
+          }}
+        >
+          <GenreTreeWheelRadialPopCore
+            nodes={wheelNodes}
+            {...wheelCallbacks}
+            onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
+          />
+        </div>
+      )}
+
       {activeTab === "stacked" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 24 }}>
           {groups.map((group) => (
             <div
               key={group.root.id}
-              style={{ width: DEFAULT_FRAME_WIDTH, height: DEFAULT_FRAME_HEIGHT, border: "1px solid #e4e4e7" }}
+              style={{
+                width: DEFAULT_FRAME_WIDTH,
+                height: DEFAULT_FRAME_HEIGHT,
+                border: "1px solid #e4e4e7",
+                background: "#f4f4f5",
+              }}
             >
               <GenreTree nodes={group.nodes} {...sharedCallbacks} />
             </div>

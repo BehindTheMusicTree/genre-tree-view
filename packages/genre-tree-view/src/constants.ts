@@ -88,11 +88,9 @@ export const RECT_BASE_DIMENSIONS: Dimensions = {
 
 // Dynamic sizing configuration
 export const MIN_NODE_WIDTH = 180;
-export const MAX_NODE_WIDTH = 350;
+export const MAX_NODE_WIDTH = 700;
 export const MIN_NODE_HEIGHT = 35;
-export const MAX_NODE_HEIGHT = 60;
-export const MIN_NODE_FONT_SIZE = 12;
-export const MAX_NODE_FONT_SIZE = 18;
+export const MAX_NODE_HEIGHT = 120;
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
@@ -184,12 +182,20 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
   };
 }
 
-/** Same interpolation as calculateNodeDimensions, mapped onto [MIN_NODE_FONT_SIZE,
- * MAX_NODE_FONT_SIZE] instead — keeps the label's font size in step with its node's box size. */
+// The node-height fraction its font size renders at, interpolated by the same log-scaled t as
+// calculateNodeDimensions — small nodes get a smaller fraction of their (already small) height so
+// their label doesn't dominate the card, while the largest nodes reach a full half.
+const MIN_NODE_FONT_HEIGHT_RATIO = 0.3;
+const MAX_NODE_FONT_HEIGHT_RATIO = 0.5;
+
+/** A fraction of the node's own box height — keeps the label's font size proportional to its
+ * node's rendered size, rather than interpolated separately over its own min/max range. */
 export function calculateNodeFontSize(itemCount: number, range: ItemCountRange): number {
   const t = logarithmicPosition(itemCount, range);
+  const { HEIGHT } = calculateNodeDimensions(itemCount, range);
+  const ratio = MIN_NODE_FONT_HEIGHT_RATIO + t * (MAX_NODE_FONT_HEIGHT_RATIO - MIN_NODE_FONT_HEIGHT_RATIO);
 
-  return Math.round(MIN_NODE_FONT_SIZE + t * (MAX_NODE_FONT_SIZE - MIN_NODE_FONT_SIZE));
+  return Math.round(HEIGHT * ratio);
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
@@ -199,6 +205,28 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
 // half-height keeps every chip fully on screen, not just the ones nearest the top.
 export const WHEEL_RADIUS = 260;
 export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
+
+// GenreTreeWheelRadialPopCore tokens. This renderer's circle must fit a full interactive pop
+// subtree inside it (not just chip clearance like the plain wheel), so it starts from a bigger
+// base floor than WHEEL_RADIUS even when no cardinal has a pop side — leaving room to grow
+// further per calculatePopSubtreeRadialExtent (pop-core-radial-layout.ts) once one does.
+export const WHEEL_POP_CORE_RADIUS = 945;
+
+// Radial (depth-axis) step for a pop subtree's polar layout — analogous to
+// VERTICAL_ORIENTATION_DEPTH_SEPARATION for the cartesian renderers, but expressed directly as a
+// radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
+export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
+
+// Center "Mainstream Pop" node's own subtree (see pop-core-radial-layout.ts's
+// computeCenterRadialLayout). Three concentric circles are involved: the mainstream pop root
+// circle (where its direct children spread), the mainstream pop outer circle (the outer bound of
+// its whole subtree), and the core root circle (the wheel's own edge, where ring roots sit).
+// MAINSTREAM_POP_ROOT_CIRCLE_GAP is the gap between the (2x-scaled) center chip's own half-extent
+// and the mainstream pop root circle; MAINSTREAM_POP_OUTER_CIRCLE_GAP is the gap enforced between
+// the mainstream pop outer circle and the core root circle, so it never touches the ring roots'
+// own pop wedges.
+export const MAINSTREAM_POP_ROOT_CIRCLE_GAP = 48;
+export const MAINSTREAM_POP_OUTER_CIRCLE_GAP = 96;
 
 // Miniature subtree preview shown for non-cardinal (filler) roots on the radial wheel — the full,
 // unclipped GenreTree, scaled down and rendered as a dim grayscale "shadow" (see
@@ -224,7 +252,7 @@ export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 // Zoom/pan tokens (see zoom-pan.ts). Bounds keep the tree from shrinking past legibility or
 // growing so large that a single wheel tick jumps an unreasonable amount.
-export const ZOOM_MIN_SCALE = 0.25;
+export const ZOOM_MIN_SCALE = 0.05;
 export const ZOOM_MAX_SCALE = 3;
 // Exponent multiplier applied to a wheel event's deltaY — small because deltaY is typically
 // tens to hundreds of pixels per tick, and exp() amplifies fast.

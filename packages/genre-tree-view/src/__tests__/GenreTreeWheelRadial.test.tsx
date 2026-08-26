@@ -300,6 +300,18 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
   });
 
+  it("disables the zoom-in button once the maximum scale is reached", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+    const zoomInButton = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
+
+    for (let i = 0; i < 30; i++) {
+      fireEvent.click(zoomInButton);
+    }
+
+    expect(zoomInButton.disabled).toBe(true);
+    expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
+  });
+
   it("renders an optional center label, and omits it when not provided", () => {
     const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();

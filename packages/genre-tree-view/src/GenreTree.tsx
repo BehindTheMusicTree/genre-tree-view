@@ -136,6 +136,18 @@ export function GenreTree({
     };
   }, []);
 
+  // Starts the view fit to the whole tree instead of at scale 1 / pan (0, 0) — runs once the
+  // tree's own draw effect above has populated svgRef, guarded so it never re-fires afterward
+  // (e.g. on a subsequent nodes/layout change) and fights the user's own pan/zoom.
+  const hasInitialFitRef = useRef(false);
+  useEffect(() => {
+    if (hasInitialFitRef.current || !interactive) return;
+    const elements = queryTreeContentElements(svgRef.current);
+    if (elements.length === 0) return;
+    hasInitialFitRef.current = true;
+    panZoom.fitToFrame(elements);
+  });
+
   const svg = <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ overflow: "visible", display: "block" }} />;
 
   if (!interactive) {

@@ -5,11 +5,56 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-26
+
+### Added
+
+- `side?: "core" | "pop"` on `GenreTreeNode` — marks one of a root's two direct children as its
+  optional "pop" branch (the other, unmarked or explicitly `"core"`, is required).
+- `GenreTreeWheelRadialPopCore`, a fifth tree renderer: `GenreTreeWheelRadial` for forests using
+  the new `side` field. Each developed cardinal's outward subtree renders only its core branch;
+  if that root also has a pop branch, that subtree renders as a full interactive tree fanned out
+  inside the wheel's own circle instead of being hidden — the pop child sits at the outer ring next
+  to its cardinal root chip, and each generation below it steps inward toward the wheel's center.
+  The circle grows as needed to fit the largest developed pop subtree. Unlike the other three wheel
+  renderers, it takes no `centerLabel` prop — its pivot point instead renders the `nodes` root named
+  exactly `"Mainstream Pop"` (which must exist, or the component throws) as a full interactive
+  chip, styled the same as the ring's own root chips, and that root (plus its own descendants, if
+  any) is excluded from the ring's own chips. The center node's own subtree, if it has one, is
+  hidden by default and toggles open/closed via a dedicated floating button: expanded, it spreads
+  full-circle around the center chip (deeper generations radiating further out), and the wheel's
+  own edge grows to keep clear of it.
+- A "Fit to frame" pass now runs automatically on the first render of `GenreTree`, `GenreTreeWheel`,
+  `GenreTreeWheelRight`, `GenreTreeWheelRadial`, and `GenreTreeWheelRadialPopCore` — once, before
+  any user interaction — instead of starting every tree at scale 1 / pan (0, 0) regardless of size.
+
+### Changed
+
+- `MAX_NODE_WIDTH`/`MAX_NODE_HEIGHT` doubled (350→700 / 60→120) and `WHEEL_POP_CORE_RADIUS`
+  grown (420→945) so `GenreTreeWheelRadialPopCore`'s wheel and node cards read at a larger scale.
+- Node label font size is now derived directly from each node's own rendered box height (a ratio
+  that grows with the node's log-scaled item-count position, from 0.3x at the smallest to 0.5x at
+  the largest) instead of a separate, disconnected min/max font range — keeps labels proportional
+  to their node regardless of how node sizing itself is tuned.
+
 ### Fixed
 
 - `GenreTreeWheelRadial`: a filler (non-selected) root chip's decorative mini-tree preview no
   longer paints over its own chip label — `.gtv-wheel-chip-anchor` now stays above its
   `.gtv-wheel-radial-mini-tree` sibling regardless of DOM order.
+- `GenreTreeWheelRadialPopCore`: a pop subtree now grows outward from its cardinal root toward the
+  wheel's center instead of the reverse; the center "Pop" root node is now centered on the wheel's
+  pivot and styled to match the ring's own chips; node labels render with `line-height: 1` so
+  large font sizes stay vertically centered instead of skewed by the browser's default line-height.
+- `GenreTreeWheelRadialPopCore`: `.gtv-wheel-pop-outer-circle` now matches `.gtv-wheel-circle`'s
+  border treatment instead of a distinguishable dashed style, and a new `.gtv-wheel-middle-circle`
+  marks the "Mainstream Pop" center subtree's own boundary — the annulus between the two is tinted
+  relative to the surrounding background via `--gtv-wheel-annulus-tint-ratio`. The center
+  "Mainstream Pop" chip and its expanded subtree now render with a white fill (previously the
+  hashed root color), with dark label text and a thicker border for legibility.
+- Zoom-out floor (`ZOOM_MIN_SCALE` 0.25→0.05) lowered to match the smaller "fit to frame" scale
+  that large trees now need after the node-size increase above — the zoom-out button no longer
+  greys out before the whole tree is visible.
 
 ## [1.0.0] - 2026-08-22
 
