@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as d3 from "d3";
 import { calculateSvgDimensions, createTreeLayout, renderTree, setupTreeLayout } from "../tree-renderer";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { calculateNodeDimensions, getItemCountRange } from "../constants";
+import { ACTIONS_OVERLAY_HEIGHT, MAX_NODE_HEIGHT, calculateNodeDimensions, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 import type { RenderTreeCallbacks } from "../tree-renderer";
 
@@ -38,6 +38,13 @@ describe("calculateSvgDimensions / setupTreeLayout / createTreeLayout", () => {
     const dims = calculateSvgDimensions(d3, laidOut);
     expect(dims.svgWidth).toBeGreaterThan(0);
     expect(dims.svgHeight).toBeGreaterThan(0);
+  });
+
+  it("reserves at least a full node's height for a single, childless root", () => {
+    const root = buildTreeHierarchyStructure(d3, [{ id: "root", parentId: null, name: "Root", itemCount: 0 }]);
+    const laidOut = createTreeLayout(d3, root);
+    const dims = calculateSvgDimensions(d3, laidOut);
+    expect(dims.svgHeight).toBeGreaterThanOrEqual(MAX_NODE_HEIGHT + ACTIONS_OVERLAY_HEIGHT);
   });
 
   it("swaps x/y and offsets the new y by highestVerticalCoordinate", () => {
