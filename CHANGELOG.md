@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-26
+
+### Fixed
+
+- `splitRootGroupBySide` now throws when a root has more than one non-`"pop"` direct child instead
+  of silently picking the first one and dropping the rest from rendering.
+
 ## [1.0.2] - 2026-08-26
 
 ### Fixed
