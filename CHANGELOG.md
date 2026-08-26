@@ -44,6 +44,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   wheel's center instead of the reverse; the center "Pop" root node is now centered on the wheel's
   pivot and styled to match the ring's own chips; node labels render with `line-height: 1` so
   large font sizes stay vertically centered instead of skewed by the browser's default line-height.
+- `GenreTreeWheelRadialPopCore`: `.gtv-wheel-pop-outer-circle` now matches `.gtv-wheel-circle`'s
+  border treatment instead of a distinguishable dashed style, and a new `.gtv-wheel-middle-circle`
+  marks the "Mainstream Pop" center subtree's own boundary — the annulus between the two is tinted
+  relative to the surrounding background via `--gtv-wheel-annulus-tint-ratio`. The center
+  "Mainstream Pop" chip and its expanded subtree now render with a white fill (previously the
+  hashed root color), with dark label text and a thicker border for legibility.
 - Zoom-out floor (`ZOOM_MIN_SCALE` 0.25→0.05) lowered to match the smaller "fit to frame" scale
   that large trees now need after the node-size increase above — the zoom-out button no longer
   greys out before the whole tree is visible.
