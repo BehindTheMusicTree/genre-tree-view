@@ -49,4 +49,15 @@ describe("splitRootGroupBySide", () => {
     expect(split.coreNodes.map((n) => n.id)).toEqual(["solo"]);
     expect(split.popNodes).toEqual([]);
   });
+
+  it("throws when the root has more than one non-pop direct child", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "rock", parentId: null, name: "Rock", itemCount: 0 },
+      { id: "rock-core-a", parentId: "rock", name: "Rock Core A", itemCount: 0 },
+      { id: "rock-core-b", parentId: "rock", name: "Rock Core B", itemCount: 0 },
+      { id: "rock-pop", parentId: "rock", name: "Pop Rock", itemCount: 0, side: "pop" },
+    ];
+    const [group] = groupNodesByRoot(nodes);
+    expect(() => splitRootGroupBySide(group)).toThrow(/Rock.*rock.*2.*Rock Core A.*Rock Core B/s);
+  });
 });
