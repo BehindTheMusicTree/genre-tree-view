@@ -165,6 +165,13 @@ export function GenreTree({
         overflow: "hidden",
         width: "100%",
         height: "100%",
+        // The tree content below is position: absolute, so it contributes nothing to this div's
+        // own layout size — without an explicit floor here the viewport can collapse to whatever
+        // static-position content remains (the zoom controls), shrinking below ZOOM_FIT_PADDING
+        // and driving fitToFrame's scale negative. minWidth/minHeight keep width/height: 100% as
+        // the common case (filling an explicitly-sized parent) while flooring at the tree's size.
+        minWidth: svgWidth,
+        minHeight: svgHeight,
         cursor: "grab",
       } as React.CSSProperties}
       onPointerDown={panZoom.handlePointerDown}

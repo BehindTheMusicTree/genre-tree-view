@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
+import { ZOOM_FIT_PADDING } from "../constants";
 
 function nullRef() {
   return { current: null };
@@ -49,6 +50,29 @@ describe("usePanZoom", () => {
     });
 
     expect(result.current.zoomScale).toBe(1);
+    document.body.removeChild(viewport);
+    document.body.removeChild(content);
+  });
+
+  it("fitToFrame no-ops when the viewport is too small to hold ZOOM_FIT_PADDING on both sides", () => {
+    const viewport = document.createElement("div");
+    const content = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(content);
+    const collapsedSize = ZOOM_FIT_PADDING * 2 - 1;
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: collapsedSize, bottom: collapsedSize, width: collapsedSize, height: collapsedSize }) as DOMRect;
+    content.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 500, bottom: 500, width: 500, height: 500 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.fitToFrame([content]);
+    });
+
+    expect(result.current.zoomScale).toBe(1);
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
     document.body.removeChild(viewport);
     document.body.removeChild(content);
   });

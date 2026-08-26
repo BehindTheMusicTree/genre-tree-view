@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-08-27
+
+### Fixed
+
+- `GenreTree`'s initial "fit to screen" no longer produces a negative zoom scale when the
+  viewport's laid-out size collapses below `ZOOM_FIT_PADDING * 2` (the tree content div is
+  `position: absolute` and doesn't contribute to its parent's layout size). The viewport now has
+  an intrinsic `minWidth`/`minHeight` floor matching the tree's own size, and `fitToFrame` no-ops
+  instead of mirroring content out of view when the viewport is still too small to fit into.
+
 ## [1.0.3] - 2026-08-26
 
 ### Fixed
