@@ -8,7 +8,14 @@ import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
-import { calculateWheelRadiusForAngles, computeRadialLayout, RadialSlot } from "./radial-wheel-geometry";
+import {
+  bisectAngles,
+  buildSectorClipPathPolygon,
+  calculateWheelRadiusForAngles,
+  computeRadialLayout,
+  computeSectorBounds,
+  RadialSlot,
+} from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
@@ -17,8 +24,10 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  hexToRgba,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  ROOT_SECTOR_FILL_OPACITY,
   WHEEL_MINI_TREE_DEPTH_SPACING_SCALE,
   WHEEL_MINI_TREE_SCALE,
   WHEEL_RADIUS,
@@ -213,6 +222,38 @@ export function WheelRadialCore({
     setTopRootId(rootId);
   };
 
+  // One divider per boundary between two angularly-adjacent roots, bisecting their own continuous
+  // (unwrapped) angles — see bisectAngles's doc comment — so dividers inherit the same
+  // shortest-path transition behavior as the chips they sit between, instead of needing their own
+  // continuity tracking.
+  const dividerAngles = useMemo(() => {
+    if (groups.length <= 1) return [];
+    return groups.map((group, index) => {
+      const next = groups[(index + 1) % groups.length];
+      const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
+      const nextAngle = continuousAngleByRootId.get(next.root.id) ?? 0;
+      return bisectAngles(angle, nextAngle);
+    });
+  }, [groups, continuousAngleByRootId]);
+
+  // One tinted sector fan per root, computed via computeSectorBounds rather than differencing
+  // dividerAngles pairs directly — see that function's doc comment for why anchoring both bounds
+  // on the root's own continuous angle keeps `end - start` a true sweep instead of an accidental
+  // multiple of 360 off, which plain divider-to-divider differencing wouldn't guarantee.
+  const sectorFills = useMemo(() => {
+    if (groups.length <= 1) return [];
+    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    return groups.map((group, index) => {
+      const { start, end } = computeSectorBounds(continuousAngles, index);
+      return {
+        rootId: group.root.id,
+        start,
+        clipPath: buildSectorClipPathPolygon(end - start),
+        color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
+      };
+    });
+  }, [groups, continuousAngleByRootId]);
+
   return (
     <div
       ref={viewportRef}
@@ -299,6 +340,28 @@ export function WheelRadialCore({
           {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
 
           <div className="gtv-wheel">
+            {sectorFills.map((sector) => (
+              <div
+                key={`sector-${sector.rootId}`}
+                className="gtv-wheel-sector"
+                style={
+                  {
+                    "--gtv-sector-angle": `${sector.start}deg`,
+                    "--gtv-sector-color": sector.color,
+                    clipPath: sector.clipPath,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+
+            {dividerAngles.map((angle, index) => (
+              <div
+                key={`divider-${groups[index].root.id}`}
+                className="gtv-wheel-divider"
+                style={{ "--gtv-divider-angle": `${angle}deg` } as React.CSSProperties}
+              />
+            ))}
+
             {groups.map((group, index) => {
               const slot = layout[index];
               const angle = continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;

@@ -8,7 +8,13 @@ import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import { groupNodesByRoot } from "./root-grouping";
-import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "./wheel-geometry";
+import {
+  buildWheelSectorGradient,
+  calculateWheelRadius,
+  computeRotationForSelection,
+  getChipAngle,
+  getWheelDividerAngle,
+} from "./wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
@@ -17,9 +23,11 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  hexToRgba,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  ROOT_SECTOR_FILL_OPACITY,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -174,6 +182,13 @@ export function WheelCore({
       )
     : 0;
 
+  // Colors every root's chip index (i.e. getChipAngle(i, n)'s ordering) matches groups' own order,
+  // so each color stop lines up with the sector buildWheelSectorGradient carves out for it.
+  const sectorFillGradient = useMemo(
+    () => buildWheelSectorGradient(groups.map((group) => hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY))),
+    [groups],
+  );
+
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
     setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
@@ -240,6 +255,24 @@ export function WheelCore({
           {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
 
           <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
+            {sectorFillGradient && (
+              <div
+                className="gtv-wheel-sector-fill"
+                style={{ "--gtv-sector-fill-gradient": sectorFillGradient } as React.CSSProperties}
+              />
+            )}
+
+            {groups.length > 1 &&
+              groups.map((group, index) => (
+                <div
+                  key={`divider-${group.root.id}`}
+                  className="gtv-wheel-divider"
+                  style={
+                    { "--gtv-divider-angle": `${getWheelDividerAngle(index, groups.length)}deg` } as React.CSSProperties
+                  }
+                />
+              ))}
+
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
