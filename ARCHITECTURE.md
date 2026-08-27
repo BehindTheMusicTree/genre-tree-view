@@ -62,14 +62,29 @@ pnpm workspace with two members:
   - `NodeHelper.tsx` — `buildTreeHierarchyStructure` turns the flat `GenreTreeNode[]` into a d3
     hierarchy.
   - `tree-renderer.ts` — layout (`createTreeLayout`, `setupTreeLayout`), SVG sizing
-    (`calculateSvgDimensions`), and DOM rendering (`renderTree`) for the `<GenreTree>` SVG.
+    (`calculateSvgDimensions`), and DOM rendering (`renderTree`) for the `<GenreTree>` SVG. When a
+    tree is mounted with `hideRoot` (every wheel renderer's subtree, growing out of a root chip),
+    every visible node — not just the root's direct children — renders filled with that root's own
+    genre color and bold white label text, so the subtree reads as a continuation of the chip
+    rather than a jump into plain cards; `GenreTreeWheelRadialPopCore`'s in-circle "pop" branch
+    doesn't use `hideRoot` and keeps its plain styling.
   - `d3-helper/d3-grid-helper.ts` and `d3-helper/d3-path-helper.ts` — lower-level D3 grid/path
     geometry helpers used by the renderer.
   - `root-grouping.ts` — `groupNodesByRoot` partitions the flat node list into per-root subtrees
     for the wheel renderers.
   - `wheel-geometry.ts` and `radial-wheel-geometry.ts` — chip placement and rotation math
     (`calculateWheelRadius`, `computeRotationForSelection`, `getChipAngle`, `computeRadialLayout`,
-    `calculateWheelRadiusForAngles`) shared by the wheel renderers.
+    `calculateWheelRadiusForAngles`) shared by the wheel renderers, plus the radial divider/sector
+    fill math each wheel variant uses to separate and tint adjacent roots' angular spans:
+    `getWheelDividerAngle`/`buildWheelSectorGradient` (evenly-spaced simple wheel, a single static
+    `conic-gradient` since the whole `.gtv-wheel` rotates as one unit) and `bisectAngles` plus
+    `buildSectorClipPathPolygon`/`computeSectorBounds` (the two radial wheels' non-evenly-spaced,
+    continuously-animated roots — rendered as individually-rotated divider lines and arc-sampled
+    `clip-path` sector fans instead of a periodic gradient, so re-layout animates smoothly instead
+    of snapping at the 0°/360° seam). Divider lines and sector fills are rendered as oversized
+    elements anchored at the wheel's rotation pivot, relying on `.gtv-wheel-container`'s
+    `overflow: hidden` to clip them at the real frame edge under any pan/zoom instead of computing
+    a rectangle intersection.
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
     wheel radius, rotation easing/timing) consumed by all renderers.
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core

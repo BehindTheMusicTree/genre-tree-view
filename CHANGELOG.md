@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- All four wheel renderers (`GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+  `GenreTreeWheelRadialPopCore`) now draw a thin radial divider line at the bisector between every
+  pair of angularly-adjacent roots, and tint the angular sector behind each root's own chip with
+  that root's genre color (15% opacity) — both extending to the container's edge.
+- Every node of a wheel subtree (not just its hidden root) now renders filled with that root's own
+  genre color and bold white label text, reading as a continuation of the root chip instead of a
+  visual gap into plain cards. In `GenreTreeWheelRadialPopCore`, this applies to the "core" branch
+  only — the in-circle "pop" branch keeps its plain styling.
+
 ## [1.0.4] - 2026-08-27
 
 ### Fixed
