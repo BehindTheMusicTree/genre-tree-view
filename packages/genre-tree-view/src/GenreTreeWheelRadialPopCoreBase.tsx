@@ -17,7 +17,14 @@ import {
   computePopRadialLayout,
   renderPopSubtree,
 } from "./pop-core-radial-layout";
-import { calculateWheelRadiusForAngles, computeRadialLayout, RadialSlot } from "./radial-wheel-geometry";
+import {
+  bisectAngles,
+  buildSectorClipPathPolygon,
+  calculateWheelRadiusForAngles,
+  computeRadialLayout,
+  computeSectorBounds,
+  RadialSlot,
+} from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
@@ -26,11 +33,13 @@ import {
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  hexToRgba,
   MAINSTREAM_POP_OUTER_CIRCLE_GAP,
   MAINSTREAM_POP_ROOT_CIRCLE_GAP,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
+  ROOT_SECTOR_FILL_OPACITY,
   WHEEL_MINI_TREE_DEPTH_SPACING_SCALE,
   WHEEL_MINI_TREE_SCALE,
   WHEEL_POP_CORE_RADIUS,
@@ -448,6 +457,36 @@ export function WheelRadialPopCoreCore({
     setTopRootId(rootId);
   };
 
+  // One divider per boundary between two angularly-adjacent ring roots, bisecting their own
+  // continuous (unwrapped) angles — see bisectAngles's doc comment, and WheelRadialCore's own copy
+  // of this computation.
+  const dividerAngles = useMemo(() => {
+    if (groups.length <= 1) return [];
+    return groups.map((group, index) => {
+      const next = groups[(index + 1) % groups.length];
+      const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
+      const nextAngle = continuousAngleByRootId.get(next.root.id) ?? 0;
+      return bisectAngles(angle, nextAngle);
+    });
+  }, [groups, continuousAngleByRootId]);
+
+  // One tinted sector fan per root — see WheelRadialCore's own copy of this computation, and
+  // computeSectorBounds's doc comment for why both bounds are anchored on the root's own
+  // continuous angle instead of differencing dividerAngles pairs directly.
+  const sectorFills = useMemo(() => {
+    if (groups.length <= 1) return [];
+    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    return groups.map((group, index) => {
+      const { start, end } = computeSectorBounds(continuousAngles, index);
+      return {
+        rootId: group.root.id,
+        start,
+        clipPath: buildSectorClipPathPolygon(end - start),
+        color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
+      };
+    });
+  }, [groups, continuousAngleByRootId]);
+
   return (
     <div
       ref={viewportRef}
@@ -614,6 +653,28 @@ export function WheelRadialPopCoreCore({
           </div>
 
           <div className="gtv-wheel">
+            {sectorFills.map((sector) => (
+              <div
+                key={`sector-${sector.rootId}`}
+                className="gtv-wheel-sector"
+                style={
+                  {
+                    "--gtv-sector-angle": `${sector.start}deg`,
+                    "--gtv-sector-color": sector.color,
+                    clipPath: sector.clipPath,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+
+            {dividerAngles.map((angle, index) => (
+              <div
+                key={`divider-${groups[index].root.id}`}
+                className="gtv-wheel-divider"
+                style={{ "--gtv-divider-angle": `${angle}deg` } as React.CSSProperties}
+              />
+            ))}
+
             {groups.map((group, index) => {
               const slot = layout[index];
               const angle = continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;

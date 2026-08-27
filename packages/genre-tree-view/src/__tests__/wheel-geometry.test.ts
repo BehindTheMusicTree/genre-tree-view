@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { calculateWheelRadius, computeRotationForSelection, getChipAngle } from "../wheel-geometry";
+import {
+  buildWheelSectorGradient,
+  calculateWheelRadius,
+  computeRotationForSelection,
+  getChipAngle,
+  getWheelDividerAngle,
+} from "../wheel-geometry";
 
 describe("getChipAngle", () => {
   it("spaces chips evenly around the full circle, starting at 0 for the first chip", () => {
@@ -15,6 +21,38 @@ describe("getChipAngle", () => {
         expect(getChipAngle(i, total)).toBe(i * (360 / total));
       }
     }
+  });
+});
+
+describe("getWheelDividerAngle", () => {
+  it("sits at the midpoint between a chip and its next clockwise neighbor", () => {
+    expect(getWheelDividerAngle(0, 4)).toBe(45);
+    expect(getWheelDividerAngle(1, 4)).toBe(135);
+    expect(getWheelDividerAngle(2, 4)).toBe(225);
+    expect(getWheelDividerAngle(3, 4)).toBe(315);
+  });
+
+  it("wraps the last divider back toward the first chip", () => {
+    expect(getWheelDividerAngle(2, 3)).toBe(300);
+  });
+});
+
+describe("buildWheelSectorGradient", () => {
+  it("returns an empty string for fewer than 2 colors, matching the no-dividers-for-1-root rule", () => {
+    expect(buildWheelSectorGradient([])).toBe("");
+    expect(buildWheelSectorGradient(["red"])).toBe("");
+  });
+
+  it("builds hard color stops spanning the full circle, starting from the last divider", () => {
+    const gradient = buildWheelSectorGradient(["red", "green", "blue", "yellow"]);
+    expect(gradient).toBe(
+      "conic-gradient(from 315deg, red 0deg 90deg, green 90deg 180deg, blue 180deg 270deg, yellow 270deg 360deg)",
+    );
+  });
+
+  it("starts at the divider bisecting the last and first chips regardless of count", () => {
+    const gradient = buildWheelSectorGradient(["a", "b", "c"]);
+    expect(gradient).toContain(`from ${getWheelDividerAngle(2, 3)}deg`);
   });
 });
 

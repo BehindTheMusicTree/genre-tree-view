@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  bisectAngles,
+  buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
+  computeSectorBounds,
   getCardinalRingOffsets,
 } from "../radial-wheel-geometry";
 
@@ -140,6 +143,94 @@ describe("computeRadialLayout", () => {
         });
       }
     }
+  });
+});
+
+describe("bisectAngles", () => {
+  it("averages two angles that are already close together", () => {
+    expect(bisectAngles(0, 90)).toBe(45);
+    expect(bisectAngles(90, 0)).toBe(45);
+  });
+
+  it("takes the shorter arc across a 0/360 wraparound instead of the long way round", () => {
+    expect(bisectAngles(350, 10)).toBe(360);
+    expect(bisectAngles(10, 350)).toBe(0);
+  });
+
+  it("handles continuous/unwrapped angles outside [0, 360) the same way", () => {
+    expect(bisectAngles(370, 350)).toBe(360);
+    expect(bisectAngles(-10, 10)).toBe(0);
+  });
+});
+
+describe("buildSectorClipPathPolygon", () => {
+  it("returns an empty string for a non-positive sweep", () => {
+    expect(buildSectorClipPathPolygon(0)).toBe("");
+    expect(buildSectorClipPathPolygon(-10)).toBe("");
+  });
+
+  it("starts and ends the fan at the pivot, with the first ray straight up", () => {
+    const polygon = buildSectorClipPathPolygon(90, 10);
+    expect(polygon.startsWith("polygon(50% 50%, 50% 0%")).toBe(true);
+  });
+
+  it("samples the arc every stepDeg and lands exactly on the sweep's end angle", () => {
+    const polygon = buildSectorClipPathPolygon(180, 10);
+    // 90 degrees clockwise from "up" is straight right, radius 50% from center (50%, 50%).
+    expect(polygon).toContain("100% 50%");
+    // 180 degrees clockwise from "up" is straight down. Math.sin(Math.PI) isn't exactly 0, so the
+    // x coordinate carries a floating-point residual (e.g. "50.00000000000001%") — compare
+    // numerically instead of matching the string exactly.
+    const lastPoint = polygon.slice(0, -1).split(", ").pop();
+    const [lastX, lastY] = (lastPoint ?? "").split(" ").map((coord) => parseFloat(coord));
+    expect(lastX).toBeCloseTo(50);
+    expect(lastY).toBeCloseTo(100);
+  });
+
+  it("clamps the last sample to the exact sweep even when it doesn't divide evenly by stepDeg", () => {
+    const polygon = buildSectorClipPathPolygon(95, 10);
+    const lastTheta = (95 * Math.PI) / 180;
+    const lastX = 50 + 50 * Math.sin(lastTheta);
+    const lastY = 50 - 50 * Math.cos(lastTheta);
+    expect(polygon.endsWith(`${lastX}% ${lastY}%)`)).toBe(true);
+  });
+
+  it("produces a robust wide (180 degree) fan instead of a 3-point chord-clipped triangle", () => {
+    const polygon = buildSectorClipPathPolygon(180, 10);
+    const pointCount = polygon.slice("polygon(".length, -1).split(", ").length;
+    expect(pointCount).toBeGreaterThan(3);
+  });
+});
+
+describe("computeSectorBounds", () => {
+  it("splits an evenly-spaced 4-root ring into four 90-degree sectors centered on each root", () => {
+    const angles = [0, 90, 180, 270];
+    expect(computeSectorBounds(angles, 0)).toEqual({ start: -45, end: 45 });
+    expect(computeSectorBounds(angles, 1)).toEqual({ start: 45, end: 135 });
+    expect(computeSectorBounds(angles, 2)).toEqual({ start: 135, end: 225 });
+    expect(computeSectorBounds(angles, 3)).toEqual({ start: 225, end: 315 });
+  });
+
+  it("gives each of 2 roots a full 180-degree sector with no chord-clipping gap", () => {
+    const angles = [0, 180];
+    const first = computeSectorBounds(angles, 0);
+    const second = computeSectorBounds(angles, 1);
+    expect(first.end - first.start).toBe(180);
+    expect(second.end - second.start).toBe(180);
+    // Together the two sectors must cover the full circle exactly once, with no gap or overlap.
+    expect(first.end).toBe(second.start);
+    expect(second.end - first.start).toBe(360);
+  });
+
+  it("keeps both bounds anchored in the same continuous frame as the root's own angle, unlike naively differencing independently-anchored dividers", () => {
+    // Every root's continuous angle has wound up a full lap outside [0, 360) (as if
+    // continuousAngleByRootId accumulated one extra lap across repeated re-layouts), while their
+    // relative order/spacing stays the same evenly-spaced 4-root ring as the first test above.
+    const angles = [-360, -270, -180, -90];
+    const { start, end } = computeSectorBounds(angles, 0);
+    expect(end - start).toBe(90);
+    expect(start).toBe(-405);
+    expect(end).toBe(-315);
   });
 });
 

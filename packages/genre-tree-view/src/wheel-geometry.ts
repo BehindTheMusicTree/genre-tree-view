@@ -6,6 +6,33 @@ export function getChipAngle(index: number, totalCount: number): number {
   return index * (360 / totalCount);
 }
 
+/** Angle (CSS `rotate()` convention) of the boundary between the `index`-th chip and its next
+ * neighbor clockwise, for `totalCount` evenly-spaced chips — the midpoint of their spacing, used
+ * to draw a radial divider separating the two. */
+export function getWheelDividerAngle(index: number, totalCount: number): number {
+  return getChipAngle(index, totalCount) + 180 / totalCount;
+}
+
+/** CSS `conic-gradient(...)` value tinting each of `totalCount` evenly-spaced chips' angular
+ * span with its own color (see ROOT_SECTOR_FILL_OPACITY / hexToRgba in constants.ts for producing
+ * a translucent entry) — `colors[i]` must correspond to the chip at `getChipAngle(i, totalCount)`.
+ * Hard stops (not a smooth blend) at each getWheelDividerAngle boundary, so a sector's fill lines
+ * up exactly with its bounding divider lines. A single static gradient works here (unlike the
+ * radial wheel variants) because this wheel's chips are evenly spaced and the whole `.gtv-wheel`
+ * box rotates as one unit — nesting this inside that box lets it rotate for free instead of
+ * needing its own per-sector rotation. Empty string (no fill) below 2 colors, matching the "no
+ * dividers for 1 root" rule. */
+export function buildWheelSectorGradient(colors: string[]): string {
+  const n = colors.length;
+  if (n < 2) return "";
+  const span = 360 / n;
+  // Starts the gradient at chip 0's own leading boundary so the first hard stop lands exactly on
+  // a divider instead of splitting chip 0's own sector across the gradient's 0deg seam.
+  const startAngle = getWheelDividerAngle(n - 1, n);
+  const stops = colors.map((color, i) => `${color} ${i * span}deg ${(i + 1) * span}deg`).join(", ");
+  return `conic-gradient(from ${startAngle}deg, ${stops})`;
+}
+
 /** Minimum wheel radius so adjacent chips — each up to `maxChipWidth` wide in the worst case —
  * don't overlap. The chord between two adjacent chip anchor points on the circle
  * (2 * radius * sin(pi / rootCount)) must be at least `maxChipWidth` plus a small gap; solving

@@ -64,6 +64,20 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
   return `#${toHex(mix(channel(1)))}${toHex(mix(channel(3)))}${toHex(mix(channel(5)))}`;
 }
 
+// Opacity of a wheel view's per-root background sector fill (see buildWheelSectorGradient /
+// buildSectorClipPathPolygon) — light enough to read as a wash behind chips/dividers/subtrees
+// rather than competing with them for attention.
+export const ROOT_SECTOR_FILL_OPACITY = 0.15;
+
+/** Converts an opaque "#RRGGBB" color (e.g. a TREE_COLORS entry) to an "rgba()" string at
+ * `opacity` (0-1) — unlike tintSurface, which stays opaque by blending toward a fixed background,
+ * this produces a true transparent fill for layering over arbitrary content (e.g. a wheel's
+ * sector-fill wash, which sits behind chips/dividers/subtrees of varying color). */
+export function hexToRgba(hex: string, opacity: number): string {
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  return `rgba(${channel(1)}, ${channel(3)}, ${channel(5)}, ${opacity})`;
+}
+
 /** Deterministically maps a seed string (e.g. a root node id) to a color in the default palette. */
 export function getGenreTreeColor(seed: string): string {
   let hash = 0;
