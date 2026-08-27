@@ -334,7 +334,11 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
 
   const depthOf = new Map<string, number>([[rootId, 0]]);
   const childCountOf = new Map<string, number>([[rootId, 0]]);
-  const queue: string[] = [rootId];
+  // Seeded empty, not [rootId]: the root's one direct (core) child comes from the spine loop
+  // below, which enqueues it itself. Seeding rootId here would let the breadth-first
+  // remaining-subgenre loop re-pick the root as a parent and attach a second, unlabeled direct
+  // child — splitRootGroupBySide then throws on >1 non-pop direct child.
+  const queue: string[] = [];
 
   let spineTail = rootId;
   for (let d = 0; d < targetDepth; d++) {
