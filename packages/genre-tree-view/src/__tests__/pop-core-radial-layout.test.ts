@@ -11,7 +11,7 @@ import {
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH, SURFACE_BORDER_WIDTH, WHEEL_RADIUS, getItemCountRange } from "../constants";
+import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH, RADIAL_LINK_WIDTH, WHEEL_RADIUS, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -248,7 +248,7 @@ describe("renderPopSubtree link rendering", () => {
     });
   });
 
-  it("keeps stroke-width at the baseline SURFACE_BORDER_WIDTH when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
+  it("keeps stroke-width at the baseline RADIAL_LINK_WIDTH when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
@@ -268,7 +268,7 @@ describe("renderPopSubtree link rendering", () => {
     );
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
-    expect(strokeWidth).toBeCloseTo(SURFACE_BORDER_WIDTH, 5);
+    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH, 5);
   });
 
   it("scales stroke-width up proportionally once radialReferenceRadius grows past WHEEL_RADIUS, so links stay visible after the wheel's pan/zoom fit-to-frame shrinks a large wheel down to fit the viewport", () => {
@@ -292,6 +292,6 @@ describe("renderPopSubtree link rendering", () => {
     );
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
-    expect(strokeWidth).toBeCloseTo(SURFACE_BORDER_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
+    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
   });
 });

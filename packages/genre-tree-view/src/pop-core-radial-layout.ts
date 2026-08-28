@@ -15,6 +15,8 @@ import {
   MAX_NODE_WIDTH,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
+  RADIAL_LINK_COLOR,
+  RADIAL_LINK_WIDTH,
   ROOT_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
@@ -232,7 +234,7 @@ export function renderPopSubtree(
   // root has no incoming link), and the link from the center out to each depth-1 child is still
   // wanted.
   const drawnNodes = skipRootNode ? hierarchy.descendants().filter((d) => d.depth > 0) : hierarchy.descendants();
-  const linkStrokeWidth = SURFACE_BORDER_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
+  const linkStrokeWidth = RADIAL_LINK_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
 
   svg
     .selectAll("path.gtv-link")
@@ -242,7 +244,7 @@ export function renderPopSubtree(
     .attr("class", "gtv-link")
     .attr("d", (d) => `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`)
     .style("fill", "none")
-    .style("stroke", SURFACE_BORDER_COLOR)
+    .style("stroke", RADIAL_LINK_COLOR)
     .style("stroke-width", linkStrokeWidth)
     .style("stroke-linecap", "round");
 
