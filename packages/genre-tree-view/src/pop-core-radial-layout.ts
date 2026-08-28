@@ -25,9 +25,9 @@ import {
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 
-// Angular width of the wedge a pop subtree fans out into, centered on its cardinal's direction —
-// narrower than the cardinal's own full 90deg quadrant so it never touches the neighboring
-// quadrant's wedge, matching the gutter every other radial-wheel element keeps from its neighbors.
+// Angular width of the wedge a pop subtree fans out into, centered on its own root's direction —
+// narrower than the root's own full sector so it never touches a neighboring root's wedge,
+// matching the gutter every other radial-wheel element keeps from its neighbors.
 export const POP_WEDGE_SPAN_DEGREES = 80;
 
 // Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
@@ -36,7 +36,7 @@ const POP_SUBTREE_OUTER_MARGIN = 24;
 
 // A pop hierarchy (per buildPopHierarchy/splitRootGroupBySide) is rooted at the pop child, which
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
-// regardless of which cardinal it belongs to.
+// regardless of which root it belongs to.
 const POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH = 1;
 
 /** The radius (px, from the wheel's true center) for a node at `depth` steps below the ring roots'
@@ -65,7 +65,7 @@ export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTre
 /** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without
  * overlapping the wheel's own edge — driven by its deepest node's ring (absolute depth
  * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus that node's own half-width and a fixed outer
- * margin. Used to grow the wheel's circle to fit whichever developed cardinal's pop subtree
+ * margin. Used to grow the wheel's circle to fit whichever developed root's pop subtree
  * reaches furthest.
  *
  * `coreRootCircleRadius` shifts the whole subtree outward by that amount, mirroring
@@ -96,11 +96,11 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * one. Radius is NOT taken from that layout's own y — every node's radius descends from
  * `coreRootCircleRadius` by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step (the mirror image of
  * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands right on the ring roots'
- * own circle, next to the cardinal root chip it branches from, and each deeper generation steps
+ * own circle, next to the root chip it branches from, and each deeper generation steps
  * further inward, toward the wheel's own center.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
- * cardinal root's own bisected angular sector (see `computeSectorBounds`) when more ring roots are
+ * root's own bisected angular sector (see `computeSectorBounds`) when more ring roots are
  * present than that constant assumes — otherwise descendants near the wedge's edges can render past
  * the root's real sector, into a neighboring root's. */
 export function computePopRadialLayout(
@@ -131,11 +131,11 @@ export function computePopRadialLayout(
 
 /**
  * Lays out the center "Mainstream Pop" node's own subtree in polar coordinates, full-circle
- * (unlike `computePopRadialLayout`'s 80deg wedge — the center node has no single cardinal
+ * (unlike `computePopRadialLayout`'s 80deg wedge — the center node has no single ring-root
  * direction to anchor to). `hierarchy` must be rooted at the center node itself: depth 0 (the
  * center node) is pinned to the wheel's true origin and excluded from angular layout; depth 1 (its
  * direct children) land exactly one `depthSpacing` step past `coreRootCircleRadius` — the same
- * circle every cardinal's pop hierarchy's absolute-depth-1 node lands on too, so the center
+ * circle every ring root's pop hierarchy's absolute-depth-1 node lands on too, so the center
  * subtree's rings coincide with the ring roots' own absolute depth circles — spread around the
  * full circle proportional to each child's own subtree size (d3.tree's default separation, unlike
  * the wedge layout's forced-equal `.separation(() => 1)`); each deeper generation steps outward by

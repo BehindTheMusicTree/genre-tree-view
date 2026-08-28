@@ -145,7 +145,7 @@ describe("computeCenterRadialLayout", () => {
     });
   });
 
-  it("places its own depth-1 nodes one depthSpacing further out than a cardinal's pop hierarchy places its own depth-0 (absolute depth 1) node — the two subtrees grow away from opposite ends of the same ring circle", () => {
+  it("places its own depth-1 nodes one depthSpacing further out than a root's pop hierarchy places its own depth-0 (absolute depth 1) node — the two subtrees grow away from opposite ends of the same ring circle", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
     const coreRootCircleRadius = 250;
     const laidOutCenter = computeCenterRadialLayout(d3, hierarchy, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);

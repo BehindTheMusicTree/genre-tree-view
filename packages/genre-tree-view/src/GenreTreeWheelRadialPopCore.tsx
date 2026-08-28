@@ -11,7 +11,7 @@ export interface GenreTreeWheelRadialPopCoreProps extends Omit<GenreTreeProps, "
 }
 
 /**
- * `GenreTreeWheelRadial`, but each developed cardinal's outward subtree is only its core (non-pop)
+ * `GenreTreeWheelRadial`, but each developed root's outward subtree is only its core (non-pop)
  * branch — if that root also has a `side: "pop"` child, that pop subtree renders as a full
  * interactive tree fanned out inside the wheel's own circle instead. The wheel's pivot point
  * renders `nodes`' root named "Pop" (which must exist and have no children) as a full interactive

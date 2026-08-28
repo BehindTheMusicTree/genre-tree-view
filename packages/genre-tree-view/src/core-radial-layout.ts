@@ -11,7 +11,7 @@ type D3Node = d3.HierarchyNode<GenreTreeNode>;
 // never sits flush against the wheel's outer edge — mirrors POP_SUBTREE_OUTER_MARGIN.
 const CORE_SUBTREE_OUTER_MARGIN = 24;
 
-/** Builds a cardinal's core subtree hierarchy, rooted at the root's own first core child (root not
+/** Builds a root's core subtree hierarchy, rooted at the root's own first core child (root not
  * included) — mirrors buildPopHierarchy: that child's own parentId still points at the (excluded)
  * ring root, which d3.stratify would reject, so it's normalized to null here. */
 export function buildCoreHierarchy(d3Lib: typeof import("d3"), coreNodes: GenreTreeNode[]): D3Node {
@@ -23,9 +23,9 @@ export function buildCoreHierarchy(d3Lib: typeof import("d3"), coreNodes: GenreT
 }
 
 /**
- * Lays a cardinal's core (non-pop) subtree out in polar coordinates, fanning outward from
+ * Lays a root's core (non-pop) subtree out in polar coordinates, fanning outward from
  * `coreRootCircleRadius` within a wedge centered on `wedgeCenterAngleDegrees` — the mirror image of
- * `computePopRadialLayout`'s inward wedge. `hierarchy` is rooted at the cardinal root's own core
+ * `computePopRadialLayout`'s inward wedge. `hierarchy` is rooted at the ring root's own core
  * child (root not included), so depth 0 (absolute depth 1) lands exactly on `coreRootCircleRadius`,
  * next to the root chip it branches from, and each deeper generation steps further outward by
  * `depthSpacing`, occupying a disjoint radius range from any inward pop wedge in the same quadrant.

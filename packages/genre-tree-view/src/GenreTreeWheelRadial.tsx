@@ -13,9 +13,9 @@ export interface GenreTreeWheelRadialProps extends Omit<GenreTreeProps, "nodes" 
 }
 
 /**
- * All root genres distributed evenly around a full circle centered in its container, with up to 4
- * roots — one per cardinal direction — developed as full subtrees simultaneously. Clicking any
- * chip re-lays-out the ring so that root lands on the right, recalculating the other 3 cardinals.
+ * All root genres distributed evenly around a full circle centered in its container, every root
+ * developed as a full subtree simultaneously. Clicking any chip re-lays-out the ring so that root
+ * lands on the right, recalculating every other root's angle.
  */
 export function GenreTreeWheelRadial(props: GenreTreeWheelRadialProps) {
   return <WheelRadialCore {...props} />;
