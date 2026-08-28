@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   buildPopHierarchy,
   calculateMainstreamPopOuterCircleRadius,
@@ -7,10 +7,26 @@ import {
   computeCenterRadialLayout,
   computePopRadialLayout,
   getRadialDepthRadius,
+  renderPopSubtree,
+  type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH } from "../constants";
+import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH, SURFACE_BORDER_WIDTH, WHEEL_RADIUS, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
+
+afterEach(() => {
+  document.body.innerHTML = "";
+});
+
+function createSvg() {
+  const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  document.body.appendChild(svgEl);
+  return d3.select(svgEl).append("g") as unknown as d3.Selection<SVGGElement, unknown, null, undefined>;
+}
+
+const noopCallbacks: RenderPopSubtreeCallbacks = {
+  onReparentTargetSelect: () => {},
+};
 
 const popRock: GenreTreeNode[] = [
   { id: "rock-pop", parentId: null, name: "Pop Rock", itemCount: 0 },
@@ -207,5 +223,75 @@ describe("getRadialDepthRadius", () => {
   it("is the single shared formula: coreRootCircleRadius + depth * depthSpacing", () => {
     expect(getRadialDepthRadius(0, 200, 50)).toBeCloseTo(200, 5);
     expect(getRadialDepthRadius(3, 200, 50)).toBeCloseTo(350, 5);
+  });
+});
+
+describe("renderPopSubtree link rendering", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 2 },
+  ];
+
+  it("renders one path.gtv-link per link, visible (non-zero stroke-width, not none/transparent)", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    expect(links.size()).toBe(laidOut.links().length);
+    links.each(function () {
+      const strokeWidth = parseFloat(d3.select(this).style("stroke-width"));
+      expect(strokeWidth).toBeGreaterThan(0);
+      expect(d3.select(this).style("stroke")).not.toBe("none");
+    });
+  });
+
+  it("keeps stroke-width at the baseline SURFACE_BORDER_WIDTH when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      false,
+      false,
+      WHEEL_RADIUS,
+    );
+
+    const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
+    expect(strokeWidth).toBeCloseTo(SURFACE_BORDER_WIDTH, 5);
+  });
+
+  it("scales stroke-width up proportionally once radialReferenceRadius grows past WHEEL_RADIUS, so links stay visible after the wheel's pan/zoom fit-to-frame shrinks a large wheel down to fit the viewport", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+    const grownRadius = WHEEL_RADIUS * 10;
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      false,
+      false,
+      grownRadius,
+    );
+
+    const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
+    expect(strokeWidth).toBeCloseTo(SURFACE_BORDER_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
   });
 });

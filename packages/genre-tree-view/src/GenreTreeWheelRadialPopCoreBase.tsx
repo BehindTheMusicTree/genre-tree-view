@@ -413,6 +413,9 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
+        undefined,
+        undefined,
+        coreRootCircleRadius,
       );
     });
 
@@ -461,6 +464,7 @@ export function WheelRadialPopCoreCore({
         wheelItemCountRange,
         false,
         true,
+        coreRootCircleRadius,
       );
     });
 
@@ -503,6 +507,8 @@ export function WheelRadialPopCoreCore({
         },
         wheelItemCountRange,
         true,
+        undefined,
+        coreRootCircleRadius,
       );
     }
   }, [

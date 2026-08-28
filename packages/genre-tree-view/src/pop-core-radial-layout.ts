@@ -18,6 +18,7 @@ import {
   ROOT_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
+  WHEEL_RADIUS,
   calculateNodeDimensions,
   calculateNodeFontSize,
   tintSurface,
@@ -214,6 +215,13 @@ export function renderPopSubtree(
   // Core nodes continue the root chip's own solid-color style (matches every other renderer's
   // treatment of a root); pop nodes keep the lighter tint that sets the pop wedge apart from core.
   isCoreSector = false,
+  // The wheel's own radius at baseline WHEEL_RADIUS (260px). Once a wheel grows well past that
+  // (many developed subtrees), the pan/zoom fit-to-frame shrinks the whole svg via a CSS transform
+  // on an ancestor element to keep it inside the viewport — that transform scales down a fixed
+  // stroke-width in SVG user-space to sub-pixel and invisible, while node chips stay visible
+  // because their fill area is still large enough post-shrink. Scaling stroke-width up in the same
+  // proportion the wheel has grown keeps links visible at roughly a constant on-screen width.
+  radialReferenceRadius = WHEEL_RADIUS,
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -224,6 +232,7 @@ export function renderPopSubtree(
   // root has no incoming link), and the link from the center out to each depth-1 child is still
   // wanted.
   const drawnNodes = skipRootNode ? hierarchy.descendants().filter((d) => d.depth > 0) : hierarchy.descendants();
+  const linkStrokeWidth = SURFACE_BORDER_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
 
   svg
     .selectAll("path.gtv-link")
@@ -234,7 +243,7 @@ export function renderPopSubtree(
     .attr("d", (d) => `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`)
     .style("fill", "none")
     .style("stroke", SURFACE_BORDER_COLOR)
-    .style("stroke-width", SURFACE_BORDER_WIDTH)
+    .style("stroke-width", linkStrokeWidth)
     .style("stroke-linecap", "round");
 
   const nodes = svg
