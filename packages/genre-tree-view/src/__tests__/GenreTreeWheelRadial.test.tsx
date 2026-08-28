@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import * as d3 from "d3";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
-import { calculateRootAnchorClearance } from "../NodeHelper";
-import { calculateWheelRadiusForAngles, computeRadialLayout } from "../radial-wheel-geometry";
-import { getItemCountRange, MAX_NODE_WIDTH, WHEEL_RADIUS } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -62,8 +58,13 @@ function chipFor(container: HTMLElement, name: string) {
   ) as HTMLButtonElement;
 }
 
-function anchors(container: HTMLElement) {
-  return Array.from(container.querySelectorAll(".gtv-wheel-radial-tree-anchor")) as HTMLElement[];
+function coreSectors(container: HTMLElement) {
+  return Array.from(container.querySelectorAll(".gtv-wheel-core-sector")) as SVGGElement[];
+}
+
+function getWheelRadius(container: HTMLElement) {
+  const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+  return parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
 }
 
 function getTransformDiv(container: HTMLElement) {
@@ -90,14 +91,25 @@ const makeRect = (left: number, top: number, width: number, height: number): DOM
 });
 
 describe("GenreTreeWheelRadial", () => {
-  it("develops every root when there are fewer than 4, one anchor per root", () => {
+  it("skips a cardinal root that has no children, mounting no core sector for it", () => {
+    const nodesWithChildlessRoot: GenreTreeNode[] = [
+      ...NODES_UNDER_FOUR,
+      { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
+    ];
+    const { container } = render(<GenreTreeWheelRadial nodes={nodesWithChildlessRoot} />);
+
+    expect(coreSectors(container).length).toBe(3);
+    expect(container.querySelector("#group-root-d")).toBeFalsy();
+  });
+
+  it("develops every root when there are fewer than 4, one core sector per root", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNDER_FOUR} />);
 
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
     expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
-    expect(anchors(container).length).toBe(3);
+    expect(coreSectors(container).length).toBe(3);
 
     // Each root's own card is hidden (it grows out of its chip) but its descendants render.
     expect(container.querySelector("#group-root-a")).toBeFalsy();
@@ -106,13 +118,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-c-child")).toBeTruthy();
   });
 
-  it("reserves cardinal anchor clearance from both the selected root's local subtree size and its own cross-root chip scale", () => {
-    // root-a (default top root, lands at the "right" cardinal) has a much smaller subtree than
-    // root-b — under the cross-root scale used to size the chips, root-a's chip would be near
-    // MIN_NODE_WIDTH, but the hidden root inside its own mounted <GenreTree> always renders at its
-    // *local* max regardless of how it compares to root-b. Reserving clearance from only the local
-    // half-extent (the bug) lands the tree's root->depth1 links exactly on the chip's own center
-    // instead of at its edge — the extra cross-root chip half-extent term is what reaches the edge.
+  it("places a cardinal's depth-1 core child exactly on the wheel's own radius, and grows the wheel to fit a deeper core branch", () => {
     const nodes: GenreTreeNode[] = [
       { id: "root-a", parentId: null, name: "Small", itemCount: 1 },
       { id: "a-child", parentId: "root-a", name: "SmallChild", itemCount: 1 },
@@ -121,26 +127,31 @@ describe("GenreTreeWheelRadial", () => {
     ];
     const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
+    const wheelRadius = getWheelRadius(container);
+    const aChild = container.querySelector("#group-a-child") as SVGGElement;
+    const match = aChild.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
+    const [x, y] = [Number(match[1]), Number(match[2])];
 
-    const layout = computeRadialLayout(2, 0, 90);
-    const wheelRadius = calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS);
-    const rootItemCountRange = getItemCountRange([{ itemCount: 2 }, { itemCount: 1000 }]);
-    const expectedClearance = calculateRootAnchorClearance(d3, [nodes[0], nodes[1]], 2, rootItemCountRange, "WIDTH");
+    expect(Math.hypot(x, y)).toBeCloseTo(wheelRadius, 5);
 
-    expect(rightAnchor.style.left).toBe(`${wheelRadius + expectedClearance}px`);
+    const deepNodes: GenreTreeNode[] = [
+      ...nodes,
+      { id: "a-grandchild", parentId: "a-child", name: "SmallGrandchild", itemCount: 1 },
+    ];
+    const { container: deepContainer } = render(<GenreTreeWheelRadial nodes={deepNodes} />);
+    expect(getWheelRadius(deepContainer)).toBeGreaterThan(wheelRadius);
   });
 
   it("develops exactly 4 roots when there are 5 or more, leaving the rest as a chip plus a mini-tree preview", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(5);
-    expect(anchors(container).length).toBe(4);
+    expect(coreSectors(container).length).toBe(4);
     for (const name of ["Rock", "Electronic", "Folk", "Metal"]) {
       expect(chipFor(container, name).className).toContain("gtv-wheel-chip--selected");
     }
     expect(chipFor(container, "Jazz").className).not.toContain("gtv-wheel-chip--selected");
-    // Jazz (the one filler root) isn't a full mounted subtree (no .gtv-wheel-radial-tree-anchor),
+    // Jazz (the one filler root) isn't a full mounted subtree (no .gtv-wheel-core-sector),
     // but does get a miniature preview, which renders the same descendant markup.
     expect(container.querySelector("#group-c-child")).toBeTruthy();
   });
@@ -159,16 +170,14 @@ describe("GenreTreeWheelRadial", () => {
     }
   });
 
-  it("the just-clicked root lands on the right at full opacity; the other developed roots are secondary", () => {
+  it("the just-clicked root lands on the right cardinal's core sector", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
-    expect(rightAnchor.className).not.toContain("gtv-wheel-radial-tree-anchor--secondary");
-    expect(rightAnchor.querySelector("#group-a-child")).toBeTruthy();
+    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
+    expect(rightSector.querySelector("#group-a-child")).toBeTruthy();
 
     for (const direction of ["top", "bottom", "left"]) {
-      const anchor = container.querySelector(`.gtv-wheel-radial-tree-anchor--${direction}`) as HTMLElement;
-      expect(anchor.className).toContain("gtv-wheel-radial-tree-anchor--secondary");
+      expect(container.querySelector(`.gtv-wheel-core-sector--${direction}`)).toBeTruthy();
     }
   });
 
@@ -176,19 +185,19 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     // Not yet a full subtree — only the miniature preview renders its child.
-    expect(container.querySelector(".gtv-wheel-radial-tree-anchor #group-c-child")).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-core-sector #group-c-child")).toBeFalsy();
     expect(container.querySelector(".gtv-wheel-radial-mini-tree #group-c-child")).toBeTruthy();
 
     fireEvent.click(chipFor(container, "Jazz"));
 
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
-    expect(rightAnchor.querySelector("#group-c-child")).toBeTruthy();
+    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
+    expect(rightSector.querySelector("#group-c-child")).toBeTruthy();
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
     // With clickedIndex=2 (c), cardinal ring offsets [0,1,3,4] resolve to ring indices
     // {2,3,0,1} = c,d,a,b — e (index 4) is the one that falls out of the cardinals, gaining a
     // miniature preview instead of a full subtree.
     expect(chipFor(container, "Metal").className).not.toContain("gtv-wheel-chip--selected");
-    expect(container.querySelector(".gtv-wheel-radial-tree-anchor #group-e-child")).toBeFalsy();
+    expect(container.querySelector(".gtv-wheel-core-sector #group-e-child")).toBeFalsy();
     expect(container.querySelector(".gtv-wheel-radial-mini-tree #group-e-child")).toBeTruthy();
   });
 
@@ -228,15 +237,15 @@ describe("GenreTreeWheelRadial", () => {
     rerender(<GenreTreeWheelRadial nodes={withoutMetal} />);
 
     expect(chipFor(container, "Metal")).toBeUndefined();
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
-    expect(rightAnchor.querySelector("#group-a-child")).toBeTruthy();
+    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
+    expect(rightSector.querySelector("#group-a-child")).toBeTruthy();
   });
 
   it("renders no chips and mounts no anchors when nodes is empty", () => {
     const onRootSelect = vi.fn();
     const { container } = render(<GenreTreeWheelRadial nodes={[]} onRootSelect={onRootSelect} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
-    expect(anchors(container).length).toBe(0);
+    expect(coreSectors(container).length).toBe(0);
     expect(onRootSelect).not.toHaveBeenCalled();
   });
 
@@ -244,10 +253,10 @@ describe("GenreTreeWheelRadial", () => {
     const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     rerender(<GenreTreeWheelRadial nodes={[]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
-    expect(anchors(container).length).toBe(0);
+    expect(coreSectors(container).length).toBe(0);
   });
 
-  it("ctrl+wheel scales the shared stage that anchors both the trees and the wheel", () => {
+  it("ctrl+wheel scales the shared stage that anchors both the core sectors and the wheel", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
@@ -270,7 +279,7 @@ describe("GenreTreeWheelRadial", () => {
 
     expect(transformDiv.style.transform).toContain("translate(-20px, -30px)");
     expect(transformDiv.contains(stage.querySelector(".gtv-wheel"))).toBe(true);
-    expect(anchors(container).every((anchor) => transformDiv.contains(anchor))).toBe(true);
+    expect(coreSectors(container).every((anchor) => transformDiv.contains(anchor))).toBe(true);
   });
 
   it("does not start a pan drag from a pointerdown on a wheel chip", () => {
@@ -345,6 +354,30 @@ describe("GenreTreeWheelRadial", () => {
 
     fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
     expect(onAddChild).toHaveBeenCalledWith("root-a");
+  });
+
+  it("adds the reparent-target overlay to eligible core nodes and forwards the selection, excluding the reparented node's own descendants", () => {
+    const onReparent = vi.fn();
+    const nodes: GenreTreeNode[] = [
+      ...NODES_FIVE,
+      { id: "a-grandchild", parentId: "a-child", name: "Oi", itemCount: 0 },
+    ];
+    const { container } = render(
+      <GenreTreeWheelRadial nodes={nodes} reparentingNodeId="a-child" onReparent={onReparent} />,
+    );
+
+    const grandchildGroup = container.querySelector("#group-a-grandchild") as SVGGElement;
+    expect(grandchildGroup.className.baseVal).toContain("gtv-node--forbidden");
+
+    const bChildGroup = container.querySelector("#group-b-child") as SVGGElement;
+    fireEvent.mouseEnter(bChildGroup);
+    const overlayTarget = container.querySelector(
+      "#select-as-new-parent-group-b-child foreignObject",
+    ) as SVGForeignObjectElement;
+    expect(overlayTarget).toBeTruthy();
+    fireEvent.click(overlayTarget);
+
+    expect(onReparent).toHaveBeenCalledWith("a-child", "b-child");
   });
 
   it("renders a hover-revealed name label inside each root chip", () => {

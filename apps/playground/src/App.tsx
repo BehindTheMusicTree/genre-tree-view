@@ -305,14 +305,7 @@ const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
 // ("core") spine — Classical is deliberately omitted so the pop-core wheel demo shows a root
 // with no pop subtree, per the feature's "pop is optional" requirement.
 const POP_BRANCHES: Record<string, string[]> = {
-  Rock: [
-    "Pop Rock",
-    "Soft Rock Radio",
-    "Adult Contemporary Rock",
-    "Arena Rock Radio",
-    "Power Pop Rock",
-    "Yacht Rock Revival",
-  ],
+  Rock: ["Pop Rock", "Soft Rock Radio", "Adult Contemporary Rock"],
   Electronic: ["Pop EDM", "Radio Trance", "Commercial Dance"],
   Jazz: ["Smooth Jazz Pop", "Jazz Standards", "Easy Listening Jazz"],
   "Hip-Hop": ["Pop Rap", "Radio Rap", "Crossover Hip Hop", "Party Rap"],

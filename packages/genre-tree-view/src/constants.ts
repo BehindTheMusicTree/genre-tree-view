@@ -231,17 +231,6 @@ export const WHEEL_POP_CORE_RADIUS = 945;
 // radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
 export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
 
-// Center "Mainstream Pop" node's own subtree (see pop-core-radial-layout.ts's
-// computeCenterRadialLayout). Three concentric circles are involved: the mainstream pop root
-// circle (where its direct children spread), the mainstream pop outer circle (the outer bound of
-// its whole subtree), and the core root circle (the wheel's own edge, where ring roots sit).
-// MAINSTREAM_POP_ROOT_CIRCLE_GAP is the gap between the (2x-scaled) center chip's own half-extent
-// and the mainstream pop root circle; MAINSTREAM_POP_OUTER_CIRCLE_GAP is the gap enforced between
-// the mainstream pop outer circle and the core root circle, so it never touches the ring roots'
-// own pop wedges.
-export const MAINSTREAM_POP_ROOT_CIRCLE_GAP = 48;
-export const MAINSTREAM_POP_OUTER_CIRCLE_GAP = 96;
-
 // Miniature subtree preview shown for non-cardinal (filler) roots on the radial wheel — the full,
 // unclipped GenreTree, scaled down and rendered as a dim grayscale "shadow" (see
 // .gtv-wheel-radial-mini-tree in styles.css) rather than a real interactive one. Since it's no

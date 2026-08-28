@@ -169,6 +169,30 @@ describe("GenreTreeWheel", () => {
     expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
   });
 
+  it("disables the zoom-in button once the maximum scale is reached", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const zoomInButton = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
+
+    for (let i = 0; i < 30; i++) {
+      fireEvent.click(zoomInButton);
+    }
+
+    expect(zoomInButton.disabled).toBe(true);
+    expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
+  });
+
+  it("disables the zoom-out button once the minimum scale is reached", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const zoomOutButton = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
+
+    for (let i = 0; i < 30; i++) {
+      fireEvent.click(zoomOutButton);
+    }
+
+    expect(zoomOutButton.disabled).toBe(true);
+    expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
+  });
+
   it("draws the wheel's circle outline", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();

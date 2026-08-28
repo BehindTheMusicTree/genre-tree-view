@@ -24,18 +24,27 @@ pnpm workspace with two members:
   - `GenreTreeWheelRight` hugs the left edge; the selected root's subtree grows rightward
     (`orientation="horizontal-anchored"`) from right-center.
   - `GenreTreeWheelRadial` places roots around a full circle, developing up to 4 as full subtrees
-    simultaneously — one per cardinal direction, using the four anchored/mirrored orientations
-    (`vertical` / `horizontal-anchored` / `vertical-flipped` / `horizontal-anchored-flipped` for
-    top/right/bottom/left respectively). Clicking a chip re-lays-out the ring so that root lands
-    on the right.
+    simultaneously — one per cardinal direction. Unlike `GenreTreeWheel`/`GenreTreeWheelRight`,
+    each developed cardinal's branch is *not* a mounted `<GenreTree>` (cartesian `tree-renderer.ts`
+    pipeline); it's a self-contained polar layout — `core-radial-layout.ts`'s
+    `buildCoreHierarchy`/`computeCoreRadialLayout` — rendered with straight-line links via the same
+    node/link primitives the pop-core wheel uses (`renderPopSubtree` from
+    `pop-core-radial-layout.ts`), into a `<g class="gtv-wheel-core-sector gtv-wheel-core-sector--{direction}">`
+    inside a shared `<svg class="gtv-wheel-pop-layer">` layer. Each cardinal's branch is confined to
+    an 80° wedge (`POP_WEDGE_SPAN_DEGREES`) centered on its fixed 90°-wide quadrant; the wheel's own
+    circle (`wheelRadius`) grows past its normal chip-clearance floor to fit whichever developed
+    branch reaches deepest. `<GenreTree interactive={false}>` is still used, but only for the small
+    non-cardinal (filler) roots' `.gtv-wheel-radial-mini-tree` previews. Clicking a chip re-lays-out
+    the ring so that root lands on the right.
   - `GenreTreeWheelRadialPopCore` is `GenreTreeWheelRadial` for forests where each root optionally
     splits into a required "core" child and an optional "pop" child (`GenreTreeNode.side`, see
-    `pop-core-split.ts`). Each developed cardinal's outward subtree is only its core branch; if the
-    root also has a pop branch, that subtree renders as a full interactive tree fanned out *inside*
-    the wheel's own circle (in the cardinal's own quadrant) via a self-contained polar layout —
-    `pop-core-radial-layout.ts` — instead of the cartesian `tree-renderer.ts` pipeline the other
-    renderers share. The circle grows past its normal chip-clearance floor to fit the largest
-    developed pop subtree. Unlike the other three renderers (which take an optional `centerLabel`
+    `pop-core-split.ts`). Each developed cardinal's outward branch is only its core branch, laid out
+    and rendered exactly as in `GenreTreeWheelRadial` above (`core-radial-layout.ts`, straight
+    links, 80° wedge, `.gtv-wheel-core-sector--{direction}`); if the root also has a pop branch,
+    that subtree renders as a second, full interactive tree fanned out *inside* the wheel's own
+    circle (in the same cardinal quadrant) via `pop-core-radial-layout.ts`'s pop layout. The circle
+    grows past its normal chip-clearance floor to fit the largest developed core or pop subtree,
+    whichever reaches deepest. Unlike the other three renderers (which take an optional `centerLabel`
     string), its wheel's pivot point renders a full interactive chip — the same
     `.gtv-wheel-chip-anchor`/`.gtv-wheel-chip` markup and styling as a ring root chip — for the
     root named exactly `"Mainstream Pop"` — required to exist among `nodes`, or the component
@@ -91,10 +100,17 @@ pnpm workspace with two members:
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root must have at most one non-pop
     direct child, or it throws (fail-fast — no silently dropping ambiguous data).
   - `pop-core-radial-layout.ts` — self-contained polar tree layout/render module (angle + radius
-    per node, node/link DOM construction) for pop subtrees fanned out inside the wheel's circle
-    (`GenreTreeWheelRadialPopCore` only); reuses `NodeHelper.tsx`'s position-agnostic per-node
-    rendering primitives (`addHoverNameLabel`, `addToolbarActions`, `addReparentTargetOverlay`)
-    rather than `tree-renderer.ts`'s cartesian-coupled `renderTree`.
+    per node, node/link DOM construction, `renderPopSubtree`) for pop subtrees fanned out inside
+    the wheel's circle (`GenreTreeWheelRadialPopCore`'s pop branches and its center "Mainstream
+    Pop" subtree); reuses `NodeHelper.tsx`'s position-agnostic per-node rendering primitives
+    (`addHoverNameLabel`, `addToolbarActions`, `addReparentTargetOverlay`) rather than
+    `tree-renderer.ts`'s cartesian-coupled `renderTree`.
+  - `core-radial-layout.ts` — the polar layout counterpart for each cardinal's outward-developing
+    branch (`buildCoreHierarchy`, `computeCoreRadialLayout`, `calculateCoreSubtreeRadialExtent`),
+    used by both `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`; rendered via
+    `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a cardinal's core branch and its pop
+    branch share the same node/link DOM construction and only differ in the layout math that
+    produces each node's angle/radius.
 
 ## Public surface
 
