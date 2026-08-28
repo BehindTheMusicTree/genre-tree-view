@@ -26,26 +26,26 @@ describe("buildCoreHierarchy", () => {
 });
 
 describe("computeCoreRadialLayout", () => {
-  it("places the core child (depth 0, absolute depth 1) exactly on coreRootCircleRadius, on the wedge's center angle", () => {
+  it("places the core child (depth 0, absolute depth 1) one depthSpacing step past coreRootCircleRadius, on the wedge's center angle", () => {
     const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
     const coreRootCircleRadius = 500;
     const laidOut = computeCoreRadialLayout(d3, hierarchy, 0, 80, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
     const punk = laidOut.descendants().find((d) => d.data.id === "punk")!;
 
-    expect(Math.hypot(punk.x!, punk.y!)).toBeCloseTo(coreRootCircleRadius, 5);
+    expect(Math.hypot(punk.x!, punk.y!)).toBeCloseTo(coreRootCircleRadius + POP_TREE_DEPTH_RADIAL_SPACING, 5);
     // wedge centered on 0deg (top): projects to (0, -radius).
     expect(punk.x!).toBeCloseTo(0, 5);
-    expect(punk.y!).toBeCloseTo(-coreRootCircleRadius, 5);
+    expect(punk.y!).toBeCloseTo(-(coreRootCircleRadius + POP_TREE_DEPTH_RADIAL_SPACING), 5);
   });
 
-  it("places every node at a radius that steps outward from coreRootCircleRadius by depth * depthSpacing", () => {
+  it("places every node at a radius that steps outward from coreRootCircleRadius by (depth + 1) * depthSpacing", () => {
     const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
     const coreRootCircleRadius = 300;
     const laidOut = computeCoreRadialLayout(d3, hierarchy, 90, 80, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
 
     laidOut.each((d) => {
       const radius = Math.hypot(d.x!, d.y!);
-      expect(radius).toBeCloseTo(coreRootCircleRadius + d.depth * POP_TREE_DEPTH_RADIAL_SPACING, 5);
+      expect(radius).toBeCloseTo(coreRootCircleRadius + (d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
     });
   });
 
@@ -62,7 +62,7 @@ describe("computeCoreRadialLayout", () => {
     });
   });
 
-  it("keeps a single-node subtree (no children) at the wedge center, on coreRootCircleRadius", () => {
+  it("keeps a single-node subtree (no children) at the wedge center, one depthSpacing step past coreRootCircleRadius", () => {
     const solo = buildCoreHierarchy(d3, [{ id: "solo-core", parentId: null, name: "Solo Core", itemCount: 0 }]);
     const coreRootCircleRadius = 500;
     const laidOut = computeCoreRadialLayout(d3, solo, 180, 80, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
@@ -70,7 +70,7 @@ describe("computeCoreRadialLayout", () => {
 
     expect(node.x!).toBeCloseTo(0, 5);
     // wedge centered on 180deg (bottom): projects to (0, +radius).
-    expect(node.y!).toBeCloseTo(coreRootCircleRadius, 5);
+    expect(node.y!).toBeCloseTo(coreRootCircleRadius + POP_TREE_DEPTH_RADIAL_SPACING, 5);
   });
 });
 
@@ -85,12 +85,12 @@ describe("calculateCoreSubtreeRadialExtent", () => {
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
 
-  it("matches the height * depthSpacing + half node width + margin formula when coreRootCircleRadius defaults to 0", () => {
+  it("matches the (height + 1) * depthSpacing + half node width + margin formula when coreRootCircleRadius defaults to 0", () => {
     const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
     const extent = calculateCoreSubtreeRadialExtent(hierarchy, POP_TREE_DEPTH_RADIAL_SPACING);
     const maxDepth = hierarchy.height;
 
-    expect(extent).toBeCloseTo(maxDepth * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24, 5);
+    expect(extent).toBeCloseTo((maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24, 5);
   });
 
   it("offsets the extent by the given coreRootCircleRadius", () => {

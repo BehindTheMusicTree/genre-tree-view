@@ -9,6 +9,7 @@ import {
 } from "./NodeHelper";
 import { openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import {
+  ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
   ItemCountRange,
   MAX_NODE_WIDTH,
@@ -95,9 +96,9 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * technique the cartesian renderers rely on, just fed a 1-D angular size instead of a 2-D pixel
  * one. Radius is NOT taken from that layout's own y — every node's radius descends from
  * `coreRootCircleRadius` by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step (the mirror image of
- * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands right on the ring roots'
- * own circle, next to the root chip it branches from, and each deeper generation steps
- * further inward, toward the wheel's own center.
+ * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands one `POP_TREE_DEPTH_RADIAL_SPACING`
+ * step inside the ring roots' own circle, clear of the root chip's own boundary circle rather than
+ * straddling it, and each deeper generation steps further inward, toward the wheel's own center.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
  * root's own bisected angular sector (see `computeSectorBounds`) when more ring roots are
@@ -121,7 +122,7 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = getRadialDepthRadius(-d.depth, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+    const radius = getRadialDepthRadius(-(d.depth + 1), coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -210,9 +211,13 @@ export function renderPopSubtree(
   callbacks: RenderPopSubtreeCallbacks,
   itemCountRange: ItemCountRange,
   skipRootNode = false,
+  // Core nodes continue the root chip's own solid-color style (matches every other renderer's
+  // treatment of a root); pop nodes keep the lighter tint that sets the pop wedge apart from core.
+  isCoreSector = false,
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
+  const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
   // Links are untouched: hierarchy.links() only ever contains depth0→depth1+ edges (a hierarchy
@@ -240,7 +245,7 @@ export function renderPopSubtree(
     .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-    .style("--gtv-node-fill", tintSurface(rootColor));
+    .style("--gtv-node-fill", nodeFill);
 
   nodes
     .append("rect")
@@ -264,7 +269,7 @@ export function renderPopSubtree(
         bl: CORNER_RADIUS,
       });
     })
-    .attr("fill", tintSurface(rootColor));
+    .attr("fill", nodeFill);
 
   nodes
     .append("path")
@@ -280,7 +285,7 @@ export function renderPopSubtree(
     })
     .attr("fill", "none")
     .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
+    .attr("stroke-width", (d) => (d.depth === 0 || isCoreSector ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
 
   nodes
     .append("foreignObject")
@@ -290,7 +295,9 @@ export function renderPopSubtree(
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
-      return `<div class="gtv-node-label" style="color:${TEXT_COLOR};font-size:${fontSize}px">${d.data.name}</div>`;
+      const rootClass = isCoreSector ? " gtv-node-label--root" : "";
+      const color = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
       if (reparentingNodeId || isForbidden(d)) return;

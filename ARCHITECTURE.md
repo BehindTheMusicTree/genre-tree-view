@@ -23,8 +23,9 @@ pnpm workspace with two members:
     (`orientation="vertical"`) from top-center.
   - `GenreTreeWheelRight` hugs the left edge; the selected root's subtree grows rightward
     (`orientation="horizontal-anchored"`) from right-center.
-  - `GenreTreeWheelRadial` places all roots evenly around a full circle, developing every one of
-    them as a full subtree simultaneously. Unlike `GenreTreeWheel`/`GenreTreeWheelRight`, each
+  - `GenreTreeWheelRadial` places all roots around a full circle, each root's angular width
+    proportional to its own subtree's node count (`computeRadialLayout` in
+    `radial-wheel-geometry.ts`), developing every one of them as a full subtree simultaneously. Unlike `GenreTreeWheel`/`GenreTreeWheelRight`, each
     developed root's branch is *not* a mounted `<GenreTree>` (cartesian `tree-renderer.ts`
     pipeline); it's a self-contained polar layout — `core-radial-layout.ts`'s
     `buildCoreHierarchy`/`computeCoreRadialLayout` — rendered with straight-line links via the same
@@ -88,7 +89,7 @@ pnpm workspace with two members:
     fill math each wheel variant uses to separate and tint adjacent roots' angular spans:
     `getWheelDividerAngle`/`buildWheelSectorGradient` (evenly-spaced simple wheel, a single static
     `conic-gradient` since the whole `.gtv-wheel` rotates as one unit) and `bisectAngles` plus
-    `buildSectorClipPathPolygon`/`computeSectorBounds` (the two radial wheels' evenly-spaced,
+    `buildSectorClipPathPolygon`/`computeSectorBounds` (the two radial wheels' proportionally-spaced,
     continuously-animated roots — rendered as individually-rotated divider lines and arc-sampled
     `clip-path` sector fans instead of a periodic gradient, so re-layout animates smoothly instead
     of snapping at the 0°/360° seam). Divider lines and sector fills are rendered as oversized

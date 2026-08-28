@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
+import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -16,8 +17,9 @@ const NODES_UNDER_FOUR: GenreTreeNode[] = [
   { id: "c-child", parentId: "root-c", name: "Bebop", itemCount: 0 },
 ];
 
-// 5 roots, ring order a,b,c,d,e — evenly spaced at 72-degree steps, landing at 90deg (right) with
-// the default top root (a, index 0): a=90, b=162, c=234, d=306, e=18.
+// 5 roots, ring order a,b,c,d,e, each with exactly 2 nodes (root + one child) — equal weight means
+// computeRadialLayout's proportional spacing degenerates to even 72-degree steps, landing at 90deg
+// (right) with the default top root (a, index 0): a=90, b=162, c=234, d=306, e=18.
 const NODES_FIVE: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
   { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
@@ -31,8 +33,9 @@ const NODES_FIVE: GenreTreeNode[] = [
   { id: "e-child", parentId: "root-e", name: "Doom", itemCount: 0 },
 ];
 
-// 6 roots, ring order a..f — evenly spaced at 60-degree steps, landing at 90deg (right) with the
-// default top root (a, index 0): a=90, b=150, c=210, d=270, e=330, f=30. Clicking b (topIndex -> 1)
+// 6 roots, ring order a..f, each with exactly 2 nodes (root + one child) — equal weight means
+// computeRadialLayout's proportional spacing degenerates to even 60-degree steps, landing at 90deg
+// (right) with the default top root (a, index 0): a=90, b=150, c=210, d=270, e=330, f=30. Clicking b (topIndex -> 1)
 // moves f from raw 30deg to raw 330deg — a scenario that only a continuous-angle chip that unwraps
 // to -30deg (not the raw +330deg) takes the correct short path for.
 const NODES_SIX: GenreTreeNode[] = [
@@ -145,7 +148,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-a-core-child")).toBeTruthy();
   });
 
-  it("places a root's depth-1 core child exactly on the wheel's own radius, and grows the wheel to fit a deeper core branch", () => {
+  it("places a root's depth-1 core child one depthSpacing step past the wheel's own radius, and grows the wheel to fit a deeper core branch", () => {
     const nodes: GenreTreeNode[] = [
       { id: "root-a", parentId: null, name: "Small", itemCount: 1 },
       { id: "a-child", parentId: "root-a", name: "SmallChild", itemCount: 1 },
@@ -159,7 +162,7 @@ describe("GenreTreeWheelRadial", () => {
     const match = aChild.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
     const [x, y] = [Number(match[1]), Number(match[2])];
 
-    expect(Math.hypot(x, y)).toBeCloseTo(wheelRadius, 5);
+    expect(Math.hypot(x, y)).toBeCloseTo(wheelRadius + POP_TREE_DEPTH_RADIAL_SPACING, 5);
 
     const deepNodes: GenreTreeNode[] = [
       ...nodes,

@@ -15,8 +15,9 @@ const CENTER_NODE: GenreTreeNode = {
   itemCount: 10,
 };
 
-// 3 ring roots (root-a, root-b, root-c), evenly spaced at 360/3 = 120-degree steps. root-a is
-// clicked by default and lands at 90 (right): a=90, b=210, c=330.
+// 3 ring roots (root-a, root-b, root-c) with node counts 5, 2, 2 respectively (root-a's core+pop
+// subtree is bigger), so computeRadialLayout's proportional spacing gives root-a a wider arc than
+// root-b/root-c. root-a is clicked by default and lands at 90 (right): a=90, b=230, c=310.
 const NODES_WITH_POP: GenreTreeNode[] = [
   CENTER_NODE,
   { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },

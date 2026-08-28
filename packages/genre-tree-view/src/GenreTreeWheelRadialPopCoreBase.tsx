@@ -191,9 +191,11 @@ export function WheelRadialPopCoreCore({
     0,
   );
 
+  const rootWeights = useMemo(() => groups.map((group) => group.nodes.length), [groups]);
+
   const layout = useMemo(
-    () => computeRadialLayout(groups.length, topIndex, LANDING_ANGLE),
-    [groups.length, topIndex],
+    () => computeRadialLayout(rootWeights, topIndex, LANDING_ANGLE),
+    [rootWeights, topIndex],
   );
 
   // computeRadialLayout always returns angles wrapped to [0, 360) — re-rendering with a fresh
@@ -454,6 +456,8 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
+        false,
+        true,
       );
     });
 

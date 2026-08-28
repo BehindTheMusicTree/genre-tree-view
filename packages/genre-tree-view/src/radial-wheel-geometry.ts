@@ -3,20 +3,37 @@ export interface RadialSlot {
   angle: number;
 }
 
-/** Full radial layout for `rootCount` roots (fixed ring order) with `clickedIndex` landing at
+/** Full radial layout for `weights.length` roots (fixed ring order) with `clickedIndex` landing at
  * `landingAngle` (CSS `rotate()` convention: 0 = top, clockwise; 90 = right, this wheel's
- * confirmed landing direction). Every root is evenly spaced around the full circle in ring order
- * starting at the clicked root, and every root is fully developed. Returns one entry per ring
- * index (0..rootCount-1), indexable by the same index groupNodesByRoot's output uses. Empty for
- * rootCount <= 0. */
-export function computeRadialLayout(rootCount: number, clickedIndex: number, landingAngle: number): RadialSlot[] {
+ * confirmed landing direction). Every root gets an arc proportional to its own `weights` entry
+ * (its subtree's node count) rather than an equal `360/rootCount` share — a root with more nodes
+ * occupies proportionally more of the circle. Ring order is unchanged: roots are still laid out
+ * in order starting at the clicked root, walking the ring from `clickedIndex`. Each root's angle
+ * is the center of its own proportionally-sized arc, so the clicked root's arc is centered exactly
+ * on `landingAngle`, matching the even-spacing case's guarantee that the clicked root's own angle
+ * equals `landingAngle`. Every root is fully developed. Returns one entry per ring index
+ * (0..weights.length-1), indexable by the same index groupNodesByRoot's output uses. Empty for
+ * `weights.length <= 0`. Every weight must be positive (a root's own weight is its subtree's node
+ * count, which always includes the root itself, so a zero/negative weight indicates invalid
+ * input rather than a real, reachable state) — throws otherwise rather than silently coercing it. */
+export function computeRadialLayout(weights: number[], clickedIndex: number, landingAngle: number): RadialSlot[] {
+  const rootCount = weights.length;
   if (rootCount <= 0) return [];
 
+  if (weights.some((weight) => weight <= 0)) {
+    throw new Error("computeRadialLayout: every root weight (node count) must be positive");
+  }
+
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const orderedWidths = weights.map((_, i) => (weights[(clickedIndex + i) % rootCount] / total) * 360);
+
   const slots: RadialSlot[] = new Array(rootCount);
-  const step = 360 / rootCount;
+  let boundary = landingAngle - orderedWidths[0] / 2;
   for (let i = 0; i < rootCount; i++) {
+    const width = orderedWidths[i];
     const rootIndex = (clickedIndex + i) % rootCount;
-    slots[rootIndex] = { rootIndex, angle: (i * step + landingAngle) % 360 };
+    slots[rootIndex] = { rootIndex, angle: (((boundary + width / 2) % 360) + 360) % 360 };
+    boundary += width;
   }
 
   return slots;

@@ -26,9 +26,10 @@ export function buildCoreHierarchy(d3Lib: typeof import("d3"), coreNodes: GenreT
  * Lays a root's core (non-pop) subtree out in polar coordinates, fanning outward from
  * `coreRootCircleRadius` within a wedge centered on `wedgeCenterAngleDegrees` — the mirror image of
  * `computePopRadialLayout`'s inward wedge. `hierarchy` is rooted at the ring root's own core
- * child (root not included), so depth 0 (absolute depth 1) lands exactly on `coreRootCircleRadius`,
- * next to the root chip it branches from, and each deeper generation steps further outward by
- * `depthSpacing`, occupying a disjoint radius range from any inward pop wedge in the same quadrant.
+ * child (root not included), so depth 0 (absolute depth 1) lands one `depthSpacing` step past
+ * `coreRootCircleRadius`, clear of the root chip's own boundary circle rather than straddling it,
+ * and each deeper generation steps further outward by `depthSpacing`, occupying a disjoint radius
+ * range from any inward pop wedge in the same quadrant.
  */
 export function computeCoreRadialLayout(
   d3Lib: typeof import("d3"),
@@ -49,7 +50,7 @@ export function computeCoreRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = getRadialDepthRadius(d.depth, coreRootCircleRadius, depthSpacing);
+    const radius = getRadialDepthRadius(d.depth + 1, coreRootCircleRadius, depthSpacing);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -68,6 +69,8 @@ export function calculateCoreSubtreeRadialExtent(
   coreRootCircleRadius = 0,
 ): number {
   return (
-    getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) + MAX_NODE_WIDTH / 2 + CORE_SUBTREE_OUTER_MARGIN
+    getRadialDepthRadius(hierarchy.height + 1, coreRootCircleRadius, depthSpacing) +
+    MAX_NODE_WIDTH / 2 +
+    CORE_SUBTREE_OUTER_MARGIN
   );
 }

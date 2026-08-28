@@ -8,13 +8,17 @@ import {
 } from "../radial-wheel-geometry";
 
 describe("computeRadialLayout", () => {
-  it("returns [] for zero or negative root counts", () => {
-    expect(computeRadialLayout(0, 0, 90)).toEqual([]);
-    expect(computeRadialLayout(-1, 0, 90)).toEqual([]);
+  it("returns [] for an empty weights array", () => {
+    expect(computeRadialLayout([], 0, 90)).toEqual([]);
   });
 
-  it("evenly spaces all roots at 90-degree steps when rootCount is 4", () => {
-    const layout = computeRadialLayout(4, 0, 0);
+  it("throws when any weight is non-positive", () => {
+    expect(() => computeRadialLayout([1, 0, 1], 0, 90)).toThrow();
+    expect(() => computeRadialLayout([1, -2, 1], 0, 90)).toThrow();
+  });
+
+  it("evenly spaces all roots at 90-degree steps when weights are uniform (rootCount 4)", () => {
+    const layout = computeRadialLayout([1, 1, 1, 1], 0, 0);
     expect(layout).toEqual([
       { rootIndex: 0, angle: 0 },
       { rootIndex: 1, angle: 90 },
@@ -24,19 +28,19 @@ describe("computeRadialLayout", () => {
   });
 
   it("applies the landingAngle offset to every slot", () => {
-    const layout = computeRadialLayout(4, 0, 90);
+    const layout = computeRadialLayout([1, 1, 1, 1], 0, 90);
     expect(layout.map((s) => s.angle)).toEqual([90, 180, 270, 0]);
   });
 
   it("lands the clicked root at exactly landingAngle regardless of clickedIndex", () => {
     for (let clicked = 0; clicked < 4; clicked++) {
-      const layout = computeRadialLayout(4, clicked, 90);
+      const layout = computeRadialLayout([1, 1, 1, 1], clicked, 90);
       expect(layout[clicked]).toEqual({ rootIndex: clicked, angle: 90 });
     }
   });
 
-  it("evenly spaces all 5 roots at 72-degree steps", () => {
-    const layout = computeRadialLayout(5, 0, 0);
+  it("evenly spaces all 5 roots at 72-degree steps when weights are uniform", () => {
+    const layout = computeRadialLayout([1, 1, 1, 1, 1], 0, 0);
     expect(layout).toEqual([
       { rootIndex: 0, angle: 0 },
       { rootIndex: 1, angle: 72 },
@@ -46,8 +50,8 @@ describe("computeRadialLayout", () => {
     ]);
   });
 
-  it("recomputes evenly-spaced angles from the newly clicked root", () => {
-    const layout = computeRadialLayout(5, 2, 0);
+  it("recomputes evenly-spaced angles from the newly clicked root when weights are uniform", () => {
+    const layout = computeRadialLayout([1, 1, 1, 1, 1], 2, 0);
     const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
       acc[slot.rootIndex] = slot;
       return acc;
@@ -60,8 +64,8 @@ describe("computeRadialLayout", () => {
     expect(byIndex[1]).toEqual({ rootIndex: 1, angle: 288 });
   });
 
-  it("evenly spaces all 6 roots at 60-degree steps", () => {
-    const layout = computeRadialLayout(6, 0, 0);
+  it("evenly spaces all 6 roots at 60-degree steps when weights are uniform", () => {
+    const layout = computeRadialLayout([1, 1, 1, 1, 1, 1], 0, 0);
     const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
       acc[slot.rootIndex] = slot;
       return acc;
@@ -75,8 +79,8 @@ describe("computeRadialLayout", () => {
     expect(byIndex[5]).toEqual({ rootIndex: 5, angle: 300 });
   });
 
-  it("evenly spaces all 7 roots at 360/7-degree steps", () => {
-    const layout = computeRadialLayout(7, 0, 0);
+  it("evenly spaces all 7 roots at 360/7-degree steps when weights are uniform", () => {
+    const layout = computeRadialLayout([1, 1, 1, 1, 1, 1, 1], 0, 0);
     const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
       acc[slot.rootIndex] = slot;
       return acc;
@@ -88,10 +92,11 @@ describe("computeRadialLayout", () => {
     }
   });
 
-  it("produces exactly one evenly-spaced entry per ring index for N up to 13", () => {
+  it("produces exactly one entry per ring index for N up to 13 with uniform weights", () => {
     for (let n = 1; n <= 13; n++) {
+      const weights = new Array(n).fill(1);
       for (let clicked = 0; clicked < n; clicked++) {
-        const layout = computeRadialLayout(n, clicked, 90);
+        const layout = computeRadialLayout(weights, clicked, 90);
         expect(layout.length).toBe(n);
         expect(new Set(layout.map((s) => s.rootIndex)).size).toBe(n);
 
@@ -105,6 +110,46 @@ describe("computeRadialLayout", () => {
         });
       }
     }
+  });
+
+  it("gives each root an arc proportional to its own weight, centered at its own angle", () => {
+    // total weight 4, unit = 90deg/weight: root 0 and 1 each get a 90deg-wide arc, root 2 (weight
+    // 2) gets a 180deg-wide arc twice as wide. Hand-computed boundaries (cumulative, offset so
+    // root 0's arc is centered on landingAngle=0): root 0 spans [-45, 45], root 1 spans [45, 135],
+    // root 2 spans [135, 315] (wrapping to -45) — so their centers are 0, 90, and 225.
+    const layout = computeRadialLayout([1, 1, 2], 0, 0);
+    expect(layout).toEqual([
+      { rootIndex: 0, angle: 0 },
+      { rootIndex: 1, angle: 90 },
+      { rootIndex: 2, angle: 225 },
+    ]);
+  });
+
+  it("still lands the clicked (heavier) root exactly at landingAngle, ring order unchanged", () => {
+    // Same weights as above but clicking root 2 (the heavy one) instead of root 0. Ring order
+    // starting at root 2 is [2, 0, 1]; root 2's own 180deg-wide arc is centered on landingAngle=90,
+    // so it spans [0, 180]. Root 0 (weight 1, 90deg-wide) follows, spanning [180, 270], centered at
+    // 225. Root 1 (weight 1, 90deg-wide) follows that, spanning [270, 360], centered at 315.
+    const layout = computeRadialLayout([1, 1, 2], 2, 90);
+    expect(layout).toEqual([
+      { rootIndex: 0, angle: 225 },
+      { rootIndex: 1, angle: 315 },
+      { rootIndex: 2, angle: 90 },
+    ]);
+  });
+
+  it("gives a root with a much larger weight a proportionally wider gap to its neighbors", () => {
+    // Root 3's weight (7) dwarfs its three weight-1 neighbors, so both gaps touching it (to root 2
+    // and wrapping around to root 0) should be much wider than the gap between two light roots.
+    const layout = computeRadialLayout([1, 1, 1, 7], 0, 0);
+    const byIndex = layout.reduce<Record<number, (typeof layout)[number]>>((acc, slot) => {
+      acc[slot.rootIndex] = slot;
+      return acc;
+    }, {});
+
+    const lightGap = byIndex[1].angle - byIndex[0].angle;
+    const heavyGap = byIndex[3].angle - byIndex[2].angle;
+    expect(heavyGap).toBeGreaterThan(lightGap);
   });
 });
 

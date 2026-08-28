@@ -66,11 +66,12 @@ function computeContinuousAngles(
 }
 
 /**
- * All root genres distributed evenly around a full circle centered in its container, every one of
+ * All root genres distributed around a full circle centered in its container, each one's angular
+ * width proportional to its own subtree's node count (see `computeRadialLayout`), every one of
  * them fully developed (full subtree mounted) at once. Clicking any chip re-lays-out the whole
  * ring so that root lands on the right and recalculates every other root's angle from scratch.
  * Unlike `WheelCore`, there's no single wheel-wide rotation to animate — every root's angle is
- * recomputed fresh from `(groups.length, topIndex, LANDING_ANGLE)` each render, then unwrapped
+ * recomputed fresh from `(rootWeights, topIndex, LANDING_ANGLE)` each render, then unwrapped
  * per chip (see `continuousAngleByRootId`) so each chip's own CSS transition always takes its own
  * shortest path instead of snapping through a 360deg/0deg wraparound.
  *
@@ -112,9 +113,11 @@ export function WheelRadialCore({
     0,
   );
 
+  const rootWeights = useMemo(() => groups.map((group) => group.nodes.length), [groups]);
+
   const layout = useMemo(
-    () => computeRadialLayout(groups.length, topIndex, LANDING_ANGLE),
-    [groups.length, topIndex],
+    () => computeRadialLayout(rootWeights, topIndex, LANDING_ANGLE),
+    [rootWeights, topIndex],
   );
 
   // computeRadialLayout always returns angles wrapped to [0, 360) — re-rendering with a fresh
@@ -275,6 +278,8 @@ export function WheelRadialCore({
           playState,
         },
         wheelItemCountRange,
+        false,
+        true,
       );
     });
   }, [
