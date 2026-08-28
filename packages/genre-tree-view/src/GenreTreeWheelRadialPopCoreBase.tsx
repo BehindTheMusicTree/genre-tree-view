@@ -603,6 +603,28 @@ export function WheelRadialPopCoreCore({
             />
           )}
 
+          {/* Sector wash + inner tint sit in their own .gtv-wheel layer, rendered before the node
+              svg below, so they paint under the developed nodes instead of dulling them — see the
+              second .gtv-wheel layer (after the svg) for the dividers/chips, which stay above the
+              nodes. */}
+          <div className="gtv-wheel">
+            {sectorFills.map((sector) => (
+              <div
+                key={`sector-${sector.rootId}`}
+                className="gtv-wheel-sector"
+                style={
+                  {
+                    "--gtv-sector-angle": `${sector.start}deg`,
+                    "--gtv-sector-color": sector.color,
+                    clipPath: sector.clipPath,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+
+            <div className="gtv-wheel-inner-tint" />
+          </div>
+
           <svg
             ref={popSvgRef}
             className="gtv-wheel-pop-layer"
@@ -670,22 +692,6 @@ export function WheelRadialPopCoreCore({
           </div>
 
           <div className="gtv-wheel">
-            {sectorFills.map((sector) => (
-              <div
-                key={`sector-${sector.rootId}`}
-                className="gtv-wheel-sector"
-                style={
-                  {
-                    "--gtv-sector-angle": `${sector.start}deg`,
-                    "--gtv-sector-color": sector.color,
-                    clipPath: sector.clipPath,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-
-            <div className="gtv-wheel-inner-tint" />
-
             {dividerAngles.map((angle, index) => (
               <div
                 key={`divider-${groups[index].root.id}`}

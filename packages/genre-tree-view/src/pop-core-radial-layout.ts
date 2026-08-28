@@ -13,11 +13,11 @@ import {
   CORNER_RADIUS,
   ItemCountRange,
   MAX_NODE_WIDTH,
+  POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
-  TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   tintSurface,
@@ -217,7 +217,7 @@ export function renderPopSubtree(
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
-  const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor);
+  const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
   // Links are untouched: hierarchy.links() only ever contains depth0→depth1+ edges (a hierarchy
@@ -296,8 +296,7 @@ export function renderPopSubtree(
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       const rootClass = isCoreSector ? " gtv-node-label--root" : "";
-      const color = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
-      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
+      return `<div class="gtv-node-label${rootClass}" style="color:${ACCENT_TEXT_COLOR};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
       if (reparentingNodeId || isForbidden(d)) return;

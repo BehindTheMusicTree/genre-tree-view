@@ -376,10 +376,9 @@ export function WheelRadialCore({
         <div className="gtv-wheel-stage">
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
-          <svg ref={coreSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
-
-          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
-
+          {/* Sector wash sits in its own .gtv-wheel layer, rendered before the node svg below, so
+              the wash paints under the developed nodes instead of dulling them — see the second
+              .gtv-wheel layer (after the svg) for the dividers/chips, which stay above the nodes. */}
           <div className="gtv-wheel">
             {sectorFills.map((sector) => (
               <div
@@ -394,7 +393,13 @@ export function WheelRadialCore({
                 }
               />
             ))}
+          </div>
 
+          <svg ref={coreSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
+
+          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
+
+          <div className="gtv-wheel">
             {dividerAngles.map((angle, index) => (
               <div
                 key={`divider-${groups[index].root.id}`}

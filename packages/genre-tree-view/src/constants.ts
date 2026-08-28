@@ -39,6 +39,11 @@ export const ACCENT_DOT_SIZE = 4;
 // wash" strength.
 export const ROOT_TINT_RATIO = 0.08;
 
+// Tint ratio for a radial wheel's pop-sector nodes (see renderPopSubtree in
+// pop-core-radial-layout.ts) — stronger than ROOT_TINT_RATIO so pop nodes read as a lighter
+// shade of their root's own color rather than the near-white wash the toolbar/card surfaces use.
+export const POP_SECTOR_TINT_RATIO = 0.8;
+
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
 // Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to

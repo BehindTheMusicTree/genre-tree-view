@@ -487,9 +487,9 @@
    wedge, since it only needs to lighten whatever sector color already sits beneath it. Sized via
    `inset: 0` rather than an explicit radius var because .gtv-wheel's own box (see above) is
    already exactly `--gtv-wheel-radius * 2` centered on the wheel pivot, i.e. this disc's edge
-   lands on the ring-root circle for free. Rendered after .gtv-wheel-sector but before
-   .gtv-wheel-divider/chips in DOM order so it paints over the sector wash without dulling the
-   divider lines or chips above it. */
+   lands on the ring-root circle for free. Rendered in the background .gtv-wheel layer (JSX),
+   before the node svg and the foreground .gtv-wheel layer (dividers/chips), so it paints over the
+   sector wash without dulling the developed nodes, dividers, or chips above it. */
 .gtv-wheel-inner-tint {
   position: absolute;
   inset: 0;
