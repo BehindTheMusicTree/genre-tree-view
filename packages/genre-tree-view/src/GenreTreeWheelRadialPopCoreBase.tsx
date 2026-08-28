@@ -378,14 +378,6 @@ export function WheelRadialPopCoreCore({
     [chipClearanceFloor, maxPopExtentDelta, centerSubtreeExtentDelta, maxCoreExtentDelta],
   );
 
-  // Outermost radius any developed cardinal's own pop wedge actually reaches — used both to grow
-  // the wheel and to draw a dedicated boundary marking just the pop region (which can sit well
-  // inside the wheel's own edge, e.g. when the center subtree or chip clearance dominates instead).
-  const maxPopExtent = useMemo(
-    () => (maxPopExtentDelta > 0 ? chipClearanceFloor + maxPopExtentDelta : 0),
-    [chipClearanceFloor, maxPopExtentDelta],
-  );
-
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the actual layout math no longer positions anything relative to this; both the center
   // subtree and every cardinal's pop wedges now measure outward from the same coreRootCircleRadius.
@@ -638,13 +630,6 @@ export function WheelRadialPopCoreCore({
         <div className="gtv-wheel-stage">
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
-          {maxPopExtent > 0 && (
-            <div
-              className="gtv-wheel-pop-outer-circle"
-              style={{ "--gtv-wheel-pop-outer-radius": `${maxPopExtent}px` } as React.CSSProperties}
-            />
-          )}
-
           {isPopExpanded && centerSubtreeHierarchy && (
             <div
               className="gtv-wheel-middle-circle"
@@ -732,6 +717,8 @@ export function WheelRadialPopCoreCore({
                 }
               />
             ))}
+
+            <div className="gtv-wheel-inner-tint" />
 
             {dividerAngles.map((angle, index) => (
               <div
