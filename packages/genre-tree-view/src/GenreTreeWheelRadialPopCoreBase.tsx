@@ -15,6 +15,7 @@ import {
   calculatePopSubtreeRadialExtent,
   computeCenterRadialLayout,
   computePopRadialLayout,
+  getRadialPointOnCircle,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
 } from "./pop-core-radial-layout";
@@ -379,6 +380,7 @@ export function WheelRadialPopCoreCore({
 
     popHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
       const laidOut = computePopRadialLayout(d3, hierarchy, angle, coreRootCircleRadius, wedgeSpanForRoot(rootId));
+      const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
             .descendants()
@@ -416,6 +418,7 @@ export function WheelRadialPopCoreCore({
         undefined,
         undefined,
         coreRootCircleRadius,
+        rootLinkOrigin,
       );
     });
 
@@ -428,6 +431,7 @@ export function WheelRadialPopCoreCore({
         coreRootCircleRadius,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
+      const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
             .descendants()
@@ -465,6 +469,7 @@ export function WheelRadialPopCoreCore({
         false,
         true,
         coreRootCircleRadius,
+        rootLinkOrigin,
       );
     });
 

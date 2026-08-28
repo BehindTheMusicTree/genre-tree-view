@@ -7,6 +7,7 @@ import {
   computeCenterRadialLayout,
   computePopRadialLayout,
   getRadialDepthRadius,
+  getRadialPointOnCircle,
   renderPopSubtree,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
@@ -293,5 +294,65 @@ describe("renderPopSubtree link rendering", () => {
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
+  });
+
+  it("draws an extra root->depth1 link from rootLinkOrigin to the hierarchy's own depth-0 node, since the ring root itself isn't part of the hierarchy", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const coreRootCircleRadius = 1000;
+    const angle = 0;
+    const laidOut = computePopRadialLayout(d3, hierarchy, angle, coreRootCircleRadius);
+    const svg = createSvg();
+    const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      undefined,
+      undefined,
+      WHEEL_RADIUS,
+      rootLinkOrigin,
+    );
+
+    const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    // hierarchy.links() (pop-rock -> arena-rock) plus the extra root -> pop-rock link.
+    expect(links.size()).toBe(laidOut.links().length + 1);
+
+    const popRoot = laidOut.descendants().find((d) => d.data.id === "pop-rock")!;
+    const rootLink = links.filter((_, i, nodesArr) => {
+      const d3Node = d3.select<SVGPathElement, unknown>(nodesArr[i]);
+      return d3Node.attr("d") === `M ${rootLinkOrigin.x} ${rootLinkOrigin.y} L ${popRoot.x} ${popRoot.y}`;
+    });
+    expect(rootLink.size()).toBe(1);
+  });
+
+  it("omits the extra root link when rootLinkOrigin isn't given", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    expect(links.size()).toBe(laidOut.links().length);
+  });
+});
+
+describe("getRadialPointOnCircle", () => {
+  it("places angle 0 (top) at (0, -radius)", () => {
+    const point = getRadialPointOnCircle(0, 100);
+    expect(point.x).toBeCloseTo(0, 5);
+    expect(point.y).toBeCloseTo(-100, 5);
+  });
+
+  it("places angle 90deg (clockwise from top) at (radius, 0)", () => {
+    const point = getRadialPointOnCircle(90, 100);
+    expect(point.x).toBeCloseTo(100, 5);
+    expect(point.y).toBeCloseTo(0, 5);
   });
 });

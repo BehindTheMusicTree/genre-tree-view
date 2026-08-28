@@ -182,6 +182,17 @@ export function calculateMainstreamPopOuterCircleRadius(
   return getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
 }
 
+/** Cartesian (x, y) position on the circle of the given radius, at the given angle in the CSS
+ * `rotate()` convention (0 = top, clockwise) — the same convention `computePopRadialLayout` and
+ * `computeCoreRadialLayout` project their own nodes with, and the one `.gtv-wheel-slot`'s
+ * `rotate(...) translateY(-radius)` (styles.css) positions the root's own JSX-rendered chip with.
+ * Used to find where that chip sits in the D3 hierarchy's coordinate space, so the root->depth1
+ * link can be drawn even though the root itself isn't part of the hierarchy. */
+export function getRadialPointOnCircle(angleDegrees: number, radius: number): { x: number; y: number } {
+  const angleRad = (angleDegrees * Math.PI) / 180;
+  return { x: radius * Math.sin(angleRad), y: -radius * Math.cos(angleRad) };
+}
+
 export interface RenderPopSubtreeCallbacks {
   onPlayPause?: (nodeId: string) => void;
   onAddChild?: (parentId: string) => void;
@@ -224,21 +235,35 @@ export function renderPopSubtree(
   // because their fill area is still large enough post-shrink. Scaling stroke-width up in the same
   // proportion the wheel has grown keeps links visible at roughly a constant on-screen width.
   radialReferenceRadius = WHEEL_RADIUS,
+  // Where the hierarchy's own root (depth 0) connects to, when that root ISN'T part of the
+  // hierarchy but instead rendered separately as its own JSX wheel chip (every per-root core/pop
+  // subtree — buildCoreHierarchy/buildPopHierarchy both exclude the ring root itself, unlike the
+  // center "Mainstream Pop" subtree, whose hierarchy still includes its own root at depth 0). When
+  // given, one extra gtv-link is drawn per depth-0 node from this point to that node, since
+  // hierarchy.links() has no edge for it (a hierarchy root has no incoming link).
+  rootLinkOrigin?: { x: number; y: number },
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
-  // Links are untouched: hierarchy.links() only ever contains depth0→depth1+ edges (a hierarchy
-  // root has no incoming link), and the link from the center out to each depth-1 child is still
-  // wanted.
   const drawnNodes = skipRootNode ? hierarchy.descendants().filter((d) => d.depth > 0) : hierarchy.descendants();
   const linkStrokeWidth = RADIAL_LINK_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
+  const rootLinks = rootLinkOrigin
+    ? hierarchy
+        .descendants()
+        .filter((d) => d.depth === 0)
+        .map((d) => ({ source: rootLinkOrigin, target: { x: d.x!, y: d.y! } }))
+    : [];
+  const links: { source: { x?: number; y?: number }; target: { x?: number; y?: number } }[] = [
+    ...hierarchy.links(),
+    ...rootLinks,
+  ];
 
   svg
     .selectAll("path.gtv-link")
-    .data(hierarchy.links())
+    .data(links)
     .enter()
     .append("path")
     .attr("class", "gtv-link")

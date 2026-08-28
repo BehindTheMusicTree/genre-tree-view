@@ -7,7 +7,7 @@ import * as d3 from "d3";
 import { NodeToolbar } from "./NodeToolbar";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
-import { POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
+import { getRadialPointOnCircle, POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
   bisectAngles,
@@ -247,6 +247,7 @@ export function WheelRadialCore({
         wheelRadius,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
+      const rootLinkOrigin = getRadialPointOnCircle(angle, wheelRadius);
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
             .descendants()
@@ -284,6 +285,7 @@ export function WheelRadialCore({
         false,
         true,
         wheelRadius,
+        rootLinkOrigin,
       );
     });
   }, [

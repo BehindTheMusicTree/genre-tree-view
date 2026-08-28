@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
 import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -170,6 +171,28 @@ describe("GenreTreeWheelRadial", () => {
     ];
     const { container: deepContainer } = render(<GenreTreeWheelRadial nodes={deepNodes} />);
     expect(getWheelRadius(deepContainer)).toBeGreaterThan(wheelRadius);
+  });
+
+  it("draws a link from the root's own position (on the wheel's circle, at its chip's angle) out to its depth-1 core child", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+      { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
+    ];
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
+
+    const wheelRadius = getWheelRadius(container);
+    // root-a is the only (and default top) root, landing at 90deg (LANDING_ANGLE).
+    const { x: rootX, y: rootY } = getRadialPointOnCircle(90, wheelRadius);
+
+    const aChild = container.querySelector("#group-a-child") as SVGGElement;
+    const match = aChild.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
+    const [childX, childY] = [Number(match[1]), Number(match[2])];
+
+    const links = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    const rootLink = Array.from(links).find(
+      (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${childX} ${childY}`,
+    );
+    expect(rootLink).toBeTruthy();
   });
 
   it("develops every root when there are 5 or more, one core sector per root", () => {

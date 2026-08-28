@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
+import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -43,6 +44,17 @@ function coreSectorForRoot(container: HTMLElement, rootId: string) {
 
 function popSectorForRoot(container: HTMLElement, rootId: string) {
   return container.querySelector(`.gtv-wheel-pop-sector[data-gtv-root-id="${rootId}"]`) as SVGGElement | null;
+}
+
+function getWheelRadius(container: HTMLElement) {
+  const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+  return parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
+}
+
+function nodeCoords(container: HTMLElement, id: string) {
+  const group = container.querySelector(`#group-${id}`) as SVGGElement;
+  const match = group.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
+  return [Number(match[1]), Number(match[2])] as const;
 }
 
 describe("GenreTreeWheelRadialPopCore", () => {
@@ -134,6 +146,30 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
     expect(popSectorForRoot(container, "root-a")).toBeTruthy();
     expect(popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop")).toBeTruthy();
+  });
+
+  it("draws a link from the root's own position out to its depth-1 child, for both its core and pop branches", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+
+    const wheelRadius = getWheelRadius(container);
+    // root-a is the default top root, landing at 90deg (LANDING_ANGLE).
+    const { x: rootX, y: rootY } = getRadialPointOnCircle(90, wheelRadius);
+
+    const [coreChildX, coreChildY] = nodeCoords(container, "a-core");
+    const coreLinks = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    expect(
+      Array.from(coreLinks).some(
+        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${coreChildX} ${coreChildY}`,
+      ),
+    ).toBe(true);
+
+    const [popChildX, popChildY] = nodeCoords(container, "a-pop");
+    const popLinks = popSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    expect(
+      Array.from(popLinks).some(
+        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${popChildX} ${popChildY}`,
+      ),
+    ).toBe(true);
   });
 
   it("skips a root that has no children, mounting no core sector for it", () => {
