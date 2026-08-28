@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-29
+
 ### Fixed
 
 - `GenreTree`'s "fit to frame" no longer clips content for a tree larger than its (explicitly
