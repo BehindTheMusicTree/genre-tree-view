@@ -97,14 +97,20 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * `coreRootCircleRadius` by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step (the mirror image of
  * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands right on the ring roots'
  * own circle, next to the cardinal root chip it branches from, and each deeper generation steps
- * further inward, toward the wheel's own center. */
+ * further inward, toward the wheel's own center.
+ *
+ * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
+ * cardinal root's own bisected angular sector (see `computeSectorBounds`) when more ring roots are
+ * present than that constant assumes — otherwise descendants near the wedge's edges can render past
+ * the root's real sector, into a neighboring root's. */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   wedgeCenterAngleDegrees: number,
   coreRootCircleRadius: number,
+  wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
 ): D3Node {
-  const wedgeSpanRad = (POP_WEDGE_SPAN_DEGREES * Math.PI) / 180;
+  const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
 
   const treeLayout = d3Lib

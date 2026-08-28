@@ -118,6 +118,31 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-c-child")).toBeTruthy();
   });
 
+  it("still develops the lone root's core sector when there's only one root (no sibling to bisect a sector against)", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+      { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
+    ];
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
+
+    expect(coreSectors(container).length).toBe(1);
+    expect(container.querySelector("#group-a-child")).toBeTruthy();
+  });
+
+  it("renders a root that has both a core child and a pop-side child, without throwing d3.stratify's 'multiple roots' error", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+      { id: "a-core-child", parentId: "root-a", name: "Punk", itemCount: 3 },
+      { id: "a-pop-child", parentId: "root-a", name: "Pop Rock", itemCount: 2, side: "pop" },
+    ];
+
+    expect(() => render(<GenreTreeWheelRadial nodes={nodes} />)).not.toThrow();
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
+
+    expect(coreSectors(container).length).toBe(1);
+    expect(container.querySelector("#group-a-core-child")).toBeTruthy();
+  });
+
   it("places a cardinal's depth-1 core child exactly on the wheel's own radius, and grows the wheel to fit a deeper core branch", () => {
     const nodes: GenreTreeNode[] = [
       { id: "root-a", parentId: null, name: "Small", itemCount: 1 },

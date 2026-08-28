@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdBlurCircular, MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
@@ -308,6 +308,26 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [cardinalByDirection, splitByRootId]);
 
+  // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
+  // dividerAngles/sectorFills below) — caps each cardinal's pop/core wedge span so a subtree's
+  // descendants can't fan out past the root's actual sector into a neighboring root's, which
+  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring.
+  const sectorSpanByRootId = useMemo(() => {
+    const map = new Map<string, number>();
+    if (groups.length <= 1) return map;
+    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    groups.forEach((group, index) => {
+      const { start, end } = computeSectorBounds(continuousAngles, index);
+      map.set(group.root.id, end - start);
+    });
+    return map;
+  }, [groups, continuousAngleByRootId]);
+
+  const wedgeSpanForRoot = useCallback(
+    (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
+    [sectorSpanByRootId],
+  );
+
   // Floor every ring root sits on, driven purely by chip clearance — the base every radial depth
   // (ring roots, their pop branches, and the center subtree) measures outward from, before pop/
   // center subtree extents are folded in below.
@@ -358,14 +378,6 @@ export function WheelRadialPopCoreCore({
     [chipClearanceFloor, maxPopExtentDelta, centerSubtreeExtentDelta, maxCoreExtentDelta],
   );
 
-  // Outermost radius any developed cardinal's own pop wedge actually reaches — used both to grow
-  // the wheel and to draw a dedicated boundary marking just the pop region (which can sit well
-  // inside the wheel's own edge, e.g. when the center subtree or chip clearance dominates instead).
-  const maxPopExtent = useMemo(
-    () => (maxPopExtentDelta > 0 ? chipClearanceFloor + maxPopExtentDelta : 0),
-    [chipClearanceFloor, maxPopExtentDelta],
-  );
-
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the actual layout math no longer positions anything relative to this; both the center
   // subtree and every cardinal's pop wedges now measure outward from the same coreRootCircleRadius.
@@ -395,7 +407,13 @@ export function WheelRadialPopCoreCore({
       .attr("transform", `translate(${coreRootCircleRadius}, ${coreRootCircleRadius})`);
 
     popHierarchyByDirection.forEach(({ hierarchy, rootId }, direction) => {
-      const laidOut = computePopRadialLayout(d3, hierarchy, CARDINAL_ANGLE_BY_DIRECTION[direction], coreRootCircleRadius);
+      const laidOut = computePopRadialLayout(
+        d3,
+        hierarchy,
+        CARDINAL_ANGLE_BY_DIRECTION[direction],
+        coreRootCircleRadius,
+        wedgeSpanForRoot(rootId),
+      );
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
             .descendants()
@@ -437,7 +455,7 @@ export function WheelRadialPopCoreCore({
         d3,
         hierarchy,
         CARDINAL_ANGLE_BY_DIRECTION[direction],
-        POP_WEDGE_SPAN_DEGREES,
+        wedgeSpanForRoot(rootId),
         coreRootCircleRadius,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
@@ -522,6 +540,7 @@ export function WheelRadialPopCoreCore({
     popHierarchyByDirection,
     coreHierarchyByDirection,
     coreRootCircleRadius,
+    wedgeSpanForRoot,
     reparentingNodeId,
     playingNodeId,
     playState,
@@ -611,13 +630,6 @@ export function WheelRadialPopCoreCore({
         <div className="gtv-wheel-stage">
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
-          {maxPopExtent > 0 && (
-            <div
-              className="gtv-wheel-pop-outer-circle"
-              style={{ "--gtv-wheel-pop-outer-radius": `${maxPopExtent}px` } as React.CSSProperties}
-            />
-          )}
-
           {isPopExpanded && centerSubtreeHierarchy && (
             <div
               className="gtv-wheel-middle-circle"
@@ -705,6 +717,8 @@ export function WheelRadialPopCoreCore({
                 }
               />
             ))}
+
+            <div className="gtv-wheel-inner-tint" />
 
             {dividerAngles.map((angle, index) => (
               <div

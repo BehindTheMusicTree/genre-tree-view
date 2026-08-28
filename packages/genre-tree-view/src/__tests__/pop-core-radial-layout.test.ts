@@ -55,6 +55,19 @@ describe("computePopRadialLayout", () => {
     });
   });
 
+  it("confines every node's angle to a narrower wedgeSpanDegrees when the root's real ring sector is narrower than the default 80deg wedge", () => {
+    const hierarchy = buildPopHierarchy(d3, popRock);
+    const wedgeCenterDeg = 90;
+    const wedgeSpanDegrees = 30;
+    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 2000, wedgeSpanDegrees);
+
+    laidOut.each((d) => {
+      const angleDeg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+      const delta = Math.abs(((angleDeg - wedgeCenterDeg + 540) % 360) - 180);
+      expect(delta).toBeLessThanOrEqual(wedgeSpanDegrees / 2 + 1e-6);
+    });
+  });
+
   it("keeps a single-node subtree (no children) at the wedge center, on coreRootCircleRadius", () => {
     const solo: GenreTreeNode[] = [{ id: "solo-pop", parentId: null, name: "Solo Pop", itemCount: 0 }];
     const hierarchy = buildPopHierarchy(d3, solo);

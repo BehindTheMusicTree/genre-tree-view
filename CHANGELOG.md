@@ -5,7 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now confine each root's core/pop wedge
+  to that root's actual bisected angular sector (capped at 80°) instead of always using the full
+  80° span, preventing a developed subtree from overflowing into a neighboring root's sector when
+  more than four or five roots share a ring.
+- `GenreTreeWheelRadial` no longer crashes with a `d3.stratify()` "multiple roots" error (and
+  renders blank) when a root has both core-side and pop-side children — it now splits the two
+  sides before building the core hierarchy, matching `GenreTreeWheelRadialPopCore`.
+
 ### Changed
+
+- `GenreTreeWheelRadialPopCore` now marks its pop/core boundary with a single circle
+  (`.gtv-wheel-circle`) instead of two; the region inside it is lightened with a white overlay
+  (`--gtv-wheel-inner-tint-ratio`, default `0.55`) to distinguish it from the core region outside.
 
 - `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now lay out each cardinal's outward
   "core" branch with a polar layout (`core-radial-layout.ts`) confined to an 80° wedge, rendered

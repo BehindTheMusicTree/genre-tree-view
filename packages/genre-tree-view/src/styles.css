@@ -483,6 +483,22 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: whitens the pop region (inside the single ring-root circle,
+   .gtv-wheel-circle) relative to the core region (outside it) — a full circle, not a per-sector
+   wedge, since it only needs to lighten whatever sector color already sits beneath it. Sized via
+   `inset: 0` rather than an explicit radius var because .gtv-wheel's own box (see above) is
+   already exactly `--gtv-wheel-radius * 2` centered on the wheel pivot, i.e. this disc's edge
+   lands on the ring-root circle for free. Rendered after .gtv-wheel-sector but before
+   .gtv-wheel-divider/chips in DOM order so it paints over the sector wash without dulling the
+   divider lines or chips above it. */
+.gtv-wheel-inner-tint {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, var(--gtv-wheel-inner-tint-ratio, 0.55));
+  pointer-events: none;
+}
+
 /* Counter-rotates against both the wheel's and the slot's rotation so the chip (and its hover
    toolbar, a sibling below) stay upright regardless of where on the wheel they land. Carries the
    rotation instead of .gtv-wheel-chip itself so the toolbar can sit outside the chip's own
@@ -932,28 +948,6 @@
   left: 50%;
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
-}
-
-/* Marks just the outer edge of the developed cardinals' own pop wedges (`maxPopExtent`) — distinct
-   from .gtv-wheel-circle (the whole wheel's edge, e.g. chip clearance floor) since the pop region
-   can sit well inside it. Same border treatment as .gtv-wheel-circle so both boundaries read as
-   the same kind of trait. */
-.gtv-wheel-container--radial .gtv-wheel-pop-outer-circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
-  height: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
-  margin-left: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
-  margin-top: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
-  border-radius: 50%;
-  border: 1px solid #e4e4e7;
-  /* Tint ratio toward the outside page background (#f4f4f5): 0 = white, 1 = same grey as outside.
-     .gtv-wheel-middle-circle renders on top with a solid white fill, so this grey only shows
-     through the annulus between the two circles. Tune the ratio to taste. */
-  --gtv-wheel-annulus-tint-ratio: 0.4;
-  background: color-mix(in srgb, #f4f4f5 calc(var(--gtv-wheel-annulus-tint-ratio) * 100%), #ffffff);
-  pointer-events: none;
 }
 
 .gtv-wheel-container--radial .gtv-wheel-middle-circle {
