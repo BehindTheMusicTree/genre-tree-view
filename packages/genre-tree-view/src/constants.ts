@@ -12,6 +12,11 @@ export const CONNECTOR_COLOR = "#D4D4D8";
 export const CONNECTOR_WIDTH = 1.5;
 export const CONNECTOR_OPACITY = 1;
 
+// Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR/
+// WIDTH since those also style node chip borders and shouldn't move together with the links.
+export const RADIAL_LINK_COLOR = "#A1A1AA";
+export const RADIAL_LINK_WIDTH = 0.75;
+
 export const TEXT_COLOR = "#18181B";
 export const TEXT_MUTED_COLOR = "#A1A1AA";
 
@@ -39,6 +44,11 @@ export const ACCENT_DOT_SIZE = 4;
 // wash" strength.
 export const ROOT_TINT_RATIO = 0.08;
 
+// Tint ratio for a radial wheel's pop-sector nodes (see renderPopSubtree in
+// pop-core-radial-layout.ts) — stronger than ROOT_TINT_RATIO so pop nodes read as a lighter
+// shade of their root's own color rather than the near-white wash the toolbar/card surfaces use.
+export const POP_SECTOR_TINT_RATIO = 0.8;
+
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
 // Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
@@ -62,6 +72,20 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
   const mix = (value: number) => Math.round(value * ratio + 255 * (1 - ratio));
   const toHex = (value: number) => value.toString(16).padStart(2, "0");
   return `#${toHex(mix(channel(1)))}${toHex(mix(channel(3)))}${toHex(mix(channel(5)))}`;
+}
+
+// Opacity of a wheel view's per-root background sector fill (see buildWheelSectorGradient /
+// buildSectorClipPathPolygon) — light enough to read as a wash behind chips/dividers/subtrees
+// rather than competing with them for attention.
+export const ROOT_SECTOR_FILL_OPACITY = 0.15;
+
+/** Converts an opaque "#RRGGBB" color (e.g. a TREE_COLORS entry) to an "rgba()" string at
+ * `opacity` (0-1) — unlike tintSurface, which stays opaque by blending toward a fixed background,
+ * this produces a true transparent fill for layering over arbitrary content (e.g. a wheel's
+ * sector-fill wash, which sits behind chips/dividers/subtrees of varying color). */
+export function hexToRgba(hex: string, opacity: number): string {
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  return `rgba(${channel(1)}, ${channel(3)}, ${channel(5)}, ${opacity})`;
 }
 
 /** Deterministically maps a seed string (e.g. a root node id) to a color in the default palette. */
@@ -208,7 +232,7 @@ export const WHEEL_VIEWPORT_HEIGHT = WHEEL_RADIUS * 2 + MAX_NODE_HEIGHT / 2;
 
 // GenreTreeWheelRadialPopCore tokens. This renderer's circle must fit a full interactive pop
 // subtree inside it (not just chip clearance like the plain wheel), so it starts from a bigger
-// base floor than WHEEL_RADIUS even when no cardinal has a pop side — leaving room to grow
+// base floor than WHEEL_RADIUS even when no root has a pop side — leaving room to grow
 // further per calculatePopSubtreeRadialExtent (pop-core-radial-layout.ts) once one does.
 export const WHEEL_POP_CORE_RADIUS = 945;
 
@@ -216,29 +240,6 @@ export const WHEEL_POP_CORE_RADIUS = 945;
 // VERTICAL_ORIENTATION_DEPTH_SEPARATION for the cartesian renderers, but expressed directly as a
 // radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
 export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
-
-// Center "Mainstream Pop" node's own subtree (see pop-core-radial-layout.ts's
-// computeCenterRadialLayout). Three concentric circles are involved: the mainstream pop root
-// circle (where its direct children spread), the mainstream pop outer circle (the outer bound of
-// its whole subtree), and the core root circle (the wheel's own edge, where ring roots sit).
-// MAINSTREAM_POP_ROOT_CIRCLE_GAP is the gap between the (2x-scaled) center chip's own half-extent
-// and the mainstream pop root circle; MAINSTREAM_POP_OUTER_CIRCLE_GAP is the gap enforced between
-// the mainstream pop outer circle and the core root circle, so it never touches the ring roots'
-// own pop wedges.
-export const MAINSTREAM_POP_ROOT_CIRCLE_GAP = 48;
-export const MAINSTREAM_POP_OUTER_CIRCLE_GAP = 96;
-
-// Miniature subtree preview shown for non-cardinal (filler) roots on the radial wheel — the full,
-// unclipped GenreTree, scaled down and rendered as a dim grayscale "shadow" (see
-// .gtv-wheel-radial-mini-tree in styles.css) rather than a real interactive one. Since it's no
-// longer clipped to a small box, overlapping a neighboring chip/preview/cardinal tree is expected
-// and accepted — the heavy dimming plus the cardinal trees' higher stacking order keep it from
-// competing with anything the user is meant to actually read.
-export const WHEEL_MINI_TREE_SCALE = 0.675;
-
-// Widens the gaps between depth levels in the mini-tree shadow previews (3x the normal spacing),
-// so nested nodes stay legible even at WHEEL_MINI_TREE_SCALE's small size.
-export const WHEEL_MINI_TREE_DEPTH_SPACING_SCALE = 3;
 
 // Suggested size for the fixed-size ancestor any GenreTree/GenreTreeWheel variant requires (see
 // GenreTreeWheel's own doc comment): enough room for a typically-deep tree, or the wheel's chip

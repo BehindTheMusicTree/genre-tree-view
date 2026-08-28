@@ -160,6 +160,14 @@ describe("GenreTree", () => {
       expect(onReparent).toHaveBeenCalledWith("child-a", "root");
     });
 
+    it("does not forbid any node when reparentingNodeId belongs to a different tree instance", () => {
+      const { container } = render(<GenreTree nodes={TREE} reparentingNodeId="not-in-this-tree" />);
+
+      const rootGroup = container.querySelector("#group-root") as SVGGElement;
+      fireEvent.mouseEnter(rootGroup);
+      expect(container.querySelector("#select-as-new-parent-group-root")).toBeTruthy();
+    });
+
     it("excludes the node being reparented and its descendants from the overlay", () => {
       const { container } = render(<GenreTree nodes={TREE} reparentingNodeId="root" />);
 

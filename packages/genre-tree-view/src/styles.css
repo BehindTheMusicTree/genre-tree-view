@@ -341,11 +341,11 @@
   pointer-events: none;
 }
 
-/* GenreTreeWheelRadialPopCore only: hosts each developed cardinal's pop subtree, rendered
-   directly via d3 (pop-core-radial-layout.ts) rather than as nested <GenreTree> instances like
-   the cardinal anchors — positioned exactly like .gtv-wheel-circle above (both are centered on
-   the same wheel pivot) so pop-core-radial-layout's polar-projected coordinates, whose origin is
-   the wheel's own center, land in the right place without any extra JS-computed offset. */
+/* GenreTreeWheelRadialPopCore only: hosts each developed root's pop subtree, rendered
+   directly via d3 (pop-core-radial-layout.ts) — positioned exactly like .gtv-wheel-circle above
+   (both are centered on the same wheel pivot) so pop-core-radial-layout's polar-projected
+   coordinates, whose origin is the wheel's own center, land in the right place without any extra
+   JS-computed offset. */
 .gtv-wheel-pop-layer {
   position: absolute;
   top: 0;
@@ -361,10 +361,9 @@
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
 }
 
-/* .gtv-wheel-pop-sector / .gtv-wheel-pop-sector--{top,right,bottom,left}: one <g> per developed
-   cardinal with a pop branch, applied in pop-core-radial-layout.ts's caller. Plain grouping hooks,
-   not currently styled — reserved for any future per-direction treatment (e.g. dimming on hover
-   like the ring's own mini-tree previews). */
+/* .gtv-wheel-pop-sector: one <g> per developed root with a pop branch, identified by its own
+   data-gtv-root-id attribute. Plain grouping hook, not currently styled — reserved for any future
+   per-root treatment. */
 
 /* Optional decorative label centered on the wheel's pivot point — a sibling of .gtv-wheel
    (not nested inside it) so it stays upright and fixed regardless of --gtv-wheel-rotation.
@@ -429,6 +428,76 @@
   transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
 }
 
+/* Straight radial line separating two angularly-adjacent root subtrees, from the wheel's pivot
+   out to the frame edge. Massively overshoots any real container size on purpose — since
+   .gtv-wheel-container clips with overflow: hidden, the line always reaches the visible edge
+   without needing to react to resize/pan/zoom itself. pointer-events: none keeps it out of the
+   way of chip clicks and pan/zoom dragging, same as .gtv-wheel-circle. */
+.gtv-wheel-divider {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 100000px;
+  background: #e4e4e7;
+  transform-origin: top center;
+  transform: rotate(var(--gtv-divider-angle, 0deg));
+  pointer-events: none;
+}
+
+/* GenreTreeWheel/GenreTreeWheelRight only: single element carrying a static conic-gradient (built
+   by buildWheelSectorGradient) that tints every root's angular span at once — see that function's
+   doc comment for why one gradient suffices here but not on the radial variants. Centered on the
+   same pivot as .gtv-wheel-divider and oversized the same way, so overflow: hidden on
+   .gtv-wheel-container clips it to the frame edge under any pan/zoom. Rendered first among
+   .gtv-wheel's children so every divider/chip/subtree paints on top of it. */
+.gtv-wheel-sector-fill {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200000px;
+  height: 200000px;
+  margin-left: -100000px;
+  margin-top: -100000px;
+  background: var(--gtv-sector-fill-gradient, none);
+  pointer-events: none;
+}
+
+/* GenreTreeWheelRadial/GenreTreeWheelRadialPopCore only: one element per root's colored sector
+   wash (see buildSectorClipPathPolygon's doc comment for why each sector needs its own shaped,
+   independently-rotated element instead of one shared conic-gradient). Unlike .gtv-wheel-divider,
+   this box is centered on the pivot by its own geometric center (not a `top center` transform
+   origin) since buildSectorClipPathPolygon's fan shape already encodes the "ray out from center"
+   extent that the divider instead gets from its transform-origin. */
+.gtv-wheel-sector {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200000px;
+  height: 200000px;
+  margin-left: -100000px;
+  margin-top: -100000px;
+  background: var(--gtv-sector-color, transparent);
+  transform: rotate(var(--gtv-sector-angle, 0deg));
+  pointer-events: none;
+}
+
+/* GenreTreeWheelRadialPopCore only: whitens the pop region (inside the single ring-root circle,
+   .gtv-wheel-circle) relative to the core region (outside it) — a full circle, not a per-sector
+   wedge, since it only needs to lighten whatever sector color already sits beneath it. Sized via
+   `inset: 0` rather than an explicit radius var because .gtv-wheel's own box (see above) is
+   already exactly `--gtv-wheel-radius * 2` centered on the wheel pivot, i.e. this disc's edge
+   lands on the ring-root circle for free. Rendered in the background .gtv-wheel layer (JSX),
+   before the node svg and the foreground .gtv-wheel layer (dividers/chips), so it paints over the
+   sector wash without dulling the developed nodes, dividers, or chips above it. */
+.gtv-wheel-inner-tint {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, var(--gtv-wheel-inner-tint-ratio, 0.55));
+  pointer-events: none;
+}
+
 /* Counter-rotates against both the wheel's and the slot's rotation so the chip (and its hover
    toolbar, a sibling below) stay upright regardless of where on the wheel they land. Carries the
    rotation instead of .gtv-wheel-chip itself so the toolbar can sit outside the chip's own
@@ -438,9 +507,6 @@
    effect when it lived on .gtv-wheel-chip directly. */
 .gtv-wheel-chip-anchor {
   position: absolute;
-  /* Stays above this slot's own .gtv-wheel-radial-mini-tree sibling (a later, otherwise-higher-
-     painting sibling on the radial wheel) so a filler root's ghost preview never crosses its own
-     chip's label — same reasoning as .gtv-wheel-radial-tree-anchor's z-index above. */
   z-index: 2;
   transform: translate(-50%, -50%)
     rotate(calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg))));
@@ -712,8 +778,8 @@
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
 }
 
-/* GenreTreeWheelRadial — full circle centered in the container, up to 4 roots developed
-   simultaneously at the cardinal points instead of one. The stage collapses to a single point
+/* GenreTreeWheelRadial — full circle centered in the container, every root developed
+   simultaneously and evenly spaced around the ring. The stage collapses to a single point
    at the container's center (width/height both 0) rather than hugging an edge, so every
    percentage-based child offset below resolves the same way the two edge-hugging variants'
    already do against their own zero-size axis — see .gtv-wheel-stage / .gtv-wheel-tree-anchor
@@ -729,177 +795,11 @@
   transform-origin: 0 0;
 }
 
-/* One anchor div per cardinal, all glued to the stage's single point by default (bottom/top/
-   left/right: 0) and pushed out to the circle's rim via the growth axis. Unlike the two
-   edge-hugging wheels, the radial stage's own zero point sits at the circle's CENTER (see
-   .gtv-wheel-container--radial .gtv-wheel-stage above), not already on the rim — so each
-   anchor's offset must cover the wheel radius itself, plus the mounted root's own chip
-   half-extent (the same per-side clearance the other wheels' tree-anchors add on top of their
-   already-on-the-rim zero point). Applied inline from JS via the matching offset property
-   (bottom/left/top/right) — simpler than a CSS var here since, unlike the rotating single-tree
-   wheels, these 4 anchors never share one value. */
-/* z-index: 1 (vs. the mini-tree previews' auto stacking, see .gtv-wheel-radial-mini-tree below)
-   guarantees a real cardinal tree always paints over a filler root's ghost preview where their
-   unclipped extents overlap, regardless of DOM order. */
-.gtv-wheel-radial-tree-anchor {
-  position: absolute;
-  z-index: 1;
-  filter: grayscale(0);
-  transition:
-    opacity 150ms ease,
-    filter 150ms ease;
-}
-
-.gtv-wheel-radial-tree-anchor--top {
-  left: 0;
-  bottom: 0;
-  transform: translateX(-50%);
-}
-
-.gtv-wheel-radial-tree-anchor--right {
-  left: 0;
-  top: 0;
-  transform: translateY(-50%);
-}
-
-.gtv-wheel-radial-tree-anchor--bottom {
-  left: 0;
-  top: 0;
-  transform: translateX(-50%);
-}
-
-.gtv-wheel-radial-tree-anchor--left {
-  right: 0;
-  top: 0;
-  transform: translateY(-50%);
-}
-
-/* Focus+context treatment: the just-clicked (right-landing) tree stays at full opacity via
-   the absence of this class; the other 3 developed trees dim until hovered/focused so the
-   just-selected one reads as primary without hiding the rest of the context. */
-.gtv-wheel-radial-tree-anchor--secondary {
-  opacity: 0.68;
-  transition: opacity 150ms ease;
-}
-
-.gtv-wheel-radial-tree-anchor--secondary:hover,
-.gtv-wheel-radial-tree-anchor--secondary:focus-within {
-  opacity: 1;
-}
-
-/* Full, unclipped, non-interactive subtree preview for a non-cardinal (filler) root — a sibling of
-   .gtv-wheel-chip-anchor inside the same (rotated) .gtv-wheel-slot. Unlike the chip, it does NOT
-   counter-rotate: it inherits the slot's rotate(chipAngle) so the tree's growth axis leans outward
-   along the same center-to-root angle the chip sits at, rather than always pointing straight up
-   (individual node cards are kept upright separately — see the counter-rotation rule below).
-   bottom: 0 + left: 50% anchors the tree's root to the slot's ring position (--gtv-wheel-slot is a
-   zero-size box, so top/bottom coincide there); transform-origin: bottom center keeps that anchor
-   point fixed as --gtv-mini-tree-scale changes. Rendered at full size rather than clipped to a small
-   box — low opacity reads it as a background "shadow" so it doesn't compete for attention with
-   the chip or any real tree it happens to overlap (see the z-index on .gtv-wheel-radial-tree-anchor
-   above, which keeps real cardinal trees on top of these regardless). No grayscale here: a root's
-   color must stay the same whether it's shown as the cardinal tree or this filler preview.
-   pointer-events: none keeps it purely decorative; the chip button beneath still handles
-   selection. */
-.gtv-wheel-radial-mini-tree {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%) scale(var(--gtv-mini-tree-scale, 0.45));
-  transform-origin: bottom center;
-  pointer-events: none;
-  opacity: 0.55;
-  transition: opacity 150ms ease;
-}
-
-/* The mini tree's own SVG node markup has no class hook on its outer content besides these three
-   (see tree-renderer.ts: the card's shadow group, its border path, and the label's foreignObject
-   — all three already centered on their node's own (0,0) local origin, with no transform of their
-   own). Counter-rotating just these three, in place, keeps every node's card and label upright and
-   horizontal — per the design decision that only the tree's growth axis should follow the ring
-   angle, never an individual node's own content — while their shared ancestor <g class="node">
-   keeps carrying the (unrotated) translate(x, y) that lays the tree out along that leaning axis.
-   transform-box: fill-box pins the rotation's pivot to each element's own bounding box center
-   instead of the whole embedded SVG's viewport origin (view-box, the CSS default for SVG shapes),
-   which would otherwise swing every node around a shared point far outside itself. */
-.gtv-wheel-radial-mini-tree .gtv-card-shadow-group,
-.gtv-wheel-radial-mini-tree .gtv-node-border,
-.gtv-wheel-radial-mini-tree foreignObject {
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: rotate(calc(-1 * var(--gtv-chip-angle, 0deg)));
-}
-
-/* Labels stay hidden at rest so the shadow preview reads as a plain grey tree shape, not a wall
-   of tiny unreadable text at this scale — they only appear once hovered (see the hover rule
-   below), matching the same reveal-on-hover treatment as the chip name/toolbar. */
-.gtv-wheel-radial-mini-tree .gtv-node-label {
-  opacity: 0;
-  transition: opacity 150ms ease;
-}
-
-/* tree-renderer.ts sets stroke-width as an inline SVG style (CONNECTOR_WIDTH, 1.5), which beats
-   any non-!important stylesheet rule regardless of selector specificity — !important is the only
-   way to thin the branches for this preview-only state without threading a new prop through the
-   shared rendering pipeline just for a decorative shadow tree. */
-.gtv-wheel-radial-mini-tree .gtv-link {
-  stroke-width: 1px !important;
-  transition: stroke-width 150ms ease;
-}
-
-/* :hover on .gtv-wheel-slot bubbles from its descendants — including the chip button, which sits
-   in flow above this preview — even though the slot itself is a zero-size box, so hovering a
-   filler root's chip also brightens its own mini tree. */
-.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree {
-  opacity: 0.85;
-}
-
-.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree .gtv-node-label {
-  opacity: 1;
-}
-
-.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree .gtv-link {
-  stroke-width: 1.5px !important;
-}
-
-/* Hovering a filler's mini tree puts the wheel in "focus" mode: the 4 real cardinal trees grey
-   out so the hovered shadow preview reads as the thing being looked at, instead of competing with
-   fully-colored trees elsewhere on the ring. :has(.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree)
-   is only ever true while hovering a non-cardinal slot, since cardinal slots never render a mini
-   tree to match against. */
-.gtv-wheel-container--radial .gtv-wheel-stage:has(.gtv-wheel-slot:hover .gtv-wheel-radial-mini-tree)
-  .gtv-wheel-radial-tree-anchor {
-  opacity: 0.16;
-  filter: grayscale(1);
-}
-
 .gtv-wheel-container--radial .gtv-wheel-circle {
   top: 50%;
   left: 50%;
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
-}
-
-/* Marks just the outer edge of the developed cardinals' own pop wedges (`maxPopExtent`) — distinct
-   from .gtv-wheel-circle (the whole wheel's edge, e.g. chip clearance floor) since the pop region
-   can sit well inside it. Same border treatment as .gtv-wheel-circle so both boundaries read as
-   the same kind of trait. */
-.gtv-wheel-container--radial .gtv-wheel-pop-outer-circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
-  height: calc(var(--gtv-wheel-pop-outer-radius, 0px) * 2);
-  margin-left: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
-  margin-top: calc(var(--gtv-wheel-pop-outer-radius, 0px) * -1);
-  border-radius: 50%;
-  border: 1px solid #e4e4e7;
-  /* Tint ratio toward the outside page background (#f4f4f5): 0 = white, 1 = same grey as outside.
-     .gtv-wheel-middle-circle renders on top with a solid white fill, so this grey only shows
-     through the annulus between the two circles. Tune the ratio to taste. */
-  --gtv-wheel-annulus-tint-ratio: 0.4;
-  background: color-mix(in srgb, #f4f4f5 calc(var(--gtv-wheel-annulus-tint-ratio) * 100%), #ffffff);
-  pointer-events: none;
 }
 
 .gtv-wheel-container--radial .gtv-wheel-middle-circle {

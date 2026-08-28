@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   GenreTree,
   GenreTreeWheel,
@@ -196,25 +196,11 @@ const LARGE_ROOTS: LargeRootDef[] = [
     ],
   },
   {
+    // Deliberately just 2 subgenres (vs. 16-32 for every other root) so its ring sector renders
+    // visibly narrower than its neighbors, demonstrating computeRadialLayout's proportional
+    // (by node count) spacing.
     name: "Classical",
-    subgenres: [
-      "Baroque",
-      "Renaissance",
-      "Medieval",
-      "Classical Period",
-      "Romantic",
-      "Modernist",
-      "Minimalism",
-      "Opera",
-      "Chamber Music",
-      "Symphonic",
-      "Choral",
-      "Concerto",
-      "Sonata",
-      "Impressionism",
-      "Neoclassicism",
-      "Avant-Garde Classical",
-    ],
+    subgenres: ["Baroque", "Romantic"],
   },
   {
     name: "Folk",
@@ -305,14 +291,7 @@ const LARGE_ROOT_BRANCH_COUNTS = [0, 2, 4, 1, 3, 0, 5, 2];
 // ("core") spine — Classical is deliberately omitted so the pop-core wheel demo shows a root
 // with no pop subtree, per the feature's "pop is optional" requirement.
 const POP_BRANCHES: Record<string, string[]> = {
-  Rock: [
-    "Pop Rock",
-    "Soft Rock Radio",
-    "Adult Contemporary Rock",
-    "Arena Rock Radio",
-    "Power Pop Rock",
-    "Yacht Rock Revival",
-  ],
+  Rock: ["Pop Rock", "Soft Rock Radio", "Adult Contemporary Rock"],
   Electronic: ["Pop EDM", "Radio Trance", "Commercial Dance"],
   Jazz: ["Smooth Jazz Pop", "Jazz Standards", "Easy Listening Jazz"],
   "Hip-Hop": ["Pop Rap", "Radio Rap", "Crossover Hip Hop", "Party Rap"],
@@ -334,7 +313,11 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
 
   const depthOf = new Map<string, number>([[rootId, 0]]);
   const childCountOf = new Map<string, number>([[rootId, 0]]);
-  const queue: string[] = [rootId];
+  // Seeded empty, not [rootId]: the root's one direct (core) child comes from the spine loop
+  // below, which enqueues it itself. Seeding rootId here would let the breadth-first
+  // remaining-subgenre loop re-pick the root as a parent and attach a second, unlabeled direct
+  // child — splitRootGroupBySide then throws on >1 non-pop direct child.
+  const queue: string[] = [];
 
   let spineTail = rootId;
   for (let d = 0; d < targetDepth; d++) {
@@ -513,6 +496,25 @@ export function App() {
 
   const groups = groupNodesByRoot(nodes);
 
+  // GenreTreeWheelRadial (plain, no pop/core center node) has no special handling for the "pop"
+  // fixture root below — it's only valid input for GenreTreeWheelRadialPopCore, where it's
+  // required and excluded from the ring. Strip its whole subtree here so the plain radial tab
+  // doesn't choke on it via splitRootGroupBySide.
+  const plainRadialWheelNodes = useMemo(() => {
+    const excludedIds = new Set<string>(["pop"]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const node of wheelNodes) {
+        if (node.parentId && excludedIds.has(node.parentId) && !excludedIds.has(node.id)) {
+          excludedIds.add(node.id);
+          changed = true;
+        }
+      }
+    }
+    return wheelNodes.filter((node) => !excludedIds.has(node.id));
+  }, [wheelNodes]);
+
   const playCallbacks = {
     playingNodeId,
     playState,
@@ -615,7 +617,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadial
-            nodes={wheelNodes}
+            nodes={plainRadialWheelNodes}
             {...wheelCallbacks}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-radial selected root ${rootId}`)}

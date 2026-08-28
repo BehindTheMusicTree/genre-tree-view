@@ -5,6 +5,48 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-29
+
+### Fixed
+
+- `GenreTree`'s "fit to frame" no longer clips content for a tree larger than its (explicitly
+  sized) ancestor: the pan/zoom viewport div no longer floors its own `minWidth`/`minHeight` at
+  the tree's unscaled size, which used to grow it past a smaller ancestor and make fit-to-frame
+  measure the wrong (inflated) viewport.
+- Manual zoom-out (wheel/pinch/button) can now always reach at least as far out as "fit to frame"
+  computes for the current content, instead of bottoming out at the static `ZOOM_MIN_SCALE` floor
+  while "fit to frame" jumps straight past it for large trees.
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now confine each root's core/pop wedge
+  to that root's actual bisected angular sector (capped at 80°) instead of always using the full
+  80° span, preventing a developed subtree from overflowing into a neighboring root's sector when
+  more than four or five roots share a ring.
+- `GenreTreeWheelRadial` no longer crashes with a `d3.stratify()` "multiple roots" error (and
+  renders blank) when a root has both core-side and pop-side children — it now splits the two
+  sides before building the core hierarchy, matching `GenreTreeWheelRadialPopCore`.
+
+### Changed
+
+- `GenreTreeWheelRadialPopCore` now marks its pop/core boundary with a single circle
+  (`.gtv-wheel-circle`) instead of two; the region inside it is lightened with a white overlay
+  (`--gtv-wheel-inner-tint-ratio`, default `0.55`) to distinguish it from the core region outside.
+
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now lay out each cardinal's outward
+  "core" branch with a polar layout (`core-radial-layout.ts`) confined to an 80° wedge, rendered
+  with straight-line links via the same node/link primitives as the in-circle pop branch, instead
+  of mounting a cartesian `<GenreTree>` subtree. The wheel's circle radius now grows to fit
+  whichever developed branch (core or pop) reaches deepest.
+
+### Added
+
+- All four wheel renderers (`GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+  `GenreTreeWheelRadialPopCore`) now draw a thin radial divider line at the bisector between every
+  pair of angularly-adjacent roots, and tint the angular sector behind each root's own chip with
+  that root's genre color (15% opacity) — both extending to the container's edge.
+- Every node of a wheel subtree (not just its hidden root) now renders filled with that root's own
+  genre color and bold white label text, reading as a continuation of the root chip instead of a
+  visual gap into plain cards. In `GenreTreeWheelRadialPopCore`, this applies to the "core" branch
+  only — the in-circle "pop" branch keeps its plain styling.
+
 ## [1.0.4] - 2026-08-27
 
 ### Fixed

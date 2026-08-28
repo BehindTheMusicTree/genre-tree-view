@@ -91,6 +91,6 @@ export interface GenreTreeProps {
    * its wheel together instead of giving the tree its own independent one. */
   interactive?: boolean;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
-   * (no change). Used by GenreTreeWheelRadial to spread out its filler-root mini-tree previews. */
+   * (no change). */
   depthSpacingScale?: number;
 }

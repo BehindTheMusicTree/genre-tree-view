@@ -20,6 +20,12 @@ describe("clampZoomScale", () => {
   it("clamps above the maximum", () => {
     expect(clampZoomScale(ZOOM_MAX_SCALE + 1)).toBe(ZOOM_MAX_SCALE);
   });
+
+  it("clamps below a caller-supplied minScale instead of ZOOM_MIN_SCALE", () => {
+    const minScale = ZOOM_MIN_SCALE / 10;
+    expect(clampZoomScale(minScale / 2, minScale)).toBe(minScale);
+    expect(clampZoomScale(ZOOM_MIN_SCALE / 2, minScale)).toBe(ZOOM_MIN_SCALE / 2);
+  });
 });
 
 describe("computeZoomScale", () => {
@@ -38,6 +44,11 @@ describe("computeZoomScale", () => {
   it("clamps the result to the configured bounds", () => {
     expect(computeZoomScale(ZOOM_MAX_SCALE, -10000)).toBe(ZOOM_MAX_SCALE);
     expect(computeZoomScale(ZOOM_MIN_SCALE, 10000)).toBe(ZOOM_MIN_SCALE);
+  });
+
+  it("clamps below a caller-supplied minScale instead of ZOOM_MIN_SCALE", () => {
+    const minScale = ZOOM_MIN_SCALE / 10;
+    expect(computeZoomScale(ZOOM_MIN_SCALE, 10000, minScale)).toBe(minScale);
   });
 });
 
@@ -58,6 +69,11 @@ describe("computeZoomScaleForButton", () => {
   it("clamps the result to the configured bounds", () => {
     expect(computeZoomScaleForButton(ZOOM_MAX_SCALE, 1)).toBe(ZOOM_MAX_SCALE);
     expect(computeZoomScaleForButton(ZOOM_MIN_SCALE, -1)).toBe(ZOOM_MIN_SCALE);
+  });
+
+  it("clamps below a caller-supplied minScale instead of ZOOM_MIN_SCALE", () => {
+    const minScale = ZOOM_MIN_SCALE / 10;
+    expect(computeZoomScaleForButton(minScale / 100, -1, minScale)).toBe(minScale);
   });
 });
 

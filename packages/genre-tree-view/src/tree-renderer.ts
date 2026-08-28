@@ -22,6 +22,7 @@ import {
   ELEVATION,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
+  ACCENT_TEXT_COLOR,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
   calculateNodeDimensions,
@@ -312,6 +313,11 @@ export function renderTree(
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
 
+  // With the actual root hidden, the whole visible subtree grows directly out of the root chip —
+  // styling every node the same way (solid root color, bold white label) reads as a continuation
+  // of that chip instead of a visual gap into plain cards.
+  const isSubtreeCore = (d: D3Node) => hideRoot && d.depth >= 1;
+
   // The hidden root still contributes its (x, y) as the anchor endpoint for appendPaths above —
   // only its own card/toolbar is skipped here, not its position.
   const visibleDescendants = hideRoot
@@ -333,7 +339,7 @@ export function renderTree(
     })
     // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
     // label beneath it with the card's own fill instead of a hardcoded color.
-    .style("--gtv-node-fill", tintSurface(rootColor));
+    .style("--gtv-node-fill", (d) => (isSubtreeCore(d) ? rootColor : tintSurface(rootColor)));
 
   // Invisible hit-region spanning the node body, appended before any visible content so painted
   // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap
@@ -375,7 +381,7 @@ export function renderTree(
         bl: CORNER_RADIUS,
       });
     })
-    .attr("fill", tintSurface(rootColor));
+    .attr("fill", (d) => (isSubtreeCore(d) ? rootColor : tintSurface(rootColor)));
 
   nodes
     .append("path")
@@ -400,8 +406,8 @@ export function renderTree(
     .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
     .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
     .html((d) => {
-      const rootClass = d.depth === 0 ? " gtv-node-label--root" : "";
-      const color = isForbidden(d) ? TEXT_MUTED_COLOR : TEXT_COLOR;
+      const rootClass = d.depth === 0 || isSubtreeCore(d) ? " gtv-node-label--root" : "";
+      const color = isForbidden(d) ? TEXT_MUTED_COLOR : isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })

@@ -1,7 +1,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
-import { ZOOM_FIT_PADDING } from "../constants";
+import { ZOOM_FIT_PADDING, ZOOM_MIN_SCALE } from "../constants";
+import { computeFitScale } from "../zoom-pan";
 
 function nullRef() {
   return { current: null };
@@ -73,6 +74,82 @@ describe("usePanZoom", () => {
     expect(result.current.zoomScale).toBe(1);
     expect(result.current.panX).toBe(0);
     expect(result.current.panY).toBe(0);
+    document.body.removeChild(viewport);
+    document.body.removeChild(content);
+  });
+
+  it("fitToFrame's computed transform contains the full measured content bounding box, uncropped", () => {
+    const viewport = document.createElement("div");
+    const content = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(content);
+    // Content (3000x4000) is far larger than the viewport (1200x750), mirroring a tall/wide tree
+    // rendered inside a fixed-size frame smaller than its own unscaled extent.
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    content.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.fitToFrame([content]);
+    });
+
+    const { panX, panY, zoomScale } = result.current;
+    const screenLeft = panX;
+    const screenTop = panY;
+    const screenRight = panX + 3000 * zoomScale;
+    const screenBottom = panY + 4000 * zoomScale;
+
+    // Full content bounding box must land entirely inside the viewport — no node/edge clipped.
+    expect(screenLeft).toBeGreaterThanOrEqual(0);
+    expect(screenTop).toBeGreaterThanOrEqual(0);
+    expect(screenRight).toBeLessThanOrEqual(1200);
+    expect(screenBottom).toBeLessThanOrEqual(750);
+
+    // Height is the binding constraint here, so the fitted content should sit right up against
+    // ZOOM_FIT_PADDING vertically (not shrunk far more than necessary, which would also indicate
+    // a wrong viewport measurement).
+    expect(screenTop).toBeCloseTo(ZOOM_FIT_PADDING, 0);
+    expect(750 - screenBottom).toBeCloseTo(ZOOM_FIT_PADDING, 0);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(content);
+  });
+
+  it("relaxes manual zoom-out's floor to match a fitToFrame scale below ZOOM_MIN_SCALE", () => {
+    const viewport = document.createElement("div");
+    const content = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(content);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 }) as DOMRect;
+    // Content large enough that computeFitScale must go well below ZOOM_MIN_SCALE to fit it.
+    content.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 100000, bottom: 100000, width: 100000, height: 100000 }) as DOMRect;
+    const expectedFitScale = computeFitScale(100000, 100000, 100, 100, ZOOM_FIT_PADDING);
+    expect(expectedFitScale).toBeLessThan(ZOOM_MIN_SCALE);
+
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.fitToFrame([content]);
+    });
+    expect(result.current.zoomScale).toBeCloseTo(expectedFitScale);
+
+    // Zoom back in above the static floor, then confirm manual zoom-out can walk back down past
+    // ZOOM_MIN_SCALE instead of bottoming out there — i.e. it can reach at least as far out as
+    // fitToFrame already did.
+    for (let i = 0; i < 100 && result.current.zoomScale <= ZOOM_MIN_SCALE; i++) {
+      act(() => result.current.zoomIn());
+    }
+    expect(result.current.zoomScale).toBeGreaterThan(ZOOM_MIN_SCALE);
+
+    for (let i = 0; i < 200 && result.current.canZoomOut; i++) {
+      act(() => result.current.zoomOut());
+    }
+    expect(result.current.zoomScale).toBeLessThan(ZOOM_MIN_SCALE);
+
     document.body.removeChild(viewport);
     document.body.removeChild(content);
   });
