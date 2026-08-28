@@ -117,12 +117,23 @@ describe("GenreTreeWheelRadialPopCore", () => {
   it("develops the cardinal roots' core branches and renders their pop branch inside the wheel's own circle", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
-    expect(rightAnchor.querySelector("#group-a-core-child")).toBeTruthy();
-    expect(rightAnchor.querySelector("#group-a-pop-child")).toBeFalsy();
+    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
+    expect(rightSector.querySelector("#group-a-core-child")).toBeTruthy();
+    expect(rightSector.querySelector("#group-a-pop-child")).toBeFalsy();
 
     expect(container.querySelector(".gtv-wheel-pop-sector--right")).toBeTruthy();
     expect(container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop")).toBeTruthy();
+  });
+
+  it("skips a cardinal root that has no children, mounting no core sector for it", () => {
+    const nodesWithChildlessRoot: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChildlessRoot} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(3);
+    expect(container.querySelector("#group-root-d")).toBeFalsy();
   });
 
   it("omits the pop sector for a cardinal root that has no pop branch", () => {
@@ -218,8 +229,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     rerender(<GenreTreeWheelRadialPopCore nodes={withoutJazz} />);
 
     expect(chipFor(container, "Jazz")).toBeUndefined();
-    const rightAnchor = container.querySelector(".gtv-wheel-radial-tree-anchor--right") as HTMLElement;
-    expect(rightAnchor.querySelector("#group-a-core-child")).toBeTruthy();
+    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
+    expect(rightSector.querySelector("#group-a-core-child")).toBeTruthy();
   });
 
   it("adds the reparent-target overlay to eligible nodes in the pop sector and forwards the selection", () => {
@@ -237,6 +248,54 @@ describe("GenreTreeWheelRadialPopCore", () => {
     fireEvent.click(overlayTarget);
 
     expect(onReparent).toHaveBeenCalledWith("a-pop-child", "a-pop");
+  });
+
+  it("adds the reparent-target overlay to eligible nodes in a core sector and forwards the selection", () => {
+    const onReparent = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore
+        nodes={NODES_WITH_POP}
+        reparentingNodeId="a-core-child"
+        onReparent={onReparent}
+      />,
+    );
+
+    const coreGroup = container.querySelector(".gtv-wheel-core-sector--right #group-a-core") as SVGGElement;
+    fireEvent.mouseEnter(coreGroup);
+    const overlayTarget = container.querySelector(
+      "#select-as-new-parent-group-a-core foreignObject",
+    ) as SVGForeignObjectElement;
+    expect(overlayTarget).toBeTruthy();
+    fireEvent.click(overlayTarget);
+
+    expect(onReparent).toHaveBeenCalledWith("a-core-child", "a-core");
+  });
+
+  it("adds the reparent-target overlay to eligible nodes in the expanded center subtree and forwards the selection", () => {
+    const onReparent = vi.fn();
+    const nodesWithCenterChildren: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-grandchild", parentId: "pop-child", name: "Top 40", itemCount: 1 },
+    ];
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore
+        nodes={nodesWithCenterChildren}
+        reparentingNodeId="pop-grandchild"
+        onReparent={onReparent}
+      />,
+    );
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+
+    const centerChildGroup = container.querySelector(".gtv-wheel-center-sector #group-pop-child") as SVGGElement;
+    fireEvent.mouseEnter(centerChildGroup);
+    const overlayTarget = container.querySelector(
+      "#select-as-new-parent-group-pop-child foreignObject",
+    ) as SVGForeignObjectElement;
+    expect(overlayTarget).toBeTruthy();
+    fireEvent.click(overlayTarget);
+
+    expect(onReparent).toHaveBeenCalledWith("pop-grandchild", "pop-child");
   });
 
   it("zoom-in button and fit-to-frame button both rescale the shared transform", () => {
@@ -323,10 +382,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector("#select-as-new-parent-group-a-pop")).toBeFalsy();
   });
 
-  it("renders only the center chip and mounts no anchors when nodes only contains the required center root", () => {
+  it("renders only the center chip and mounts no core sectors when nodes only contains the required center root", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={[CENTER_NODE]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(1);
     expect(container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip")).toBeTruthy();
-    expect(container.querySelectorAll(".gtv-wheel-radial-tree-anchor").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(0);
   });
 });

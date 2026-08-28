@@ -10,6 +10,7 @@ import {
 import { openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import {
   CORNER_RADIUS,
+  ItemCountRange,
   MAX_NODE_WIDTH,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_BORDER_WIDTH,
@@ -18,7 +19,6 @@ import {
   TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
-  getItemCountRange,
   tintSurface,
 } from "./constants";
 
@@ -28,11 +28,24 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 // Angular width of the wedge a pop subtree fans out into, centered on its cardinal's direction —
 // narrower than the cardinal's own full 90deg quadrant so it never touches the neighboring
 // quadrant's wedge, matching the gutter every other radial-wheel element keeps from its neighbors.
-const POP_WEDGE_SPAN_DEGREES = 80;
+export const POP_WEDGE_SPAN_DEGREES = 80;
 
 // Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
 // never sits flush against the wheel's own circle edge.
 const POP_SUBTREE_OUTER_MARGIN = 24;
+
+// A pop hierarchy (per buildPopHierarchy/splitRootGroupBySide) is rooted at the pop child, which
+// is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
+// regardless of which cardinal it belongs to.
+const POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH = 1;
+
+/** The radius (px, from the wheel's true center) for a node at `depth` steps below the ring roots'
+ * own circle (`coreRootCircleRadius`) — the single formula every radial depth (ring roots, their
+ * pop branches, and the center "Mainstream Pop" subtree) shares, so that any two nodes at the same
+ * absolute depth always land on the same circle regardless of which branch/subtree they belong to. */
+export function getRadialDepthRadius(depth: number, coreRootCircleRadius: number, depthSpacing: number): number {
+  return coreRootCircleRadius + depth * depthSpacing;
+}
 
 /** Builds the pop subtree's hierarchy, rooted at the pop child (root not included) — thin wrapper
  * over buildTreeHierarchyStructure so callers of this module don't need to import NodeHelper
@@ -49,17 +62,26 @@ export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTre
   return buildTreeHierarchyStructure(d3Lib, normalized);
 }
 
-/** The outer radius (px, from the wheel's center) a pop subtree needs to render without
- * overlapping the wheel's own edge — driven by its deepest node's ring plus that node's own
- * half-width and a fixed outer margin. Used to grow the wheel's circle to fit whichever developed
- * cardinal's pop subtree reaches furthest.
+/** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without
+ * overlapping the wheel's own edge — driven by its deepest node's ring (absolute depth
+ * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus that node's own half-width and a fixed outer
+ * margin. Used to grow the wheel's circle to fit whichever developed cardinal's pop subtree
+ * reaches furthest.
  *
- * `innerRadiusFloor` shifts the whole subtree outward by that amount (mirroring
- * `computePopRadialLayout`'s own offset) so the returned extent still reflects where the subtree's
- * outermost node actually lands once it's been pushed clear of the middle circle. */
-export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, innerRadiusFloor = 0): number {
-  const maxDepth = hierarchy.height;
-  return innerRadiusFloor + (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
+ * `coreRootCircleRadius` shifts the whole subtree outward by that amount, mirroring
+ * `computePopRadialLayout`'s own base radius — pass 0 to get the extent as a delta past the ring
+ * roots' own circle (e.g. when that circle's own size is still being determined from this delta),
+ * or the wheel's actual `coreRootCircleRadius` to get the subtree's true outer radius. */
+export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircleRadius = 0): number {
+  return (
+    getRadialDepthRadius(
+      POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + hierarchy.height,
+      coreRootCircleRadius,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    ) +
+    MAX_NODE_WIDTH / 2 +
+    POP_SUBTREE_OUTER_MARGIN
+  );
 }
 
 /**
@@ -71,27 +93,19 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, innerRadiusFl
  *
  * Angle spread across siblings/cousins uses d3's own tidy-tree balancing (`d3.tree()`), the same
  * technique the cartesian renderers rely on, just fed a 1-D angular size instead of a 2-D pixel
- * one. Radius is NOT taken from that layout's own y — it's fixed per depth, counting down from the
- * subtree's own deepest ring (`(height + 1) * POP_TREE_DEPTH_RADIAL_SPACING`) as depth increases,
- * so the pop child (depth 0) lands right at that outer ring — next to the cardinal root chip it
- * branches from — and each generation below it steps inward, toward the wheel's own center.
- *
- * `innerRadiusFloor` shifts the entire subtree outward so its deepest node never crosses into the
- * center Mainstream Pop node's own circle — every generation keeps its normal
- * `POP_TREE_DEPTH_RADIAL_SPACING` gap from its neighbors, just measured from that floor instead of
- * from the wheel's true center. Callers must grow the wheel radius to match (see
- * `calculatePopSubtreeRadialExtent`'s own `innerRadiusFloor` param) so the shifted-out subtree still
- * fits inside the wheel's edge.
- */
+ * one. Radius is NOT taken from that layout's own y — every node's radius descends from
+ * `coreRootCircleRadius` by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step (the mirror image of
+ * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands right on the ring roots'
+ * own circle, next to the cardinal root chip it branches from, and each deeper generation steps
+ * further inward, toward the wheel's own center. */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   wedgeCenterAngleDegrees: number,
-  innerRadiusFloor = 0,
+  coreRootCircleRadius: number,
 ): D3Node {
   const wedgeSpanRad = (POP_WEDGE_SPAN_DEGREES * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
-  const maxDepth = hierarchy.height;
 
   const treeLayout = d3Lib
     .tree<GenreTreeNode>()
@@ -101,7 +115,7 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = innerRadiusFloor + (maxDepth - d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING;
+    const radius = getRadialDepthRadius(-d.depth, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -113,16 +127,18 @@ export function computePopRadialLayout(
  * Lays out the center "Mainstream Pop" node's own subtree in polar coordinates, full-circle
  * (unlike `computePopRadialLayout`'s 80deg wedge — the center node has no single cardinal
  * direction to anchor to). `hierarchy` must be rooted at the center node itself: depth 0 (the
- * center node) is pinned to the wheel's true origin and excluded from angular layout; depth 1
- * (its direct children) land on the `mainstreamPopRootCircleRadius` ring — the "mainstream pop
- * root circle" — spread around the full circle proportional to each child's own subtree size
- * (d3.tree's default separation, unlike the wedge layout's forced-equal `.separation(() => 1)`);
- * each deeper generation steps outward by `depthSpacing`.
+ * center node) is pinned to the wheel's true origin and excluded from angular layout; depth 1 (its
+ * direct children) land exactly one `depthSpacing` step past `coreRootCircleRadius` — the same
+ * circle every cardinal's pop hierarchy's absolute-depth-1 node lands on too, so the center
+ * subtree's rings coincide with the ring roots' own absolute depth circles — spread around the
+ * full circle proportional to each child's own subtree size (d3.tree's default separation, unlike
+ * the wedge layout's forced-equal `.separation(() => 1)`); each deeper generation steps outward by
+ * `depthSpacing`.
  */
 export function computeCenterRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
-  mainstreamPopRootCircleRadius: number,
+  coreRootCircleRadius: number,
   depthSpacing: number,
 ): D3Node {
   const treeLayout = d3Lib.tree<GenreTreeNode>().size([2 * Math.PI, 1]);
@@ -135,7 +151,7 @@ export function computeCenterRadialLayout(
       return;
     }
     const angleRad = d.x!;
-    const radius = mainstreamPopRootCircleRadius + (d.depth - 1) * depthSpacing;
+    const radius = getRadialDepthRadius(d.depth, coreRootCircleRadius, depthSpacing);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -150,12 +166,10 @@ export function computeCenterRadialLayout(
  * 1`). */
 export function calculateMainstreamPopOuterCircleRadius(
   hierarchy: D3Node,
-  mainstreamPopRootCircleRadius: number,
+  coreRootCircleRadius: number,
   depthSpacing: number,
 ): number {
-  return (
-    mainstreamPopRootCircleRadius + (hierarchy.height - 1) * depthSpacing + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN
-  );
+  return getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
 }
 
 export interface RenderPopSubtreeCallbacks {
@@ -188,10 +202,10 @@ export function renderPopSubtree(
   reparentingNodeId: string | null,
   reparentForbiddenIds: string[],
   callbacks: RenderPopSubtreeCallbacks,
+  itemCountRange: ItemCountRange,
   skipRootNode = false,
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
-  const itemCountRange = getItemCountRange(hierarchy.descendants().map((d) => d.data));
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.

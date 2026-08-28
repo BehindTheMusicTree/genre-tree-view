@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now lay out each cardinal's outward
+  "core" branch with a polar layout (`core-radial-layout.ts`) confined to an 80° wedge, rendered
+  with straight-line links via the same node/link primitives as the in-circle pop branch, instead
+  of mounting a cartesian `<GenreTree>` subtree. The wheel's circle radius now grows to fit
+  whichever developed branch (core or pop) reaches deepest.
+
 ### Added
 
 - All four wheel renderers (`GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,

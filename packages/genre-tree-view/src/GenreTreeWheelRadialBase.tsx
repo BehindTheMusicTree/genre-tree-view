@@ -5,9 +5,10 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { GenreTree } from "./GenreTree";
-import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
+import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
+import { POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
 import {
   bisectAngles,
   buildSectorClipPathPolygon,
@@ -17,8 +18,7 @@ import {
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
-import { queryTreeContentElements } from "./zoom-pan";
-import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
+import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
   calculateNodeFontSize,
@@ -27,6 +27,7 @@ import {
   hexToRgba,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   WHEEL_MINI_TREE_DEPTH_SPACING_SCALE,
   WHEEL_MINI_TREE_SCALE,
@@ -75,23 +76,11 @@ const CARDINAL_DIRECTION_BY_ANGLE: Record<number, CardinalDirection> = {
   270: "left",
 };
 
-// Each cardinal grows its subtree straight away from the wheel's center, never at an angle, so
-// labels always stay horizontal (see the plan's confirmed design decision #7).
-const CARDINAL_ORIENTATION: Record<CardinalDirection, TreeOrientation> = {
-  top: "vertical",
-  right: "horizontal-anchored",
-  bottom: "vertical-flipped",
-  left: "horizontal-anchored-flipped",
-};
-
-// Which side of each anchor's box the selected root's own chip half-extent clearance is applied
-// to (see .gtv-wheel-radial-tree-anchor--* in styles.css) — the side the box is pushed further
-// away from the wheel's center along.
-const CARDINAL_OFFSET_PROP: Record<CardinalDirection, "top" | "right" | "bottom" | "left"> = {
-  top: "bottom",
-  right: "left",
-  bottom: "top",
-  left: "right",
+const CARDINAL_ANGLE_BY_DIRECTION: Record<CardinalDirection, number> = {
+  top: 0,
+  right: 90,
+  bottom: 180,
+  left: 270,
 };
 
 /**
@@ -104,6 +93,10 @@ const CARDINAL_OFFSET_PROP: Record<CardinalDirection, "top" | "right" | "bottom"
  * LANDING_ANGLE)` each render, then unwrapped per chip (see `continuousAngleByRootId`) so each
  * chip's own CSS transition always takes its own shortest path instead of snapping through a
  * 360deg/0deg wraparound.
+ *
+ * Each developed cardinal's own subtree fans outward from the wheel's circle in polar
+ * coordinates (see `computeCoreRadialLayout`), within an 80deg wedge centered on the cardinal's
+ * angle — the same wedge geometry and shared `<svg>` layer used by the pop/core wheel.
  */
 export function WheelRadialCore({
   nodes,
@@ -127,7 +120,7 @@ export function WheelRadialCore({
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
   const wheelCircleRef = useRef<HTMLDivElement>(null);
-  const anchorRefs = useRef<Partial<Record<CardinalDirection, HTMLDivElement | null>>>({});
+  const coreSvgRef = useRef<SVGSVGElement>(null);
 
   // Falls back to the first root without writing state back when the explicitly selected root
   // disappears from `nodes` — avoids a setState-in-effect cascading render for derived state.
@@ -161,11 +154,6 @@ export function WheelRadialCore({
   }
   const continuousAngleByRootId = angleMemo.angles;
 
-  const wheelRadius = useMemo(
-    () => calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS),
-    [layout],
-  );
-
   // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
   // against) reflects the full subtree total instead, mirroring the tree's own rollup.
   const aggregatedRootItemCountById = useMemo(
@@ -182,6 +170,58 @@ export function WheelRadialCore({
     [groups, aggregatedRootItemCountById],
   );
 
+  // Node cards scale against the whole tree's item counts, not just their own subtree's — a
+  // shallow root's few nodes can have a narrow itemCount spread that would otherwise get stretched
+  // across the full size range and render wildly inconsistent card sizes next to deeper siblings.
+  const wheelItemCountRange = useMemo(() => getItemCountRange(nodes), [nodes]);
+
+  const cardinalByDirection = useMemo(() => {
+    const map: Partial<Record<CardinalDirection, GenreTreeRootGroup>> = {};
+    layout.forEach((slot, index) => {
+      if (slot.isCardinal) {
+        map[CARDINAL_DIRECTION_BY_ANGLE[slot.angle]] = groups[index];
+      }
+    });
+    return map;
+  }, [layout, groups]);
+
+  // Only developed cardinals whose root actually has children get a hierarchy built — a
+  // childless root has nothing to fan outward.
+  const coreHierarchyByDirection = useMemo(() => {
+    const map = new Map<CardinalDirection, { hierarchy: d3.HierarchyNode<GenreTreeNode>; rootId: string }>();
+    (Object.keys(cardinalByDirection) as CardinalDirection[]).forEach((direction) => {
+      const group = cardinalByDirection[direction];
+      if (!group) return;
+      const coreChildNodes = group.nodes.filter((node) => node.id !== group.root.id);
+      if (coreChildNodes.length === 0) return;
+      map.set(direction, { hierarchy: buildCoreHierarchy(d3, coreChildNodes), rootId: group.root.id });
+    });
+    return map;
+  }, [cardinalByDirection]);
+
+  // Floor every ring root sits on, driven purely by chip clearance — the base every cardinal's
+  // core wedge measures outward from, before the deepest developed subtree's extent is folded in.
+  const chipClearanceFloor = useMemo(
+    () => calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS),
+    [layout],
+  );
+
+  // How far past the ring roots' own circle the deepest developed cardinal's subtree reaches —
+  // computed as a delta (base radius 0) since the actual base (wheelRadius) isn't known yet;
+  // folded into wheelRadius below, then re-applied at the real base for rendering.
+  const maxCoreExtentDelta = useMemo(() => {
+    let extent = 0;
+    coreHierarchyByDirection.forEach(({ hierarchy }) => {
+      extent = Math.max(extent, calculateCoreSubtreeRadialExtent(hierarchy, POP_TREE_DEPTH_RADIAL_SPACING, 0));
+    });
+    return extent;
+  }, [coreHierarchyByDirection]);
+
+  const wheelRadius = useMemo(
+    () => Math.max(chipClearanceFloor, chipClearanceFloor + maxCoreExtentDelta),
+    [chipClearanceFloor, maxCoreExtentDelta],
+  );
+
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
   const onRootSelectRef = useRef(onRootSelect);
@@ -193,30 +233,84 @@ export function WheelRadialCore({
     if (effectiveTopRootId) onRootSelectRef.current?.(effectiveTopRootId);
   }, [effectiveTopRootId]);
 
+  useEffect(() => {
+    if (!coreSvgRef.current) return;
+
+    const svg = d3.select(coreSvgRef.current);
+    svg.selectAll("*").remove();
+    const originGroup = svg.append("g").attr("transform", `translate(${wheelRadius}, ${wheelRadius})`);
+
+    coreHierarchyByDirection.forEach(({ hierarchy, rootId }, direction) => {
+      const laidOut = computeCoreRadialLayout(
+        d3,
+        hierarchy,
+        CARDINAL_ANGLE_BY_DIRECTION[direction],
+        POP_WEDGE_SPAN_DEGREES,
+        wheelRadius,
+        POP_TREE_DEPTH_RADIAL_SPACING,
+      );
+      const reparentForbiddenIds = reparentingNodeId
+        ? (laidOut
+            .descendants()
+            .find((d) => d.data.id === reparentingNodeId)
+            ?.descendants()
+            .map((d) => d.data.id) ?? [])
+        : [];
+
+      const sectorGroup = originGroup
+        .append("g")
+        .attr("class", `gtv-wheel-core-sector gtv-wheel-core-sector--${direction}`);
+
+      renderPopSubtree(
+        d3,
+        sectorGroup,
+        laidOut,
+        getGenreTreeColor(rootId),
+        reparentingNodeId,
+        reparentForbiddenIds,
+        {
+          onPlayPause,
+          onAddChild,
+          onRenameRequest,
+          onDeleteRequest,
+          onReparentRequest,
+          onReparentTargetSelect: (newParentId) => {
+            if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
+          },
+          additionalActions,
+          playingNodeId,
+          playState,
+        },
+        wheelItemCountRange,
+      );
+    });
+  }, [
+    coreHierarchyByDirection,
+    wheelRadius,
+    reparentingNodeId,
+    playingNodeId,
+    playState,
+    onPlayPause,
+    onAddChild,
+    onRenameRequest,
+    onDeleteRequest,
+    onReparentRequest,
+    onReparent,
+    additionalActions,
+    wheelItemCountRange,
+  ]);
+
   // Starts the view fit to the wheel + rendered subtrees instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once anchored content has actually rendered, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections.
   const hasInitialFitRef = useRef(false);
   useEffect(() => {
     if (hasInitialFitRef.current) return;
-    const elements = [
-      wheelCircleRef.current,
-      ...Object.values(anchorRefs.current).flatMap((el) => queryTreeContentElements(el)),
-    ];
+    const elements = [wheelCircleRef.current, coreSvgRef.current];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements);
   });
-
-  const cardinalByDirection = useMemo(() => {
-    const map: Partial<Record<CardinalDirection, GenreTreeRootGroup>> = {};
-    layout.forEach((slot, index) => {
-      if (slot.isCardinal) {
-        map[CARDINAL_DIRECTION_BY_ANGLE[slot.angle]] = groups[index];
-      }
-    });
-    return map;
-  }, [layout, groups]);
 
   const handleChipClick = (rootId: string) => {
     setTopRootId(rootId);
@@ -281,61 +375,9 @@ export function WheelRadialCore({
         }}
       >
         <div className="gtv-wheel-stage">
-          {(["top", "right", "bottom", "left"] as const).map((direction) => {
-            const group = cardinalByDirection[direction];
-            if (!group) return null;
-
-            // See calculateRootAnchorClearance's doc comment (and GenreTreeWheelBase for the
-            // equivalent bottom/left-hugging wheel computation) for why the anchor's clearance
-            // from the wheel's center needs both the hidden root's own local half-extent and the
-            // visible ring chip's cross-root display half-extent, not just one or the other.
-            const chipHalfExtent = calculateRootAnchorClearance(
-              d3,
-              group.nodes,
-              aggregatedRootItemCountById.get(group.root.id)!,
-              rootItemCountRange,
-              direction === "top" || direction === "bottom" ? "HEIGHT" : "WIDTH",
-            );
-            const secondary = direction !== "right";
-
-            return (
-              <div
-                key={direction}
-                ref={(el) => {
-                  anchorRefs.current[direction] = el;
-                }}
-                className={[
-                  "gtv-wheel-radial-tree-anchor",
-                  `gtv-wheel-radial-tree-anchor--${direction}`,
-                  secondary && "gtv-wheel-radial-tree-anchor--secondary",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                style={{ [CARDINAL_OFFSET_PROP[direction]]: wheelRadius + chipHalfExtent } as React.CSSProperties}
-              >
-                <GenreTree
-                  key={group.root.id}
-                  nodes={group.nodes}
-                  orientation={CARDINAL_ORIENTATION[direction]}
-                  hideRoot
-                  interactive={false}
-                  rootColor={getGenreTreeColor(group.root.id)}
-                  playingNodeId={playingNodeId}
-                  playState={playState}
-                  reparentingNodeId={reparentingNodeId}
-                  onPlayPause={onPlayPause}
-                  onAddChild={onAddChild}
-                  onRenameRequest={onRenameRequest}
-                  onDeleteRequest={onDeleteRequest}
-                  onReparentRequest={onReparentRequest}
-                  onReparent={onReparent}
-                  additionalActions={additionalActions}
-                />
-              </div>
-            );
-          })}
-
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
+
+          <svg ref={coreSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
 
           {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
 
@@ -479,12 +521,7 @@ export function WheelRadialCore({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() =>
-            panZoom.fitToFrame([
-              wheelCircleRef.current,
-              ...Object.values(anchorRefs.current).flatMap((el) => queryTreeContentElements(el)),
-            ])
-          }
+          onClick={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />
