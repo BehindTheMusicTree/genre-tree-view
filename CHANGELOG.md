@@ -7,6 +7,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `GenreTree`'s "fit to frame" no longer clips content for a tree larger than its (explicitly
+  sized) ancestor: the pan/zoom viewport div no longer floors its own `minWidth`/`minHeight` at
+  the tree's unscaled size, which used to grow it past a smaller ancestor and make fit-to-frame
+  measure the wrong (inflated) viewport.
+- Manual zoom-out (wheel/pinch/button) can now always reach at least as far out as "fit to frame"
+  computes for the current content, instead of bottoming out at the static `ZOOM_MIN_SCALE` floor
+  while "fit to frame" jumps straight past it for large trees.
 - `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now confine each root's core/pop wedge
   to that root's actual bisected angular sector (capped at 80°) instead of always using the full
   80° span, preventing a developed subtree from overflowing into a neighboring root's sector when

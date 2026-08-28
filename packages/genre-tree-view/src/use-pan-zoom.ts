@@ -16,7 +16,9 @@ export interface UsePanZoomResult {
   zoomIn: () => void;
   zoomOut: () => void;
   /** Recomputes pan/scale so the union bounding box of the given elements (nulls ignored) fits
-   * inside the viewport with ZOOM_FIT_PADDING of clearance. No-ops if none are present/measurable. */
+   * inside the viewport with ZOOM_FIT_PADDING of clearance. No-ops if none are present/measurable.
+   * Also relaxes manual zoom-out's floor to match, when this content needs to go further out
+   * than ZOOM_MIN_SCALE — see minScale below. */
   fitToFrame: (elements: (Element | null | undefined)[]) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
 }
@@ -32,6 +34,12 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [zoomScale, setZoomScale] = useState(1);
+
+  // Floor for manual zoom-out (wheel/pinch/button), relaxed below ZOOM_MIN_SCALE whenever
+  // fitToFrame computes a more permissive scale for the current content — so manual zoom-out can
+  // always reach at least as far out as "fit to frame" does, instead of bottoming out at the
+  // static default while fitToFrame jumps straight past it.
+  const [minScale, setMinScale] = useState(ZOOM_MIN_SCALE);
 
   const zoomAtPoint = useCallback(
     (newScale: number, clientX: number, clientY: number) => {
@@ -62,7 +70,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       if (event.ctrlKey) {
-        zoomAtPoint(computeZoomScale(zoomScale, event.deltaY), event.clientX, event.clientY);
+        zoomAtPoint(computeZoomScale(zoomScale, event.deltaY, minScale), event.clientX, event.clientY);
       } else {
         setPanX((x) => x - event.deltaX);
         setPanY((y) => y - event.deltaY);
@@ -71,7 +79,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [zoomScale, zoomAtPoint, viewportRef]);
+  }, [zoomScale, minScale, zoomAtPoint, viewportRef]);
 
   // Fallback for input that never reaches the wheel handler above — e.g. a trackpad/OS/browser
   // combination that doesn't translate a pinch gesture into a ctrlKey wheel event at all.
@@ -81,9 +89,13 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       const viewport = viewportRef.current;
       if (!viewport) return;
       const rect = viewport.getBoundingClientRect();
-      zoomAtPoint(computeZoomScaleForButton(zoomScale, direction), rect.left + rect.width / 2, rect.top + rect.height / 2);
+      zoomAtPoint(
+        computeZoomScaleForButton(zoomScale, direction, minScale),
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2,
+      );
     },
-    [zoomAtPoint, zoomScale, viewportRef],
+    [zoomAtPoint, zoomScale, minScale, viewportRef],
   );
 
   // Generalizes zoomAtPoint's screen->content conversion from a single point to the union
@@ -125,6 +137,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
         ZOOM_FIT_PADDING,
       );
 
+      setMinScale(Math.min(ZOOM_MIN_SCALE, fitScale));
       setZoomScale(fitScale);
       setPanX(viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale);
       setPanY(viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale);
@@ -170,7 +183,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     zoomScale,
     transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
     canZoomIn: zoomScale < ZOOM_MAX_SCALE,
-    canZoomOut: zoomScale > ZOOM_MIN_SCALE,
+    canZoomOut: zoomScale > minScale,
     zoomIn: () => zoomByButton(1),
     zoomOut: () => zoomByButton(-1),
     fitToFrame,

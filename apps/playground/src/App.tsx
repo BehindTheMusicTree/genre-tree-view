@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   GenreTree,
   GenreTreeWheel,
@@ -196,25 +196,11 @@ const LARGE_ROOTS: LargeRootDef[] = [
     ],
   },
   {
+    // Deliberately just 2 subgenres (vs. 16-32 for every other root) so its ring sector renders
+    // visibly narrower than its neighbors, demonstrating computeRadialLayout's proportional
+    // (by node count) spacing.
     name: "Classical",
-    subgenres: [
-      "Baroque",
-      "Renaissance",
-      "Medieval",
-      "Classical Period",
-      "Romantic",
-      "Modernist",
-      "Minimalism",
-      "Opera",
-      "Chamber Music",
-      "Symphonic",
-      "Choral",
-      "Concerto",
-      "Sonata",
-      "Impressionism",
-      "Neoclassicism",
-      "Avant-Garde Classical",
-    ],
+    subgenres: ["Baroque", "Romantic"],
   },
   {
     name: "Folk",
@@ -510,6 +496,25 @@ export function App() {
 
   const groups = groupNodesByRoot(nodes);
 
+  // GenreTreeWheelRadial (plain, no pop/core center node) has no special handling for the "pop"
+  // fixture root below — it's only valid input for GenreTreeWheelRadialPopCore, where it's
+  // required and excluded from the ring. Strip its whole subtree here so the plain radial tab
+  // doesn't choke on it via splitRootGroupBySide.
+  const plainRadialWheelNodes = useMemo(() => {
+    const excludedIds = new Set<string>(["pop"]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const node of wheelNodes) {
+        if (node.parentId && excludedIds.has(node.parentId) && !excludedIds.has(node.id)) {
+          excludedIds.add(node.id);
+          changed = true;
+        }
+      }
+    }
+    return wheelNodes.filter((node) => !excludedIds.has(node.id));
+  }, [wheelNodes]);
+
   const playCallbacks = {
     playingNodeId,
     playState,
@@ -612,7 +617,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadial
-            nodes={wheelNodes}
+            nodes={plainRadialWheelNodes}
             {...wheelCallbacks}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-radial selected root ${rootId}`)}

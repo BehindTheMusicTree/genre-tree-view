@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
+import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -15,6 +16,9 @@ const CENTER_NODE: GenreTreeNode = {
   itemCount: 10,
 };
 
+// 3 ring roots (root-a, root-b, root-c) with node counts 5, 2, 2 respectively (root-a's core+pop
+// subtree is bigger), so computeRadialLayout's proportional spacing gives root-a a wider arc than
+// root-b/root-c. root-a is clicked by default and lands at 90 (right): a=90, b=230, c=310.
 const NODES_WITH_POP: GenreTreeNode[] = [
   CENTER_NODE,
   { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
@@ -32,6 +36,25 @@ function chipFor(container: HTMLElement, name: string) {
   return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find((el) =>
     el.textContent?.startsWith(name),
   ) as HTMLButtonElement;
+}
+
+function coreSectorForRoot(container: HTMLElement, rootId: string) {
+  return container.querySelector(`.gtv-wheel-core-sector[data-gtv-root-id="${rootId}"]`) as SVGGElement | null;
+}
+
+function popSectorForRoot(container: HTMLElement, rootId: string) {
+  return container.querySelector(`.gtv-wheel-pop-sector[data-gtv-root-id="${rootId}"]`) as SVGGElement | null;
+}
+
+function getWheelRadius(container: HTMLElement) {
+  const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+  return parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
+}
+
+function nodeCoords(container: HTMLElement, id: string) {
+  const group = container.querySelector(`#group-${id}`) as SVGGElement;
+  const match = group.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
+  return [Number(match[1]), Number(match[2])] as const;
 }
 
 describe("GenreTreeWheelRadialPopCore", () => {
@@ -114,18 +137,42 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector(".gtv-wheel-center-sector")).toBeFalsy();
   });
 
-  it("develops the cardinal roots' core branches and renders their pop branch inside the wheel's own circle", () => {
+  it("develops every root's core branch and renders its pop branch inside the wheel's own circle", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
-    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
-    expect(rightSector.querySelector("#group-a-core-child")).toBeTruthy();
-    expect(rightSector.querySelector("#group-a-pop-child")).toBeFalsy();
+    const rootASector = coreSectorForRoot(container, "root-a")!;
+    expect(rootASector.querySelector("#group-a-core-child")).toBeTruthy();
+    expect(rootASector.querySelector("#group-a-pop-child")).toBeFalsy();
 
-    expect(container.querySelector(".gtv-wheel-pop-sector--right")).toBeTruthy();
-    expect(container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop")).toBeTruthy();
+    expect(popSectorForRoot(container, "root-a")).toBeTruthy();
+    expect(popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop")).toBeTruthy();
   });
 
-  it("skips a cardinal root that has no children, mounting no core sector for it", () => {
+  it("draws a link from the root's own position out to its depth-1 child, for both its core and pop branches", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+
+    const wheelRadius = getWheelRadius(container);
+    // root-a is the default top root, landing at 90deg (LANDING_ANGLE).
+    const { x: rootX, y: rootY } = getRadialPointOnCircle(90, wheelRadius);
+
+    const [coreChildX, coreChildY] = nodeCoords(container, "a-core");
+    const coreLinks = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    expect(
+      Array.from(coreLinks).some(
+        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${coreChildX} ${coreChildY}`,
+      ),
+    ).toBe(true);
+
+    const [popChildX, popChildY] = nodeCoords(container, "a-pop");
+    const popLinks = popSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    expect(
+      Array.from(popLinks).some(
+        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${popChildX} ${popChildY}`,
+      ),
+    ).toBe(true);
+  });
+
+  it("skips a root that has no children, mounting no core sector for it", () => {
     const nodesWithChildlessRoot: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
@@ -136,11 +183,11 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector("#group-root-d")).toBeFalsy();
   });
 
-  it("omits the pop sector for a cardinal root that has no pop branch", () => {
+  it("omits the pop sector for a root that has no pop branch", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
-    for (const direction of ["top", "bottom", "left"]) {
-      expect(container.querySelector(`.gtv-wheel-pop-sector--${direction}`)).toBeFalsy();
+    for (const rootId of ["root-b", "root-c"]) {
+      expect(popSectorForRoot(container, rootId)).toBeFalsy();
     }
   });
 
@@ -176,7 +223,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const onPlayPause = vi.fn();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
 
-    const popGroup = container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop") as SVGGElement;
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
     fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     const popPlayButton = container.querySelector('#toolbar-a-pop [data-menu-key="play"]') as HTMLButtonElement;
     fireEvent.click(popPlayButton);
@@ -199,25 +246,22 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
   });
 
-  it("mounts a miniature preview tree only for non-cardinal (filler) roots, not the 4 developed cardinals", () => {
-    const nodesWithFiller: GenreTreeNode[] = [
+  it("develops every root when there are more than 3, one core sector per root", () => {
+    const nodesWithMoreRoots: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
       { id: "d-child", parentId: "root-d", name: "Bluegrass", itemCount: 0 },
       { id: "root-e", parentId: null, name: "Metal", itemCount: 0 },
       { id: "e-child", parentId: "root-e", name: "Doom", itemCount: 0 },
     ];
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithFiller} />);
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithMoreRoots} />);
 
-    expect(container.querySelectorAll(".gtv-wheel-radial-mini-tree").length).toBe(1);
-    expect(
-      chipFor(container, "Jazz").closest(".gtv-wheel-slot")?.querySelector(".gtv-wheel-radial-mini-tree"),
-    ).toBeTruthy();
-    for (const name of ["Rock", "Electronic", "Folk", "Metal"]) {
-      expect(
-        chipFor(container, name).closest(".gtv-wheel-slot")?.querySelector(".gtv-wheel-radial-mini-tree"),
-      ).toBeFalsy();
+    expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(5);
+    for (const name of ["Rock", "Electronic", "Jazz", "Folk", "Metal"]) {
+      expect(chipFor(container, name).className).toContain("gtv-wheel-chip--selected");
     }
+    expect(coreSectorForRoot(container, "root-d")?.querySelector("#group-d-child")).toBeTruthy();
+    expect(coreSectorForRoot(container, "root-e")?.querySelector("#group-e-child")).toBeTruthy();
   });
 
   it("falls back to the first remaining root when the top root disappears from nodes", () => {
@@ -229,8 +273,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     rerender(<GenreTreeWheelRadialPopCore nodes={withoutJazz} />);
 
     expect(chipFor(container, "Jazz")).toBeUndefined();
-    const rightSector = container.querySelector(".gtv-wheel-core-sector--right") as SVGGElement;
-    expect(rightSector.querySelector("#group-a-core-child")).toBeTruthy();
+    const rootASector = coreSectorForRoot(container, "root-a")!;
+    expect(rootASector.querySelector("#group-a-core-child")).toBeTruthy();
   });
 
   it("adds the reparent-target overlay to eligible nodes in the pop sector and forwards the selection", () => {
@@ -239,7 +283,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} reparentingNodeId="a-pop-child" onReparent={onReparent} />,
     );
 
-    const popGroup = container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop") as SVGGElement;
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
     fireEvent.mouseEnter(popGroup);
     const overlayTarget = container.querySelector(
       "#select-as-new-parent-group-a-pop foreignObject",
@@ -260,7 +304,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       />,
     );
 
-    const coreGroup = container.querySelector(".gtv-wheel-core-sector--right #group-a-core") as SVGGElement;
+    const coreGroup = coreSectorForRoot(container, "root-a")?.querySelector("#group-a-core") as SVGGElement;
     fireEvent.mouseEnter(coreGroup);
     const overlayTarget = container.querySelector(
       "#select-as-new-parent-group-a-core foreignObject",
@@ -343,7 +387,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     vi.useFakeTimers();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
-    const popGroup = container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop") as SVGGElement;
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
     fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
@@ -358,7 +402,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     vi.useFakeTimers();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
-    const popGroup = container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop") as SVGGElement;
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
     fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
@@ -376,7 +420,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} reparentingNodeId="a-pop" onReparent={onReparent} />,
     );
 
-    const popGroup = container.querySelector(".gtv-wheel-pop-sector--right #group-a-pop") as SVGGElement;
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
     fireEvent.mouseEnter(popGroup);
 
     expect(container.querySelector("#select-as-new-parent-group-a-pop")).toBeFalsy();
