@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
@@ -9,6 +9,7 @@ import { NodeToolbar } from "./NodeToolbar";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
 import { POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
+import { splitRootGroupBySide } from "./pop-core-split";
 import {
   bisectAngles,
   buildSectorClipPathPolygon,
@@ -186,18 +187,43 @@ export function WheelRadialCore({
   }, [layout, groups]);
 
   // Only developed cardinals whose root actually has children get a hierarchy built — a
-  // childless root has nothing to fan outward.
+  // childless root has nothing to fan outward. A root's pop-side branch (splitRootGroupBySide)
+  // is excluded here the same way GenreTreeWheelRadialPopCoreBase excludes it, since this
+  // component has no separate pop rendering path and mixing both branches' direct children into
+  // buildCoreHierarchy would leave more than one node with no in-set parent — d3.stratify()
+  // rejects that as "multiple roots".
   const coreHierarchyByDirection = useMemo(() => {
     const map = new Map<CardinalDirection, { hierarchy: d3.HierarchyNode<GenreTreeNode>; rootId: string }>();
     (Object.keys(cardinalByDirection) as CardinalDirection[]).forEach((direction) => {
       const group = cardinalByDirection[direction];
       if (!group) return;
-      const coreChildNodes = group.nodes.filter((node) => node.id !== group.root.id);
+      const { coreNodes } = splitRootGroupBySide(group);
+      const coreChildNodes = coreNodes.filter((node) => node.id !== group.root.id);
       if (coreChildNodes.length === 0) return;
       map.set(direction, { hierarchy: buildCoreHierarchy(d3, coreChildNodes), rootId: group.root.id });
     });
     return map;
   }, [cardinalByDirection]);
+
+  // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
+  // dividerAngles/sectorFills below) — caps each cardinal's core wedge span so a subtree's
+  // descendants can't fan out past the root's actual sector into a neighboring root's, which
+  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring.
+  const sectorSpanByRootId = useMemo(() => {
+    const map = new Map<string, number>();
+    if (groups.length <= 1) return map;
+    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    groups.forEach((group, index) => {
+      const { start, end } = computeSectorBounds(continuousAngles, index);
+      map.set(group.root.id, end - start);
+    });
+    return map;
+  }, [groups, continuousAngleByRootId]);
+
+  const wedgeSpanForRoot = useCallback(
+    (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
+    [sectorSpanByRootId],
+  );
 
   // Floor every ring root sits on, driven purely by chip clearance — the base every cardinal's
   // core wedge measures outward from, before the deepest developed subtree's extent is folded in.
@@ -245,7 +271,7 @@ export function WheelRadialCore({
         d3,
         hierarchy,
         CARDINAL_ANGLE_BY_DIRECTION[direction],
-        POP_WEDGE_SPAN_DEGREES,
+        wedgeSpanForRoot(rootId),
         wheelRadius,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
@@ -287,6 +313,7 @@ export function WheelRadialCore({
   }, [
     coreHierarchyByDirection,
     wheelRadius,
+    wedgeSpanForRoot,
     reparentingNodeId,
     playingNodeId,
     playState,

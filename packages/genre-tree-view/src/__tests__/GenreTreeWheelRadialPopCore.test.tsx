@@ -388,4 +388,16 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip")).toBeTruthy();
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(0);
   });
+
+  it("still develops the lone ring root's core sector when it's the only root besides the center (no sibling to bisect a sector against)", () => {
+    const nodes: GenreTreeNode[] = [
+      CENTER_NODE,
+      { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+      { id: "a-core", parentId: "root-a", name: "Punk", itemCount: 3 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(1);
+    expect(container.querySelector("#group-a-core")).toBeTruthy();
+  });
 });
