@@ -5,6 +5,7 @@ import {
   calculateWheelRadiusForAngles,
   computeRadialLayout,
   computeSectorBounds,
+  computeSectorSymmetricSpan,
 } from "../radial-wheel-geometry";
 
 describe("computeRadialLayout", () => {
@@ -238,6 +239,39 @@ describe("computeSectorBounds", () => {
     expect(end - start).toBe(90);
     expect(start).toBe(-405);
     expect(end).toBe(-315);
+  });
+});
+
+describe("computeSectorSymmetricSpan", () => {
+  it("equals the full sector width when the root's angle is centered in its sector (evenly-spaced ring)", () => {
+    const angles = [0, 90, 180, 270];
+    for (let i = 0; i < angles.length; i++) {
+      expect(computeSectorSymmetricSpan(angles, i)).toBe(90);
+    }
+  });
+
+  it("caps at twice the smaller side when the root's sector is asymmetric, so a wedge centered on the root's own angle never spills past the tighter boundary", () => {
+    // Root 1 sits much closer to root 0 (10deg away) than to root 2 (170deg away), so its sector
+    // (computeSectorBounds) is highly asymmetric: only 5deg of room on the tight side, 85deg on
+    // the other. A symmetric wedge must be capped at 2*5=10deg to stay within [start, end] on both
+    // sides at once.
+    const angles = [0, 10, 180];
+    const { start, end } = computeSectorBounds(angles, 1);
+    const span = computeSectorSymmetricSpan(angles, 1);
+    const mine = angles[1];
+
+    expect(span).toBeCloseTo(10);
+    // A symmetric wedge of this span centered on `mine` must land fully inside [start, end].
+    expect(mine - span / 2).toBeGreaterThanOrEqual(start - 1e-9);
+    expect(mine + span / 2).toBeLessThanOrEqual(end + 1e-9);
+  });
+
+  it("never exceeds the raw sector width (end - start)", () => {
+    const angles = [0, 10, 180];
+    for (let i = 0; i < angles.length; i++) {
+      const { start, end } = computeSectorBounds(angles, i);
+      expect(computeSectorSymmetricSpan(angles, i)).toBeLessThanOrEqual(end - start + 1e-9);
+    }
   });
 });
 

@@ -104,6 +104,19 @@ export function computeSectorBounds(
   return { start: bisectAngles(mine, prev), end: bisectAngles(mine, next) };
 }
 
+/** Widest symmetric wedge, centered on the root's own angle (`continuousAngles[index]`), that still
+ * fits entirely within that root's actual angular sector (see `computeSectorBounds`) — twice the
+ * smaller of the two distances from the root's own angle to each of its sector's bounds. A sector
+ * isn't generally symmetric around the root's own angle (neighbors can sit at uneven angular
+ * distances, e.g. when `computeRadialLayout` gives roots weight-proportional arc widths), so capping
+ * a symmetric wedge at the raw sector width (`end - start`) lets the wider side spill past its
+ * boundary into the neighboring sector even though the narrower side has no slack to give. */
+export function computeSectorSymmetricSpan(continuousAngles: number[], index: number): number {
+  const mine = continuousAngles[index];
+  const { start, end } = computeSectorBounds(continuousAngles, index);
+  return 2 * Math.min(mine - start, end - mine);
+}
+
 /** Generalizes calculateWheelRadius's chord-overlap guarantee (see wheel-geometry.ts) to
  * non-uniformly-spaced angles: the ring only needs to grow enough to clear the SMALLEST adjacent
  * gap actually present (including the wraparound gap from the last angle back to the first), not

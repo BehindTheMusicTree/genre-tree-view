@@ -24,6 +24,7 @@ import {
   calculateWheelRadiusForAngles,
   computeRadialLayout,
   computeSectorBounds,
+  computeSectorSymmetricSpan,
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
@@ -279,14 +280,16 @@ export function WheelRadialPopCoreCore({
   // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
   // dividerAngles/sectorFills below) — caps each root's pop/core wedge span so a subtree's
   // descendants can't fan out past the root's actual sector into a neighboring root's, which
-  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring.
+  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring. Uses
+  // computeSectorSymmetricSpan (not the raw end - start sector width) since the wedge below fans
+  // out symmetrically around the root's own angle, and that angle isn't generally centered within
+  // its sector — capping at the raw width can let the wider side spill into the neighboring sector.
   const sectorSpanByRootId = useMemo(() => {
     const map = new Map<string, number>();
     if (groups.length <= 1) return map;
     const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
     groups.forEach((group, index) => {
-      const { start, end } = computeSectorBounds(continuousAngles, index);
-      map.set(group.root.id, end - start);
+      map.set(group.root.id, computeSectorSymmetricSpan(continuousAngles, index));
     });
     return map;
   }, [groups, continuousAngleByRootId]);
