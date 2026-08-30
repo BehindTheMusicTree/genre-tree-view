@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Run validation workflow on pull requests targeting `main` and `develop`.
+
 ### Documentation
 
 - Reworked `CLAUDE.md` to provide clearer Claude Code guidance and document the package's extraction context.
