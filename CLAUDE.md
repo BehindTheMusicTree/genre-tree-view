@@ -12,6 +12,7 @@ data fetching, mutations, and popups/dialogs are the consumer's responsibility �
 owns rendering only.
 
 pnpm workspace with two members:
+
 - `packages/genre-tree-view` — the published library (tsup build, Vitest tests).
 - `apps/playground` — a Vite app for manually exercising the component against mock data; not
   published, depends on the library via `workspace:*`.
@@ -52,10 +53,3 @@ Five renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTree
 `GenreTreeWheelRadialPopCore`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
 breakdown of modules and the public export surface — keep that file in sync with this one instead
 of duplicating details here.
-
-### Extraction context
-
-This package was extracted from `grow-the-music-tree-frontend` so any BehindTheMusicTree app can
-render the tree without depending on that app's contexts, data hooks, or domain types. Keep this
-package free of app-specific data-fetching, routing, or domain assumptions — everything
-consumer-specific goes through props/callbacks.
