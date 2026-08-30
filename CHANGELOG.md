@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documentation
+
+- Reworked `CLAUDE.md` to provide clearer Claude Code guidance and document the package's extraction context.
+- Restructured `CONTRIBUTING.md` headings and removed the redundant manual table of contents.
+
 ## [1.1.0] - 2026-08-29
 
 ### Fixed

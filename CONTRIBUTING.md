@@ -1,13 +1,20 @@
-# Contributing
+# Table of content
 
-## Setup
+- [Table of content](#table-of-content)
+- [Setup](#setup)
+- [Commands](#commands)
+- [Branching model (Gitflow)](#branching-model-gitflow)
+- [Cutting a release](#cutting-a-release)
+- [Hotfixes](#hotfixes)
+
+# Setup
 
 ```bash
 pnpm install
 pnpm dev              # builds the library in watch mode + runs apps/playground, in parallel
 ```
 
-## Commands
+# Commands
 
 Run from repo root unless noted.
 
@@ -30,7 +37,7 @@ PRs are validated by `validate.yml` (build, typecheck, lint, coverage). Coverage
 enforced at 95% (lines/branches/functions/statements) in
 `packages/genre-tree-view/vitest.config.ts`, excluding `src/index.ts` and `src/types.ts`.
 
-## Branching model (Gitflow)
+# Branching model (Gitflow)
 
 - **`main`** — always reflects the latest released version. Every commit on `main` is tagged
   `vX.Y.Z` and triggers `publish.yml`. Never commit to `main` directly.
@@ -40,7 +47,7 @@ enforced at 95% (lines/branches/functions/statements) in
 - **`hotfix/*`** — branch off `main` for urgent fixes that can't wait for the next release cycle;
   PR into `main`, then back-merge into `develop`.
 
-## Cutting a release
+# Cutting a release
 
 1. Branch `release/x.y.z` off `develop`.
 2. On that branch, run `pnpm release -- <patch|minor|major>`. This bumps the package version,
@@ -51,7 +58,7 @@ enforced at 95% (lines/branches/functions/statements) in
    builds and publishes the package to GitHub Packages and creates a GitHub Release.
 5. Merge `release/x.y.z` (or `main`) back into `develop` so `develop` picks up the version bump.
 
-## Hotfixes
+# Hotfixes
 
 1. Branch `hotfix/x.y.z` off `main`.
 2. Fix the issue, then follow the same version-bump/tag/publish steps as a release (steps 2–4
