@@ -333,8 +333,11 @@ export function WheelRadialPopCoreCore({
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
-  // same idea as maxPopExtentDelta, but outward instead of inward; folds into coreRootCircleRadius
-  // below so the circle grows to fit the deepest core branch too.
+  // same idea as maxPopExtentDelta. Core branches render outward from coreRootCircleRadius
+  // regardless of its value, so this doesn't belong in coreRootCircleRadius itself (that would
+  // needlessly drag the visual outer circle and ring root chips outward with it) — it only feeds
+  // svgCanvasRadius below, so the deepest core branch has enough SVG canvas to render into
+  // without being clipped.
   const maxCoreExtentDelta = useMemo(() => {
     let extent = 0;
     coreHierarchyByRootId.forEach(({ hierarchy }) => {
@@ -352,15 +355,25 @@ export function WheelRadialPopCoreCore({
     [mainstreamCircleRadius, maxPopExtentDelta],
   );
 
+  // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
+  // own chip sits — NOT the SVG canvas size (see svgCanvasRadius below). Deliberately excludes
+  // maxCoreExtentDelta: a deep core branch needs canvas room to render into, but it shouldn't
+  // drag ring root chips (and the pop branches anchored to them) outward with it.
   const coreRootCircleRadius = useMemo(
     () =>
-      Math.max(
-        chipClearanceFloor,
-        chipClearanceFloor + centerSubtreeExtentDelta,
-        chipClearanceFloor + maxCoreExtentDelta,
-        popReachRequiredRadius,
-      ),
-    [chipClearanceFloor, centerSubtreeExtentDelta, maxCoreExtentDelta, popReachRequiredRadius],
+      Math.max(chipClearanceFloor, chipClearanceFloor + centerSubtreeExtentDelta, popReachRequiredRadius),
+    [chipClearanceFloor, centerSubtreeExtentDelta, popReachRequiredRadius],
+  );
+
+  // The SVG canvas's actual radius. Core branches render outward from the real coreRootCircleRadius
+  // (see computeCoreRadialLayout's call below), so the canvas must extend maxCoreExtentDelta past
+  // that actual base — not past chipClearanceFloor, which can be smaller than coreRootCircleRadius
+  // whenever pop reach or the expanded center subtree is what's sizing it — or the deepest core
+  // node gets clipped. Purely a rendering-surface concern: never feeds back into coreRootCircleRadius,
+  // so it doesn't affect the visual outer circle or ring root chip placement.
+  const svgCanvasRadius = useMemo(
+    () => coreRootCircleRadius + maxCoreExtentDelta,
+    [coreRootCircleRadius, maxCoreExtentDelta],
   );
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
@@ -386,7 +399,7 @@ export function WheelRadialPopCoreCore({
     svg.selectAll("*").remove();
     const originGroup = svg
       .append("g")
-      .attr("transform", `translate(${coreRootCircleRadius}, ${coreRootCircleRadius})`);
+      .attr("transform", `translate(${svgCanvasRadius}, ${svgCanvasRadius})`);
 
     popHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
       const laidOut = computePopRadialLayout(
@@ -536,6 +549,7 @@ export function WheelRadialPopCoreCore({
     popHierarchyByRootId,
     coreHierarchyByRootId,
     coreRootCircleRadius,
+    svgCanvasRadius,
     mainstreamCircleRadius,
     wedgeSpanForRoot,
     reparentingNodeId,
@@ -606,6 +620,7 @@ export function WheelRadialPopCoreCore({
       style={
         {
           "--gtv-wheel-radius": `${coreRootCircleRadius}px`,
+          "--gtv-wheel-svg-radius": `${svgCanvasRadius}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
@@ -658,8 +673,8 @@ export function WheelRadialPopCoreCore({
           <svg
             ref={popSvgRef}
             className="gtv-wheel-pop-layer"
-            width={coreRootCircleRadius * 2}
-            height={coreRootCircleRadius * 2}
+            width={svgCanvasRadius * 2}
+            height={svgCanvasRadius * 2}
           />
 
           <div className="gtv-wheel-center-node">

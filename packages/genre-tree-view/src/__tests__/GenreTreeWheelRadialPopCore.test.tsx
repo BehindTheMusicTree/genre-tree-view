@@ -60,6 +60,11 @@ function getWheelRadius(container: HTMLElement) {
   return parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
 }
 
+function getSvgCanvasRadius(container: HTMLElement) {
+  const svg = container.querySelector(".gtv-wheel-pop-layer") as SVGSVGElement;
+  return Number(svg.getAttribute("width")) / 2;
+}
+
 // jsdom's getBoundingClientRect() always returns all-zero rects, which isn't enough to exercise
 // fit-to-frame's actual scale computation — this fakes real rects for specific elements, keyed by
 // identity/class.
@@ -262,7 +267,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     // clearance) reopened a visible gap to the mainstream circle.
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
-      ...Array.from({ length: 12 }, (_, i) => [
+      ...Array.from({ length: 24 }, (_, i) => [
         { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
         {
           id: `extra-root-${i}-child`,
@@ -288,6 +293,30 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
     const [x, y] = nodeCoords(container, "a-pop-child");
     expect(Math.hypot(x, y)).toBeCloseTo(mainstreamRadius + MAX_NODE_WIDTH / 2 + 24, 6);
+  });
+
+  it("grows the svg canvas, not the visual outer circle or ring root chip radius, to fit a deep core branch", () => {
+    // Regression test: a deep core branch used to inflate coreRootCircleRadius itself (dragging
+    // the visual outer circle and every ring root chip outward with it, reopening the pop-side
+    // gap this whole fix chain exists to close). It must instead only grow the svg's own canvas
+    // (--gtv-wheel-svg-radius), which core branches render past coreRootCircleRadius into.
+    const deepCoreNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-core-grandchild", parentId: "a-core-child", name: "Crust Punk", itemCount: 1 },
+      { id: "a-core-great-grandchild", parentId: "a-core-grandchild", name: "D-beat", itemCount: 1 },
+      { id: "a-core-great-great-grandchild", parentId: "a-core-great-grandchild", name: "Grindcore", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={deepCoreNodes} />);
+
+    const wheelRadius = getWheelRadius(container);
+    const svgCanvasRadius = getSvgCanvasRadius(container);
+
+    // The deepest core node reaches out past the visual outer circle / ring root chip radius...
+    const [x, y] = nodeCoords(container, "a-core-great-great-grandchild");
+    expect(Math.hypot(x, y)).toBeGreaterThan(wheelRadius);
+    // ...but the svg canvas itself is big enough to actually hold it, not clip it.
+    expect(svgCanvasRadius).toBeGreaterThan(wheelRadius);
+    expect(Math.hypot(x, y)).toBeLessThanOrEqual(svgCanvasRadius);
   });
 
   it("leaves the wheel's sizing unaffected by the mainstream circle when no root has a pop branch", () => {
