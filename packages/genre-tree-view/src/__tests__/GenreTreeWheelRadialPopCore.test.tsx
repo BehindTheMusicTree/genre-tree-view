@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
+import { linkPathEndpoints } from "./link-path-test-utils";
 
 afterEach(() => {
   cleanup();
@@ -170,20 +171,26 @@ describe("GenreTreeWheelRadialPopCore", () => {
     // root-a is the default top root, landing at 90deg (LANDING_ANGLE).
     const { x: rootX, y: rootY } = getRadialPointOnCircle(90, wheelRadius);
 
+    const endpointsMatch = (d: string, targetX: number, targetY: number) => {
+      const { start, end } = linkPathEndpoints(d);
+      return (
+        Math.abs(start[0] - rootX) < 1e-6 &&
+        Math.abs(start[1] - rootY) < 1e-6 &&
+        Math.abs(end[0] - targetX) < 1e-6 &&
+        Math.abs(end[1] - targetY) < 1e-6
+      );
+    };
+
     const [coreChildX, coreChildY] = nodeCoords(container, "a-core");
     const coreLinks = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
     expect(
-      Array.from(coreLinks).some(
-        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${coreChildX} ${coreChildY}`,
-      ),
+      Array.from(coreLinks).some((link) => endpointsMatch(link.getAttribute("d")!, coreChildX, coreChildY)),
     ).toBe(true);
 
     const [popChildX, popChildY] = nodeCoords(container, "a-pop");
     const popLinks = popSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
     expect(
-      Array.from(popLinks).some(
-        (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${popChildX} ${popChildY}`,
-      ),
+      Array.from(popLinks).some((link) => endpointsMatch(link.getAttribute("d")!, popChildX, popChildY)),
     ).toBe(true);
   });
 

@@ -14,6 +14,7 @@ import {
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH, RADIAL_LINK_WIDTH, WHEEL_RADIUS, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
+import { linkPathEndpoints } from "./link-path-test-utils";
 
 afterEach(() => {
   document.body.innerHTML = "";
@@ -326,7 +327,13 @@ describe("renderPopSubtree link rendering", () => {
     const popRoot = laidOut.descendants().find((d) => d.data.id === "pop-rock")!;
     const rootLink = links.filter((_, i, nodesArr) => {
       const d3Node = d3.select<SVGPathElement, unknown>(nodesArr[i]);
-      return d3Node.attr("d") === `M ${rootLinkOrigin.x} ${rootLinkOrigin.y} L ${popRoot.x} ${popRoot.y}`;
+      const { start, end } = linkPathEndpoints(d3Node.attr("d")!);
+      return (
+        Math.abs(start[0] - rootLinkOrigin.x) < 1e-6 &&
+        Math.abs(start[1] - rootLinkOrigin.y) < 1e-6 &&
+        Math.abs(end[0] - popRoot.x!) < 1e-6 &&
+        Math.abs(end[1] - popRoot.y!) < 1e-6
+      );
     });
     expect(rootLink.size()).toBe(1);
   });

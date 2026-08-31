@@ -5,6 +5,7 @@ import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import { buildSectorClipPathPolygon } from "../radial-wheel-geometry";
 import type { GenreTreeNode } from "../types";
+import { linkPathEndpoints } from "./link-path-test-utils";
 
 afterEach(() => {
   cleanup();
@@ -213,9 +214,15 @@ describe("GenreTreeWheelRadial", () => {
     const [childX, childY] = [Number(match[1]), Number(match[2])];
 
     const links = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
-    const rootLink = Array.from(links).find(
-      (link) => link.getAttribute("d") === `M ${rootX} ${rootY} L ${childX} ${childY}`,
-    );
+    const rootLink = Array.from(links).find((link) => {
+      const { start, end } = linkPathEndpoints(link.getAttribute("d")!);
+      return (
+        Math.abs(start[0] - rootX) < 1e-6 &&
+        Math.abs(start[1] - rootY) < 1e-6 &&
+        Math.abs(end[0] - childX) < 1e-6 &&
+        Math.abs(end[1] - childY) < 1e-6
+      );
+    });
     expect(rootLink).toBeTruthy();
   });
 
