@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-31
+
 ### Added
 
 - Run validation workflow on pull requests targeting `main` and `develop`.
@@ -22,6 +24,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   further out via `overflow: visible`.
 - `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`'s connecting links now curve along the
   wheel's own rings instead of cutting straight chords across it.
+- `GenreTreeWheelRadialPopCore`'s outer circle now nests the mainstream subtree correctly, sizes
+  pop-branch depth spacing off the deepest pop branch and the mainstream gap, and adapts to pop
+  reach instead of stretching depth spacing — closing gaps and overlaps between the pop branches
+  and the center mainstream circle.
+- `GenreTreeWheelRadialPopCore`'s svg canvas now grows independently of the visual outer circle to
+  fit a deep core branch: previously, `coreRootCircleRadius` doubled as both the visual outer
+  circle's radius and the svg canvas's own size, so a deep core branch needing extra canvas room
+  to avoid being clipped also dragged the visual circle and every ring root chip outward with it,
+  reopening a gap on the pop side.
 
 ### Documentation
 
