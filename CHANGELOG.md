@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-31
+
 ### Added
 
 - Run validation workflow on pull requests targeting `main` and `develop`.
