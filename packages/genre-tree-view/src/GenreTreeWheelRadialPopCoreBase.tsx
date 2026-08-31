@@ -29,6 +29,7 @@ import {
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
+import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
@@ -543,7 +544,7 @@ export function WheelRadialPopCoreCore({
   const hasInitialFitRef = useRef(false);
   useEffect(() => {
     if (hasInitialFitRef.current) return;
-    const elements = [wheelCircleRef.current, popSvgRef.current];
+    const elements = [wheelCircleRef.current, ...queryTreeContentElements(popSvgRef.current)];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements);
@@ -817,7 +818,9 @@ export function WheelRadialPopCoreCore({
           <button
             type="button"
             className="gtv-zoom-btn"
-            onClick={() => panZoom.fitToFrame([wheelCircleRef.current, popSvgRef.current])}
+            onClick={() =>
+              panZoom.fitToFrame([wheelCircleRef.current, ...queryTreeContentElements(popSvgRef.current)])
+            }
             aria-label="Fit to frame"
           >
             <MdFitScreen className="gtv-icon" size={18} />
