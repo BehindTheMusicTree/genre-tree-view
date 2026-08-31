@@ -9,6 +9,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Run validation workflow on pull requests targeting `main` and `develop`.
 
+### Fixed
+
+- `GenreTreeWheelRadialPopCore`'s "fit to frame" no longer crops the popped tree: it now measures
+  the actually-rendered `.gtv-node-rect`/`.gtv-link` content instead of the pop layer's own `<svg>`
+  box, which only covered the reserved wheel-circle radius and undersized the fit for content drawn
+  further out via `overflow: visible`.
+
 ### Documentation
 
 - Reworked `CLAUDE.md` to provide clearer Claude Code guidance and document the package's extraction context.
