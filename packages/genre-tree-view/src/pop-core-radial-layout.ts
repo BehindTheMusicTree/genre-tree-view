@@ -36,7 +36,7 @@ export const POP_WEDGE_SPAN_DEGREES = 80;
 
 // Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
 // never sits flush against the wheel's own circle edge.
-const POP_SUBTREE_OUTER_MARGIN = 24;
+export const POP_SUBTREE_OUTER_MARGIN = 24;
 
 // A pop hierarchy (per buildPopHierarchy/splitRootGroupBySide) is rooted at the pop child, which
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
@@ -109,13 +109,21 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
  * root's own weight-proportional angular sector (see `computeSectorWidths`) when more ring roots
  * are present than that constant assumes — otherwise descendants near the wedge's edges can render
- * past the root's real sector, into a neighboring root's. */
+ * past the root's real sector, into a neighboring root's.
+ *
+ * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` but the caller should stretch it to
+ * fill whatever room actually separates the mainstream circle from the wheel's own outer circle
+ * (divided by the tallest developed pop subtree's height) — otherwise a pop chain shallower than
+ * whatever unrelated constraint (chip clearance, an expanded center subtree, a deeper core branch)
+ * is sizing that outer circle renders cramped near the mainstream circle with a big unused gap
+ * before the ring root's own chip. */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   wedgeCenterAngleDegrees: number,
   mainstreamCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
+  depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
 ): D3Node {
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
@@ -129,7 +137,7 @@ export function computePopRadialLayout(
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
     const radius =
-      getRadialDepthRadius(hierarchy.height - d.depth, mainstreamCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING) +
+      getRadialDepthRadius(hierarchy.height - d.depth, mainstreamCircleRadius, depthSpacing) +
       MAX_NODE_WIDTH / 2 +
       POP_SUBTREE_OUTER_MARGIN;
     d.x = radius * Math.sin(angleRad);
