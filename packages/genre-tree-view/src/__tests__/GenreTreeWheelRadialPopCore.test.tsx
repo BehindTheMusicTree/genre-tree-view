@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
-import { getRadialPointOnCircle } from "../pop-core-radial-layout";
+import * as d3 from "d3";
+import {
+  buildPopHierarchy,
+  calculateMainstreamPopOuterCircleRadius,
+  calculatePopSubtreeRadialExtent,
+  getRadialPointOnCircle,
+} from "../pop-core-radial-layout";
+import { buildTreeHierarchyStructure } from "../NodeHelper";
+import { MAX_NODE_WIDTH, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -73,6 +81,14 @@ function nodeCoords(container: HTMLElement, id: string) {
   return [Number(match[1]), Number(match[2])] as const;
 }
 
+// The center chip's rendered width is exactly `centerChipDiameter` (collapsed) or
+// `centerNodeDimensions.WIDTH` (expanded) — reading it off the DOM avoids reimplementing the
+// component's internal item-count-range sizing just to get the mainstream circle's radius.
+function centerChipRadius(container: HTMLElement) {
+  const chip = container.querySelector(".gtv-wheel-chip--center") as HTMLElement;
+  return parseFloat(chip.style.width) / 2;
+}
+
 describe("GenreTreeWheelRadialPopCore", () => {
   it("renders the 'Mainstream Pop' root interactively at the wheel's center, styled as a chip, excluded from the ring", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
@@ -136,6 +152,155 @@ describe("GenreTreeWheelRadialPopCore", () => {
     fireEvent.click(container.querySelector('[aria-label="Hide Mainstream Pop sub-genres"]')!);
     const recollapsedRadius = parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
     expect(recollapsedRadius).toBe(collapsedRadius);
+  });
+
+  it("pins the deepest pop node just outside the collapsed mainstream circle, sizing the wheel off that gap", () => {
+    const deepPopNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-pop-grandchild", parentId: "a-pop-child", name: "Yacht Rock", itemCount: 1 },
+      { id: "a-pop-great-grandchild", parentId: "a-pop-grandchild", name: "Smooth Jazz Pop", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={deepPopNodes} />);
+
+    const mainstreamRadius = centerChipRadius(container);
+    const popHierarchy = buildPopHierarchy(
+      d3,
+      deepPopNodes.filter((node) => node.id.startsWith("a-pop")),
+    );
+    const expectedExtent = calculatePopSubtreeRadialExtent(popHierarchy, 0);
+    const coreRootCircleRadius = getWheelRadius(container);
+
+    expect(coreRootCircleRadius).toBeCloseTo(mainstreamRadius + expectedExtent, 6);
+
+    const [x, y] = nodeCoords(container, "a-pop-great-grandchild");
+    expect(Math.hypot(x, y)).toBeCloseTo(
+      coreRootCircleRadius - (1 + popHierarchy.height) * POP_TREE_DEPTH_RADIAL_SPACING,
+      6,
+    );
+  });
+
+  it("pins the deepest pop node just outside the mainstream circle once it's expanded to fit the center subtree", () => {
+    const deepPopAndCenterNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-pop-grandchild", parentId: "a-pop-child", name: "Yacht Rock", itemCount: 1 },
+      { id: "a-pop-great-grandchild", parentId: "a-pop-grandchild", name: "Smooth Jazz Pop", itemCount: 1 },
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-grandchild", parentId: "pop-child", name: "Top 40", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={deepPopAndCenterNodes} />);
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+
+    const centerSubtreeHierarchy = buildTreeHierarchyStructure(
+      d3,
+      deepPopAndCenterNodes.filter((node) => node.id === "pop" || node.id.startsWith("pop-")),
+    );
+    const mainstreamRadius = calculateMainstreamPopOuterCircleRadius(
+      centerSubtreeHierarchy,
+      0,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
+    const popHierarchy = buildPopHierarchy(
+      d3,
+      deepPopAndCenterNodes.filter((node) => node.id.startsWith("a-pop")),
+    );
+    const expectedExtent = calculatePopSubtreeRadialExtent(popHierarchy, 0);
+    const coreRootCircleRadius = getWheelRadius(container);
+
+    expect(coreRootCircleRadius).toBeCloseTo(mainstreamRadius + expectedExtent, 6);
+
+    const [x, y] = nodeCoords(container, "a-pop-great-grandchild");
+    expect(Math.hypot(x, y)).toBeCloseTo(
+      coreRootCircleRadius - (1 + popHierarchy.height) * POP_TREE_DEPTH_RADIAL_SPACING,
+      6,
+    );
+  });
+
+  it("keeps the center subtree strictly inside the mainstream circle when expanded, instead of past the outer wheel", () => {
+    // Regression test for the bug where the center subtree was laid out outward from
+    // coreRootCircleRadius (the outer wheel's own circle) instead of from the true center, pushing
+    // it past the outer circle entirely rather than nesting it inside the mainstream circle where
+    // the ring roots' pop branches expect to find it.
+    const deepCenterNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      { id: "pop-grandchild", parentId: "pop-child", name: "Top 40", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={deepCenterNodes} />);
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+
+    const centerSubtreeHierarchy = buildTreeHierarchyStructure(
+      d3,
+      deepCenterNodes.filter((node) => node.id === "pop" || node.id.startsWith("pop-")),
+    );
+    const mainstreamRadius = calculateMainstreamPopOuterCircleRadius(
+      centerSubtreeHierarchy,
+      0,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
+    const coreRootCircleRadius = getWheelRadius(container);
+
+    const middleCircle = container.querySelector(".gtv-wheel-middle-circle") as HTMLElement;
+    expect(parseFloat(middleCircle.style.getPropertyValue("--gtv-wheel-middle-radius"))).toBeCloseTo(
+      mainstreamRadius,
+      6,
+    );
+
+    const [childX, childY] = nodeCoords(container, "pop-child");
+    expect(Math.hypot(childX, childY)).toBeCloseTo(POP_TREE_DEPTH_RADIAL_SPACING, 6);
+
+    const [grandchildX, grandchildY] = nodeCoords(container, "pop-grandchild");
+    expect(Math.hypot(grandchildX, grandchildY)).toBeCloseTo(2 * POP_TREE_DEPTH_RADIAL_SPACING, 6);
+    expect(Math.hypot(grandchildX, grandchildY)).toBeLessThan(mainstreamRadius);
+    expect(Math.hypot(grandchildX, grandchildY)).toBeLessThan(coreRootCircleRadius);
+  });
+
+  it("still pins the pop branch's deepest node just outside the mainstream circle even when chip clearance (many ring roots), not pop reach, is what sizes the wheel", () => {
+    // Enough extra roots (each with a core child, no pop) that chip-clearance angular spacing —
+    // not the shallow pop branch on root-a — is what drives coreRootCircleRadius. Regression test
+    // for the bug where the deepest pop node was pinned a fixed distance inward from
+    // coreRootCircleRadius itself, so inflating that radius for unrelated reasons (here, chip
+    // clearance) reopened a visible gap to the mainstream circle.
+    const manyRootsNodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      ...Array.from({ length: 12 }, (_, i) => [
+        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
+        {
+          id: `extra-root-${i}-child`,
+          parentId: `extra-root-${i}`,
+          name: `Extra ${i} Child`,
+          itemCount: 0,
+        } satisfies GenreTreeNode,
+      ]).flat(),
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={manyRootsNodes} />);
+
+    const mainstreamRadius = centerChipRadius(container);
+    const popHierarchy = buildPopHierarchy(
+      d3,
+      manyRootsNodes.filter((node) => node.id.startsWith("a-pop")),
+    );
+    const expectedExtent = calculatePopSubtreeRadialExtent(popHierarchy, 0);
+    const coreRootCircleRadius = getWheelRadius(container);
+
+    // Confirms chip clearance, not pop reach, is the binding constraint here — otherwise this
+    // test wouldn't exercise the regression at all.
+    expect(coreRootCircleRadius).toBeGreaterThan(mainstreamRadius + expectedExtent);
+
+    const [x, y] = nodeCoords(container, "a-pop-child");
+    expect(Math.hypot(x, y)).toBeCloseTo(mainstreamRadius + MAX_NODE_WIDTH / 2 + 24, 6);
+  });
+
+  it("leaves the wheel's sizing unaffected by the mainstream circle when no root has a pop branch", () => {
+    const noPopNodes: GenreTreeNode[] = NODES_WITH_POP.filter((node) => node.id !== "a-pop" && node.id !== "a-pop-child");
+    const withPopContainer = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />).container;
+    const withoutPopRadius = (() => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={noPopNodes} />);
+      return getWheelRadius(container);
+    })();
+
+    // Removing the only pop branch must not grow the wheel to clear a mainstream circle that no
+    // longer has anything reaching toward it — it should be no larger than with the pop branch.
+    expect(withoutPopRadius).toBeLessThanOrEqual(getWheelRadius(withPopContainer));
   });
 
   it("does not throw and stays collapsed by default when the 'Mainstream Pop' root has children but the toggle button is never clicked", () => {

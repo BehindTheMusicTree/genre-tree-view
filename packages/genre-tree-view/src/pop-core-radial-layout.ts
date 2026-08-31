@@ -97,11 +97,14 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  *
  * Angle spread across siblings/cousins uses d3's own tidy-tree balancing (`d3.tree()`), the same
  * technique the cartesian renderers rely on, just fed a 1-D angular size instead of a 2-D pixel
- * one. Radius is NOT taken from that layout's own y — every node's radius descends from
- * `coreRootCircleRadius` by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step (the mirror image of
- * `getRadialDepthRadius`'s outward climb): the pop child (depth 0) lands one `POP_TREE_DEPTH_RADIAL_SPACING`
- * step inside the ring roots' own circle, clear of the root chip's own boundary circle rather than
- * straddling it, and each deeper generation steps further inward, toward the wheel's own center.
+ * one. Radius is NOT taken from that layout's own y — every node's radius climbs OUTWARD from
+ * `mainstreamCircleRadius` (the center "Mainstream Pop" node's own current circle, collapsed or
+ * expanded) by `POP_TREE_DEPTH_RADIAL_SPACING` per depth step below the branch's deepest node,
+ * so that node always lands exactly `MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN` past the
+ * mainstream circle regardless of how far out the ring roots' own circle
+ * (`coreRootCircleRadius`) ends up sitting for unrelated reasons (e.g. chip clearance for many
+ * ring roots) — anchoring inward from that circle instead would let any such unrelated inflation
+ * reopen a gap between the mainstream circle and the pop branch's deepest node.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
  * root's own weight-proportional angular sector (see `computeSectorWidths`) when more ring roots
@@ -111,7 +114,7 @@ export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   wedgeCenterAngleDegrees: number,
-  coreRootCircleRadius: number,
+  mainstreamCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
 ): D3Node {
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
@@ -125,7 +128,10 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = getRadialDepthRadius(-(d.depth + 1), coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+    const radius =
+      getRadialDepthRadius(hierarchy.height - d.depth, mainstreamCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING) +
+      MAX_NODE_WIDTH / 2 +
+      POP_SUBTREE_OUTER_MARGIN;
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });

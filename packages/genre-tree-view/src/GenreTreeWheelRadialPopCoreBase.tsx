@@ -324,6 +324,14 @@ export function WheelRadialPopCoreCore({
     [isPopExpanded, centerSubtreeHierarchy],
   );
 
+  // The mainstream circle's current radius from the wheel's true center — the collapsed center
+  // chip's own disc, or (once expanded) how far its own subtree reaches. The deepest pop node
+  // must clear this, not just some fixed distance past the ring roots' own circle.
+  const mainstreamCircleRadius = useMemo(
+    () => (isPopExpanded && centerSubtreeHierarchy ? centerSubtreeExtentDelta : centerChipDiameter / 2),
+    [isPopExpanded, centerSubtreeHierarchy, centerSubtreeExtentDelta, centerChipDiameter],
+  );
+
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
   // same idea as maxPopExtentDelta, but outward instead of inward; folds into coreRootCircleRadius
   // below so the circle grows to fit the deepest core branch too.
@@ -335,24 +343,30 @@ export function WheelRadialPopCoreCore({
     return extent;
   }, [coreHierarchyByRootId]);
 
+  // Pins coreRootCircleRadius so the deepest developed pop branch's own node lands just outside
+  // the mainstream circle by its usual outer margin — rather than a fixed distance past the ring
+  // roots' own circle regardless of how big the mainstream circle currently is. Zero (dropped
+  // from the Math.max below) when no root has a pop branch at all.
+  const popReachRequiredRadius = useMemo(
+    () => (maxPopExtentDelta > 0 ? mainstreamCircleRadius + maxPopExtentDelta : 0),
+    [mainstreamCircleRadius, maxPopExtentDelta],
+  );
+
   const coreRootCircleRadius = useMemo(
     () =>
       Math.max(
         chipClearanceFloor,
-        chipClearanceFloor + maxPopExtentDelta,
         chipClearanceFloor + centerSubtreeExtentDelta,
         chipClearanceFloor + maxCoreExtentDelta,
+        popReachRequiredRadius,
       ),
-    [chipClearanceFloor, maxPopExtentDelta, centerSubtreeExtentDelta, maxCoreExtentDelta],
+    [chipClearanceFloor, centerSubtreeExtentDelta, maxCoreExtentDelta, popReachRequiredRadius],
   );
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
-  // marker — the actual layout math no longer positions anything relative to this; both the center
-  // subtree and every root's pop wedges now measure outward from the same coreRootCircleRadius.
-  const middleCircleFloor = useMemo(
-    () => coreRootCircleRadius + centerSubtreeExtentDelta,
-    [coreRootCircleRadius, centerSubtreeExtentDelta],
-  );
+  // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
+  // while every root's pop wedges fan outward from it toward coreRootCircleRadius.
+  const middleCircleFloor = mainstreamCircleRadius;
 
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
@@ -375,7 +389,7 @@ export function WheelRadialPopCoreCore({
       .attr("transform", `translate(${coreRootCircleRadius}, ${coreRootCircleRadius})`);
 
     popHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
-      const laidOut = computePopRadialLayout(d3, hierarchy, angle, coreRootCircleRadius, wedgeSpanForRoot(rootId));
+      const laidOut = computePopRadialLayout(d3, hierarchy, angle, mainstreamCircleRadius, wedgeSpanForRoot(rootId));
       const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
@@ -473,7 +487,7 @@ export function WheelRadialPopCoreCore({
       const laidOutCenter = computeCenterRadialLayout(
         d3,
         centerSubtreeHierarchy,
-        coreRootCircleRadius,
+        0,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
       const reparentForbiddenIds = reparentingNodeId
@@ -516,6 +530,7 @@ export function WheelRadialPopCoreCore({
     popHierarchyByRootId,
     coreHierarchyByRootId,
     coreRootCircleRadius,
+    mainstreamCircleRadius,
     wedgeSpanForRoot,
     reparentingNodeId,
     playingNodeId,
