@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
 import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
+import { buildSectorClipPathPolygon } from "../radial-wheel-geometry";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -52,6 +53,29 @@ const NODES_SIX: GenreTreeNode[] = [
   { id: "e-child", parentId: "root-e", name: "Doom", itemCount: 0 },
   { id: "root-f", parentId: null, name: "Blues", itemCount: 0 },
   { id: "f-child", parentId: "root-f", name: "Delta", itemCount: 0 },
+];
+
+// 3 roots with deliberately unequal weight, engineered so the ONLY thing that could make it wrong
+// is weighting by group.nodes.length (root + core branch + pop branch) instead of by the rendered
+// core branch alone (splitRootGroupBySide's coreNodes) — see rootWeights in
+// GenreTreeWheelRadialBase.tsx. root-a has a small core (2 nodes: root + a-core) hidden behind a
+// pop branch of equal size (2 nodes: a-pop + a-pop-child) that this wheel never renders, so its
+// group.nodes.length (4) equals root-b's, even though root-b's core branch (4 nodes: root +
+// b-core + 2 children) is actually twice as large as root-a's rendered core (2 nodes). root-c (2
+// nodes, no pop) is an unweighted control. Weighting by group.nodes.length (the bug) yields ring
+// weights [4, 4, 2]; weighting by rendered core nodes (the fix) yields [2, 4, 2] — different enough
+// to move every non-clicked root's angle.
+const NODES_UNEQUAL_POP_CORE_WEIGHT: GenreTreeNode[] = [
+  { id: "root-a", parentId: null, name: "Classical", itemCount: 0 },
+  { id: "a-core", parentId: "root-a", name: "Baroque", itemCount: 0 },
+  { id: "a-pop", parentId: "root-a", name: "Crossover", itemCount: 0, side: "pop" },
+  { id: "a-pop-child", parentId: "a-pop", name: "Neoclassical Pop", itemCount: 0 },
+  { id: "root-b", parentId: null, name: "Rock", itemCount: 0 },
+  { id: "b-core", parentId: "root-b", name: "Punk", itemCount: 0 },
+  { id: "b-core-child1", parentId: "b-core", name: "Hardcore", itemCount: 0 },
+  { id: "b-core-child2", parentId: "b-core", name: "Post-Punk", itemCount: 0 },
+  { id: "root-c", parentId: null, name: "Jazz", itemCount: 0 },
+  { id: "c-child", parentId: "root-c", name: "Bebop", itemCount: 0 },
 ];
 
 function chipFor(container: HTMLElement, name: string) {
@@ -248,6 +272,28 @@ describe("GenreTreeWheelRadial", () => {
     expect(
       chipFor(container, "Blues").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
     ).toBe("-30deg");
+  });
+
+  it("weights each root's angular slice by its rendered core branch, not its hidden pop branch's node count", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNEQUAL_POP_CORE_WEIGHT} />);
+
+    // root-a (the default top root) always centers on the 90deg landing angle regardless of its
+    // own weight, so it can't reveal the bug — root-b and root-c can, since their angles shift
+    // with every root's relative weight. Weighting by group.nodes.length ([4, 4, 2], the bug)
+    // would land root-b at 234deg and root-c at 342deg; weighting by rendered core nodes ([2, 4,
+    // 2], the fix) lands them at 225deg and 0deg.
+    expect(
+      chipFor(container, "Rock").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+    ).toBe("225deg");
+    expect(
+      chipFor(container, "Jazz").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+    ).toBe("0deg");
+
+    // Same story for the rendered sector wash: root-b's (index 1) sector should sweep the full
+    // 180deg its weight (4 of the 8 total core nodes) proportionally earns, once root-a's
+    // inflated pop-inclusive weight no longer steals space from it.
+    const sectors = Array.from(container.querySelectorAll(".gtv-wheel-sector")) as HTMLElement[];
+    expect(sectors[1].style.clipPath).toBe(buildSectorClipPathPolygon(180));
   });
 
   it("fires onRootSelect on mount with the default root and again on click", () => {

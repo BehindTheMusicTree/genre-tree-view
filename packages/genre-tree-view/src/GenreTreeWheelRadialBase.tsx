@@ -10,12 +10,10 @@ import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadial
 import { getRadialPointOnCircle, POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
-  bisectAngles,
   buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
-  computeSectorBounds,
-  computeSectorSymmetricSpan,
+  computeSectorWidths,
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
@@ -114,7 +112,14 @@ export function WheelRadialCore({
     0,
   );
 
-  const rootWeights = useMemo(() => groups.map((group) => group.nodes.length), [groups]);
+  // Weighted by each root's own rendered core branch (splitRootGroupBySide), not group.nodes.length
+  // — group.nodes also includes the root's pop branch (see coreHierarchyByRootId below), which this
+  // component never renders, so weighting by it would inflate a root's slice past what it actually
+  // draws whenever it has a large hidden pop branch.
+  const rootWeights = useMemo(
+    () => groups.map((group) => splitRootGroupBySide(group).coreNodes.length),
+    [groups],
+  );
 
   const layout = useMemo(
     () => computeRadialLayout(rootWeights, topIndex, LANDING_ANGLE),
@@ -175,22 +180,19 @@ export function WheelRadialCore({
     return map;
   }, [groups, layout]);
 
-  // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
-  // dividerAngles/sectorFills below) — caps each root's core wedge span so a subtree's
-  // descendants can't fan out past the root's actual sector into a neighboring root's, which
-  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring. Uses
-  // computeSectorSymmetricSpan (not the raw end - start sector width) since the wedge below fans
-  // out symmetrically around the root's own angle, and that angle isn't generally centered within
-  // its sector — capping at the raw width can let the wider side spill into the neighboring sector.
+  // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
+  // the total — same widths computeRadialLayout placed chips with, so a root's wedge below is
+  // guaranteed to fit within its actual sector without spilling into a neighbor's, regardless of
+  // how uneven neighboring roots' weights are (see computeSectorWidths's doc comment).
   const sectorSpanByRootId = useMemo(() => {
     const map = new Map<string, number>();
     if (groups.length <= 1) return map;
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    const widths = computeSectorWidths(rootWeights);
     groups.forEach((group, index) => {
-      map.set(group.root.id, computeSectorSymmetricSpan(continuousAngles, index));
+      map.set(group.root.id, widths[index]);
     });
     return map;
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
     (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
@@ -321,37 +323,35 @@ export function WheelRadialCore({
     setTopRootId(rootId);
   };
 
-  // One divider per boundary between two angularly-adjacent roots, bisecting their own continuous
-  // (unwrapped) angles — see bisectAngles's doc comment — so dividers inherit the same
-  // shortest-path transition behavior as the chips they sit between, instead of needing their own
-  // continuity tracking.
+  // One divider per boundary between two angularly-adjacent roots — each root's own continuous
+  // (unwrapped) angle plus half its weight-proportional width (sectorSpanByRootId) lands exactly on
+  // the boundary with its next neighbor, since computeRadialLayout tiled the roots' widths
+  // contiguously around the circle in the first place.
   const dividerAngles = useMemo(() => {
     if (groups.length <= 1) return [];
-    return groups.map((group, index) => {
-      const next = groups[(index + 1) % groups.length];
+    return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
-      const nextAngle = continuousAngleByRootId.get(next.root.id) ?? 0;
-      return bisectAngles(angle, nextAngle);
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
+      return angle + width / 2;
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
-  // One tinted sector fan per root, computed via computeSectorBounds rather than differencing
-  // dividerAngles pairs directly — see that function's doc comment for why anchoring both bounds
-  // on the root's own continuous angle keeps `end - start` a true sweep instead of an accidental
-  // multiple of 360 off, which plain divider-to-divider differencing wouldn't guarantee.
+  // One tinted sector fan per root, bounded by its own weight-proportional width rather than
+  // bisected neighbor angles — see computeSectorWidths's doc comment for why bisection
+  // under/over-shoots a root's true sector when its neighbors' weights differ a lot from its own.
   const sectorFills = useMemo(() => {
     if (groups.length <= 1) return [];
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
-    return groups.map((group, index) => {
-      const { start, end } = computeSectorBounds(continuousAngles, index);
+    return groups.map((group) => {
+      const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
       return {
         rootId: group.root.id,
-        start,
-        clipPath: buildSectorClipPathPolygon(end - start),
+        start: angle - width / 2,
+        clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
       };
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
   return (
     <div

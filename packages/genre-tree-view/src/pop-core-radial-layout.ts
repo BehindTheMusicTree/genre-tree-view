@@ -104,9 +104,9 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * straddling it, and each deeper generation steps further inward, toward the wheel's own center.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
- * root's own bisected angular sector (see `computeSectorBounds`) when more ring roots are
- * present than that constant assumes — otherwise descendants near the wedge's edges can render past
- * the root's real sector, into a neighboring root's. */
+ * root's own weight-proportional angular sector (see `computeSectorWidths`) when more ring roots
+ * are present than that constant assumes — otherwise descendants near the wedge's edges can render
+ * past the root's real sector, into a neighboring root's. */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,

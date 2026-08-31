@@ -11,6 +11,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now size each root's angular sector
+  (dividers, colored wash, wedge cap) proportionally to that root's own node count, instead of
+  bisecting its immediate ring neighbors' angles — a root with a much smaller weight than its
+  neighbors used to get a sector far wider than its actual share (e.g. ~25° instead of ~5.7° for a
+  weight-3 root sandwiched between weight-25 and weight-21 neighbors).
 - `GenreTreeWheelRadialPopCore`'s "fit to frame" no longer crops the popped tree: it now measures
   the actually-rendered `.gtv-node-rect`/`.gtv-link` content instead of the pop layer's own `<svg>`
   box, which only covered the reserved wheel-circle radius and undersized the fit for content drawn
