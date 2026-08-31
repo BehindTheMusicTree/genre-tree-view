@@ -16,7 +16,6 @@ import {
   computeCenterRadialLayout,
   computePopRadialLayout,
   getRadialPointOnCircle,
-  POP_SUBTREE_OUTER_MARGIN,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
 } from "./pop-core-radial-layout";
@@ -364,29 +363,6 @@ export function WheelRadialPopCoreCore({
     [chipClearanceFloor, centerSubtreeExtentDelta, maxCoreExtentDelta, popReachRequiredRadius],
   );
 
-  // Tallest developed pop subtree's own height (in tree-depth steps) — the deepest one still lands
-  // its outer node just past the mainstream circle (unchanged); every pop branch shares this same
-  // depth count so they all step outward at the same rate, matching how ring-root depth and core
-  // depth are already shared across branches.
-  const maxPopDepth = useMemo(() => {
-    let depth = 0;
-    popHierarchyByRootId.forEach(({ hierarchy }) => {
-      depth = Math.max(depth, hierarchy.height);
-    });
-    return depth;
-  }, [popHierarchyByRootId]);
-
-  // Stretches the per-depth step so a pop branch's own root (closest to the ring root's chip)
-  // reaches all the way to coreRootCircleRadius instead of leaving a big unused gap whenever some
-  // unrelated constraint (chip clearance for many ring roots, an expanded center subtree, a deeper
-  // core branch) sizes the outer circle well past what POP_TREE_DEPTH_RADIAL_SPACING alone would
-  // need — never shrinks below the default spacing, only stretches when there's slack to fill.
-  const popDepthSpacing = useMemo(() => {
-    if (maxPopDepth === 0) return POP_TREE_DEPTH_RADIAL_SPACING;
-    const availableGap = coreRootCircleRadius - mainstreamCircleRadius - MAX_NODE_WIDTH / 2 - POP_SUBTREE_OUTER_MARGIN;
-    return Math.max(POP_TREE_DEPTH_RADIAL_SPACING, availableGap / maxPopDepth);
-  }, [maxPopDepth, coreRootCircleRadius, mainstreamCircleRadius]);
-
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
   // while every root's pop wedges fan outward from it toward coreRootCircleRadius.
@@ -419,7 +395,6 @@ export function WheelRadialPopCoreCore({
         angle,
         mainstreamCircleRadius,
         wedgeSpanForRoot(rootId),
-        popDepthSpacing,
       );
       const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
       const reparentForbiddenIds = reparentingNodeId
@@ -562,7 +537,6 @@ export function WheelRadialPopCoreCore({
     coreHierarchyByRootId,
     coreRootCircleRadius,
     mainstreamCircleRadius,
-    popDepthSpacing,
     wedgeSpanForRoot,
     reparentingNodeId,
     playingNodeId,

@@ -111,12 +111,11 @@ export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircl
  * are present than that constant assumes — otherwise descendants near the wedge's edges can render
  * past the root's real sector, into a neighboring root's.
  *
- * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` but the caller should stretch it to
- * fill whatever room actually separates the mainstream circle from the wheel's own outer circle
- * (divided by the tallest developed pop subtree's height) — otherwise a pop chain shallower than
- * whatever unrelated constraint (chip clearance, an expanded center subtree, a deeper core branch)
- * is sizing that outer circle renders cramped near the mainstream circle with a big unused gap
- * before the ring root's own chip. */
+ * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` — kept constant per depth step
+ * regardless of how far out the wheel's own outer circle ends up sitting; it's the outer circle's
+ * own radius (`coreRootCircleRadius`, sized off the deepest developed pop branch's reach — see
+ * `popReachRequiredRadius` in the wheel component) that adapts to fit the pop branches, not the
+ * spacing between their depths. */
 export function computePopRadialLayout(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
