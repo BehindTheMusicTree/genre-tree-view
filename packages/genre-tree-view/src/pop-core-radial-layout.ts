@@ -212,7 +212,7 @@ export interface RenderPopSubtreeCallbacks {
  * corner, offset by `+ width / 2` at render time). Card drawing, hover toolbar, and reparent-target
  * overlay reuse the exact same NodeHelper/d3-path-helper building blocks tree-renderer.ts's
  * renderTree uses, so pop nodes look and behave identically to every other node in the package —
- * only the positioning math and link shape (straight lines fanning from the wheel's center, not
+ * only the positioning math and link shape (radial curves following the wheel's own rings, not
  * tree-renderer's orthogonal links) are specific to this renderer.
  */
 export function renderPopSubtree(
@@ -261,13 +261,27 @@ export function renderPopSubtree(
     ...rootLinks,
   ];
 
+  // Cartesian (x, y) here is always a point on a circle centered on the wheel's own center (see
+  // computePopRadialLayout/computeCenterRadialLayout), so it's exactly invertible back to the
+  // (angle, radius) polar pair d3.linkRadial expects — recovering that lets links curve smoothly
+  // along the wheel's rings instead of cutting straight chords across them.
+  const toPolar = (p: { x?: number; y?: number }) => {
+    const x = p.x ?? 0;
+    const y = p.y ?? 0;
+    return { x: Math.atan2(x, -y), y: Math.hypot(x, y) };
+  };
+  const radialLinkGenerator = d3Lib
+    .linkRadial<{ source: { x: number; y: number }; target: { x: number; y: number } }, { x: number; y: number }>()
+    .angle((d) => d.x)
+    .radius((d) => d.y);
+
   svg
     .selectAll("path.gtv-link")
     .data(links)
     .enter()
     .append("path")
     .attr("class", "gtv-link")
-    .attr("d", (d) => `M ${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`)
+    .attr("d", (d) => radialLinkGenerator({ source: toPolar(d.source), target: toPolar(d.target) }))
     .style("fill", "none")
     .style("stroke", RADIAL_LINK_COLOR)
     .style("stroke-width", linkStrokeWidth)
