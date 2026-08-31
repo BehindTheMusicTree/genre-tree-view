@@ -39,6 +39,17 @@ export function computeRadialLayout(weights: number[], clickedIndex: number, lan
   return slots;
 }
 
+/** Each root's true angular sector width in degrees, proportional to its own `weights` entry out
+ * of the total — the same per-root share `computeRadialLayout` uses internally to place chips, but
+ * exposed directly so callers reconstructing a root's sector bounds (dividers, colored wash, wedge
+ * caps) can derive them from the actual weights instead of bisecting neighboring roots' angles
+ * (which only approximates the true bounds, and badly so when neighbors' weights differ a lot from
+ * the root's own — see computeSectorBounds). */
+export function computeSectorWidths(weights: number[]): number[] {
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  return weights.map((weight) => (weight / total) * 360);
+}
+
 /** Midpoint angle between two chip angles that may be continuous/unwrapped (e.g. from
  * computeContinuousAngles), taking the shorter arc between them rather than always going the
  * increasing-angle way — brings `b` within 180 degrees of `a` before averaging, so the divider

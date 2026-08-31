@@ -20,12 +20,10 @@ import {
   renderPopSubtree,
 } from "./pop-core-radial-layout";
 import {
-  bisectAngles,
   buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
-  computeSectorBounds,
-  computeSectorSymmetricSpan,
+  computeSectorWidths,
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
@@ -279,22 +277,19 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [groups, layout, splitByRootId]);
 
-  // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
-  // dividerAngles/sectorFills below) — caps each root's pop/core wedge span so a subtree's
-  // descendants can't fan out past the root's actual sector into a neighboring root's, which
-  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring. Uses
-  // computeSectorSymmetricSpan (not the raw end - start sector width) since the wedge below fans
-  // out symmetrically around the root's own angle, and that angle isn't generally centered within
-  // its sector — capping at the raw width can let the wider side spill into the neighboring sector.
+  // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
+  // the total — same widths computeRadialLayout placed chips with, so a root's pop/core wedge below
+  // is guaranteed to fit within its actual sector without spilling into a neighbor's, regardless of
+  // how uneven neighboring roots' weights are (see computeSectorWidths's doc comment).
   const sectorSpanByRootId = useMemo(() => {
     const map = new Map<string, number>();
     if (groups.length <= 1) return map;
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    const widths = computeSectorWidths(rootWeights);
     groups.forEach((group, index) => {
-      map.set(group.root.id, computeSectorSymmetricSpan(continuousAngles, index));
+      map.set(group.root.id, widths[index]);
     });
     return map;
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
     (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
@@ -554,35 +549,34 @@ export function WheelRadialPopCoreCore({
     setTopRootId(rootId);
   };
 
-  // One divider per boundary between two angularly-adjacent ring roots, bisecting their own
-  // continuous (unwrapped) angles — see bisectAngles's doc comment, and WheelRadialCore's own copy
-  // of this computation.
+  // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
+  // copy of this computation for why each root's own continuous angle plus half its
+  // weight-proportional width (sectorSpanByRootId) lands exactly on the boundary with its next
+  // neighbor.
   const dividerAngles = useMemo(() => {
     if (groups.length <= 1) return [];
-    return groups.map((group, index) => {
-      const next = groups[(index + 1) % groups.length];
+    return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
-      const nextAngle = continuousAngleByRootId.get(next.root.id) ?? 0;
-      return bisectAngles(angle, nextAngle);
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
+      return angle + width / 2;
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
-  // One tinted sector fan per root — see WheelRadialCore's own copy of this computation, and
-  // computeSectorBounds's doc comment for why both bounds are anchored on the root's own
-  // continuous angle instead of differencing dividerAngles pairs directly.
+  // One tinted sector fan per root, bounded by its own weight-proportional width — see
+  // WheelRadialCore's own copy of this computation, and computeSectorWidths's doc comment.
   const sectorFills = useMemo(() => {
     if (groups.length <= 1) return [];
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
-    return groups.map((group, index) => {
-      const { start, end } = computeSectorBounds(continuousAngles, index);
+    return groups.map((group) => {
+      const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
       return {
         rootId: group.root.id,
-        start,
-        clipPath: buildSectorClipPathPolygon(end - start),
+        start: angle - width / 2,
+        clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
       };
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
   return (
     <div
