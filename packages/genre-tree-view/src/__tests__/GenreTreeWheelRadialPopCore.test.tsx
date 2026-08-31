@@ -51,6 +51,21 @@ function getWheelRadius(container: HTMLElement) {
   return parseFloat(wheelContainer.style.getPropertyValue("--gtv-wheel-radius"));
 }
 
+// jsdom's getBoundingClientRect() always returns all-zero rects, which isn't enough to exercise
+// fit-to-frame's actual scale computation — this fakes real rects for specific elements, keyed by
+// identity/class.
+const makeRect = (left: number, top: number, width: number, height: number): DOMRect => ({
+  left,
+  top,
+  right: left + width,
+  bottom: top + height,
+  width,
+  height,
+  x: left,
+  y: top,
+  toJSON: () => ({}),
+});
+
 function nodeCoords(container: HTMLElement, id: string) {
   const group = container.querySelector(`#group-${id}`) as SVGGElement;
   const match = group.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
@@ -357,6 +372,39 @@ describe("GenreTreeWheelRadialPopCore", () => {
     fireEvent.click(container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement);
     fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
     expect(Number.isNaN(getScale())).toBe(false);
+  });
+
+  it("fit-to-frame button fits the popped tree's actually-rendered nodes/links, not just the reserved wheel circle's own box", () => {
+    // popSvgRef's declared width/height cover only the reserved wheel-circle radius; the pop/core
+    // wedges it renders (via renderPopSubtree) draw outward past that with `overflow: visible`, so
+    // measuring the svg element's own box instead of its rendered .gtv-node-rect/.gtv-link content
+    // undersizes the fit and crops the tree. This pins the fit to the real content bounds.
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+    const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+    const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
+    const transformDiv = (container.querySelector(".gtv-wheel-stage") as HTMLElement).parentElement as HTMLElement;
+    const getScale = () => {
+      const match = transformDiv.style.transform.match(/scale\(([^)]+)\)/);
+      return match ? Number(match[1]) : NaN;
+    };
+
+    const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: Element,
+    ) {
+      if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+      if (this === circle) return makeRect(300, 200, 200, 200);
+      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(0, 0, 2000, 2000);
+      return makeRect(0, 0, 0, 0);
+    });
+
+    fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
+
+    // Fitting the 2000x2000 rendered content into an 800x600 viewport (with ZOOM_FIT_PADDING
+    // clearance) must shrink well below 1 — fitting only the 200x200 reserved circle would cap at
+    // scale 1 instead, cropping everything past it.
+    expect(getScale()).toBeLessThan(0.5);
+
+    rectSpy.mockRestore();
   });
 
   it("disables the zoom-in button once the maximum scale is reached", () => {
