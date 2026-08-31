@@ -20,6 +20,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the actually-rendered `.gtv-node-rect`/`.gtv-link` content instead of the pop layer's own `<svg>`
   box, which only covered the reserved wheel-circle radius and undersized the fit for content drawn
   further out via `overflow: visible`.
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`'s connecting links now curve along the
+  wheel's own rings instead of cutting straight chords across it.
 
 ### Documentation
 
