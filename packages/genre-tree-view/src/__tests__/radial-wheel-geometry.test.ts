@@ -6,6 +6,7 @@ import {
   computeRadialLayout,
   computeSectorBounds,
   computeSectorSymmetricSpan,
+  computeSectorWidths,
 } from "../radial-wheel-geometry";
 
 describe("computeRadialLayout", () => {
@@ -151,6 +152,27 @@ describe("computeRadialLayout", () => {
     const lightGap = byIndex[1].angle - byIndex[0].angle;
     const heavyGap = byIndex[3].angle - byIndex[2].angle;
     expect(heavyGap).toBeGreaterThan(lightGap);
+  });
+});
+
+describe("computeSectorWidths", () => {
+  it("splits equal weights into equal widths", () => {
+    expect(computeSectorWidths([1, 1, 1])).toEqual([120, 120, 120]);
+  });
+
+  it("gives a much smaller root a proportionally small width even between much larger neighbors", () => {
+    // Reproduces the reported bug: a root with weight 3 sandwiched between weight-25 and weight-21
+    // neighbors (out of 190 total) should get ~5.68deg, not the ~25deg neighbor-bisection produced.
+    const weights = [36, 34, 24, 25, 3, 21, 28, 19];
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    const widths = computeSectorWidths(weights);
+    expect(widths[4]).toBeCloseTo((3 / total) * 360, 5);
+    expect(widths[4]).toBeLessThan(6);
+  });
+
+  it("widths sum to 360", () => {
+    const widths = computeSectorWidths([5, 12, 3, 40]);
+    expect(widths.reduce((sum, width) => sum + width, 0)).toBeCloseTo(360, 10);
   });
 });
 

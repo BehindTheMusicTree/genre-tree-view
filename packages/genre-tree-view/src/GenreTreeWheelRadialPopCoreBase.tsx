@@ -20,15 +20,14 @@ import {
   renderPopSubtree,
 } from "./pop-core-radial-layout";
 import {
-  bisectAngles,
   buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
-  computeSectorBounds,
-  computeSectorSymmetricSpan,
+  computeSectorWidths,
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
+import { queryTreeContentElements } from "./zoom-pan";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
@@ -278,22 +277,19 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [groups, layout, splitByRootId]);
 
-  // Real angular sector each ring root owns (bisected against its immediate neighbors, same as
-  // dividerAngles/sectorFills below) — caps each root's pop/core wedge span so a subtree's
-  // descendants can't fan out past the root's actual sector into a neighboring root's, which
-  // POP_WEDGE_SPAN_DEGREES alone doesn't guarantee once more than ~4 roots share the ring. Uses
-  // computeSectorSymmetricSpan (not the raw end - start sector width) since the wedge below fans
-  // out symmetrically around the root's own angle, and that angle isn't generally centered within
-  // its sector — capping at the raw width can let the wider side spill into the neighboring sector.
+  // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
+  // the total — same widths computeRadialLayout placed chips with, so a root's pop/core wedge below
+  // is guaranteed to fit within its actual sector without spilling into a neighbor's, regardless of
+  // how uneven neighboring roots' weights are (see computeSectorWidths's doc comment).
   const sectorSpanByRootId = useMemo(() => {
     const map = new Map<string, number>();
     if (groups.length <= 1) return map;
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
+    const widths = computeSectorWidths(rootWeights);
     groups.forEach((group, index) => {
-      map.set(group.root.id, computeSectorSymmetricSpan(continuousAngles, index));
+      map.set(group.root.id, widths[index]);
     });
     return map;
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
     (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
@@ -328,9 +324,20 @@ export function WheelRadialPopCoreCore({
     [isPopExpanded, centerSubtreeHierarchy],
   );
 
+  // The mainstream circle's current radius from the wheel's true center — the collapsed center
+  // chip's own disc, or (once expanded) how far its own subtree reaches. The deepest pop node
+  // must clear this, not just some fixed distance past the ring roots' own circle.
+  const mainstreamCircleRadius = useMemo(
+    () => (isPopExpanded && centerSubtreeHierarchy ? centerSubtreeExtentDelta : centerChipDiameter / 2),
+    [isPopExpanded, centerSubtreeHierarchy, centerSubtreeExtentDelta, centerChipDiameter],
+  );
+
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
-  // same idea as maxPopExtentDelta, but outward instead of inward; folds into coreRootCircleRadius
-  // below so the circle grows to fit the deepest core branch too.
+  // same idea as maxPopExtentDelta. Core branches render outward from coreRootCircleRadius
+  // regardless of its value, so this doesn't belong in coreRootCircleRadius itself (that would
+  // needlessly drag the visual outer circle and ring root chips outward with it) — it only feeds
+  // svgCanvasRadius below, so the deepest core branch has enough SVG canvas to render into
+  // without being clipped.
   const maxCoreExtentDelta = useMemo(() => {
     let extent = 0;
     coreHierarchyByRootId.forEach(({ hierarchy }) => {
@@ -339,24 +346,40 @@ export function WheelRadialPopCoreCore({
     return extent;
   }, [coreHierarchyByRootId]);
 
+  // Pins coreRootCircleRadius so the deepest developed pop branch's own node lands just outside
+  // the mainstream circle by its usual outer margin — rather than a fixed distance past the ring
+  // roots' own circle regardless of how big the mainstream circle currently is. Zero (dropped
+  // from the Math.max below) when no root has a pop branch at all.
+  const popReachRequiredRadius = useMemo(
+    () => (maxPopExtentDelta > 0 ? mainstreamCircleRadius + maxPopExtentDelta : 0),
+    [mainstreamCircleRadius, maxPopExtentDelta],
+  );
+
+  // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
+  // own chip sits — NOT the SVG canvas size (see svgCanvasRadius below). Deliberately excludes
+  // maxCoreExtentDelta: a deep core branch needs canvas room to render into, but it shouldn't
+  // drag ring root chips (and the pop branches anchored to them) outward with it.
   const coreRootCircleRadius = useMemo(
     () =>
-      Math.max(
-        chipClearanceFloor,
-        chipClearanceFloor + maxPopExtentDelta,
-        chipClearanceFloor + centerSubtreeExtentDelta,
-        chipClearanceFloor + maxCoreExtentDelta,
-      ),
-    [chipClearanceFloor, maxPopExtentDelta, centerSubtreeExtentDelta, maxCoreExtentDelta],
+      Math.max(chipClearanceFloor, chipClearanceFloor + centerSubtreeExtentDelta, popReachRequiredRadius),
+    [chipClearanceFloor, centerSubtreeExtentDelta, popReachRequiredRadius],
+  );
+
+  // The SVG canvas's actual radius. Core branches render outward from the real coreRootCircleRadius
+  // (see computeCoreRadialLayout's call below), so the canvas must extend maxCoreExtentDelta past
+  // that actual base — not past chipClearanceFloor, which can be smaller than coreRootCircleRadius
+  // whenever pop reach or the expanded center subtree is what's sizing it — or the deepest core
+  // node gets clipped. Purely a rendering-surface concern: never feeds back into coreRootCircleRadius,
+  // so it doesn't affect the visual outer circle or ring root chip placement.
+  const svgCanvasRadius = useMemo(
+    () => coreRootCircleRadius + maxCoreExtentDelta,
+    [coreRootCircleRadius, maxCoreExtentDelta],
   );
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
-  // marker — the actual layout math no longer positions anything relative to this; both the center
-  // subtree and every root's pop wedges now measure outward from the same coreRootCircleRadius.
-  const middleCircleFloor = useMemo(
-    () => coreRootCircleRadius + centerSubtreeExtentDelta,
-    [coreRootCircleRadius, centerSubtreeExtentDelta],
-  );
+  // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
+  // while every root's pop wedges fan outward from it toward coreRootCircleRadius.
+  const middleCircleFloor = mainstreamCircleRadius;
 
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
@@ -376,10 +399,16 @@ export function WheelRadialPopCoreCore({
     svg.selectAll("*").remove();
     const originGroup = svg
       .append("g")
-      .attr("transform", `translate(${coreRootCircleRadius}, ${coreRootCircleRadius})`);
+      .attr("transform", `translate(${svgCanvasRadius}, ${svgCanvasRadius})`);
 
     popHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
-      const laidOut = computePopRadialLayout(d3, hierarchy, angle, coreRootCircleRadius, wedgeSpanForRoot(rootId));
+      const laidOut = computePopRadialLayout(
+        d3,
+        hierarchy,
+        angle,
+        mainstreamCircleRadius,
+        wedgeSpanForRoot(rootId),
+      );
       const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
       const reparentForbiddenIds = reparentingNodeId
         ? (laidOut
@@ -477,7 +506,7 @@ export function WheelRadialPopCoreCore({
       const laidOutCenter = computeCenterRadialLayout(
         d3,
         centerSubtreeHierarchy,
-        coreRootCircleRadius,
+        0,
         POP_TREE_DEPTH_RADIAL_SPACING,
       );
       const reparentForbiddenIds = reparentingNodeId
@@ -520,6 +549,8 @@ export function WheelRadialPopCoreCore({
     popHierarchyByRootId,
     coreHierarchyByRootId,
     coreRootCircleRadius,
+    svgCanvasRadius,
+    mainstreamCircleRadius,
     wedgeSpanForRoot,
     reparentingNodeId,
     playingNodeId,
@@ -543,7 +574,7 @@ export function WheelRadialPopCoreCore({
   const hasInitialFitRef = useRef(false);
   useEffect(() => {
     if (hasInitialFitRef.current) return;
-    const elements = [wheelCircleRef.current, popSvgRef.current];
+    const elements = [wheelCircleRef.current, ...queryTreeContentElements(popSvgRef.current)];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements);
@@ -553,35 +584,34 @@ export function WheelRadialPopCoreCore({
     setTopRootId(rootId);
   };
 
-  // One divider per boundary between two angularly-adjacent ring roots, bisecting their own
-  // continuous (unwrapped) angles — see bisectAngles's doc comment, and WheelRadialCore's own copy
-  // of this computation.
+  // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
+  // copy of this computation for why each root's own continuous angle plus half its
+  // weight-proportional width (sectorSpanByRootId) lands exactly on the boundary with its next
+  // neighbor.
   const dividerAngles = useMemo(() => {
     if (groups.length <= 1) return [];
-    return groups.map((group, index) => {
-      const next = groups[(index + 1) % groups.length];
+    return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
-      const nextAngle = continuousAngleByRootId.get(next.root.id) ?? 0;
-      return bisectAngles(angle, nextAngle);
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
+      return angle + width / 2;
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
-  // One tinted sector fan per root — see WheelRadialCore's own copy of this computation, and
-  // computeSectorBounds's doc comment for why both bounds are anchored on the root's own
-  // continuous angle instead of differencing dividerAngles pairs directly.
+  // One tinted sector fan per root, bounded by its own weight-proportional width — see
+  // WheelRadialCore's own copy of this computation, and computeSectorWidths's doc comment.
   const sectorFills = useMemo(() => {
     if (groups.length <= 1) return [];
-    const continuousAngles = groups.map((group) => continuousAngleByRootId.get(group.root.id) ?? 0);
-    return groups.map((group, index) => {
-      const { start, end } = computeSectorBounds(continuousAngles, index);
+    return groups.map((group) => {
+      const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
+      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
       return {
         rootId: group.root.id,
-        start,
-        clipPath: buildSectorClipPathPolygon(end - start),
+        start: angle - width / 2,
+        clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
       };
     });
-  }, [groups, continuousAngleByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
   return (
     <div
@@ -590,6 +620,7 @@ export function WheelRadialPopCoreCore({
       style={
         {
           "--gtv-wheel-radius": `${coreRootCircleRadius}px`,
+          "--gtv-wheel-svg-radius": `${svgCanvasRadius}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
         } as React.CSSProperties
@@ -642,8 +673,8 @@ export function WheelRadialPopCoreCore({
           <svg
             ref={popSvgRef}
             className="gtv-wheel-pop-layer"
-            width={coreRootCircleRadius * 2}
-            height={coreRootCircleRadius * 2}
+            width={svgCanvasRadius * 2}
+            height={svgCanvasRadius * 2}
           />
 
           <div className="gtv-wheel-center-node">
@@ -817,7 +848,9 @@ export function WheelRadialPopCoreCore({
           <button
             type="button"
             className="gtv-zoom-btn"
-            onClick={() => panZoom.fitToFrame([wheelCircleRef.current, popSvgRef.current])}
+            onClick={() =>
+              panZoom.fitToFrame([wheelCircleRef.current, ...queryTreeContentElements(popSvgRef.current)])
+            }
             aria-label="Fit to frame"
           >
             <MdFitScreen className="gtv-icon" size={18} />

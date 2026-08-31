@@ -5,6 +5,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-31
+
+### Added
+
+- Run validation workflow on pull requests targeting `main` and `develop`.
+
+### Fixed
+
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore` now size each root's angular sector
+  (dividers, colored wash, wedge cap) proportionally to that root's own node count, instead of
+  bisecting its immediate ring neighbors' angles — a root with a much smaller weight than its
+  neighbors used to get a sector far wider than its actual share (e.g. ~25° instead of ~5.7° for a
+  weight-3 root sandwiched between weight-25 and weight-21 neighbors).
+- `GenreTreeWheelRadialPopCore`'s "fit to frame" no longer crops the popped tree: it now measures
+  the actually-rendered `.gtv-node-rect`/`.gtv-link` content instead of the pop layer's own `<svg>`
+  box, which only covered the reserved wheel-circle radius and undersized the fit for content drawn
+  further out via `overflow: visible`.
+- `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`'s connecting links now curve along the
+  wheel's own rings instead of cutting straight chords across it.
+- `GenreTreeWheelRadialPopCore`'s outer circle now nests the mainstream subtree correctly, sizes
+  pop-branch depth spacing off the deepest pop branch and the mainstream gap, and adapts to pop
+  reach instead of stretching depth spacing — closing gaps and overlaps between the pop branches
+  and the center mainstream circle.
+- `GenreTreeWheelRadialPopCore`'s svg canvas now grows independently of the visual outer circle to
+  fit a deep core branch: previously, `coreRootCircleRadius` doubled as both the visual outer
+  circle's radius and the svg canvas's own size, so a deep core branch needing extra canvas room
+  to avoid being clipped also dragged the visual circle and every ring root chip outward with it,
+  reopening a gap on the pop side.
+
+### Documentation
+
+- Reworked `CLAUDE.md` to provide clearer Claude Code guidance and document the package's extraction context.
+- Restructured `CONTRIBUTING.md` headings and removed the redundant manual table of contents.
+
 ## [1.1.0] - 2026-08-29
 
 ### Fixed

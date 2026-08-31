@@ -4,24 +4,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`@behindthemusictree/genre-tree-view` — a reusable, presentational D3-based tree visualization
-component for React, published to GitHub Packages. It renders a flat `GenreTreeNode[]` as an
-interactive genre/hierarchy tree via callback props (`onPlayPause`, `onAddChild`,
-`onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `additionalActions`). All
-data fetching, mutations, and popups/dialogs are the consumer's responsibility — this package
-owns rendering only.
+`@behindthemusictree/genre-tree-view` — a reusable, presentational D3-based tree visualization component for React, published to GitHub Packages. It renders a flat `GenreTreeNode[]` as an interactive genre/hierarchy tree via callback props (`onPlayPause`, `onAddChild`, `onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `additionalActions`). All data fetching, mutations, and popups/dialogs are the consumer's responsibility — this package owns rendering only.
 
 pnpm workspace with two members:
+
 - `packages/genre-tree-view` — the published library (tsup build, Vitest tests).
-- `apps/playground` — a Vite app for manually exercising the component against mock data; not
-  published, depends on the library via `workspace:*`.
+- `apps/playground` — a Vite app for manually exercising the component against mock data; not published, depends on the library via `workspace:*`.
+
+## Repository guidelines
+
+`CONTRIBUTING.md` is the canonical source for contribution workflow and development conventions.
+
+Before making changes, read and follow `CONTRIBUTING.md` for applicable instructions, including:
+
+- branching and Git workflow
+- commit conventions
+- pull request requirements
+- testing and validation
+- release procedures
+
+Do not duplicate contribution workflow instructions from `CONTRIBUTING.md` here. Keep this file focused on instructions and context specific to Claude Code.
+
+## Git workflow
+
+Never commit directly to `main` or `develop`.
+
+All changes must be made on an appropriate feature, fix, chore, or release branch, following the branching model defined in `CONTRIBUTING.md`.
+
+Before creating a commit, verify that the current branch is not `main` or `develop`.
 
 ## Commands
 
 Run from repo root unless noted.
 
-```bash
+````bash
 pnpm install
+
 pnpm dev              # builds the library in watch mode + runs the playground, in parallel
 pnpm build            # builds all workspace packages
 pnpm typecheck        # tsc --noEmit across all packages
@@ -35,7 +53,7 @@ Scoped to the library only (`packages/genre-tree-view`):
 ```bash
 pnpm --filter @behindthemusictree/genre-tree-view test:watch
 pnpm --filter @behindthemusictree/genre-tree-view test -- <pattern>   # single test file/name
-```
+````
 
 Coverage thresholds are enforced at 95% (lines/branches/functions/statements) in
 `vitest.config.ts`, excluding `src/index.ts` and `src/types.ts`.
@@ -52,10 +70,3 @@ Five renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTree
 `GenreTreeWheelRadialPopCore`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
 breakdown of modules and the public export surface — keep that file in sync with this one instead
 of duplicating details here.
-
-### Extraction context
-
-This package was extracted from `grow-the-music-tree-frontend` so any BehindTheMusicTree app can
-render the tree without depending on that app's contexts, data hooks, or domain types. Keep this
-package free of app-specific data-fetching, routing, or domain assumptions — everything
-consumer-specific goes through props/callbacks.
