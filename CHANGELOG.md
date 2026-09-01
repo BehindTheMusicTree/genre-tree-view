@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-01
+
 ### Fixed
 
 - `GenreTreeWheelRadialPopCore` pop subtrees are now glued a fixed distance inside the ring roots'
