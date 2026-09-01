@@ -22,6 +22,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.gtv-wheel` (the rotated wheel layer of sector washes/dividers/chips) no longer intercepts
   pointer events itself, so it can't block clicks/hover on the node svg it's stacked with;
   `.gtv-wheel-chip-anchor` re-enables pointer events for the chips it contains.
+- Toolbar button hover state now uses a translucent overlay instead of a hardcoded light gray
+  background, so white icon color (used on selected wheel chips and other colored fills) stays
+  legible on hover instead of nearly disappearing against the light background.
 
 ## [1.1.1] - 2026-08-31
 
