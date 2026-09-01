@@ -13,6 +13,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ratio) instead of a fixed pixel size, so nodes with larger labels get a proportionally larger
   toolbar. Also fixes a CSS gap where toolbar buttons didn't inherit `font-size` from their
   container.
+- `.gtv-wheel` (the rotated wheel layer of sector washes/dividers/chips) no longer intercepts
+  pointer events itself, so it can't block clicks/hover on the node svg it's stacked with;
+  `.gtv-wheel-chip-anchor` re-enables pointer events for the chips it contains.
 
 ## [1.1.1] - 2026-08-31
 
