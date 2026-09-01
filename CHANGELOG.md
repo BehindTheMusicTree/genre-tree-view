@@ -7,6 +7,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `GenreTreeWheelRadialPopCore` pop subtrees are now glued a fixed distance inside the ring roots'
+  own circle regardless of the branch's height, instead of anchoring outward from the mainstream
+  circle (which only let the single tallest developed branch reach the ring roots' circle, leaving
+  shallower branches visually pulled toward the center). The gap that now adapts to available space
+  is the one between a branch's deepest node and the mainstream circle, not the branch's own depth
+  positioning.
 - Node hover labels and toolbar icons now use the same color as the node's main label instead of
   a hardcoded color.
 - Toolbar icon/button size now scales with the node's computed label font-size (at a moderate
