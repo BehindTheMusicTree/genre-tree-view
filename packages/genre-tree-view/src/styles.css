@@ -105,7 +105,6 @@
   border-radius: 8px 8px 0 0;
   font-weight: 500;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: #18181b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -135,8 +134,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  font-size: inherit;
+  width: 1.2em;
+  height: 1.2em;
   padding: 0;
   border: none;
   border-radius: 6px;
@@ -147,7 +147,7 @@
 
 .gtv-toolbar-btn:hover {
   background-color: #f4f4f5;
-  color: #18181b;
+  color: var(--gtv-toolbar-icon-color, #18181b);
 }
 
 .gtv-toolbar-btn--disabled {
@@ -412,7 +412,10 @@
 
 /* Rotated by --gtv-wheel-rotation (set from JS on click); every slot inherits it. Positioned so
    its own top edge sits at the stage's anchor point, horizontally centered — the same point the
-   tree anchors its root to above. */
+   tree anchors its root to above. pointer-events: none so this box (used as both a background
+   sector-wash layer and a foreground divider/chip layer) never itself intercepts pointer events
+   over the node svg it's stacked with — same treatment as .gtv-wheel-circle/-divider/-sector
+   below; .gtv-wheel-chip-anchor re-enables pointer-events: auto for the chips it contains. */
 .gtv-wheel {
   position: absolute;
   top: 0;
@@ -421,6 +424,7 @@
   height: calc(var(--gtv-wheel-radius, 260px) * 2);
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   transform: rotate(var(--gtv-wheel-rotation, 0deg));
+  pointer-events: none;
 }
 
 /* Places the chip's anchor point on the circle at its static --gtv-chip-angle. */
@@ -574,6 +578,7 @@
   z-index: 2;
   opacity: 0;
   pointer-events: none;
+  font-size: calc(26px / 1.2);
 }
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {

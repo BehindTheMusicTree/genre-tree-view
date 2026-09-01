@@ -450,7 +450,8 @@ export function renderTree(
       // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
       // never changes the card's own filtered silhouette — the card's shadow must look identical
       // hovered or not.
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+      const labelColor = isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
 
       addToolbarActions(
         d3Lib,
@@ -467,6 +468,7 @@ export function renderTree(
           playState: callbacks.playState,
         },
         itemCountRange,
+        labelColor,
         orientation,
       );
     });

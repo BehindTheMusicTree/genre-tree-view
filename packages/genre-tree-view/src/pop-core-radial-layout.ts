@@ -393,7 +393,7 @@ export function renderPopSubtree(
           }),
         );
 
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange);
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, ACCENT_TEXT_COLOR);
 
       addToolbarActions(
         d3Lib,
@@ -410,6 +410,7 @@ export function renderPopSubtree(
           playState: callbacks.playState,
         },
         itemCountRange,
+        ACCENT_TEXT_COLOR,
         "horizontal",
       );
     });

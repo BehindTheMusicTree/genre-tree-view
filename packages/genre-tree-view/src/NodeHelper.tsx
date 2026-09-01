@@ -16,7 +16,7 @@ import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
-  TOOLBAR_BUTTON_SIZE,
+  TOOLBAR_BUTTON_SIZE_RATIO,
   TOOLBAR_MENU_X_GAP,
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
@@ -286,6 +286,7 @@ export function addHoverNameLabel(
   node: GenreTreeNode,
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   itemCountRange: ItemCountRange,
+  color: string,
 ) {
   if (!nodeGroup.select("#hover-label-" + node.id).empty()) return;
 
@@ -301,7 +302,7 @@ export function addHoverNameLabel(
     .attr("height", dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP)
     .html(
       () =>
-        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px">${node.name}</div>`,
+        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px;color:${color}">${node.name}</div>`,
     );
 
   return group;
@@ -315,12 +316,14 @@ export function addToolbarActions(
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   callbacks: NodeActionCallbacks,
   itemCountRange: ItemCountRange,
+  iconColor: string,
   orientation: TreeOrientation = "horizontal",
 ) {
   if (!nodeGroup.select("#toolbar-" + node.id).empty()) return;
 
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest } = callbacks;
   const dimensions = calculateNodeDimensions(node.itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(node.itemCount, itemCountRange);
   const isActionable = node.actionable !== false;
   const datum = nodeGroup.datum() as D3Node;
   const extraActions = callbacks.additionalActions?.(node) ?? [];
@@ -332,10 +335,10 @@ export function addToolbarActions(
       key: "play",
       icon: (d) => {
         if (callbacks.playingNodeId && callbacks.playingNodeId === d.data.id) {
-          if (callbacks.playState === "playing") return <FaPause className="gtv-icon" size={12} />;
-          if (callbacks.playState === "loading") return <FaSpinner className="gtv-icon gtv-icon--spin" size={12} />;
+          if (callbacks.playState === "playing") return <FaPause className="gtv-icon" size="0.6em" />;
+          if (callbacks.playState === "loading") return <FaSpinner className="gtv-icon gtv-icon--spin" size="0.6em" />;
         }
-        return <FaPlay className="gtv-icon" size={12} />;
+        return <FaPlay className="gtv-icon" size="0.6em" />;
       },
       label: (d) => {
         if (callbacks.playingNodeId !== d.data.id) return "Play";
@@ -352,7 +355,7 @@ export function addToolbarActions(
     primaryItems.push(
       {
         key: "add",
-        icon: () => <FaPlus className="gtv-icon" size={12} />,
+        icon: () => <FaPlus className="gtv-icon" size="0.6em" />,
         label: () => "Add sub-genre",
         onClick: (_event, d) => onAddChild?.(d.data.id),
       },
@@ -364,20 +367,20 @@ export function addToolbarActions(
     ? [
         {
           key: "rename",
-          icon: () => <MdModeEdit className="gtv-icon" size={13} />,
+          icon: () => <MdModeEdit className="gtv-icon" size="0.6em" />,
           label: () => "Rename",
           onClick: (_event, d) => onRenameRequest?.(d.data),
         },
         {
           key: "reparent",
-          icon: () => <PiGraphFill className="gtv-icon" size={13} />,
+          icon: () => <PiGraphFill className="gtv-icon" size="0.6em" />,
           label: () => "Change parent",
           onClick: (_event, d) => callbacks.onReparentRequest?.(d.data),
         },
         ...extraOverflowItems,
         {
           key: "delete",
-          icon: () => <FaTrashAlt className="gtv-icon" size={13} />,
+          icon: () => <FaTrashAlt className="gtv-icon" size="0.6em" />,
           label: () => "Delete",
           danger: true,
           dividerBefore: true,
@@ -421,7 +424,7 @@ export function addToolbarActions(
     overflowItems.length > 0
       ? ReactDOMServer.renderToString(
           <button type="button" className="gtv-toolbar-btn" title="More actions" data-menu-key="__more">
-            <MdMoreVert size={14} />
+            <MdMoreVert size="0.6em" />
           </button>,
         )
       : "";
@@ -432,7 +435,10 @@ export function addToolbarActions(
     .attr("y", -dimensions.HEIGHT / 2 + 1)
     .attr("width", dimensions.WIDTH - 2)
     .attr("height", dimensions.HEIGHT - 2)
-    .html(() => `<div class="gtv-toolbar">${buttonsHtml}${kebabHtml}</div>`)
+    .html(
+      () =>
+        `<div class="gtv-toolbar" style="--gtv-toolbar-icon-color:${iconColor};font-size:${fontSize}px">${buttonsHtml}${kebabHtml}</div>`,
+    )
     .selectAll<HTMLButtonElement, unknown>(".gtv-toolbar-btn")
     .each(function () {
       const key = this.getAttribute("data-menu-key");
@@ -444,7 +450,7 @@ export function addToolbarActions(
             ? sign === -1
               ? -dimensions.HEIGHT / 2 - TOOLBAR_MENU_X_GAP - menuItemsHeight(overflowItems)
               : dimensions.HEIGHT / 2 + TOOLBAR_MENU_X_GAP
-            : TOOLBAR_BUTTON_SIZE / 2 + TOOLBAR_MENU_X_GAP;
+            : (fontSize * TOOLBAR_BUTTON_SIZE_RATIO) / 2 + TOOLBAR_MENU_X_GAP;
           toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, menuX, menuY, overflowItems);
         });
         return;
