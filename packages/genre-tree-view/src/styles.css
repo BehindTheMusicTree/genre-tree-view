@@ -146,7 +146,7 @@
 }
 
 .gtv-toolbar-btn:hover {
-  background-color: #f4f4f5;
+  background-color: rgba(0, 0, 0, 0.08);
   color: var(--gtv-toolbar-icon-color, #18181b);
 }
 
