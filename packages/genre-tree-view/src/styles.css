@@ -147,7 +147,7 @@
 
 .gtv-toolbar-btn:hover {
   background-color: #f4f4f5;
-  color: #18181b;
+  color: var(--gtv-toolbar-icon-color, #18181b);
 }
 
 .gtv-toolbar-btn--disabled {
@@ -578,7 +578,7 @@
   z-index: 2;
   opacity: 0;
   pointer-events: none;
-  font-size: 21.667px;
+  font-size: calc(26px / 1.2);
 }
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {
