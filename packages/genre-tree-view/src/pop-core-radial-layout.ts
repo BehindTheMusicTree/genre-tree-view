@@ -136,11 +136,10 @@ export function computePopRadialLayout(
 
   hierarchy.each((d) => {
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = getRadialDepthRadius(
-      -(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + d.depth),
-      coreRootCircleRadius,
-      depthSpacing,
-    );
+    // Negative depth walks getRadialDepthRadius inward from coreRootCircleRadius rather than
+    // outward from it — deliberate, not a sign error.
+    const depthStepsInwardFromCore = -(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + d.depth);
+    const radius = getRadialDepthRadius(depthStepsInwardFromCore, coreRootCircleRadius, depthSpacing);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
