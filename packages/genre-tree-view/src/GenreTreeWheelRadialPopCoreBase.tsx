@@ -346,11 +346,11 @@ export function WheelRadialPopCoreCore({
     return extent;
   }, [coreHierarchyByRootId]);
 
-  // Pins coreRootCircleRadius so the deepest developed pop branch's own node (which climbs inward
-  // from coreRootCircleRadius by a fixed depthSpacing per depth step — see computePopRadialLayout)
-  // lands just outside the mainstream circle by its usual outer margin, rather than leaving that
-  // gap to whatever coreRootCircleRadius happens to be for other reasons. Zero (dropped from the
-  // Math.max below) when no root has a pop branch at all.
+  // Pins coreRootCircleRadius so the deepest node of the deepest developed pop branch (which
+  // climbs inward from coreRootCircleRadius by a fixed depthSpacing per depth step — see
+  // computePopRadialLayout) lands just outside the mainstream circle by its usual outer margin,
+  // rather than leaving that gap to whatever coreRootCircleRadius happens to be for other reasons.
+  // Zero (dropped from the Math.max below) when no root has a pop branch at all.
   const popReachRequiredRadius = useMemo(
     () => (maxPopExtentDelta > 0 ? mainstreamCircleRadius + maxPopExtentDelta : 0),
     [mainstreamCircleRadius, maxPopExtentDelta],
