@@ -38,13 +38,12 @@ const popRock: GenreTreeNode[] = [
 ];
 
 describe("computePopRadialLayout", () => {
-  it("places the pop child (depth 0) mainstreamCircleRadius + height * depthSpacing + half node width + margin outward, on the wedge's center angle", () => {
+  it("places the pop child (depth 0) one depthSpacing inside coreRootCircleRadius, on the wedge's center angle", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
-    const mainstreamCircleRadius = 1000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 0, mainstreamCircleRadius);
+    const coreRootCircleRadius = 1000;
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, coreRootCircleRadius);
     const popChild = laidOut.descendants().find((d) => d.data.id === "rock-pop")!;
-    const expectedRadius =
-      mainstreamCircleRadius + hierarchy.height * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24;
+    const expectedRadius = coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING;
 
     expect(Math.hypot(popChild.x!, popChild.y!)).toBeCloseTo(expectedRadius, 5);
     // wedge centered on 0deg (top): projects to (0, -radius).
@@ -52,24 +51,21 @@ describe("computePopRadialLayout", () => {
     expect(popChild.y!).toBeCloseTo(-expectedRadius, 5);
   });
 
-  it("places every node at mainstreamCircleRadius + (height - depth) * depthSpacing + half node width + margin, deepest nodes closest to mainstreamCircleRadius", () => {
+  it("places every node at coreRootCircleRadius - (depth + 1) * depthSpacing, shallowest nodes fixed just inside coreRootCircleRadius regardless of subtree height", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
-    const mainstreamCircleRadius = 2000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 90, mainstreamCircleRadius);
+    const coreRootCircleRadius = 5000;
+    const laidOut = computePopRadialLayout(d3, hierarchy, 90, coreRootCircleRadius);
 
     laidOut.each((d) => {
       const radius = Math.hypot(d.x!, d.y!);
-      expect(radius).toBeCloseTo(
-        mainstreamCircleRadius + (hierarchy.height - d.depth) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
-        5,
-      );
+      expect(radius).toBeCloseTo(coreRootCircleRadius - (d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
     });
   });
 
   it("keeps every node's angle within the wedge centered on wedgeCenterAngleDegrees", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const wedgeCenterDeg = 90;
-    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 2000);
+    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 5000);
 
     laidOut.each((d) => {
       const angleDeg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
@@ -82,7 +78,7 @@ describe("computePopRadialLayout", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const wedgeCenterDeg = 90;
     const wedgeSpanDegrees = 30;
-    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 2000, wedgeSpanDegrees);
+    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 5000, wedgeSpanDegrees);
 
     laidOut.each((d) => {
       const angleDeg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
@@ -91,33 +87,34 @@ describe("computePopRadialLayout", () => {
     });
   });
 
-  it("keeps a single-node subtree (no children) at the wedge center, mainstreamCircleRadius + half node width + margin outward", () => {
+  it("keeps a single-node subtree (no children) at the wedge center, one depthSpacing inside coreRootCircleRadius", () => {
     const solo: GenreTreeNode[] = [{ id: "solo-pop", parentId: null, name: "Solo Pop", itemCount: 0 }];
     const hierarchy = buildPopHierarchy(d3, solo);
-    const mainstreamCircleRadius = 1000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 180, mainstreamCircleRadius);
+    const coreRootCircleRadius = 1000;
+    const laidOut = computePopRadialLayout(d3, hierarchy, 180, coreRootCircleRadius);
     const node = laidOut.descendants()[0];
 
     expect(node.x!).toBeCloseTo(0, 5);
-    expect(node.y!).toBeCloseTo(mainstreamCircleRadius + MAX_NODE_WIDTH / 2 + 24, 5);
+    expect(node.y!).toBeCloseTo(coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING, 5);
   });
 
-  it("places the deepest node of any subtree exactly half node width + margin past mainstreamCircleRadius, regardless of subtree height", () => {
+  it("places the shallowest node (the branch's own root) the same fixed distance inside coreRootCircleRadius, regardless of subtree height", () => {
     const shallow = buildPopHierarchy(d3, [{ id: "shallow-pop", parentId: null, name: "Shallow Pop", itemCount: 0 }]);
     const deep = buildPopHierarchy(d3, popRock);
-    const mainstreamCircleRadius = 300;
+    const coreRootCircleRadius = 5000;
 
-    const laidOutShallow = computePopRadialLayout(d3, shallow, 0, mainstreamCircleRadius);
-    const laidOutDeep = computePopRadialLayout(d3, deep, 180, mainstreamCircleRadius);
+    const laidOutShallow = computePopRadialLayout(d3, shallow, 0, coreRootCircleRadius);
+    const laidOutDeep = computePopRadialLayout(d3, deep, 180, coreRootCircleRadius);
 
-    const shallowLeaf = laidOutShallow.descendants().find((d) => d.data.id === "shallow-pop")!;
-    const deepLeaf = laidOutDeep.descendants().find((d) => d.data.id === "yacht-rock")!;
+    const shallowRoot = laidOutShallow.descendants().find((d) => d.data.id === "shallow-pop")!;
+    const deepRoot = laidOutDeep.descendants().find((d) => d.data.id === "rock-pop")!;
 
-    // Every branch's own deepest node lands the same fixed distance past the mainstream circle,
-    // regardless of how tall the subtree beneath its ring root grows.
-    const expectedRadius = mainstreamCircleRadius + MAX_NODE_WIDTH / 2 + 24;
-    expect(Math.hypot(shallowLeaf.x!, shallowLeaf.y!)).toBeCloseTo(expectedRadius, 5);
-    expect(Math.hypot(deepLeaf.x!, deepLeaf.y!)).toBeCloseTo(expectedRadius, 5);
+    // Every branch's own root lands the same fixed distance inside coreRootCircleRadius,
+    // regardless of how tall the subtree beneath its ring root grows — only the deepest node's
+    // distance from the mainstream circle should vary with height, not this.
+    const expectedRadius = coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING;
+    expect(Math.hypot(shallowRoot.x!, shallowRoot.y!)).toBeCloseTo(expectedRadius, 5);
+    expect(Math.hypot(deepRoot.x!, deepRoot.y!)).toBeCloseTo(expectedRadius, 5);
   });
 });
 

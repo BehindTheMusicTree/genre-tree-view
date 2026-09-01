@@ -5,6 +5,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-01
+
+### Fixed
+
+- `GenreTreeWheelRadialPopCore` pop subtrees are now glued a fixed distance inside the ring roots'
+  own circle regardless of the branch's height, instead of anchoring outward from the mainstream
+  circle (which only let the single tallest developed branch reach the ring roots' circle, leaving
+  shallower branches visually pulled toward the center). The gap that now adapts to available space
+  is the one between a branch's deepest node and the mainstream circle, not the branch's own depth
+  positioning.
+- Node hover labels and toolbar icons now use the same color as the node's main label instead of
+  a hardcoded color.
+- Toolbar icon/button size now scales with the node's computed label font-size (at a moderate
+  ratio) instead of a fixed pixel size, so nodes with larger labels get a proportionally larger
+  toolbar. Also fixes a CSS gap where toolbar buttons didn't inherit `font-size` from their
+  container.
+- `.gtv-wheel` (the rotated wheel layer of sector washes/dividers/chips) no longer intercepts
+  pointer events itself, so it can't block clicks/hover on the node svg it's stacked with;
+  `.gtv-wheel-chip-anchor` re-enables pointer events for the chips it contains.
+- Toolbar button hover state now uses a translucent overlay instead of a hardcoded light gray
+  background, so white icon color (used on selected wheel chips and other colored fills) stays
+  legible on hover instead of nearly disappearing against the light background.
+
 ## [1.1.1] - 2026-08-31
 
 ### Added
