@@ -9,7 +9,7 @@ import {
   getRadialPointOnCircle,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { MAX_NODE_WIDTH, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -259,12 +259,12 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(Math.hypot(grandchildX, grandchildY)).toBeLessThan(coreRootCircleRadius);
   });
 
-  it("still pins the pop branch's deepest node just outside the mainstream circle even when chip clearance (many ring roots), not pop reach, is what sizes the wheel", () => {
+  it("keeps the pop branch's own root glued a fixed distance inside coreRootCircleRadius even when chip clearance (many ring roots), not pop reach, is what sizes the wheel", () => {
     // Enough extra roots (each with a core child, no pop) that chip-clearance angular spacing —
     // not the shallow pop branch on root-a — is what drives coreRootCircleRadius. Regression test
-    // for the bug where the deepest pop node was pinned a fixed distance inward from
-    // coreRootCircleRadius itself, so inflating that radius for unrelated reasons (here, chip
-    // clearance) reopened a visible gap to the mainstream circle.
+    // for the bug where the pop branch's own root was pinned a fixed distance outward from the
+    // mainstream circle instead, so inflating coreRootCircleRadius for unrelated reasons (here,
+    // chip clearance) left it stranded partway to the ring roots' circle instead of glued to it.
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       ...Array.from({ length: 24 }, (_, i) => [
@@ -292,7 +292,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(coreRootCircleRadius).toBeGreaterThan(mainstreamRadius + expectedExtent);
 
     const [x, y] = nodeCoords(container, "a-pop-child");
-    expect(Math.hypot(x, y)).toBeCloseTo(mainstreamRadius + MAX_NODE_WIDTH / 2 + 24, 6);
+    expect(Math.hypot(x, y)).toBeCloseTo(coreRootCircleRadius - 2 * POP_TREE_DEPTH_RADIAL_SPACING, 6);
   });
 
   it("grows the svg canvas, not the visual outer circle or ring root chip radius, to fit a deep core branch", () => {
