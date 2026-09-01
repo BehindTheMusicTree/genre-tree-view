@@ -30,7 +30,10 @@ export const MENU_ROW_HOVER_FILL = "#F4F4F5";
 export const DANGER_ROW_HOVER_FILL = "rgba(220, 38, 38, 0.08)";
 export const ACCENT_TINT_FILL = "rgba(79, 70, 229, 0.08)";
 
-export const TOOLBAR_BUTTON_SIZE = 26;
+// Must match .gtv-toolbar-btn's width/height (1.2em) in styles.css — toolbar buttons scale with
+// the node's font-size, so anything positioning relative to the rendered button size (e.g. the
+// horizontal-orientation overflow menu's Y-offset) needs this ratio to stay in sync.
+export const TOOLBAR_BUTTON_SIZE_RATIO = 1.2;
 export const TOOLBAR_GAP = 2;
 
 export const MENU_ROW_HEIGHT = 30;

@@ -16,7 +16,7 @@ import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
-  TOOLBAR_BUTTON_SIZE,
+  TOOLBAR_BUTTON_SIZE_RATIO,
   TOOLBAR_MENU_X_GAP,
   MENU_ROW_HEIGHT,
   MENU_WIDTH,
@@ -450,7 +450,7 @@ export function addToolbarActions(
             ? sign === -1
               ? -dimensions.HEIGHT / 2 - TOOLBAR_MENU_X_GAP - menuItemsHeight(overflowItems)
               : dimensions.HEIGHT / 2 + TOOLBAR_MENU_X_GAP
-            : TOOLBAR_BUTTON_SIZE / 2 + TOOLBAR_MENU_X_GAP;
+            : (fontSize * TOOLBAR_BUTTON_SIZE_RATIO) / 2 + TOOLBAR_MENU_X_GAP;
           toggleLightActionsMenu(d3Lib, nodeGroup, "overflow-menu-" + node.id, menuX, menuY, overflowItems);
         });
         return;
