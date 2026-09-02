@@ -350,6 +350,15 @@ describe("renderPopSubtree label text color", () => {
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(24, 24, 27)");
+
+    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+
+    const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
+    expect(hoverLabel.style("color")).toBe("rgb(24, 24, 27)");
+
+    const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#18181B");
   });
 
   it("uses white ACCENT_TEXT_COLOR for solid-colored core sectors (isCoreSector true)", () => {
@@ -361,6 +370,15 @@ describe("renderPopSubtree label text color", () => {
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(255, 255, 255)");
+
+    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+
+    const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
+    expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
+
+    const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#FFFFFF");
   });
 });
 
