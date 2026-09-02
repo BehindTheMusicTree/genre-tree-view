@@ -20,6 +20,7 @@ import {
   ROOT_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
+  TEXT_COLOR,
   WHEEL_RADIUS,
   calculateNodeDimensions,
   calculateNodeFontSize,
@@ -360,7 +361,8 @@ export function renderPopSubtree(
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       const rootClass = isCoreSector ? " gtv-node-label--root" : "";
-      return `<div class="gtv-node-label${rootClass}" style="color:${ACCENT_TEXT_COLOR};font-size:${fontSize}px">${d.data.name}</div>`;
+      const color = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
       if (reparentingNodeId || isForbidden(d)) return;
@@ -394,7 +396,8 @@ export function renderPopSubtree(
           }),
         );
 
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, ACCENT_TEXT_COLOR);
+      const labelColor = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
 
       addToolbarActions(
         d3Lib,
@@ -411,7 +414,7 @@ export function renderPopSubtree(
           playState: callbacks.playState,
         },
         itemCountRange,
-        ACCENT_TEXT_COLOR,
+        labelColor,
         "horizontal",
       );
     });
