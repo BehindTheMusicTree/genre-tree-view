@@ -51,7 +51,7 @@ const BRANCH_LEVEL3_FAN_SPREAD = 6;
 function pseudoRandomCount(seed: number, min: number, max: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   const frac = round(x - Math.floor(x));
-  return min + Math.floor(frac * (max - min + 1));
+  return Math.min(max, min + Math.floor(frac * (max - min + 1)));
 }
 
 function evenFanOffsets(count: number, spread: number): number[] {
