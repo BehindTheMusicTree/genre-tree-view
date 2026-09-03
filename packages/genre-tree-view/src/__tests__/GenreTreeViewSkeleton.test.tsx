@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
+import { GenreTreeViewSkeleton } from "../GenreTreeViewSkeleton";
 
 describe("GenreTreeViewSkeleton", () => {
   it.each(["wheel", "pop-core"] as const)(

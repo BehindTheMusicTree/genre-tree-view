@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
+import { GenreTreeWheelSkeleton } from "../GenreTreeWheelSkeleton";
 
 describe("GenreTreeWheelSkeleton", () => {
   it("renders an accessible loading label and a hidden svg wheel", () => {
