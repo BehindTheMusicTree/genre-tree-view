@@ -26,7 +26,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsup --watch",
+    "dev": "tsup --watch --watch src/styles.css",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
