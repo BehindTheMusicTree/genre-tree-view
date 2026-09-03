@@ -257,6 +257,10 @@ export function renderPopSubtree(
   // given, one extra gtv-link is drawn per depth-0 node from this point to that node, since
   // hierarchy.links() has no edge for it (a hierarchy root has no incoming link).
   rootLinkOrigin?: { x: number; y: number },
+  // The center "Mainstream Pop" subtree keeps the dark label/toolbar text every pop sector used to
+  // have; every other pop sector now reads light against its tinted fill instead, matching core
+  // sectors' solid-color treatment.
+  isMainstreamSector = false,
 ): void {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -361,7 +365,7 @@ export function renderPopSubtree(
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       const rootClass = isCoreSector ? " gtv-node-label--root" : "";
-      const color = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      const color = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
@@ -396,7 +400,7 @@ export function renderPopSubtree(
           }),
         );
 
-      const labelColor = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      const labelColor = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
 
       addToolbarActions(

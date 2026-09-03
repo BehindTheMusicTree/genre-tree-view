@@ -544,6 +544,8 @@ export function WheelRadialPopCoreCore({
         true,
         undefined,
         coreRootCircleRadius,
+        undefined,
+        true,
       );
     }
   }, [
