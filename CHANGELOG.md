@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeSkeleton`, `GenreTreeWheelSkeleton`, and `GenreTreeViewSkeleton` (plus the
+  `GenreTreeViewMode`-driven `GenreTreeViewSkeletonProps`), moved here from `app-kit` so any
+  consumer of `genre-tree-view` can render a matching loading fallback without depending on
+  `app-kit`.
+
 ### Fixed
 
 - `GenreTreeWheelRadialPopCore`'s pop-tint sectors now render light label and toolbar-icon text,
