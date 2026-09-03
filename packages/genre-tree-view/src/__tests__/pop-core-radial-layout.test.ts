@@ -243,19 +243,9 @@ describe("renderPopSubtree link rendering", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      false,
-      false,
-      WHEEL_RADIUS,
-    );
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
+    });
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH, 5);
@@ -267,19 +257,9 @@ describe("renderPopSubtree link rendering", () => {
     const svg = createSvg();
     const grownRadius = WHEEL_RADIUS * 10;
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      false,
-      false,
-      grownRadius,
-    );
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: grownRadius,
+    });
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
@@ -293,20 +273,10 @@ describe("renderPopSubtree link rendering", () => {
     const svg = createSvg();
     const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      undefined,
-      undefined,
-      WHEEL_RADIUS,
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
       rootLinkOrigin,
-    );
+    });
 
     const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     // hierarchy.links() (pop-rock -> arena-rock) plus the extra root -> pop-rock link.
@@ -366,7 +336,9 @@ describe("renderPopSubtree label text color", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), false, true);
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      isCoreSector: true,
+    });
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(255, 255, 255)");
@@ -386,21 +358,10 @@ describe("renderPopSubtree label text color", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      undefined,
-      undefined,
-      WHEEL_RADIUS,
-      undefined,
-      true,
-    );
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
+      isMainstreamSector: true,
+    });
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(24, 24, 27)");

@@ -445,10 +445,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        undefined,
-        undefined,
-        coreRootCircleRadius,
-        rootLinkOrigin,
+        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
       );
     });
 
@@ -496,10 +493,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        false,
-        true,
-        coreRootCircleRadius,
-        rootLinkOrigin,
+        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
       );
     });
 
@@ -541,11 +535,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        true,
-        undefined,
-        coreRootCircleRadius,
-        undefined,
-        true,
+        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true },
       );
     }
   }, [
