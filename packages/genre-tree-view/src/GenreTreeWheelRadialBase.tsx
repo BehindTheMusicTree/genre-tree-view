@@ -284,10 +284,7 @@ export function WheelRadialCore({
           playState,
         },
         wheelItemCountRange,
-        false,
-        true,
-        wheelRadius,
-        rootLinkOrigin,
+        { isCoreSector: true, radialReferenceRadius: wheelRadius, rootLinkOrigin },
       );
     });
   }, [

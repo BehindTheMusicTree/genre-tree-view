@@ -5,6 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-03
+
+### Added
+
+- `GenreTreeSkeleton`, `GenreTreeWheelSkeleton`, and `GenreTreeViewSkeleton` (plus the
+  `GenreTreeViewMode`-driven `GenreTreeViewSkeletonProps`), moved here from `app-kit` so any
+  consumer of `genre-tree-view` can render a matching loading fallback without depending on
+  `app-kit`.
+
+### Fixed
+
+- `GenreTreeWheelRadialPopCore`'s pop-tint sectors now render light label and toolbar-icon text,
+  matching solid-colored core sectors, instead of the dark text that undercut contrast against their
+  tinted background. The "Mainstream Pop" center subtree keeps its dark text.
+
 ## [1.1.2] - 2026-09-01
 
 ### Fixed
