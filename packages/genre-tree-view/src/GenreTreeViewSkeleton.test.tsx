@@ -9,7 +9,7 @@ describe("GenreTreeViewSkeleton", () => {
       const { container } = render(<GenreTreeViewSkeleton viewMode={viewMode} />);
 
       expect(screen.getByText("Loading genre tree…")).toBeInTheDocument();
-      expect(container.querySelector(".tree-container")).not.toBeNull();
+      expect(container.querySelector(".gtv-view-skeleton-wheel-wrapper")).not.toBeNull();
     },
   );
 
@@ -17,6 +17,6 @@ describe("GenreTreeViewSkeleton", () => {
     const { container } = render(<GenreTreeViewSkeleton viewMode="stacked" />);
 
     expect(screen.getByText("Loading genre tree…")).toBeInTheDocument();
-    expect(container.querySelector(".tree-container")).toBeNull();
+    expect(container.querySelector(".gtv-view-skeleton-wheel-wrapper")).toBeNull();
   });
 });
