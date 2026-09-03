@@ -7,9 +7,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `GenreTreeWheelRadialPopCore`'s "Mainstream Pop" center subtree (and other pop-tint sectors) now
-  render dark label and toolbar-icon text, matching their light-tinted background, instead of the
-  hardcoded white text used for solid-colored core sectors.
+- `GenreTreeWheelRadialPopCore`'s pop-tint sectors now render light label and toolbar-icon text,
+  matching solid-colored core sectors, instead of the dark text that undercut contrast against their
+  tinted background. The "Mainstream Pop" center subtree keeps its dark text.
 
 ## [1.1.2] - 2026-09-01
 
