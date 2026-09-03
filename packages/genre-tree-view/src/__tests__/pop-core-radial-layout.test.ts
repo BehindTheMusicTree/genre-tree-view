@@ -243,19 +243,9 @@ describe("renderPopSubtree link rendering", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      false,
-      false,
-      WHEEL_RADIUS,
-    );
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
+    });
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH, 5);
@@ -267,19 +257,9 @@ describe("renderPopSubtree link rendering", () => {
     const svg = createSvg();
     const grownRadius = WHEEL_RADIUS * 10;
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      false,
-      false,
-      grownRadius,
-    );
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: grownRadius,
+    });
 
     const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
@@ -293,20 +273,10 @@ describe("renderPopSubtree link rendering", () => {
     const svg = createSvg();
     const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
 
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      undefined,
-      undefined,
-      WHEEL_RADIUS,
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
       rootLinkOrigin,
-    );
+    });
 
     const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     // hierarchy.links() (pop-rock -> arena-rock) plus the extra root -> pop-rock link.
@@ -341,32 +311,12 @@ describe("renderPopSubtree link rendering", () => {
 describe("renderPopSubtree label text color", () => {
   const nodes: GenreTreeNode[] = [{ id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 }];
 
-  it("uses dark TEXT_COLOR for pop-tint sectors (isCoreSector false/omitted)", () => {
+  it("uses white ACCENT_TEXT_COLOR for pop-tint sectors (isMainstreamSector false/omitted)", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
     renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
-
-    const label = svg.select<HTMLDivElement>(".gtv-node-label");
-    expect(label.style("color")).toBe("rgb(24, 24, 27)");
-
-    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
-    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-
-    const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
-    expect(hoverLabel.style("color")).toBe("rgb(24, 24, 27)");
-
-    const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
-    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#18181B");
-  });
-
-  it("uses white ACCENT_TEXT_COLOR for solid-colored core sectors (isCoreSector true)", () => {
-    const hierarchy = buildPopHierarchy(d3, nodes);
-    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
-    const svg = createSvg();
-
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), false, true);
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(255, 255, 255)");
@@ -379,6 +329,51 @@ describe("renderPopSubtree label text color", () => {
 
     const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
     expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#FFFFFF");
+  });
+
+  it("uses white ACCENT_TEXT_COLOR for solid-colored core sectors (isCoreSector true)", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      isCoreSector: true,
+    });
+
+    const label = svg.select<HTMLDivElement>(".gtv-node-label");
+    expect(label.style("color")).toBe("rgb(255, 255, 255)");
+
+    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+
+    const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
+    expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
+
+    const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#FFFFFF");
+  });
+
+  it("uses dark TEXT_COLOR for the mainstream center sector (isMainstreamSector true)", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      radialReferenceRadius: WHEEL_RADIUS,
+      isMainstreamSector: true,
+    });
+
+    const label = svg.select<HTMLDivElement>(".gtv-node-label");
+    expect(label.style("color")).toBe("rgb(24, 24, 27)");
+
+    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+
+    const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
+    expect(hoverLabel.style("color")).toBe("rgb(24, 24, 27)");
+
+    const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#18181B");
   });
 });
 

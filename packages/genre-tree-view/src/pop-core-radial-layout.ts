@@ -239,25 +239,38 @@ export function renderPopSubtree(
   reparentForbiddenIds: string[],
   callbacks: RenderPopSubtreeCallbacks,
   itemCountRange: ItemCountRange,
-  skipRootNode = false,
-  // Core nodes continue the root chip's own solid-color style (matches every other renderer's
-  // treatment of a root); pop nodes keep the lighter tint that sets the pop wedge apart from core.
-  isCoreSector = false,
-  // The wheel's own radius at baseline WHEEL_RADIUS (260px). Once a wheel grows well past that
-  // (many developed subtrees), the pan/zoom fit-to-frame shrinks the whole svg via a CSS transform
-  // on an ancestor element to keep it inside the viewport — that transform scales down a fixed
-  // stroke-width in SVG user-space to sub-pixel and invisible, while node chips stay visible
-  // because their fill area is still large enough post-shrink. Scaling stroke-width up in the same
-  // proportion the wheel has grown keeps links visible at roughly a constant on-screen width.
-  radialReferenceRadius = WHEEL_RADIUS,
-  // Where the hierarchy's own root (depth 0) connects to, when that root ISN'T part of the
-  // hierarchy but instead rendered separately as its own JSX wheel chip (every per-root core/pop
-  // subtree — buildCoreHierarchy/buildPopHierarchy both exclude the ring root itself, unlike the
-  // center "Mainstream Pop" subtree, whose hierarchy still includes its own root at depth 0). When
-  // given, one extra gtv-link is drawn per depth-0 node from this point to that node, since
-  // hierarchy.links() has no edge for it (a hierarchy root has no incoming link).
-  rootLinkOrigin?: { x: number; y: number },
+  options: {
+    skipRootNode?: boolean;
+    // Core nodes continue the root chip's own solid-color style (matches every other renderer's
+    // treatment of a root); pop nodes keep the lighter tint that sets the pop wedge apart from core.
+    isCoreSector?: boolean;
+    // The wheel's own radius at baseline WHEEL_RADIUS (260px). Once a wheel grows well past that
+    // (many developed subtrees), the pan/zoom fit-to-frame shrinks the whole svg via a CSS transform
+    // on an ancestor element to keep it inside the viewport — that transform scales down a fixed
+    // stroke-width in SVG user-space to sub-pixel and invisible, while node chips stay visible
+    // because their fill area is still large enough post-shrink. Scaling stroke-width up in the same
+    // proportion the wheel has grown keeps links visible at roughly a constant on-screen width.
+    radialReferenceRadius?: number;
+    // Where the hierarchy's own root (depth 0) connects to, when that root ISN'T part of the
+    // hierarchy but instead rendered separately as its own JSX wheel chip (every per-root core/pop
+    // subtree — buildCoreHierarchy/buildPopHierarchy both exclude the ring root itself, unlike the
+    // center "Mainstream Pop" subtree, whose hierarchy still includes its own root at depth 0). When
+    // given, one extra gtv-link is drawn per depth-0 node from this point to that node, since
+    // hierarchy.links() has no edge for it (a hierarchy root has no incoming link).
+    rootLinkOrigin?: { x: number; y: number };
+    // The center "Mainstream Pop" subtree keeps the dark label/toolbar text every pop sector used to
+    // have; every other pop sector now reads light against its tinted fill instead, matching core
+    // sectors' solid-color treatment.
+    isMainstreamSector?: boolean;
+  } = {},
 ): void {
+  const {
+    skipRootNode = false,
+    isCoreSector = false,
+    radialReferenceRadius = WHEEL_RADIUS,
+    rootLinkOrigin,
+    isMainstreamSector = false,
+  } = options;
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
@@ -361,7 +374,7 @@ export function renderPopSubtree(
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       const rootClass = isCoreSector ? " gtv-node-label--root" : "";
-      const color = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      const color = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
@@ -396,7 +409,7 @@ export function renderPopSubtree(
           }),
         );
 
-      const labelColor = isCoreSector ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      const labelColor = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
 
       addToolbarActions(
