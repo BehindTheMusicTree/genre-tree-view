@@ -182,13 +182,13 @@ export function GenreTreeSkeleton() {
   const sweepDistance = VIEWBOX_WIDTH + SHIMMER_BAND_WIDTH;
 
   return (
-    <div className="mt-5 p-4">
-      <span className="sr-only">Loading genre tree…</span>
+    <div className="gtv-skeleton">
+      <span className="gtv-skeleton-sr-only">Loading genre tree…</span>
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         width={VIEWBOX_WIDTH}
         height={VIEWBOX_HEIGHT}
-        className="max-w-full h-auto"
+        className="gtv-skeleton-svg"
         aria-hidden="true"
       >
         <style>{`

@@ -14,7 +14,7 @@ export type GenreTreeViewSkeletonProps = {
 export function GenreTreeViewSkeleton({ viewMode }: GenreTreeViewSkeletonProps) {
   if (viewMode === "wheel" || viewMode === "pop-core") {
     return (
-      <div className="tree-container flex-1 min-h-0 w-full relative">
+      <div className="tree-container gtv-view-skeleton-wheel-wrapper">
         <GenreTreeWheelSkeleton />
       </div>
     );

@@ -788,6 +788,62 @@
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
 }
 
+/* GenreTreeSkeleton / GenreTreeWheelSkeleton / GenreTreeViewSkeleton — loading placeholders
+   rendered before any tree data is available. Scoped classes only (no Tailwind), so these render
+   correctly for any consumer regardless of whether Tailwind is configured. */
+
+.gtv-skeleton-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.gtv-skeleton {
+  margin-top: 1.25rem;
+  padding: 1rem;
+}
+
+.gtv-skeleton-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.gtv-wheel-skeleton {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gtv-wheel-skeleton-sector-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.gtv-wheel-skeleton-svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.gtv-view-skeleton-wheel-wrapper {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+}
+
 /* GenreTreeWheelRadial — full circle centered in the container, every root developed
    simultaneously and evenly spaced around the ring. The stage collapses to a single point
    at the container's center (width/height both 0) rather than hugging an edge, so every

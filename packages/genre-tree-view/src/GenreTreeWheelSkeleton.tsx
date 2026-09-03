@@ -222,17 +222,17 @@ export function GenreTreeWheelSkeleton() {
   const shimmerWedgeClass = `genre-tree-wheel-skeleton-shimmer-wedge-${uid}`;
 
   return (
-    <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
+    <div className="gtv-wheel-skeleton">
       <div
-        className="absolute inset-0"
+        className="gtv-wheel-skeleton-sector-layer"
         style={{ background: SECTOR_GRADIENT_CSS, opacity: SECTOR_FILL_OPACITY }}
         aria-hidden="true"
       />
-      <span className="sr-only">Loading genre tree…</span>
+      <span className="gtv-skeleton-sr-only">Loading genre tree…</span>
       <svg
         viewBox={`${CANVAS.minX} ${CANVAS.minY} ${CANVAS.width} ${CANVAS.height}`}
         preserveAspectRatio="xMidYMid meet"
-        className="relative w-full h-full max-w-full max-h-full"
+        className="gtv-wheel-skeleton-svg"
         aria-hidden="true"
       >
         <style>{`
