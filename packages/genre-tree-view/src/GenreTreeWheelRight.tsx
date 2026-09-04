@@ -10,6 +10,10 @@ export interface GenreTreeWheelRightProps extends Omit<GenreTreeProps, "nodes" |
   /** Optional label centered on the wheel's pivot point, e.g. a brand name. Stays upright and
    * fixed regardless of the wheel's rotation. */
   centerLabel?: string;
+  /** When false, clicking a chip still selects its root and swaps in its subtree, but the wheel
+   * itself stays at its current rotation instead of spinning the selected chip to the anchor.
+   * Defaults to true. */
+  allowWheelRotation?: boolean;
 }
 
 /**

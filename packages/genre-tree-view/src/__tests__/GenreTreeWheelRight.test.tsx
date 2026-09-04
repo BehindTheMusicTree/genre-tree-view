@@ -108,6 +108,21 @@ describe("GenreTreeWheelRight", () => {
     expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).not.toBe(initialRotation);
   });
 
+  it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+    );
+    const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
+    const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe(initialRotation);
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
+    expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+  });
+
   it("sets the tree anchor's chip clearance via --gtv-wheel-chip-half-width, not --gtv-wheel-chip-half-height", () => {
     const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;

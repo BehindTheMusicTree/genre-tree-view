@@ -416,6 +416,27 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onRootSelect).toHaveBeenLastCalledWith("root-c");
   });
 
+  it("still fires onRootSelect on click but leaves every chip's angle unchanged when allowWheelRotation is false", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore
+        nodes={NODES_WITH_POP}
+        onRootSelect={onRootSelect}
+        allowWheelRotation={false}
+      />,
+    );
+    const angleFor = (name: string) =>
+      (chipFor(container, name).closest(".gtv-wheel-slot") as HTMLElement).style.getPropertyValue(
+        "--gtv-chip-angle",
+      );
+    const initialAngles = ["Rock", "Electronic", "Jazz"].map(angleFor);
+
+    fireEvent.click(chipFor(container, "Jazz"));
+
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-c");
+    expect(["Rock", "Electronic", "Jazz"].map(angleFor)).toEqual(initialAngles);
+  });
+
   it("routes node actions from the center node and a mounted core subtree through the forwarded callbacks", () => {
     const onPlayPause = vi.fn();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);

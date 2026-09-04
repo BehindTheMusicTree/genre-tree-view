@@ -492,6 +492,7 @@ export function App() {
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [showToolbar, setShowToolbar] = useState(true);
+  const [allowWheelRotation, setAllowWheelRotation] = useState(true);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 
@@ -559,6 +560,17 @@ export function App() {
         showToolbar
       </label>
 
+      {(activeTab === "wheel" || activeTab === "wheel-right" || activeTab === "wheel-radial-pop-core") && (
+        <label style={{ display: "block", marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={allowWheelRotation}
+            onChange={(e) => setAllowWheelRotation(e.target.checked)}
+          />{" "}
+          allowWheelRotation
+        </label>
+      )}
+
       <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #e4e4e7", marginBottom: 24 }}>
         {TABS.map((tab) => (
           <button
@@ -592,6 +604,7 @@ export function App() {
             nodes={wheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
+            allowWheelRotation={allowWheelRotation}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
           />
@@ -612,6 +625,7 @@ export function App() {
             nodes={wheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
+            allowWheelRotation={allowWheelRotation}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-right selected root ${rootId}`)}
           />
@@ -652,6 +666,7 @@ export function App() {
             nodes={wheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
+            allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
           />
         </div>

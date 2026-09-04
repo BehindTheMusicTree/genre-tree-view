@@ -11,6 +11,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   toolbar (play/pause, add-child, overflow menu) and its hover name-label on every node, and
   the wheel renderers' root/center chips' own inner toolbar and hover name-label — the chips
   themselves (name label, click-to-select/expand) stay visible.
+- `allowWheelRotation` prop on `GenreTreeWheel`/`GenreTreeWheelRight`/`GenreTreeWheelRadialPopCore`
+  (default `true`). When `false`, clicking a chip still fires `onRootSelect` (and, on
+  `GenreTreeWheel`/`GenreTreeWheelRight`, still swaps in the selected subtree), but the wheel
+  itself stays at its current rotation instead of spinning the selected chip to the anchor.
 
 ### Fixed
 
