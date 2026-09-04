@@ -9,7 +9,7 @@ import {
   getRadialPointOnCircle,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -455,6 +455,26 @@ describe("GenreTreeWheelRadialPopCore", () => {
     fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
 
     expect(onAddChild).toHaveBeenCalledWith("root-a");
+  });
+
+  it("wires the ring chip and center chip toolbars' font-size to calculateNodeFontSize, so toolbar icons scale with their node instead of staying a fixed size", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+
+    const rootItemCountRange = getItemCountRange([{ itemCount: 12 }, { itemCount: 0 }, { itemCount: 0 }]);
+
+    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
+    const rockToolbar = rockAnchor.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
+    expect(rockToolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(
+      `${calculateNodeFontSize(12, rootItemCountRange)}px`,
+    );
+
+    const centerToolbar = container.querySelector(
+      ".gtv-wheel-center-node .gtv-wheel-chip-toolbar",
+    ) as HTMLElement;
+    const CENTER_NODE_SCALE = 2;
+    expect(centerToolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(
+      `${calculateNodeFontSize(10, rootItemCountRange) * CENTER_NODE_SCALE}px`,
+    );
   });
 
   it("draws the wheel's circle outline", () => {
