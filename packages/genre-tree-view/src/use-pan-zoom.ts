@@ -43,8 +43,9 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
   // Content bounding box in local (unscaled, pan-independent) coordinates, captured by the most
   // recent fitToFrame call — lets the pan clamp below convert any future panX/panY/zoomScale into
-  // the content's on-screen rect without re-measuring the DOM on every drag/wheel event. Null
-  // until fitToFrame has run once, at which point clamping is a no-op (nothing to clamp against yet).
+  // the content's on-screen rect without re-measuring the DOM on every drag/wheel event. Stays
+  // null until fitToFrame has run at least once; clampPanAxis treats null as "nothing to clamp
+  // against" and passes the pan value through unchanged.
   const contentBoundsRef = useRef<{ originX: number; originY: number; width: number; height: number } | null>(null);
 
   // Keeps at least PAN_MIN_VISIBLE_PX of content on-screen along each axis, so a drag or wheel-pan
