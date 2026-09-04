@@ -51,6 +51,7 @@ export interface RenderTreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
+  onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
@@ -269,7 +270,8 @@ export function renderTree(
   hideRoot = false,
   showToolbar = true,
 ): D3Selection {
-  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
+  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
+    callbacks;
 
   if (!svgRef.current) {
     throw new Error("SVG reference is null");
@@ -525,6 +527,15 @@ export function renderTree(
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
         d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
       }, 100);
+    });
+
+    // Toolbar/menu buttons stopPropagation, so this only fires for a click that actually landed
+    // on the card body itself (fill, border, label, or the invisible hit-area). The
+    // reparent-target overlay's click doesn't stopPropagation, but it only exists while
+    // reparentingNodeId is set, which the guard below already suppresses.
+    group.on("click", function (event: MouseEvent) {
+      if (reparentingNodeId) return;
+      onNodeClick?.(d.data, event);
     });
   });
 

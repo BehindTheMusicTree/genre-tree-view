@@ -127,6 +127,29 @@ describe("GenreTree", () => {
     expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root" }));
   });
 
+  it("fires onNodeClick with the node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTree nodes={TREE} onNodeClick={onNodeClick} />);
+
+    const nodeGroup = container.querySelector("#group-child-a") as SVGGElement;
+    fireEvent.click(nodeGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "child-a" }));
+  });
+
+  it("does not fire onNodeClick while a reparent is in progress", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(
+      <GenreTree nodes={TREE} reparentingNodeId="child-a" onNodeClick={onNodeClick} />,
+    );
+
+    const rootGroup = container.querySelector("#group-root") as SVGGElement;
+    fireEvent.click(rootGroup);
+
+    expect(onNodeClick).not.toHaveBeenCalled();
+  });
+
   it("renders an overflow-placement additional action in the kebab menu and invokes onClick with the node", () => {
     const onClick = vi.fn();
     const action: GenreTreeAction = {

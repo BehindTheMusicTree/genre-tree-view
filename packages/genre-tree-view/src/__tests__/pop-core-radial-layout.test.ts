@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildPopHierarchy,
   calculateMainstreamPopOuterCircleRadius,
@@ -374,6 +374,48 @@ describe("renderPopSubtree label text color", () => {
 
     const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
     expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#18181B");
+  });
+});
+
+describe("renderPopSubtree onNodeClick", () => {
+  const nodes: GenreTreeNode[] = [{ id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 }];
+
+  it("fires onNodeClick with the node's data when its group is clicked", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+    const onNodeClick = vi.fn();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], { ...noopCallbacks, onNodeClick }, getItemCountRange(nodes));
+
+    const group = svg.select<SVGGElement>("g.node").node()!;
+    group.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "pop-rock" }));
+  });
+
+  it("does not fire onNodeClick while a reparent is in progress", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+    const onNodeClick = vi.fn();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      "some-other-node",
+      [],
+      { ...noopCallbacks, onNodeClick },
+      getItemCountRange(nodes),
+    );
+
+    const group = svg.select<SVGGElement>("g.node").node()!;
+    group.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onNodeClick).not.toHaveBeenCalled();
   });
 });
 

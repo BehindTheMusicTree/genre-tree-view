@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-04
+
+### Added
+
+- `onNodeClick` prop on `GenreTreeProps`, fired with the clicked node's data whenever a node's
+  body is clicked — the tree card in `GenreTree`/`GenreTreeWheel`/`GenreTreeWheelRight`, or a root
+  chip in the wheel renderers (`GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+  `GenreTreeWheelRadialPopCore`). Suppressed while a reparent is in progress. The consumer owns any
+  resulting selection state and highlighting.
+
 ## [1.3.0] - 2026-09-04
 
 ### Added

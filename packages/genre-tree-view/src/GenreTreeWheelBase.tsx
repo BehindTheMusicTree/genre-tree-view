@@ -73,6 +73,7 @@ export function WheelCore({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
+  onNodeClick,
   additionalActions,
   showToolbar = true,
 }: WheelCoreProps) {
@@ -253,6 +254,7 @@ export function WheelCore({
                 onDeleteRequest={onDeleteRequest}
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
+                onNodeClick={onNodeClick}
                 additionalActions={additionalActions}
                 showToolbar={showToolbar}
               />
@@ -316,7 +318,10 @@ export function WheelCore({
                           "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
-                      onClick={() => handleChipClick(group.root.id, angle)}
+                      onClick={(event) => {
+                        handleChipClick(group.root.id, angle);
+                        if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
+                      }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>

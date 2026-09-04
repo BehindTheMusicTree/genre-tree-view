@@ -416,6 +416,27 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onRootSelect).toHaveBeenLastCalledWith("root-c");
   });
 
+  it("fires onNodeClick with the root node's data when its chip is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);
+
+    fireEvent.click(chipFor(container, "Jazz"));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "root-c" }));
+  });
+
+  it("does not fire onNodeClick on its chip while a reparent is in progress", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} reparentingNodeId="root-c" onNodeClick={onNodeClick} />,
+    );
+
+    fireEvent.click(chipFor(container, "Jazz"));
+
+    expect(onNodeClick).not.toHaveBeenCalled();
+  });
+
   it("still fires onRootSelect on click but leaves every chip's angle unchanged when allowWheelRotation is false", () => {
     const onRootSelect = vi.fn();
     const { container } = render(
