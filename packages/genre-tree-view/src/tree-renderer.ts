@@ -529,10 +529,10 @@ export function renderTree(
       }, 100);
     });
 
-    // Toolbar/menu buttons and the reparent-target overlay's own click all stopPropagation, so
-    // this only fires for a click that actually landed on the card body itself (fill, border,
-    // label, or the invisible hit-area). Suppressed while reparenting is in progress — the
-    // reparent-target overlay's click means something else entirely there.
+    // Toolbar/menu buttons stopPropagation, so this only fires for a click that actually landed
+    // on the card body itself (fill, border, label, or the invisible hit-area). The
+    // reparent-target overlay's click doesn't stopPropagation, but it only exists while
+    // reparentingNodeId is set, which the guard below already suppresses.
     group.on("click", function (event: MouseEvent) {
       if (reparentingNodeId) return;
       onNodeClick?.(d.data, event);
