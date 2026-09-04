@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
-import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
 import { buildSectorClipPathPolygon } from "../radial-wheel-geometry";
 import type { GenreTreeNode } from "../types";
@@ -438,6 +438,17 @@ describe("GenreTreeWheelRadial", () => {
 
     fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
     expect(onAddChild).toHaveBeenCalledWith("root-a");
+  });
+
+  it("wires the wheel-chip toolbar's font-size to the same value calculateNodeFontSize gives the label, so toolbar icons scale with the node instead of staying a fixed size", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
+    const toolbar = rockAnchor.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
+
+    const rootItemCountRange = getItemCountRange([{ itemCount: 8 }, { itemCount: 0 }, { itemCount: 0 }, { itemCount: 0 }, { itemCount: 0 }]);
+    const expectedFontSize = calculateNodeFontSize(8, rootItemCountRange);
+
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(`${expectedFontSize}px`);
   });
 
   it("adds the reparent-target overlay to eligible core nodes and forwards the selection, excluding the reparented node's own descendants", () => {
