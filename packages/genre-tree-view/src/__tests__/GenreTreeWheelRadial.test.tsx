@@ -313,6 +313,17 @@ describe("GenreTreeWheelRadial", () => {
     expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "root-c" }));
   });
 
+  it("does not fire onNodeClick on its chip while a reparent is in progress", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadial nodes={NODES_FIVE} reparentingNodeId="root-c" onNodeClick={onNodeClick} />,
+    );
+
+    fireEvent.click(chipFor(container, "Jazz"));
+
+    expect(onNodeClick).not.toHaveBeenCalled();
+  });
+
   it("fires onRootSelect on mount with the default root and again on click", () => {
     const onRootSelect = vi.fn();
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onRootSelect={onRootSelect} />);
