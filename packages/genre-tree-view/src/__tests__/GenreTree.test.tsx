@@ -97,6 +97,15 @@ describe("GenreTree", () => {
       playButton(container, "root");
       expect(container.querySelector("#hover-label-root .gtv-hover-label")!.textContent).toBe("Root");
     });
+
+    it("suppresses the hover toolbar and name-label when showToolbar is false", () => {
+      const { container } = render(<GenreTree nodes={TREE} showToolbar={false} />);
+      const nodeGroup = container.querySelector("#group-root") as SVGGElement;
+      fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+
+      expect(container.querySelector("#toolbar-root")).toBeFalsy();
+      expect(container.querySelector("#hover-label-root")).toBeFalsy();
+    });
   });
 
   it("renders a primary-placement additional action inline and invokes onClick with the node", () => {

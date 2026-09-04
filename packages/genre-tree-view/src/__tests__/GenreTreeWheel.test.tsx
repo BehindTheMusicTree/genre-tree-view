@@ -321,4 +321,17 @@ describe("GenreTreeWheel", () => {
 
     expect(getScale(transformDiv)).toBe(baseScale);
   });
+
+  it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} showToolbar={false} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
+
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
+  });
 });

@@ -100,6 +100,7 @@ export function WheelRadialPopCoreCore({
   onReparentRequest,
   onReparent,
   additionalActions,
+  showToolbar = true,
 }: WheelRadialPopCoreProps) {
   const centerNode = nodes.find((node) => node.parentId === null && node.name === CENTER_NODE_NAME);
   if (!centerNode) {
@@ -445,7 +446,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
+        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
       );
     });
 
@@ -493,7 +494,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
+        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
       );
     });
 
@@ -535,7 +536,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true },
+        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true, showToolbar },
       );
     }
   }, [
@@ -559,6 +560,7 @@ export function WheelRadialPopCoreCore({
     centerSubtreeHierarchy,
     centerNodeColor,
     wheelItemCountRange,
+    showToolbar,
   ]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
@@ -671,7 +673,11 @@ export function WheelRadialPopCoreCore({
           />
 
           <div className="gtv-wheel-center-node">
-            <div className="gtv-wheel-chip-anchor">
+            <div
+              className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                .filter(Boolean)
+                .join(" ")}
+            >
               <div
                 className={["gtv-wheel-chip", "gtv-wheel-chip--center", !isPopExpanded && "gtv-wheel-chip--circle"]
                   .filter(Boolean)
@@ -695,10 +701,13 @@ export function WheelRadialPopCoreCore({
                 <span className="gtv-node-label gtv-node-label--root" style={{ fontSize: centerNodeFontSize }}>
                   {centerNode.name}
                 </span>
+                {showToolbar && (
                 <span className="gtv-wheel-chip-hover-name" style={{ fontSize: centerNodeFontSize }}>
                   {centerNode.name}
                 </span>
+                )}
               </div>
+              {showToolbar && (
               <div
                 className={[
                   "gtv-wheel-chip-toolbar",
@@ -727,6 +736,7 @@ export function WheelRadialPopCoreCore({
                   additionalActions={additionalActions}
                 />
               </div>
+              )}
             </div>
           </div>
 
@@ -752,7 +762,11 @@ export function WheelRadialPopCoreCore({
                   className="gtv-wheel-slot"
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
-                  <div className="gtv-wheel-chip-anchor">
+                  <div
+                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <button
                       type="button"
                       className="gtv-wheel-chip gtv-wheel-chip--selected"
@@ -770,10 +784,13 @@ export function WheelRadialPopCoreCore({
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      {showToolbar && (
                       <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      )}
                     </button>
+                    {showToolbar && (
                     <div
                       className="gtv-wheel-chip-toolbar"
                       style={
@@ -798,6 +815,7 @@ export function WheelRadialPopCoreCore({
                         additionalActions={additionalActions}
                       />
                     </div>
+                    )}
                   </div>
                 </div>
               );

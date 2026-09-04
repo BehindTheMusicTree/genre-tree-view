@@ -262,6 +262,9 @@ export function renderPopSubtree(
     // have; every other pop sector now reads light against its tinted fill instead, matching core
     // sectors' solid-color treatment.
     isMainstreamSector?: boolean;
+    // When false, suppresses the hover toolbar and hover name-label on every node in this
+    // subtree. Defaults to true.
+    showToolbar?: boolean;
   } = {},
 ): void {
   const {
@@ -270,6 +273,7 @@ export function renderPopSubtree(
     radialReferenceRadius = WHEEL_RADIUS,
     rootLinkOrigin,
     isMainstreamSector = false,
+    showToolbar = true,
   } = options;
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -378,7 +382,7 @@ export function renderPopSubtree(
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (_event, d) {
-      if (reparentingNodeId || isForbidden(d)) return;
+      if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
 
       const group = d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
         SVGGElement,

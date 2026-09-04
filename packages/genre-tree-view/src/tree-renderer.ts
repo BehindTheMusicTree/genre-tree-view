@@ -267,6 +267,7 @@ export function renderTree(
   callbacks: RenderTreeCallbacks,
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
+  showToolbar = true,
 ): D3Selection {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
 
@@ -412,7 +413,7 @@ export function renderTree(
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (event, d) {
-      if (reparentingNodeId || isForbidden(d)) return;
+      if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
 
       const group = d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
         SVGGElement,

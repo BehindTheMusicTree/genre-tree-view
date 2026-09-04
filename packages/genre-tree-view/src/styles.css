@@ -620,6 +620,17 @@
   margin-top: calc(-1 * var(--gtv-hover-label-height, 22px));
 }
 
+/* When showToolbar is false, .gtv-wheel-chip-hover-name is never rendered (see
+   GenreTreeWheelBase.tsx et al.) — without this override the chip would still grow into the
+   headroom above on hover (the rule above is pure :hover, independent of that span's presence),
+   leaving a blank gap. Same specificity as the rule above, so it wins by source order instead of
+   needing !important. */
+.gtv-wheel-chip-anchor--no-toolbar:hover .gtv-wheel-chip {
+  height: var(--gtv-wheel-chip-base-height);
+  padding-top: 0;
+  margin-top: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .gtv-wheel-chip {
     transition:
