@@ -181,7 +181,8 @@ export function WheelRadialPopCoreCore({
   const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   // Tracks which root the ring is actually rotated to show at the landing angle — kept separate
   // from topRootId so a click can still fire onRootSelect (via topRootId) without moving the ring
-  // when allowWheelRotation is false. Equal to topRootId whenever rotation is allowed.
+  // when allowWheelRotation is false. Only updated on click when allowWheelRotation is true, so it
+  // can lag behind topRootId until the next click after rotation is re-enabled.
   const [rotationTopRootId, setRotationTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   // Whether the center "Mainstream Pop" node's own subtree (if it has one) is currently shown — collapsed by
   // default, toggled by clicking the center chip itself (see the button below).
