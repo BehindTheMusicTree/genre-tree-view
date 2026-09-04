@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
 import { calculateRootAnchorClearance } from "../NodeHelper";
-import { getItemCountRange } from "../constants";
+import { calculateNodeFontSize, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -276,6 +276,17 @@ describe("GenreTreeWheel", () => {
     const expectedHalfExtent = calculateRootAnchorClearance(d3, [nodes[0], nodes[1]], 2, rootItemCountRange, "HEIGHT");
 
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-height")).toBe(`${expectedHalfExtent}px`);
+  });
+
+  it("wires the wheel-chip toolbar's font-size to the same value calculateNodeFontSize gives the label, so toolbar icons scale with the node instead of staying a fixed size", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const rockChip = chipFor(container, "Rock");
+    const toolbar = rockChip.closest(".gtv-wheel-chip-anchor")!.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
+
+    const rootItemCountRange = getItemCountRange([{ itemCount: 8 }, { itemCount: 0 }, { itemCount: 0 }]);
+    const expectedFontSize = calculateNodeFontSize(8, rootItemCountRange);
+
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(`${expectedFontSize}px`);
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
