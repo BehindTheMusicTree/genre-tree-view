@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `showToolbar` prop on `GenreTreeProps` (default `true`). When `false`, suppresses the hover
+  toolbar (play/pause, add-child, overflow menu) and its hover name-label on every node, and
+  the wheel renderers' root/center chips' own inner toolbar and hover name-label — the chips
+  themselves (name label, click-to-select/expand) stay visible.
+
 ### Fixed
 
 - Wheel-chip toolbar icons now scale with the node's computed font size instead of staying a
