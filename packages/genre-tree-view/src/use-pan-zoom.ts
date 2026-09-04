@@ -44,7 +44,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // Content bounding box in local (unscaled, pan-independent) coordinates, captured by the most
   // recent fitToFrame call — lets the pan clamp below convert any future panX/panY/zoomScale into
   // the content's on-screen rect without re-measuring the DOM on every drag/wheel event. Null
-  // until fitToFrame has run once, at which point clamping is a no-op (nothing to clamp against).
+  // until fitToFrame has run once, at which point clamping is a no-op (nothing to clamp against yet).
   const contentBoundsRef = useRef<{ originX: number; originY: number; width: number; height: number } | null>(null);
 
   // Keeps at least PAN_MIN_VISIBLE_PX of content on-screen along each axis, so a drag or wheel-pan
@@ -185,9 +185,9 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   const handlePointerMoveRef = useRef<((event: PointerEvent) => void) | null>(null);
   const handlePointerUpRef = useRef<(() => void) | null>(null);
 
-  // handlePointerDown below is memoized with no deps (it's handed to React once and must stay
-  // referentially stable across renders), so its handlePointerMove closure can't just read
-  // zoomScale directly — that would freeze it at whatever scale was current on mount. Mirroring
+  // handlePointerDown below only depends on clampPanAxis (kept referentially stable across
+  // renders), so its handlePointerMove closure can't just read zoomScale directly — that would
+  // freeze it at whatever scale was current when handlePointerDown was last recreated. Mirroring
   // it into a ref, kept current via the effect below, gives the closure a live read instead.
   const zoomScaleRef = useRef(zoomScale);
   useEffect(() => {
