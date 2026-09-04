@@ -145,16 +145,31 @@ describe("NodeToolbar", () => {
     expect(onClick).toHaveBeenCalledWith(expect.anything(), NODE);
   });
 
-  it("toggles the overflow menu open and closed", () => {
+  it("toggles the overflow menu open and closed, exposing its state via aria-expanded", () => {
     const { container } = render(<NodeToolbar node={NODE} />);
     const moreButton = container.querySelector('[aria-label="More actions"]') as HTMLButtonElement;
     expect(container.querySelector(".gtv-toolbar-overflow-menu")).toBeFalsy();
+    expect(moreButton.getAttribute("aria-haspopup")).toBe("menu");
+    expect(moreButton.getAttribute("aria-expanded")).toBe("false");
 
     fireEvent.click(moreButton);
     expect(container.querySelector(".gtv-toolbar-overflow-menu")).toBeTruthy();
+    expect(moreButton.getAttribute("aria-expanded")).toBe("true");
 
     fireEvent.click(moreButton);
     expect(container.querySelector(".gtv-toolbar-overflow-menu")).toBeFalsy();
+    expect(moreButton.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("sizes the primary-row icons in em units so they scale with the toolbar's font-size", () => {
+    const { container } = render(<NodeToolbar node={NODE} onPlayPause={vi.fn()} />);
+    const playIcon = container.querySelector('[aria-label="Play"] svg') as SVGElement;
+    const addIcon = container.querySelector('[aria-label="Add sub-genre"] svg') as SVGElement;
+
+    expect(playIcon.getAttribute("width")).toBe("0.6em");
+    expect(playIcon.getAttribute("height")).toBe("0.6em");
+    expect(addIcon.getAttribute("width")).toBe("0.6em");
+    expect(addIcon.getAttribute("height")).toBe("0.6em");
   });
 
   it("calls onRenameRequest and closes the menu", () => {

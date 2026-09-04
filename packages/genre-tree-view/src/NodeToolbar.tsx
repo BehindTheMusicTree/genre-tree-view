@@ -51,11 +51,11 @@ export function NodeToolbar({
   const playLabel = isThisPlaying && playState === "playing" ? "Pause" : isThisPlaying && playState === "loading" ? "Loading..." : "Play";
   const playIcon =
     isThisPlaying && playState === "playing" ? (
-      <FaPause className="gtv-icon" size={12} />
+      <FaPause className="gtv-icon" size="0.6em" />
     ) : isThisPlaying && playState === "loading" ? (
-      <FaSpinner className="gtv-icon gtv-icon--spin" size={12} />
+      <FaSpinner className="gtv-icon gtv-icon--spin" size="0.6em" />
     ) : (
-      <FaPlay className="gtv-icon" size={12} />
+      <FaPlay className="gtv-icon" size="0.6em" />
     );
 
   return (
@@ -80,7 +80,7 @@ export function NodeToolbar({
             aria-label="Add sub-genre"
             onClick={() => onAddChild?.(node.id)}
           >
-            <FaPlus className="gtv-icon" size={12} />
+            <FaPlus className="gtv-icon" size="0.6em" />
           </button>
           {primaryExtraActions.map((action) => {
             const enabled = action.enabled ? action.enabled(node) : true;
@@ -105,9 +105,11 @@ export function NodeToolbar({
               className="gtv-toolbar-btn"
               title="More actions"
               aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              <MdMoreVert size={14} />
+              <MdMoreVert size="0.6em" />
             </button>
             {menuOpen && (
               <div className="gtv-menu-card gtv-toolbar-overflow-menu">
