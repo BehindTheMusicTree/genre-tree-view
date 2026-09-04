@@ -9,6 +9,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Wheel-chip toolbar icons now scale with the node's computed font size instead of staying a
   fixed pixel size, matching the label's scaling behavior.
+- Wheel-chip toolbar font-size no longer shrinks below the prior fixed size on small nodes, so
+  toolbar buttons keep a usable hit target.
 
 ## [1.2.0] - 2026-09-03
 
