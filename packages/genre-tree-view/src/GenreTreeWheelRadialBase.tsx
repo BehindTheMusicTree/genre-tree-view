@@ -452,7 +452,7 @@ export function WheelRadialCore({
                       }
                       onClick={(event) => {
                         handleChipClick(group.root.id);
-                        onNodeClick?.(group.root, event);
+                        if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
                       }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
