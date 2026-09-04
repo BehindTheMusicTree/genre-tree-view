@@ -57,10 +57,12 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     const bounds = contentBoundsRef.current;
     if (!viewport || !bounds) return pan;
 
-    const viewportRect = viewport.getBoundingClientRect();
     const origin = axis === "x" ? bounds.originX : bounds.originY;
     const size = axis === "x" ? bounds.width : bounds.height;
-    const viewportSize = axis === "x" ? viewportRect.width : viewportRect.height;
+    // clientWidth/clientHeight (not getBoundingClientRect) since this runs on every wheel/pointer-
+    // move event and only the viewport's own size is needed, not its position — avoids forcing a
+    // synchronous layout read in a hot path.
+    const viewportSize = axis === "x" ? viewport.clientWidth : viewport.clientHeight;
 
     const panMax = viewportSize - PAN_MIN_VISIBLE_PX - origin * scale;
     const panMin = PAN_MIN_VISIBLE_PX - size * scale - origin * scale;

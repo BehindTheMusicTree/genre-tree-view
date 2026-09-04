@@ -161,6 +161,11 @@ describe("usePanZoom", () => {
     document.body.appendChild(content);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    // clampPanAxis reads clientWidth/clientHeight (not getBoundingClientRect) for the viewport's
+    // size — jsdom defaults these to 0, so they must be stubbed too or the clamp math is exercised
+    // against the wrong viewport size.
+    Object.defineProperty(viewport, "clientWidth", { value: 1200, configurable: true });
+    Object.defineProperty(viewport, "clientHeight", { value: 750, configurable: true });
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
     const { result } = renderHook(() => usePanZoom({ current: viewport }));
@@ -207,6 +212,8 @@ describe("usePanZoom", () => {
     document.body.appendChild(content);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    Object.defineProperty(viewport, "clientWidth", { value: 1200, configurable: true });
+    Object.defineProperty(viewport, "clientHeight", { value: 750, configurable: true });
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
     const { result } = renderHook(() => usePanZoom({ current: viewport }));
