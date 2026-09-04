@@ -502,4 +502,45 @@ describe("renderTree", () => {
 
     expect(svgEl.querySelector("#select-as-new-parent-group-root")).toBeFalsy();
   });
+
+  it("fires onNodeClick with the node's data when its group is clicked", () => {
+    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+    const onNodeClick = vi.fn();
+
+    renderTree(d3, svgRef, treeData, svgWidth, svgHeight, null, [], "#4F46E5", baseCallbacks({ onNodeClick }));
+
+    const childGroup = svgEl.querySelector("#group-child") as SVGGElement;
+    childGroup.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "child" }));
+  });
+
+  it("does not fire onNodeClick while a reparent is in progress", () => {
+    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+    const onNodeClick = vi.fn();
+
+    renderTree(
+      d3,
+      svgRef,
+      treeData,
+      svgWidth,
+      svgHeight,
+      "root",
+      [],
+      "#4F46E5",
+      baseCallbacks({ onNodeClick }),
+    );
+
+    const childGroup = svgEl.querySelector("#group-child") as SVGGElement;
+    childGroup.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onNodeClick).not.toHaveBeenCalled();
+  });
 });

@@ -102,6 +102,7 @@ export function WheelRadialPopCoreCore({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
+  onNodeClick,
   additionalActions,
   showToolbar = true,
   allowWheelRotation = true,
@@ -453,6 +454,7 @@ export function WheelRadialPopCoreCore({
           onReparentTargetSelect: (newParentId) => {
             if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
           },
+          onNodeClick,
           additionalActions,
           playingNodeId,
           playState,
@@ -501,6 +503,7 @@ export function WheelRadialPopCoreCore({
           onReparentTargetSelect: (newParentId) => {
             if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
           },
+          onNodeClick,
           additionalActions,
           playingNodeId,
           playState,
@@ -543,6 +546,7 @@ export function WheelRadialPopCoreCore({
           onReparentTargetSelect: (newParentId) => {
             if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
           },
+          onNodeClick,
           additionalActions,
           playingNodeId,
           playState,
@@ -567,6 +571,7 @@ export function WheelRadialPopCoreCore({
     onDeleteRequest,
     onReparentRequest,
     onReparent,
+    onNodeClick,
     additionalActions,
     isPopExpanded,
     centerSubtreeHierarchy,
@@ -791,7 +796,10 @@ export function WheelRadialPopCoreCore({
                           "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
-                      onClick={() => handleChipClick(group.root.id)}
+                      onClick={(event) => {
+                        handleChipClick(group.root.id);
+                        onNodeClick?.(group.root, event);
+                      }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>

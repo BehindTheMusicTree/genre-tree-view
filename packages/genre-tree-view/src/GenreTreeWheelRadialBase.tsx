@@ -92,6 +92,7 @@ export function WheelRadialCore({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
+  onNodeClick,
   additionalActions,
   showToolbar = true,
 }: WheelRadialCoreProps) {
@@ -280,6 +281,7 @@ export function WheelRadialCore({
           onReparentTargetSelect: (newParentId) => {
             if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
           },
+          onNodeClick,
           additionalActions,
           playingNodeId,
           playState,
@@ -301,6 +303,7 @@ export function WheelRadialCore({
     onDeleteRequest,
     onReparentRequest,
     onReparent,
+    onNodeClick,
     additionalActions,
     wheelItemCountRange,
     showToolbar,
@@ -447,7 +450,10 @@ export function WheelRadialCore({
                           "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
-                      onClick={() => handleChipClick(group.root.id)}
+                      onClick={(event) => {
+                        handleChipClick(group.root.id);
+                        onNodeClick?.(group.root, event);
+                      }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>

@@ -86,6 +86,10 @@ export interface GenreTreeProps {
   onReparentRequest?: (node: GenreTreeNode) => void;
   /** Fired when the user picks a target node while `reparentingNodeId` is set. */
   onReparent?: (nodeId: string, newParentId: string) => void | Promise<void>;
+  /** Fired when the user clicks a node's body (its card, or its chip in the wheel renderers) —
+   * anywhere but a toolbar/menu action or, while `reparentingNodeId` is set, the reparent-target
+   * overlay. The consumer owns any resulting selection state and highlighting. */
+  onNodeClick?: (node: GenreTreeNode, event: React.MouseEvent) => void;
   /** Extra actions rendered alongside the built-in play/add-child/rename/delete/reparent set —
    * placement "primary" renders inline on the node (the upload slot from earlier versions used),
    * "overflow" (the default) renders in the kebab menu alongside rename/delete. */

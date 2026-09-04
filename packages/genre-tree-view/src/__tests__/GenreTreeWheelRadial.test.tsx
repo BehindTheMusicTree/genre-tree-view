@@ -303,6 +303,16 @@ describe("GenreTreeWheelRadial", () => {
     expect(sectors[1].style.clipPath).toBe(buildSectorClipPathPolygon(180));
   });
 
+  it("fires onNodeClick with the root node's data when its chip is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
+
+    fireEvent.click(chipFor(container, "Jazz"));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "root-c" }));
+  });
+
   it("fires onRootSelect on mount with the default root and again on click", () => {
     const onRootSelect = vi.fn();
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onRootSelect={onRootSelect} />);

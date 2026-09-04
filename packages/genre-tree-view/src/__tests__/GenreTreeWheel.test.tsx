@@ -64,6 +64,16 @@ describe("GenreTreeWheel", () => {
     expect(container.querySelector("#group-root-c")).toBeFalsy();
   });
 
+  it("fires onNodeClick with the root node's data when its chip is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={NODES} onNodeClick={onNodeClick} />);
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "root-b" }));
+  });
+
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
     render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);
