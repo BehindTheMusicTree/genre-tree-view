@@ -480,9 +480,10 @@ export function renderPopSubtree(
       }, 100);
     });
 
-    // Toolbar/menu buttons and the reparent-target overlay's own click all stopPropagation, so
-    // this only fires for a click that actually landed on the card body itself. Suppressed while
-    // reparenting is in progress — see tree-renderer.ts's identical handler.
+    // Toolbar/menu buttons stopPropagation, so this only fires for a click that actually landed
+    // on the card body itself (the reparent-target overlay doesn't stopPropagation, but its click
+    // only exists while reparentingNodeId is set, which the guard below already suppresses).
+    // See tree-renderer.ts's identical handler.
     group.on("click", function (event: MouseEvent) {
       if (reparentingNodeId) return;
       onNodeClick?.(d.data, event);
