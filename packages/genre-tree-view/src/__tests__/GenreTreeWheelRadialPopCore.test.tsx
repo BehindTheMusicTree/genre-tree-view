@@ -713,4 +713,18 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(1);
     expect(container.querySelector("#group-a-core")).toBeTruthy();
   });
+
+  it("keeps ring and center chips visible but hides their inner toolbar and suppresses the core sector's hover toolbar when showToolbar is false", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} showToolbar={false} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
+    expect(container.querySelector(".gtv-wheel-center-node")).toBeTruthy();
+    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
+
+    const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
+    fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    expect(container.querySelector("#toolbar-a-core-child")).toBeFalsy();
+  });
 });

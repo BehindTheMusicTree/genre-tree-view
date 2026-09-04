@@ -491,6 +491,7 @@ export function App() {
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const [showToolbar, setShowToolbar] = useState(true);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 
@@ -549,6 +550,15 @@ export function App() {
         <button onClick={() => setReparentingNodeId(null)}>Cancel reparent</button>
       )}
 
+      <label style={{ display: "block", marginBottom: 12 }}>
+        <input
+          type="checkbox"
+          checked={showToolbar}
+          onChange={(e) => setShowToolbar(e.target.checked)}
+        />{" "}
+        showToolbar
+      </label>
+
       <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #e4e4e7", marginBottom: 24 }}>
         {TABS.map((tab) => (
           <button
@@ -581,6 +591,7 @@ export function App() {
           <GenreTreeWheel
             nodes={wheelNodes}
             {...wheelCallbacks}
+            showToolbar={showToolbar}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
           />
@@ -600,6 +611,7 @@ export function App() {
           <GenreTreeWheelRight
             nodes={wheelNodes}
             {...wheelCallbacks}
+            showToolbar={showToolbar}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-right selected root ${rootId}`)}
           />
@@ -619,6 +631,7 @@ export function App() {
           <GenreTreeWheelRadial
             nodes={plainRadialWheelNodes}
             {...wheelCallbacks}
+            showToolbar={showToolbar}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-radial selected root ${rootId}`)}
           />
@@ -638,6 +651,7 @@ export function App() {
           <GenreTreeWheelRadialPopCore
             nodes={wheelNodes}
             {...wheelCallbacks}
+            showToolbar={showToolbar}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
           />
         </div>
@@ -655,7 +669,7 @@ export function App() {
                 background: "#f4f4f5",
               }}
             >
-              <GenreTree nodes={group.nodes} {...sharedCallbacks} />
+              <GenreTree nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} />
             </div>
           ))}
         </div>

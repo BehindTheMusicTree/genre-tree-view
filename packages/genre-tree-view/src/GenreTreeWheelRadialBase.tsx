@@ -93,6 +93,7 @@ export function WheelRadialCore({
   onReparentRequest,
   onReparent,
   additionalActions,
+  showToolbar = true,
 }: WheelRadialCoreProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
@@ -284,7 +285,7 @@ export function WheelRadialCore({
           playState,
         },
         wheelItemCountRange,
-        { isCoreSector: true, radialReferenceRadius: wheelRadius, rootLinkOrigin },
+        { isCoreSector: true, radialReferenceRadius: wheelRadius, rootLinkOrigin, showToolbar },
       );
     });
   }, [
@@ -302,6 +303,7 @@ export function WheelRadialCore({
     onReparent,
     additionalActions,
     wheelItemCountRange,
+    showToolbar,
   ]);
 
   // Starts the view fit to the wheel + rendered subtrees instead of at scale 1 / pan (0, 0) —
@@ -424,7 +426,11 @@ export function WheelRadialCore({
                   className="gtv-wheel-slot"
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
-                  <div className="gtv-wheel-chip-anchor">
+                  <div
+                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <button
                       type="button"
                       className="gtv-wheel-chip gtv-wheel-chip--selected"
@@ -447,9 +453,11 @@ export function WheelRadialCore({
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      {showToolbar && (
                       <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      )}
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
                         panZoom's pointerdown-drag tracking on the container behind it.
@@ -458,6 +466,7 @@ export function WheelRadialCore({
                         hardcoded color. Every chip has the same solid fill now (see
                         .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
                         unconditionally to stay legible against it. */}
+                    {showToolbar && (
                     <div
                       className="gtv-wheel-chip-toolbar"
                       style={
@@ -482,6 +491,7 @@ export function WheelRadialCore({
                         additionalActions={additionalActions}
                       />
                     </div>
+                    )}
                   </div>
                 </div>
               );
