@@ -51,7 +51,7 @@ export interface RenderTreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
-  onNodeClick?: (node: GenreTreeNode, event: React.MouseEvent) => void;
+  onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
@@ -535,7 +535,7 @@ export function renderTree(
     // reparent-target overlay's click means something else entirely there.
     group.on("click", function (event: MouseEvent) {
       if (reparentingNodeId) return;
-      onNodeClick?.(d.data, event as unknown as React.MouseEvent);
+      onNodeClick?.(d.data, event);
     });
   });
 
