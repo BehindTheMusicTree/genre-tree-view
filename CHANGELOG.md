@@ -13,6 +13,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   toolbar buttons keep a usable hit target.
 - The toolbar's overflow ("More actions") button now exposes its open/closed state via
   `aria-expanded` and `aria-haspopup` for assistive tech.
+- Click-drag and plain wheel-panning are now clamped so the tree can no longer be panned
+  completely out of view with no visible edge left to drag back from.
 
 ## [1.2.0] - 2026-09-03
 
