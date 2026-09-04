@@ -215,6 +215,7 @@ export interface RenderPopSubtreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
+  onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
@@ -275,7 +276,8 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     showToolbar = true,
   } = options;
-  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect } = callbacks;
+  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
+    callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
@@ -476,6 +478,15 @@ export function renderPopSubtree(
         }
         d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
       }, 100);
+    });
+
+    // Toolbar/menu buttons stopPropagation, so this only fires for a click that actually landed
+    // on the card body itself (the reparent-target overlay doesn't stopPropagation, but its click
+    // only exists while reparentingNodeId is set, which the guard below already suppresses).
+    // See tree-renderer.ts's identical handler.
+    group.on("click", function (event: MouseEvent) {
+      if (reparentingNodeId) return;
+      onNodeClick?.(d.data, event);
     });
   });
 }

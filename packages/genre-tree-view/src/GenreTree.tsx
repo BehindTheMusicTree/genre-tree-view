@@ -31,6 +31,7 @@ export function GenreTree({
   onDeleteRequest,
   onReparentRequest,
   onReparent,
+  onNodeClick,
   additionalActions,
   interactive = true,
   depthSpacingScale = 1,
@@ -101,6 +102,7 @@ export function GenreTree({
             void onReparent?.(reparentingNodeId, newParentId);
           }
         },
+        onNodeClick,
         additionalActions,
         playingNodeId,
         playState,
@@ -124,6 +126,7 @@ export function GenreTree({
     onDeleteRequest,
     onReparentRequest,
     onReparent,
+    onNodeClick,
     additionalActions,
     orientation,
     hideRoot,
