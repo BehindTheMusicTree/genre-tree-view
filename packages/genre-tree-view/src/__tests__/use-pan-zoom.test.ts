@@ -199,4 +199,58 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
     document.body.removeChild(content);
   });
+
+  it("clamps click-and-drag panning so content can never be dragged fully out of view", () => {
+    const viewport = document.createElement("div");
+    const content = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(content);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    content.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.fitToFrame([content]);
+    });
+    const { zoomScale } = result.current;
+
+    act(() => {
+      result.current.handlePointerDown({
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    // A wildly large single drag mirrors a fast/flung pointer move that would otherwise carry
+    // panX/panY off to infinity in one step.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { clientX: -1_000_000, clientY: -1_000_000 }));
+    });
+
+    const { panX, panY } = result.current;
+    const screenRight = panX + 3000 * zoomScale;
+    const screenBottom = panY + 4000 * zoomScale;
+    expect(screenRight).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
+    expect(screenBottom).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { clientX: 1_000_000, clientY: 1_000_000 }));
+    });
+
+    const opposite = result.current;
+    expect(opposite.panX).toBeLessThanOrEqual(1200 - PAN_MIN_VISIBLE_PX);
+    expect(opposite.panY).toBeLessThanOrEqual(750 - PAN_MIN_VISIBLE_PX);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup"));
+    });
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(content);
+  });
 });
