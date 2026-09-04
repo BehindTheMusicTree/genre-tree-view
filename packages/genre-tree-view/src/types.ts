@@ -98,4 +98,9 @@ export interface GenreTreeProps {
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;
+  /** When false, suppresses the hover toolbar (play/pause, add-child, overflow menu) and its
+   * hover name-label on every node, and suppresses the wheel renderers' root/center chips' own
+   * inner toolbar and hover name-label (the chips themselves — their name label, click-to-select
+   * /expand behavior — stay visible). Defaults to true. */
+  showToolbar?: boolean;
 }

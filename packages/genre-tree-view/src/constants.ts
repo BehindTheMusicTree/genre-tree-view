@@ -268,3 +268,7 @@ export const ZOOM_BUTTON_SCALE_STEP = 1.2;
 // Breathing room (px) kept around content when "fit to frame" computes a scale — content is
 // never scaled to touch the viewport's edges exactly.
 export const ZOOM_FIT_PADDING = 40;
+// Minimum content (px) usePanZoom's pan clamp always keeps on-screen along each axis — dragging
+// or wheel-panning can bring the tree to this close to sliding fully out of the viewport, but no
+// closer, so the user can never lose it entirely and have no visible edge to drag back from.
+export const PAN_MIN_VISIBLE_PX = 80;

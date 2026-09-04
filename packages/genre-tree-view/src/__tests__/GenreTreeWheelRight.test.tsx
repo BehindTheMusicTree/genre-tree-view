@@ -108,6 +108,21 @@ describe("GenreTreeWheelRight", () => {
     expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).not.toBe(initialRotation);
   });
 
+  it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+    );
+    const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
+    const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe(initialRotation);
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
+    expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+  });
+
   it("sets the tree anchor's chip clearance via --gtv-wheel-chip-half-width, not --gtv-wheel-chip-half-height", () => {
     const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
@@ -285,5 +300,18 @@ describe("GenreTreeWheelRight", () => {
     fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
 
     expect(getScale(transformDiv)).toBe(baseScale);
+  });
+
+  it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {
+    const { container } = render(<GenreTreeWheelRight nodes={NODES} showToolbar={false} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
+
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
   });
 });

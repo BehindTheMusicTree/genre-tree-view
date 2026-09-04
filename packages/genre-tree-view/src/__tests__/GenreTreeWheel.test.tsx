@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
 import { calculateRootAnchorClearance } from "../NodeHelper";
-import { getItemCountRange } from "../constants";
+import { calculateNodeFontSize, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -92,6 +92,21 @@ describe("GenreTreeWheel", () => {
     fireEvent.click(chipFor(container, "Electronic"));
 
     expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).not.toBe("0deg");
+  });
+
+  it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(
+      <GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+    );
+    const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
+    const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe(initialRotation);
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
+    expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
   });
 
   it("falls back to the first remaining root when the selected root disappears from nodes", () => {
@@ -278,6 +293,17 @@ describe("GenreTreeWheel", () => {
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-height")).toBe(`${expectedHalfExtent}px`);
   });
 
+  it("wires the wheel-chip toolbar's font-size to the same value calculateNodeFontSize gives the label, so toolbar icons scale with the node instead of staying a fixed size", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    const rockChip = chipFor(container, "Rock");
+    const toolbar = rockChip.closest(".gtv-wheel-chip-anchor")!.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
+
+    const rootItemCountRange = getItemCountRange([{ itemCount: 8 }, { itemCount: 0 }, { itemCount: 0 }]);
+    const expectedFontSize = calculateNodeFontSize(8, rootItemCountRange);
+
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(`${expectedFontSize}px`);
+  });
+
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
@@ -309,5 +335,18 @@ describe("GenreTreeWheel", () => {
     fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
 
     expect(getScale(transformDiv)).toBe(baseScale);
+  });
+
+  it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} showToolbar={false} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
+    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
+
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
   });
 });

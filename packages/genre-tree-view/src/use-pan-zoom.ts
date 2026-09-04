@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "./constants";
+import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "./constants";
 import { computeFitScale, computeZoomScale, computeZoomScaleForButton } from "./zoom-pan";
 
 export interface UsePanZoomResult {
@@ -41,6 +41,36 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // static default while fitToFrame jumps straight past it.
   const [minScale, setMinScale] = useState(ZOOM_MIN_SCALE);
 
+  // Content bounding box in local (unscaled, pan-independent) coordinates, captured by the most
+  // recent fitToFrame call — lets the pan clamp below convert any future panX/panY/zoomScale into
+  // the content's on-screen rect without re-measuring the DOM on every drag/wheel event. Stays
+  // null until fitToFrame has run at least once; clampPanAxis treats null as "nothing to clamp
+  // against" and passes the pan value through unchanged.
+  const contentBoundsRef = useRef<{ originX: number; originY: number; width: number; height: number } | null>(null);
+
+  // Keeps at least PAN_MIN_VISIBLE_PX of content on-screen along each axis, so a drag or wheel-pan
+  // can never carry the tree fully out of view with no visible edge left to drag back from. Axes
+  // are independent (an X-axis clamp never depends on the current panY, and vice versa), so each
+  // can be clamped separately as its own setState updater runs.
+  const clampPanAxis = useCallback((pan: number, scale: number, axis: "x" | "y") => {
+    const viewport = viewportRef.current;
+    const bounds = contentBoundsRef.current;
+    if (!viewport || !bounds) return pan;
+
+    const origin = axis === "x" ? bounds.originX : bounds.originY;
+    const size = axis === "x" ? bounds.width : bounds.height;
+    // clientWidth/clientHeight (not getBoundingClientRect) since this runs on every wheel/pointer-
+    // move event and only the viewport's own size is needed, not its position — avoids forcing a
+    // synchronous layout read in a hot path.
+    const viewportSize = axis === "x" ? viewport.clientWidth : viewport.clientHeight;
+
+    const panMax = viewportSize - PAN_MIN_VISIBLE_PX - origin * scale;
+    const panMin = PAN_MIN_VISIBLE_PX - size * scale - origin * scale;
+    const lo = Math.min(panMin, panMax);
+    const hi = Math.max(panMin, panMax);
+    return Math.min(hi, Math.max(lo, pan));
+  }, [viewportRef]);
+
   const zoomAtPoint = useCallback(
     (newScale: number, clientX: number, clientY: number) => {
       const viewport = viewportRef.current;
@@ -72,14 +102,14 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       if (event.ctrlKey) {
         zoomAtPoint(computeZoomScale(zoomScale, event.deltaY, minScale), event.clientX, event.clientY);
       } else {
-        setPanX((x) => x - event.deltaX);
-        setPanY((y) => y - event.deltaY);
+        setPanX((x) => clampPanAxis(x - event.deltaX, zoomScale, "x"));
+        setPanY((y) => clampPanAxis(y - event.deltaY, zoomScale, "y"));
       }
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [zoomScale, minScale, zoomAtPoint, viewportRef]);
+  }, [zoomScale, minScale, zoomAtPoint, viewportRef, clampPanAxis]);
 
   // Fallback for input that never reaches the wheel handler above — e.g. a trackpad/OS/browser
   // combination that doesn't translate a pinch gesture into a ctrlKey wheel event at all.
@@ -129,6 +159,13 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       const contentOriginX = (contentLeft - viewportRect.left - panX) / zoomScale;
       const contentOriginY = (contentTop - viewportRect.top - panY) / zoomScale;
 
+      contentBoundsRef.current = {
+        originX: contentOriginX,
+        originY: contentOriginY,
+        width: contentWidth,
+        height: contentHeight,
+      };
+
       const fitScale = computeFitScale(
         contentWidth,
         contentHeight,
@@ -151,6 +188,15 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   const handlePointerMoveRef = useRef<((event: PointerEvent) => void) | null>(null);
   const handlePointerUpRef = useRef<(() => void) | null>(null);
 
+  // handlePointerDown below only depends on clampPanAxis (kept referentially stable across
+  // renders), so its handlePointerMove closure can't just read zoomScale directly — that would
+  // freeze it at whatever scale was current when handlePointerDown was last recreated. Mirroring
+  // it into a ref, kept current via the effect below, gives the closure a live read instead.
+  const zoomScaleRef = useRef(zoomScale);
+  useEffect(() => {
+    zoomScaleRef.current = zoomScale;
+  }, [zoomScale]);
+
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.button !== 0) return;
     if ((event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip")) return;
@@ -162,8 +208,8 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       const dx = moveEvent.clientX - lastPointRef.current.x;
       const dy = moveEvent.clientY - lastPointRef.current.y;
       lastPointRef.current = { x: moveEvent.clientX, y: moveEvent.clientY };
-      setPanX((x) => x + dx);
-      setPanY((y) => y + dy);
+      setPanX((x) => clampPanAxis(x + dx, zoomScaleRef.current, "x"));
+      setPanY((y) => clampPanAxis(y + dy, zoomScaleRef.current, "y"));
     };
 
     const handlePointerUp = () => {
@@ -175,7 +221,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     handlePointerUpRef.current = handlePointerUp;
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-  }, []);
+  }, [clampPanAxis]);
 
   return {
     panX,

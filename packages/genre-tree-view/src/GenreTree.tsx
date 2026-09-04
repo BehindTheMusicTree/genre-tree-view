@@ -34,6 +34,7 @@ export function GenreTree({
   additionalActions,
   interactive = true,
   depthSpacingScale = 1,
+  showToolbar = true,
 }: GenreTreeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -106,6 +107,7 @@ export function GenreTree({
       },
       orientation,
       hideRoot,
+      showToolbar,
     );
   }, [
     treeData,
@@ -125,6 +127,7 @@ export function GenreTree({
     additionalActions,
     orientation,
     hideRoot,
+    showToolbar,
   ]);
 
   useEffect(() => {

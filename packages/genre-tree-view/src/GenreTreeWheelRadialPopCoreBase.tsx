@@ -49,6 +49,9 @@ export interface WheelRadialPopCoreProps extends Omit<GenreTreeProps, "nodes" | 
   /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
    * and on every chip click. */
   onRootSelect?: (rootId: string) => void;
+  /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
+   * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
+  allowWheelRotation?: boolean;
 }
 
 // The wheel's pivot point renders this specific root (by name) as a full interactive node
@@ -100,6 +103,8 @@ export function WheelRadialPopCoreCore({
   onReparentRequest,
   onReparent,
   additionalActions,
+  showToolbar = true,
+  allowWheelRotation = true,
 }: WheelRadialPopCoreProps) {
   const centerNode = nodes.find((node) => node.parentId === null && node.name === CENTER_NODE_NAME);
   if (!centerNode) {
@@ -174,6 +179,11 @@ export function WheelRadialPopCoreCore({
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
+  // Tracks which root the ring is actually rotated to show at the landing angle — kept separate
+  // from topRootId so a click can still fire onRootSelect (via topRootId) without moving the ring
+  // when allowWheelRotation is false. Only updated on click when allowWheelRotation is true, so it
+  // can lag behind topRootId until the next click after rotation is re-enabled.
+  const [rotationTopRootId, setRotationTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   // Whether the center "Mainstream Pop" node's own subtree (if it has one) is currently shown — collapsed by
   // default, toggled by clicking the center chip itself (see the button below).
   const [isPopExpanded, setIsPopExpanded] = useState(false);
@@ -187,8 +197,11 @@ export function WheelRadialPopCoreCore({
   const effectiveTopRootId = groups.some((group) => group.root.id === topRootId)
     ? topRootId
     : (groups[0]?.root.id ?? null);
+  const effectiveRotationTopRootId = groups.some((group) => group.root.id === rotationTopRootId)
+    ? rotationTopRootId
+    : (groups[0]?.root.id ?? null);
   const topIndex = Math.max(
-    groups.findIndex((group) => group.root.id === effectiveTopRootId),
+    groups.findIndex((group) => group.root.id === effectiveRotationTopRootId),
     0,
   );
 
@@ -445,7 +458,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
+        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
       );
     });
 
@@ -493,7 +506,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin },
+        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
       );
     });
 
@@ -535,7 +548,7 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true },
+        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true, showToolbar },
       );
     }
   }, [
@@ -559,6 +572,7 @@ export function WheelRadialPopCoreCore({
     centerSubtreeHierarchy,
     centerNodeColor,
     wheelItemCountRange,
+    showToolbar,
   ]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
@@ -575,6 +589,7 @@ export function WheelRadialPopCoreCore({
 
   const handleChipClick = (rootId: string) => {
     setTopRootId(rootId);
+    if (allowWheelRotation) setRotationTopRootId(rootId);
   };
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
@@ -671,7 +686,11 @@ export function WheelRadialPopCoreCore({
           />
 
           <div className="gtv-wheel-center-node">
-            <div className="gtv-wheel-chip-anchor">
+            <div
+              className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                .filter(Boolean)
+                .join(" ")}
+            >
               <div
                 className={["gtv-wheel-chip", "gtv-wheel-chip--center", !isPopExpanded && "gtv-wheel-chip--circle"]
                   .filter(Boolean)
@@ -695,10 +714,13 @@ export function WheelRadialPopCoreCore({
                 <span className="gtv-node-label gtv-node-label--root" style={{ fontSize: centerNodeFontSize }}>
                   {centerNode.name}
                 </span>
+                {showToolbar && (
                 <span className="gtv-wheel-chip-hover-name" style={{ fontSize: centerNodeFontSize }}>
                   {centerNode.name}
                 </span>
+                )}
               </div>
+              {showToolbar && (
               <div
                 className={[
                   "gtv-wheel-chip-toolbar",
@@ -709,6 +731,7 @@ export function WheelRadialPopCoreCore({
                 style={
                   {
                     "--gtv-node-fill": centerNodeColor,
+                    "--gtv-toolbar-font-size": `${centerNodeFontSize}px`,
                   } as React.CSSProperties
                 }
                 onPointerDown={(event) => event.stopPropagation()}
@@ -726,6 +749,7 @@ export function WheelRadialPopCoreCore({
                   additionalActions={additionalActions}
                 />
               </div>
+              )}
             </div>
           </div>
 
@@ -751,7 +775,11 @@ export function WheelRadialPopCoreCore({
                   className="gtv-wheel-slot"
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
-                  <div className="gtv-wheel-chip-anchor">
+                  <div
+                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <button
                       type="button"
                       className="gtv-wheel-chip gtv-wheel-chip--selected"
@@ -769,16 +797,20 @@ export function WheelRadialPopCoreCore({
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      {showToolbar && (
                       <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      )}
                     </button>
+                    {showToolbar && (
                     <div
                       className="gtv-wheel-chip-toolbar"
                       style={
                         {
                           "--gtv-node-fill": chipColor,
                           "--gtv-toolbar-icon-color": "#ffffff",
+                          "--gtv-toolbar-font-size": `${fontSize}px`,
                         } as React.CSSProperties
                       }
                       onPointerDown={(event) => event.stopPropagation()}
@@ -796,6 +828,7 @@ export function WheelRadialPopCoreCore({
                         additionalActions={additionalActions}
                       />
                     </div>
+                    )}
                   </div>
                 </div>
               );

@@ -44,6 +44,10 @@ export interface WheelCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColo
    * chip top-center and grows the subtree upward; "left" (GenreTreeWheelRight) lands it
    * right-center and grows the subtree rightward. */
   direction: "bottom" | "left";
+  /** When false, clicking a chip still selects its root and swaps in its subtree, but the wheel
+   * itself stays at its current rotation instead of spinning the selected chip to the anchor.
+   * Defaults to true. */
+  allowWheelRotation?: boolean;
 }
 
 /**
@@ -59,6 +63,7 @@ export function WheelCore({
   onRootSelect,
   centerLabel,
   direction,
+  allowWheelRotation = true,
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -69,6 +74,7 @@ export function WheelCore({
   onReparentRequest,
   onReparent,
   additionalActions,
+  showToolbar = true,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation = direction === "left" ? "horizontal-anchored" : "vertical";
   // CSS `rotate()` + `translateY(-radius)` convention: local angle 0°=top, 90°=right, 180°=bottom,
@@ -191,7 +197,9 @@ export function WheelCore({
 
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
-    setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
+    if (allowWheelRotation) {
+      setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
+    }
   };
 
   return (
@@ -246,6 +254,7 @@ export function WheelCore({
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
                 additionalActions={additionalActions}
+                showToolbar={showToolbar}
               />
             </div>
           )}
@@ -286,7 +295,11 @@ export function WheelCore({
                   className="gtv-wheel-slot"
                   style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
                 >
-                  <div className="gtv-wheel-chip-anchor">
+                  <div
+                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <button
                       type="button"
                       className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
@@ -309,9 +322,11 @@ export function WheelCore({
                       <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      {showToolbar && (
                       <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
                         {group.root.name}
                       </span>
+                      )}
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
                         panZoom's pointerdown-drag tracking on the container behind it.
@@ -320,12 +335,14 @@ export function WheelCore({
                         hardcoded color. Every chip has the same solid fill now (see
                         .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
                         unconditionally to stay legible against it. */}
+                    {showToolbar && (
                     <div
                       className="gtv-wheel-chip-toolbar"
                       style={
                         {
                           "--gtv-node-fill": chipColor,
                           "--gtv-toolbar-icon-color": "#ffffff",
+                          "--gtv-toolbar-font-size": `${fontSize}px`,
                         } as React.CSSProperties
                       }
                       onPointerDown={(event) => event.stopPropagation()}
@@ -343,6 +360,7 @@ export function WheelCore({
                         additionalActions={additionalActions}
                       />
                     </div>
+                    )}
                   </div>
                 </div>
               );

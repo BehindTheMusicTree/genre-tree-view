@@ -12,7 +12,7 @@
     "node": "22.23.2"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @behindthemusictree/genre-tree-view --filter genre-tree-view-playground dev",
+    "dev": "concurrently -k -n lib,playground \"pnpm --filter @behindthemusictree/genre-tree-view dev\" \"pnpm --filter genre-tree-view-playground dev\"",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
@@ -30,6 +30,7 @@
   "author": "Andreas Garcia",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "10.0.5",
     "@eslint/js": "10.0.1",
     "eslint": "10.8.0",
     "eslint-plugin-react-hooks": "7.1.1",

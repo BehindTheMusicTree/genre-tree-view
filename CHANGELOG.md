@@ -5,6 +5,30 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-04
+
+### Added
+
+- `showToolbar` prop on `GenreTreeProps` (default `true`). When `false`, suppresses the hover
+  toolbar (play/pause, add-child, overflow menu) and its hover name-label on every node, and
+  the wheel renderers' root/center chips' own inner toolbar and hover name-label — the chips
+  themselves (name label, click-to-select/expand) stay visible.
+- `allowWheelRotation` prop on `GenreTreeWheel`/`GenreTreeWheelRight`/`GenreTreeWheelRadialPopCore`
+  (default `true`). When `false`, clicking a chip still fires `onRootSelect` (and, on
+  `GenreTreeWheel`/`GenreTreeWheelRight`, still swaps in the selected subtree), but the wheel
+  itself stays at its current rotation instead of spinning the selected chip to the anchor.
+
+### Fixed
+
+- Wheel-chip toolbar icons now scale with the node's computed font size instead of staying a
+  fixed pixel size, matching the label's scaling behavior.
+- Wheel-chip toolbar font-size no longer shrinks below the prior fixed size on small nodes, so
+  toolbar buttons keep a usable hit target.
+- The toolbar's overflow ("More actions") button now exposes its open/closed state via
+  `aria-expanded` and `aria-haspopup` for assistive tech.
+- Click-drag and plain wheel-panning are now clamped so the tree can no longer be panned
+  completely out of view with no visible edge left to drag back from.
+
 ## [1.2.0] - 2026-09-03
 
 ### Added

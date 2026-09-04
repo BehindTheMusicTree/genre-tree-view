@@ -8,6 +8,9 @@ export interface GenreTreeWheelRadialPopCoreProps extends Omit<GenreTreeProps, "
   /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
    * and on every chip click. */
   onRootSelect?: (rootId: string) => void;
+  /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
+   * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
+  allowWheelRotation?: boolean;
 }
 
 /**
