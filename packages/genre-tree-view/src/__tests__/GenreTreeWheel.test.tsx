@@ -94,6 +94,21 @@ describe("GenreTreeWheel", () => {
     expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).not.toBe("0deg");
   });
 
+  it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
+    const onRootSelect = vi.fn();
+    const { container } = render(
+      <GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+    );
+    const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
+    const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
+
+    fireEvent.click(chipFor(container, "Electronic"));
+
+    expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe(initialRotation);
+    expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
+    expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+  });
+
   it("falls back to the first remaining root when the selected root disappears from nodes", () => {
     const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
     fireEvent.click(chipFor(container, "Jazz"));

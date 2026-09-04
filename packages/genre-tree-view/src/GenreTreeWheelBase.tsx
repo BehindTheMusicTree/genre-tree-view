@@ -44,6 +44,10 @@ export interface WheelCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColo
    * chip top-center and grows the subtree upward; "left" (GenreTreeWheelRight) lands it
    * right-center and grows the subtree rightward. */
   direction: "bottom" | "left";
+  /** When false, clicking a chip still selects its root and swaps in its subtree, but the wheel
+   * itself stays at its current rotation instead of spinning the selected chip to the anchor.
+   * Defaults to true. */
+  allowWheelRotation?: boolean;
 }
 
 /**
@@ -59,6 +63,7 @@ export function WheelCore({
   onRootSelect,
   centerLabel,
   direction,
+  allowWheelRotation = true,
   playingNodeId = null,
   playState,
   reparentingNodeId = null,
@@ -192,7 +197,9 @@ export function WheelCore({
 
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
-    setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
+    if (allowWheelRotation) {
+      setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
+    }
   };
 
   return (
