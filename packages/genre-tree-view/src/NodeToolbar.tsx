@@ -105,6 +105,8 @@ export function NodeToolbar({
               className="gtv-toolbar-btn"
               title="More actions"
               aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
             >
               <MdMoreVert size="0.6em" />
