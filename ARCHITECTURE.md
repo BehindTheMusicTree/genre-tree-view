@@ -14,8 +14,8 @@ pnpm workspace with two members:
   pan/zoom (`use-pan-zoom.ts`) and zoom buttons when `interactive` is true (the default); when
   `false`, it renders the bare SVG at natural size with no viewport/listeners of its own.
   `showToolbar` (default true) suppresses the hover toolbar and hover name-label on every node,
-  and the wheel renderers' root chip's own inner toolbar, when false — the chip itself (name
-  label, click-to-select/expand) stays visible.
+  and the wheel renderers' root/center chips' own inner toolbar and hover name-label, when false —
+  the chips themselves (name label, click-to-select/expand) stay visible.
 - **`GenreTreeWheel.tsx`**, **`GenreTreeWheelRight.tsx`**, **`GenreTreeWheelRadial.tsx`**, and
   **`GenreTreeWheelRadialPopCore.tsx`** all distribute the root genres of a forest around a wheel
   and mount a single (or, for the two radial variants, one per root) `GenreTree` instance(s) with
