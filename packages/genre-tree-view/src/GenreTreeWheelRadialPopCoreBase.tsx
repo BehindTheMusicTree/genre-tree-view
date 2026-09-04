@@ -709,6 +709,7 @@ export function WheelRadialPopCoreCore({
                 style={
                   {
                     "--gtv-node-fill": centerNodeColor,
+                    "--gtv-toolbar-font-size": `${centerNodeFontSize}px`,
                   } as React.CSSProperties
                 }
                 onPointerDown={(event) => event.stopPropagation()}
@@ -779,6 +780,7 @@ export function WheelRadialPopCoreCore({
                         {
                           "--gtv-node-fill": chipColor,
                           "--gtv-toolbar-icon-color": "#ffffff",
+                          "--gtv-toolbar-font-size": `${fontSize}px`,
                         } as React.CSSProperties
                       }
                       onPointerDown={(event) => event.stopPropagation()}

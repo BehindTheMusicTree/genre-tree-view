@@ -326,6 +326,7 @@ export function WheelCore({
                         {
                           "--gtv-node-fill": chipColor,
                           "--gtv-toolbar-icon-color": "#ffffff",
+                          "--gtv-toolbar-font-size": `${fontSize}px`,
                         } as React.CSSProperties
                       }
                       onPointerDown={(event) => event.stopPropagation()}
