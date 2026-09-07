@@ -206,7 +206,19 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // touch-action: none on the viewport element (see GenreTree.tsx/styles.css), which routes both
   // touch points here as ordinary pointer events instead.
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
+  // Pointers whose pointerdown landed on a node/toolbar/control: excluded from single-pointer pan
+  // (so they don't fight that element's own click/hover handling) but still tracked so a pinch that
+  // starts on top of content — the common case, since the tree fills most of the screen — still works.
+  const suppressedPointersRef = useRef<Set<number>>(new Set());
+  // Also remembers which pointer ids the current baseline was computed from, so a third finger
+  // landing (or the active pair otherwise changing) recomputes it instead of reusing a stale
+  // distance/scale from a different pair — which would otherwise cause a sudden jump in zoom.
+  const pinchStartRef = useRef<{ ids: [number, number]; distance: number; scale: number } | null>(null);
+
+  const pinchPointerIds = useCallback((pointers: Map<number, { x: number; y: number }>): [number, number] => {
+    const ids = Array.from(pointers.keys());
+    return [ids[0], ids[1]];
+  }, []);
 
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
@@ -215,18 +227,22 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
       if (pointers.size >= 2) {
-        const [a, b] = Array.from(pointers.values());
+        const [idA, idB] = pinchPointerIds(pointers);
+        const a = pointers.get(idA)!;
+        const b = pointers.get(idB)!;
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
-        if (!pinchStartRef.current) {
-          pinchStartRef.current = { distance, scale: zoomScaleRef.current };
+        const current = pinchStartRef.current;
+        if (!current || current.ids[0] !== idA || current.ids[1] !== idB) {
+          pinchStartRef.current = { ids: [idA, idB], distance, scale: zoomScaleRef.current };
           return;
         }
-        const { distance: startDistance, scale: startScale } = pinchStartRef.current;
-        if (startDistance <= 0) return;
-        const newScale = clampZoomScale(startScale * (distance / startDistance), minScaleRef.current);
+        if (current.distance <= 0) return;
+        const newScale = clampZoomScale(current.scale * (distance / current.distance), minScaleRef.current);
         zoomAtPoint(newScale, (a.x + b.x) / 2, (a.y + b.y) / 2);
         return;
       }
+
+      if (suppressedPointersRef.current.has(event.pointerId)) return;
 
       const dx = event.clientX - lastPointRef.current.x;
       const dy = event.clientY - lastPointRef.current.y;
@@ -234,7 +250,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       setPanX((x) => clampPanAxis(x + dx, zoomScaleRef.current, "x"));
       setPanY((y) => clampPanAxis(y + dy, zoomScaleRef.current, "y"));
     },
-    [zoomAtPoint, clampPanAxis],
+    [zoomAtPoint, clampPanAxis, pinchPointerIds],
   );
 
   // handlePointerMove/handlePointerUp are recreated whenever zoomAtPoint (and so zoomScale)
@@ -253,6 +269,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   const handlePointerUp = useCallback((event: PointerEvent) => {
     const pointers = activePointersRef.current;
     pointers.delete(event.pointerId);
+    suppressedPointersRef.current.delete(event.pointerId);
 
     if (pointers.size < 2) pinchStartRef.current = null;
     const remaining = Array.from(pointers.values());
@@ -272,17 +289,21 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.button !== 0) return;
-    if ((event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip")) return;
-    event.preventDefault();
+    // A pointer landing on a node/toolbar/control is excluded from single-pointer pan (so it
+    // doesn't fight that element's own click/hover handling) but still tracked below — otherwise a
+    // pinch that starts on top of content, the common case since the tree fills most of the screen,
+    // would never be recognized as a pinch at all.
+    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip") !== null;
 
     const pointers = activePointersRef.current;
     const wasEmpty = pointers.size === 0;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     lastPointRef.current = { x: event.clientX, y: event.clientY };
 
-    if (pointers.size === 2) {
-      const [a, b] = Array.from(pointers.values());
-      pinchStartRef.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), scale: zoomScaleRef.current };
+    if (isInteractive) {
+      suppressedPointersRef.current.add(event.pointerId);
+    } else {
+      event.preventDefault();
     }
 
     if (wasEmpty) {
@@ -297,11 +318,13 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // leave these window listeners attached and still calling setState after unmount.
   useEffect(() => {
     const pointers = activePointersRef.current;
+    const suppressed = suppressedPointersRef.current;
     return () => {
       window.removeEventListener("pointermove", stablePointerMove);
       window.removeEventListener("pointerup", stablePointerUp);
       window.removeEventListener("pointercancel", stablePointerUp);
       pointers.clear();
+      suppressed.clear();
       pinchStartRef.current = null;
     };
   }, [stablePointerMove, stablePointerUp]);
