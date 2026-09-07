@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
 import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MIN_SCALE } from "../constants";
 import { computeFitScale } from "../zoom-pan";
@@ -225,6 +225,7 @@ describe("usePanZoom", () => {
 
     act(() => {
       result.current.handlePointerDown({
+        pointerId: 1,
         button: 0,
         clientX: 0,
         clientY: 0,
@@ -236,7 +237,7 @@ describe("usePanZoom", () => {
     // A wildly large single drag mirrors a fast/flung pointer move that would otherwise carry
     // panX/panY off to infinity in one step.
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointermove", { clientX: -1_000_000, clientY: -1_000_000 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: -1_000_000, clientY: -1_000_000 }));
     });
 
     const { panX, panY } = result.current;
@@ -246,7 +247,7 @@ describe("usePanZoom", () => {
     expect(screenBottom).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
 
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointermove", { clientX: 1_000_000, clientY: 1_000_000 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 1_000_000, clientY: 1_000_000 }));
     });
 
     const opposite = result.current;
@@ -254,7 +255,7 @@ describe("usePanZoom", () => {
     expect(opposite.panY).toBeLessThanOrEqual(750 - PAN_MIN_VISIBLE_PX);
 
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointerup"));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
     });
 
     document.body.removeChild(viewport);
@@ -318,6 +319,33 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
     });
 
+    document.body.removeChild(viewport);
+  });
+
+  it("removes its window pointer listeners on unmount even mid-gesture", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    unmount();
+
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointermove", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointerup", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointercancel", expect.any(Function));
+
+    removeEventListenerSpy.mockRestore();
     document.body.removeChild(viewport);
   });
 });

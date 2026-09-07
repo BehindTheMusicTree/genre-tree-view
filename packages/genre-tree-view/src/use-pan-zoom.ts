@@ -186,10 +186,11 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // doesn't fight their own click/hover interactions.
   const lastPointRef = useRef({ x: 0, y: 0 });
 
-  // handlePointerDown below only depends on clampPanAxis (kept referentially stable across
-  // renders), so its handlePointerMove closure can't just read zoomScale/minScale directly — that
-  // would freeze them at whatever value was current when handlePointerDown was last recreated.
-  // Mirroring them into refs, kept current via the effects below, gives the closures a live read.
+  // handlePointerDown/handlePointerMove/handlePointerUp are registered as window listeners via
+  // referentially-stable wrappers (see stablePointerMove/stablePointerUp below), so they can't just
+  // read zoomScale/minScale directly — that would freeze them at whatever value was current when
+  // the listener was attached. Mirroring them into refs, kept current via the effects below, gives
+  // the closures a live read instead.
   const zoomScaleRef = useRef(zoomScale);
   useEffect(() => {
     zoomScaleRef.current = zoomScale;
@@ -289,6 +290,20 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       window.addEventListener("pointerup", stablePointerUp);
       window.addEventListener("pointercancel", stablePointerUp);
     }
+  }, [stablePointerMove, stablePointerUp]);
+
+  // Covers the case handlePointerUp's own cleanup can't: the component unmounting mid-gesture
+  // (route change, conditional render) before every pointer has lifted, which would otherwise
+  // leave these window listeners attached and still calling setState after unmount.
+  useEffect(() => {
+    const pointers = activePointersRef.current;
+    return () => {
+      window.removeEventListener("pointermove", stablePointerMove);
+      window.removeEventListener("pointerup", stablePointerUp);
+      window.removeEventListener("pointercancel", stablePointerUp);
+      pointers.clear();
+      pinchStartRef.current = null;
+    };
   }, [stablePointerMove, stablePointerUp]);
 
   return {
