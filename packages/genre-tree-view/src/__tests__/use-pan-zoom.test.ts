@@ -260,4 +260,63 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
     document.body.removeChild(content);
   });
+
+  it("two-finger touch pinch zooms in around the fingers' midpoint", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 400,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+      result.current.handlePointerDown({
+        pointerId: 2,
+        button: 0,
+        clientX: 600,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    // First move after the second finger lands only records the starting distance (200px apart).
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 400, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    // Fingers spread from 200px to 400px apart — distance doubles, so scale should double too.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBeCloseTo(2);
+    const panXAfterPinch = result.current.panX;
+
+    // Lifting one finger drops back to a plain single-pointer drag, anchored at the remaining one
+    // (700, 500) — moving it 50px further should pan by exactly that 50px, with no jump.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
+    });
+    expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
+    expect(result.current.zoomScale).toBeCloseTo(2);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+    });
+
+    document.body.removeChild(viewport);
+  });
 });

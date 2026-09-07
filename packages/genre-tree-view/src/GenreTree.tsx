@@ -181,6 +181,9 @@ export function GenreTree({
         // which broke fitToFrame's viewport measurement and left content clipped against that
         // ancestor's actual (smaller) visible bounds.
         cursor: "grab",
+        // Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes
+        // it as native page zoom before usePanZoom's pointer handlers see either touch point.
+        touchAction: "none",
       } as React.CSSProperties}
       onPointerDown={panZoom.handlePointerDown}
     >
