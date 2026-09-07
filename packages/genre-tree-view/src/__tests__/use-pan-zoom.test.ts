@@ -287,7 +287,8 @@ describe("usePanZoom", () => {
       } as unknown as React.PointerEvent);
     });
 
-    // First move after the second finger lands only records the starting distance (200px apart).
+    // Starting distance (200px apart) was already captured on the second pointerdown, so this
+    // first move at the same spacing is a no-op — scale stays at 1.
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 400, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));

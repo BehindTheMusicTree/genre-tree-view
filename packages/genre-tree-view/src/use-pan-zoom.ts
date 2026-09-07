@@ -236,57 +236,60 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     [zoomAtPoint, clampPanAxis],
   );
 
-  // Mirrored into a ref so handlePointerUp can remove its own window listeners on the last
-  // pointer's release without needing a forward reference to itself.
+  // handlePointerMove/handlePointerUp are recreated whenever zoomAtPoint (and so zoomScale)
+  // changes, e.g. mid-pinch — but window.addEventListener/removeEventListener only match by
+  // function identity. Registering these referentially stable wrappers instead (which delegate to
+  // the latest handler via ref) means the exact same function passed to addEventListener is always
+  // the one passed to removeEventListener, so a pinch never leaves a stale listener attached.
+  const handlePointerMoveRef = useRef(handlePointerMove);
+  useEffect(() => {
+    handlePointerMoveRef.current = handlePointerMove;
+  }, [handlePointerMove]);
   const handlePointerUpRef = useRef<(event: PointerEvent) => void>(() => {});
+  const stablePointerMove = useCallback((event: PointerEvent) => handlePointerMoveRef.current(event), []);
+  const stablePointerUp = useCallback((event: PointerEvent) => handlePointerUpRef.current(event), []);
 
-  const handlePointerUp = useCallback(
-    (event: PointerEvent) => {
-      const pointers = activePointersRef.current;
-      pointers.delete(event.pointerId);
+  const handlePointerUp = useCallback((event: PointerEvent) => {
+    const pointers = activePointersRef.current;
+    pointers.delete(event.pointerId);
 
-      if (pointers.size < 2) pinchStartRef.current = null;
-      const remaining = Array.from(pointers.values());
-      // Dropping from two fingers to one resumes as a plain drag, anchored at the finger left on
-      // screen, instead of jumping by the distance between the old two-finger midpoint and it.
-      if (remaining.length === 1) lastPointRef.current = remaining[0];
+    if (pointers.size < 2) pinchStartRef.current = null;
+    const remaining = Array.from(pointers.values());
+    // Dropping from two fingers to one resumes as a plain drag, anchored at the finger left on
+    // screen, instead of jumping by the distance between the old two-finger midpoint and it.
+    if (remaining.length === 1) lastPointRef.current = remaining[0];
 
-      if (pointers.size === 0) {
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerup", handlePointerUpRef.current);
-        window.removeEventListener("pointercancel", handlePointerUpRef.current);
-      }
-    },
-    [handlePointerMove],
-  );
+    if (pointers.size === 0) {
+      window.removeEventListener("pointermove", stablePointerMove);
+      window.removeEventListener("pointerup", stablePointerUp);
+      window.removeEventListener("pointercancel", stablePointerUp);
+    }
+  }, [stablePointerMove, stablePointerUp]);
   useEffect(() => {
     handlePointerUpRef.current = handlePointerUp;
   }, [handlePointerUp]);
 
-  const handlePointerDown = useCallback(
-    (event: React.PointerEvent) => {
-      if (event.button !== 0) return;
-      if ((event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip")) return;
-      event.preventDefault();
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {
+    if (event.button !== 0) return;
+    if ((event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip")) return;
+    event.preventDefault();
 
-      const pointers = activePointersRef.current;
-      const wasEmpty = pointers.size === 0;
-      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      lastPointRef.current = { x: event.clientX, y: event.clientY };
+    const pointers = activePointersRef.current;
+    const wasEmpty = pointers.size === 0;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    lastPointRef.current = { x: event.clientX, y: event.clientY };
 
-      if (pointers.size === 2) {
-        const [a, b] = Array.from(pointers.values());
-        pinchStartRef.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), scale: zoomScaleRef.current };
-      }
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      pinchStartRef.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), scale: zoomScaleRef.current };
+    }
 
-      if (wasEmpty) {
-        window.addEventListener("pointermove", handlePointerMove);
-        window.addEventListener("pointerup", handlePointerUp);
-        window.addEventListener("pointercancel", handlePointerUp);
-      }
-    },
-    [handlePointerMove, handlePointerUp],
-  );
+    if (wasEmpty) {
+      window.addEventListener("pointermove", stablePointerMove);
+      window.addEventListener("pointerup", stablePointerUp);
+      window.addEventListener("pointercancel", stablePointerUp);
+    }
+  }, [stablePointerMove, stablePointerUp]);
 
   return {
     panX,
