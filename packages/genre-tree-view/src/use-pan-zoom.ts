@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "./constants";
+import {
+  PAN_MIN_VISIBLE_PX,
+  ZOOM_FIT_PADDING,
+  ZOOM_MAX_SCALE,
+  ZOOM_MIN_SCALE,
+  ZOOM_PINCH_SCALE_SPEED,
+} from "./constants";
 import { clampZoomScale, computeFitScale, computeZoomScale, computeZoomScaleForButton } from "./zoom-pan";
 
 export interface UsePanZoomResult {
@@ -237,7 +243,10 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
           return;
         }
         if (current.distance <= 0) return;
-        const newScale = clampZoomScale(current.scale * (distance / current.distance), minScaleRef.current);
+        const newScale = clampZoomScale(
+          current.scale * Math.pow(distance / current.distance, ZOOM_PINCH_SCALE_SPEED),
+          minScaleRef.current,
+        );
         zoomAtPoint(newScale, (a.x + b.x) / 2, (a.y + b.y) / 2);
         return;
       }
