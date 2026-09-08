@@ -563,6 +563,73 @@
   color: #27272a;
 }
 
+/* Center chip's own expand/collapse affordance — only applied when the "Mainstream Pop" node has
+   a subtree (see the disabled rule below). Mirrors the separate .gtv-zoom-btn toggle in
+   .gtv-wheel-floating-controls (kept for discoverability/accessibility) so the two controls feel
+   like one action rather than disconnected UI.
+   Collapsed (circular) state: a soft white glow fading to fully transparent, its radius pinned to
+   half the circle's own radius. box-shadow's blur can't express a true 100%-to-0% opacity ramp, so
+   this uses a radial-gradient on ::after instead: --gtv-wheel-chip-base-height is the circle's
+   diameter here (see .gtv-wheel-chip--circle above), so the glow layer's own diameter (base-height
+   * 1.5, via the -25% inset on every side) extends base-height/4 — i.e. half the circle's radius —
+   past the chip's edge. `closest-side` pins the gradient's 100% mark to this box's own half-width
+   (rather than the default farthest-corner, which — for a square box — is the diagonal, well past
+   the visible circle) so percentages below map onto this box's actual radius. The gradient stays
+   fully transparent up to the chip's own edge (2/3 of the glow layer's radius), peaks at opacity 1
+   right at that edge, then fades back to transparent by the outer edge. */
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable {
+  position: relative;
+}
+
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--gtv-wheel-chip-base-height) / -4);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 66.67%,
+    rgba(255, 255, 255, 1) 66.67%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable:hover::after,
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip--circle.gtv-wheel-chip--expandable::after {
+    transition: opacity 120ms ease;
+  }
+}
+
+/* Expanded (rectangular) state: the glow radius above only makes sense for the circle, so this
+   state gets a plain ring instead. */
+.gtv-wheel-chip--expandable:not(.gtv-wheel-chip--circle):hover,
+.gtv-wheel-chip--expandable:not(.gtv-wheel-chip--circle):focus-visible {
+  box-shadow: 0 0 0 3px rgba(39, 39, 42, 0.18);
+}
+
+.gtv-wheel-chip--expandable:focus-visible {
+  outline: none;
+}
+
+/* No subtree to expand: the center chip is a plain label, not a control. */
+.gtv-wheel-chip--center:disabled {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip--expandable {
+    transition: box-shadow 120ms ease;
+  }
+}
+
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
    have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
    hideRoot, see WheelCore). Overlays the chip inset 1px on every side (mirroring the SVG side's
