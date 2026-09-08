@@ -349,12 +349,17 @@
    (both are centered on the same wheel pivot) so pop-core-radial-layout's polar-projected
    coordinates, whose origin is the wheel's own center, land in the right place without any extra
    JS-computed offset. */
+/* pointer-events: none because, unlike inner SVG shapes, the root <svg> box itself hit-tests as
+   an ordinary rectangle over its full (huge, canvas-sized) area regardless of paint — without
+   this, empty background here would swallow clicks meant for .gtv-wheel-middle-circle--collapsible
+   underneath it. Nodes opt back in via their own rect.gtv-hover-hit-area (pointer-events: all). */
 .gtv-wheel-pop-layer {
   position: absolute;
   top: 0;
   left: 50%;
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   overflow: visible;
+  pointer-events: none;
 }
 
 /* GenreTreeWheelRadialPopCore only: the svg's own width/height (set inline from JS) is
