@@ -296,12 +296,13 @@ describe("usePanZoom", () => {
     });
     expect(result.current.zoomScale).toBe(1);
 
-    // Fingers spread from 200px to 400px apart — distance doubles, so scale should double too.
+    // Fingers spread from 200px to 400px apart — distance doubles. Scale change is amplified by
+    // ZOOM_PINCH_SCALE_SPEED (2^1.5), not a plain 1:1 doubling — see that constant's rationale.
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(2);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
     const panXAfterPinch = result.current.panX;
 
     // Lifting one finger drops back to a plain single-pointer drag, anchored at the remaining one
@@ -313,7 +314,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
     });
     expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
-    expect(result.current.zoomScale).toBeCloseTo(2);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -375,13 +376,14 @@ describe("usePanZoom", () => {
     });
     expect(result.current.zoomScale).toBe(1);
 
-    // Now that pair (2, 3) has its own baseline (50px apart), spreading them to 100px should double
-    // scale from the pre-third-finger value of 1 — not jump based on the old pair's baseline.
+    // Now that pair (2, 3) has its own baseline (50px apart), spreading them to 100px should scale
+    // by 2^1.5 (ZOOM_PINCH_SCALE_SPEED) from the pre-third-finger value of 1 — not jump based on
+    // the old pair's baseline.
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 575, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 675, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(2);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -441,7 +443,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(1.5);
+    expect(result.current.zoomScale).toBeCloseTo(1.5 ** 1.5);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
