@@ -515,6 +515,26 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: extra whitening layered on top of .gtv-wheel-inner-tint, but
+   confined to the expanded mainstream circle's own radius (--gtv-wheel-middle-radius) instead of
+   the whole pop region, since that circle should read as more washed-out than the rest of the pop
+   area. Radial gradient (not a flat fill) so it fades from center to edge, blending into the
+   surrounding inner tint rather than showing a hard boundary at the mainstream circle's rim. Sits
+   in the same background .gtv-wheel layer, after .gtv-wheel-inner-tint, so it still paints under
+   the node svg and doesn't dull developed nodes/links. */
+.gtv-wheel-middle-tint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  height: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  margin-left: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  margin-top: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 65%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
 /* Counter-rotates against both the wheel's and the slot's rotation so the chip (and its hover
    toolbar, a sibling below) stay upright regardless of where on the wheel they land. Carries the
    rotation instead of .gtv-wheel-chip itself so the toolbar can sit outside the chip's own

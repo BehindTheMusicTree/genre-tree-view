@@ -682,6 +682,13 @@ export function WheelRadialPopCoreCore({
             ))}
 
             <div className="gtv-wheel-inner-tint" />
+
+            {isPopExpanded && centerSubtreeHierarchy && (
+              <div
+                className="gtv-wheel-middle-tint"
+                style={{ "--gtv-wheel-middle-radius": `${middleCircleFloor}px` } as React.CSSProperties}
+              />
+            )}
           </div>
 
           <svg
