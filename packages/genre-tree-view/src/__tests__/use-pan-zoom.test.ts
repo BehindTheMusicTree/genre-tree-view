@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
 import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MIN_SCALE } from "../constants";
 import { computeFitScale } from "../zoom-pan";
@@ -225,6 +225,7 @@ describe("usePanZoom", () => {
 
     act(() => {
       result.current.handlePointerDown({
+        pointerId: 1,
         button: 0,
         clientX: 0,
         clientY: 0,
@@ -236,7 +237,7 @@ describe("usePanZoom", () => {
     // A wildly large single drag mirrors a fast/flung pointer move that would otherwise carry
     // panX/panY off to infinity in one step.
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointermove", { clientX: -1_000_000, clientY: -1_000_000 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: -1_000_000, clientY: -1_000_000 }));
     });
 
     const { panX, panY } = result.current;
@@ -246,7 +247,7 @@ describe("usePanZoom", () => {
     expect(screenBottom).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
 
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointermove", { clientX: 1_000_000, clientY: 1_000_000 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 1_000_000, clientY: 1_000_000 }));
     });
 
     const opposite = result.current;
@@ -254,10 +255,225 @@ describe("usePanZoom", () => {
     expect(opposite.panY).toBeLessThanOrEqual(750 - PAN_MIN_VISIBLE_PX);
 
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointerup"));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
     });
 
     document.body.removeChild(viewport);
     document.body.removeChild(content);
+  });
+
+  it("two-finger touch pinch zooms in around the fingers' midpoint", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 400,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+      result.current.handlePointerDown({
+        pointerId: 2,
+        button: 0,
+        clientX: 600,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    // This first move only captures the starting distance (200px apart) as the pinch baseline —
+    // scale stays at 1.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 400, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    // Fingers spread from 200px to 400px apart — distance doubles, so scale should double too.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBeCloseTo(2);
+    const panXAfterPinch = result.current.panX;
+
+    // Lifting one finger drops back to a plain single-pointer drag, anchored at the remaining one
+    // (700, 500) — moving it 50px further should pan by exactly that 50px, with no jump.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
+    });
+    expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
+    expect(result.current.zoomScale).toBeCloseTo(2);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+    });
+
+    document.body.removeChild(viewport);
+  });
+
+  it("recomputes the pinch baseline instead of jumping when a third finger joins mid-pinch", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 400,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+      result.current.handlePointerDown({
+        pointerId: 2,
+        button: 0,
+        clientX: 600,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 400, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    // A third finger lands, then the first finger lifts — the active pair (2, 3) never had its own
+    // baseline captured, so it must be recomputed from their current spacing rather than reusing
+    // pointers 1/2's stale 200px baseline (which would otherwise cause a sudden zoom jump).
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 3,
+        button: 0,
+        clientX: 650,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 650, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    // Now that pair (2, 3) has its own baseline (50px apart), spreading them to 100px should double
+    // scale from the pre-third-finger value of 1 — not jump based on the old pair's baseline.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 575, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 675, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBeCloseTo(2);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 3 }));
+    });
+    document.body.removeChild(viewport);
+  });
+
+  it("still tracks a pinch that starts with a finger on a node, without panning on that finger alone", () => {
+    const viewport = document.createElement("div");
+    const node = document.createElement("g");
+    node.setAttribute("class", "node");
+    viewport.appendChild(node);
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 400,
+        clientY: 500,
+        target: node,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    // A single finger down on a node must not pan, so it doesn't fight the node's own click/hover
+    // handling.
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+    });
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+
+    // A second finger landing on open background still starts a pinch, even though the first
+    // finger's pointerdown landed on a node.
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 2,
+        button: 0,
+        clientX: 500,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBeCloseTo(1.5);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+    });
+    document.body.removeChild(viewport);
+  });
+
+  it("removes its window pointer listeners on unmount even mid-gesture", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+    });
+
+    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    unmount();
+
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointermove", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointerup", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("pointercancel", expect.any(Function));
+
+    removeEventListenerSpy.mockRestore();
+    document.body.removeChild(viewport);
   });
 });
