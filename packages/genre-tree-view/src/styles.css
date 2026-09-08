@@ -577,11 +577,11 @@
 /* GenreTreeWheelRadialPopCore's center chip, collapsed: a circular pivot instead of a
    rectangular card — width/height are set equal inline (see centerChipDiameter) so this actually
    renders as a circle rather than an ellipse. Same drop-shadow as .gtv-zoom-controls/.gtv-menu-card
-   above, for a consistent elevated-surface look; .gtv-wheel-middle-circle (its expanded-state
-   counterpart) reuses this exact shadow. */
+   above but with a much wider blur radius, for a consistent elevated-surface look;
+   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. */
 .gtv-wheel-chip--circle {
   border-radius: 50%;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
+  filter: drop-shadow(0 2px 60px rgba(24, 24, 27, 0.16));
 }
 
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
@@ -988,7 +988,7 @@
   border-radius: 50%;
   border: 1px solid #e4e4e7;
   background: #ffffff;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
+  filter: drop-shadow(0 2px 60px rgba(24, 24, 27, 0.16));
   pointer-events: none;
 }
 
@@ -1008,7 +1008,7 @@
    every layer between them so the hit-test still lands on this element despite it being visually
    underneath. */
 .gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover {
-  filter: drop-shadow(0 4px 10px rgba(24, 24, 27, 0.24));
+  filter: drop-shadow(0 4px 100px rgba(24, 24, 27, 0.24));
 }
 
 .gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover ~ .gtv-wheel .gtv-wheel-middle-tint {
