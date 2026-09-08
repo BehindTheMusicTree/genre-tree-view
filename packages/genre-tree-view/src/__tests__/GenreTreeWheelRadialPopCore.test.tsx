@@ -139,6 +139,24 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector("#group-pop-child")).toBeFalsy();
   });
 
+  it("collapses the center subtree when its own empty background (not a node/edge) is clicked", () => {
+    const nodesWithCenterChildren: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} />);
+
+    expect(container.querySelector(".gtv-wheel-middle-circle--collapsible")).toBeFalsy();
+
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+    const middleCircle = container.querySelector(".gtv-wheel-middle-circle--collapsible");
+    expect(middleCircle).toBeTruthy();
+
+    fireEvent.click(middleCircle!);
+    expect(container.querySelector(".gtv-wheel-middle-circle--collapsible")).toBeFalsy();
+    expect(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')).toBeTruthy();
+  });
+
   it("grows the wheel's outer circle to fit the center subtree once expanded, and shrinks back on collapse", () => {
     const deepCenterNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
