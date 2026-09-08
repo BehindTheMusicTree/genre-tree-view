@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-08
+
 ### Fixed
 
 - Two-finger touch pinch now scales more per unit of finger travel — the finger-distance ratio is
