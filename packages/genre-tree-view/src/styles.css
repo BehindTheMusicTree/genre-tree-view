@@ -294,6 +294,9 @@
   height: 100%;
   overflow: hidden;
   cursor: grab;
+  /* Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes it as
+     native page zoom before usePanZoom's pointer handlers see either touch point. */
+  touch-action: none;
 }
 
 /* The single shared pan/zoom transform (see use-pan-zoom.ts) is applied here, to one "stage"

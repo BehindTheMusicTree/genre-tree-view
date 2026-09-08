@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-08
+
+### Fixed
+
+- Two-finger touch pinch now scales more per unit of finger travel — the finger-distance ratio is
+  amplified by an exponent (`ZOOM_PINCH_SCALE_SPEED`) instead of applied 1:1, since touch pinch
+  reaches JS as raw pointer events with no OS-level amplification like trackpad pinch gets.
+- Two-finger touch pinch on the tree/wheel viewport now zooms the component instead of the
+  browser's native page zoom. `touch-action: none` on the interactive viewport routes both touch
+  points to pointer events, and `usePanZoom` now tracks multiple active pointers to scale around
+  the pinch midpoint, dropping back to plain single-pointer drag when one finger lifts.
+
 ## [1.4.0] - 2026-09-04
 
 ### Added
