@@ -1002,6 +1002,29 @@
   cursor: pointer;
 }
 
+/* Hover affordance for the collapsible background: strengthens its own drop-shadow and, via the
+   general sibling combinator, the .gtv-wheel-middle-tint painted on top of it in .gtv-wheel (which
+   comes later in the DOM, see GenreTreeWheelRadialPopCoreBase.tsx) — pointer-events stays off on
+   every layer between them so the hit-test still lands on this element despite it being visually
+   underneath. */
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover {
+  filter: drop-shadow(0 4px 10px rgba(24, 24, 27, 0.24));
+}
+
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover ~ .gtv-wheel .gtv-wheel-middle-tint {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 65%, rgba(255, 255, 255, 0) 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible {
+    transition: filter 120ms ease;
+  }
+
+  .gtv-wheel-middle-tint {
+    transition: background 120ms ease;
+  }
+}
+
 .gtv-wheel-container--radial .gtv-wheel-center-label {
   top: 50%;
   left: 50%;
