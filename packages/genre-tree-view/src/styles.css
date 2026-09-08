@@ -963,6 +963,16 @@
   pointer-events: none;
 }
 
+/* Lets clicking anywhere in the expanded pop subtree's empty background collapse it back, without
+   stealing clicks from the nodes/edges painted on top of it (their own svg shapes, further up in
+   paint order, still win the hit-test) or from the center chip (also painted after this in the
+   DOM). Re-enables pointer-events (off by default above, like every other decorative wheel layer)
+   only for this collapsible variant. */
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .gtv-wheel-container--radial .gtv-wheel-center-label {
   top: 50%;
   left: 50%;

@@ -656,8 +656,9 @@ export function WheelRadialPopCoreCore({
 
           {isPopExpanded && centerSubtreeHierarchy && (
             <div
-              className="gtv-wheel-middle-circle"
+              className="gtv-wheel-middle-circle gtv-wheel-middle-circle--collapsible"
               style={{ "--gtv-wheel-middle-radius": `${middleCircleFloor}px` } as React.CSSProperties}
+              onClick={() => setIsPopExpanded(false)}
             />
           )}
 
