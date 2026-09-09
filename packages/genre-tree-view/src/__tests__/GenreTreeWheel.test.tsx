@@ -85,6 +85,17 @@ describe("GenreTreeWheel", () => {
     expect(onNodeClick).not.toHaveBeenCalled();
   });
 
+  it("fires onNodeClick with a descendant node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={NODES} onNodeClick={onNodeClick} />);
+
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+    fireEvent.click(nodeGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-child" }));
+  });
+
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
     render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);

@@ -291,6 +291,16 @@ export const ZOOM_ANIMATION_DURATION_MS = 220;
 // Breathing room (px) kept around content when "fit to frame" computes a scale — content is
 // never scaled to touch the viewport's edges exactly.
 export const ZOOM_FIT_PADDING = 40;
+// Scale a clicked node is zoomed/centered to (see usePanZoom's centerOnElement) — a fixed,
+// comfortable reading scale applied consistently regardless of the scale the user was already at,
+// so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
+// 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
+export const ZOOM_FOCUS_SCALE = 0.2;
+// Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer
+// than ZOOM_ANIMATION_DURATION_MS's wheel-notch glide since this one also covers a pan distance,
+// not just a scale change, and should read as one deliberate "fly to" (Google Maps' own
+// click-to-center glide) rather than an instant jump.
+export const CENTER_ON_ELEMENT_DURATION_MS = 450;
 // Minimum content (px) usePanZoom's pan clamp always keeps on-screen along each axis — dragging
 // or wheel-panning can bring the tree to this close to sliding fully out of the viewport, but no
 // closer, so the user can never lose it entirely and have no visible edge to drag back from.

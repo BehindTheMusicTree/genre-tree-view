@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
-import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
+import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
 import { computeFitScale } from "../zoom-pan";
 
 const WHEEL_TICK_DELTA = 4.000244140625;
@@ -493,6 +493,101 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
     });
     document.body.removeChild(viewport);
+  });
+
+  it("centerOnElement no-ops when the viewport ref isn't attached to a DOM node", () => {
+    const { result } = renderHook(() => usePanZoom(nullRef()));
+
+    act(() => {
+      result.current.centerOnElement(document.createElement("div"), 1);
+    });
+
+    expect(result.current.zoomScale).toBe(1);
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+  });
+
+  it("centerOnElement no-ops when given no element", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.centerOnElement(null, 1);
+      result.current.centerOnElement(undefined, 1);
+    });
+
+    expect(result.current.zoomScale).toBe(1);
+    document.body.removeChild(viewport);
+  });
+
+  it("centerOnElement no-ops when the viewport has zero width/height", () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }) as DOMRect;
+    element.getBoundingClientRect = () => ({ left: 10, top: 10, right: 30, bottom: 30, width: 20, height: 20 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.centerOnElement(element, 1);
+    });
+
+    expect(result.current.zoomScale).toBe(1);
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
+  it("centerOnElement animates the element's center to the viewport's center at the given scale, without jumping instantly", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const baseScale = result.current.zoomScale;
+
+    act(() => {
+      result.current.centerOnElement(element, 2);
+    });
+
+    // Must glide smoothly (Google Maps style) rather than jumping to the target on this same tick.
+    expect(result.current.zoomScale).toBe(baseScale);
+
+    await waitFor(() => expect(result.current.zoomScale).toBe(2));
+    // Element's center (140, 220) at scale 2 must land exactly on the viewport's center (600, 375).
+    expect(result.current.panX + 140 * 2).toBeCloseTo(600);
+    expect(result.current.panY + 220 * 2).toBeCloseTo(375);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
+  it("centerOnElement clamps the target scale to at most ZOOM_MAX_SCALE", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.centerOnElement(element, 999);
+    });
+
+    await waitFor(() => expect(result.current.zoomScale).toBe(ZOOM_MAX_SCALE));
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
   });
 
   it("removes its window pointer listeners on unmount even mid-gesture", () => {
