@@ -1,8 +1,10 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
-import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MIN_SCALE } from "../constants";
+import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
 import { computeFitScale } from "../zoom-pan";
+
+const WHEEL_TICK_DELTA = 4.000244140625;
 
 function nullRef() {
   return { current: null };
@@ -154,6 +156,47 @@ describe("usePanZoom", () => {
     document.body.removeChild(content);
   });
 
+  it("applies a trackpad-classified ctrl+wheel event to the zoom scale instantly, with no animation delay", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      // abs(deltaY) < 4 is unambiguously "trackpad" regardless of event timing (see
+      // classifyWheelEvent in zoom-pan.ts).
+      viewport.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, deltaY: -2, clientX: 50, clientY: 50, bubbles: true }));
+    });
+
+    // No waitFor/rAF flush needed: the scale must already reflect the event synchronously.
+    expect(result.current.zoomScale).toBeGreaterThan(1);
+
+    document.body.removeChild(viewport);
+  });
+
+  it("eases a physical-mouse-wheel-classified ctrl+wheel event toward its target instead of jumping instantly", async () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const baseScale = result.current.zoomScale;
+
+    act(() => {
+      // deltaY quantized to an exact multiple of the cross-browser mouse-wheel tick is
+      // unambiguously "wheel" (see classifyWheelEvent in zoom-pan.ts).
+      viewport.dispatchEvent(
+        new WheelEvent("wheel", { ctrlKey: true, deltaY: -(WHEEL_TICK_DELTA * 3), clientX: 50, clientY: 50, bubbles: true }),
+      );
+    });
+
+    // Unlike the trackpad path above, the scale must not have jumped yet on this same tick.
+    expect(result.current.zoomScale).toBe(baseScale);
+
+    await waitFor(() => expect(result.current.zoomScale).toBeGreaterThan(baseScale));
+
+    document.body.removeChild(viewport);
+  });
+
   it("clamps plain wheel-panning so content can never be dragged fully out of view", () => {
     const viewport = document.createElement("div");
     const content = document.createElement("div");
@@ -297,12 +340,12 @@ describe("usePanZoom", () => {
     expect(result.current.zoomScale).toBe(1);
 
     // Fingers spread from 200px to 400px apart — distance doubles. Scale change is amplified by
-    // ZOOM_PINCH_SCALE_SPEED (2^1.5), not a plain 1:1 doubling — see that constant's rationale.
+    // ZOOM_PINCH_SCALE_SPEED, not a plain 1:1 doubling — see that constant's rationale.
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
     const panXAfterPinch = result.current.panX;
 
     // Lifting one finger drops back to a plain single-pointer drag, anchored at the remaining one
@@ -314,7 +357,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
     });
     expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
-    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -377,13 +420,13 @@ describe("usePanZoom", () => {
     expect(result.current.zoomScale).toBe(1);
 
     // Now that pair (2, 3) has its own baseline (50px apart), spreading them to 100px should scale
-    // by 2^1.5 (ZOOM_PINCH_SCALE_SPEED) from the pre-third-finger value of 1 — not jump based on
-    // the old pair's baseline.
+    // by 2^ZOOM_PINCH_SCALE_SPEED from the pre-third-finger value of 1 — not jump based on the old
+    // pair's baseline.
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 575, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 675, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(2 ** 1.5);
+    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -443,7 +486,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
     });
-    expect(result.current.zoomScale).toBeCloseTo(1.5 ** 1.5);
+    expect(result.current.zoomScale).toBeCloseTo(1.5 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));

@@ -2,12 +2,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   PAN_MIN_VISIBLE_PX,
+  ZOOM_ANIMATION_DURATION_MS,
   ZOOM_FIT_PADDING,
   ZOOM_MAX_SCALE,
   ZOOM_MIN_SCALE,
   ZOOM_PINCH_SCALE_SPEED,
 } from "./constants";
-import { clampZoomScale, computeFitScale, computeZoomScale, computeZoomScaleForButton } from "./zoom-pan";
+import {
+  classifyWheelEvent,
+  clampZoomScale,
+  computeFitScale,
+  computeZoomScale,
+  computeZoomScaleForButton,
+  createWheelClassifierState,
+} from "./zoom-pan";
 
 export interface UsePanZoomResult {
   panX: number;
@@ -77,45 +85,172 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     return Math.min(hi, Math.max(lo, pan));
   }, [viewportRef]);
 
+  // Reads/writes zoomScaleRef.current (not the zoomScale/minScale state closures) so a burst of
+  // events firing faster than React can commit a render — a trackpad delivers many wheel ticks
+  // per gesture, a touch pinch many pointermoves per frame — each sees the immediately-preceding
+  // event's result instead of a stale pre-render scale. Without this, rapid events either collapse
+  // onto one stale base (perceived as sluggish/laggy trackpad zoom) or anchor against the wrong
+  // scale (perceived as the zoomed point drifting during a fast pinch).
   const zoomAtPoint = useCallback(
-    (newScale: number, clientX: number, clientY: number) => {
+    (computeNewScale: (currentScale: number) => number, clientX: number, clientY: number) => {
       const viewport = viewportRef.current;
-      if (!viewport || newScale === zoomScale) return;
+      if (!viewport) {
+        return;
+      }
+      const currentScale = zoomScaleRef.current;
+      const newScale = computeNewScale(currentScale);
+      if (newScale === currentScale) {
+        return;
+      }
 
       const rect = viewport.getBoundingClientRect();
       setPanX((prevPanX) => {
-        const contentX = (clientX - rect.left - prevPanX) / zoomScale;
+        const contentX = (clientX - rect.left - prevPanX) / currentScale;
         return clientX - rect.left - contentX * newScale;
       });
       setPanY((prevPanY) => {
-        const contentY = (clientY - rect.top - prevPanY) / zoomScale;
+        const contentY = (clientY - rect.top - prevPanY) / currentScale;
         return clientY - rect.top - contentY * newScale;
       });
+      zoomScaleRef.current = newScale;
       setZoomScale(newScale);
     },
-    [zoomScale, viewportRef],
+    [viewportRef],
+  );
+
+  // Tracks the ctrl+wheel glide animation started by animateZoomTo below — null when no
+  // animation is in flight. `targetScale` (not the already-reached interpolated scale) is what a
+  // new wheel event during an in-flight glide extends, so a burst of ticks compounds into one
+  // continuous glide-and-settle instead of restarting/jumping on every event, matching Google
+  // Maps' feel.
+  const zoomAnimationRef = useRef<{
+    startScale: number;
+    targetScale: number;
+    startTime: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+  // Running state for classifyWheelEvent (see zoom-pan.ts), distinguishing a physical mouse
+  // wheel's few large ticks from a trackpad ctrl+wheel gesture's many small ones so each gets its
+  // own response curve.
+  const wheelClassifierRef = useRef(createWheelClassifierState());
+
+  // stepZoomAnimation schedules itself for the next frame, so it needs to call its own latest
+  // version without referencing the `const` it's assigned to inside its own body (disallowed by
+  // the hooks linter, mirroring stablePointerMove/handlePointerMoveRef's ref-indirection below).
+  const stepZoomAnimationRef = useRef<() => void>(() => {});
+
+  const stepZoomAnimation = useCallback(() => {
+    const anim = zoomAnimationRef.current;
+    const viewport = viewportRef.current;
+    if (!anim || !viewport) {
+      animationFrameIdRef.current = null;
+      return;
+    }
+
+    const t = Math.min(1, (performance.now() - anim.startTime) / ZOOM_ANIMATION_DURATION_MS);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const currentScale = zoomScaleRef.current;
+    const frameScale = anim.startScale + (anim.targetScale - anim.startScale) * eased;
+
+    // Re-anchored every frame (not just once at the start) using the current frame's interpolated
+    // scale, so the same content point stays under the cursor throughout the glide rather than
+    // only at the end.
+    const rect = viewport.getBoundingClientRect();
+    setPanX((prevPanX) => {
+      const contentX = (anim.clientX - rect.left - prevPanX) / currentScale;
+      return anim.clientX - rect.left - contentX * frameScale;
+    });
+    setPanY((prevPanY) => {
+      const contentY = (anim.clientY - rect.top - prevPanY) / currentScale;
+      return anim.clientY - rect.top - contentY * frameScale;
+    });
+    // eslint-disable-next-line react-hooks/immutability -- see minScaleRef/zoomScaleRef comment in fitToFrame
+    zoomScaleRef.current = frameScale;
+    setZoomScale(frameScale);
+
+    if (t < 1) {
+      animationFrameIdRef.current = requestAnimationFrame(() => stepZoomAnimationRef.current());
+    } else {
+      zoomAnimationRef.current = null;
+      animationFrameIdRef.current = null;
+    }
+  }, [viewportRef]);
+  useEffect(() => {
+    stepZoomAnimationRef.current = stepZoomAnimation;
+  }, [stepZoomAnimation]);
+
+  // Entry point for the animated ctrl+wheel zoom path. Retargets an in-flight glide (extending
+  // its target and restarting the ease from the current interpolated scale) rather than letting
+  // overlapping animations fight, so a fast burst of wheel ticks reads as one continuous glide.
+  const animateZoomTo = useCallback(
+    (computeNewScale: (currentScale: number) => number, clientX: number, clientY: number) => {
+      const inFlight = zoomAnimationRef.current;
+      const baseScale = inFlight ? inFlight.targetScale : zoomScaleRef.current;
+      const targetScale = computeNewScale(baseScale);
+      if (targetScale === baseScale) {
+        return;
+      }
+
+      zoomAnimationRef.current = {
+        startScale: zoomScaleRef.current,
+        targetScale,
+        startTime: performance.now(),
+        clientX,
+        clientY,
+      };
+
+      if (animationFrameIdRef.current === null) {
+        animationFrameIdRef.current = requestAnimationFrame(stepZoomAnimation);
+      }
+    },
+    [stepZoomAnimation],
   );
 
   // Non-passive + attached directly to the DOM node (rather than React's onWheel) because
   // React's wheel handler is passive by default, which silently drops preventDefault() — and
-  // without it, ctrl+wheel triggers the browser's own page zoom instead of this one.
+  // without it, ctrl+wheel triggers the browser's own page zoom instead of this one. Registered
+  // once (zoomAtPoint/clampPanAxis read live scale via refs rather than being deps here) instead
+  // of re-subscribing on every scale change, which previously tore down and rebuilt this listener
+  // on every single wheel tick during a continuous trackpad gesture.
   useEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!viewport) {
+      return;
+    }
 
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       if (event.ctrlKey) {
-        zoomAtPoint(computeZoomScale(zoomScale, event.deltaY, minScale), event.clientX, event.clientY);
+        const now = performance.now();
+        const wheelType = classifyWheelEvent(event.deltaY, now, wheelClassifierRef.current);
+        if (wheelType === "trackpad") {
+          // Trackpad ctrl+wheel/pinch already arrives as a continuous, high-frequency stream of
+          // small deltas — applying it instantly (like Google Maps/MapLibre do) tracks the
+          // gesture 1:1 with zero added latency. Easing *each* of these events (as the "wheel"
+          // branch below does) stacked a ~200ms lag behind every single one, which read as the
+          // trackpad path lagging noticeably behind Google Maps' own feel.
+          zoomAtPoint((current) => computeZoomScale(current, event.deltaY, minScaleRef.current), event.clientX, event.clientY);
+        } else {
+          // A physical wheel's notches are few and chunky (one big jump per click), so easing the
+          // glide between them reads as smooth rather than laggy.
+          animateZoomTo(
+            (current) => computeZoomScaleForButton(current, event.deltaY < 0 ? 1 : -1, minScaleRef.current),
+            event.clientX,
+            event.clientY,
+          );
+        }
       } else {
-        setPanX((x) => clampPanAxis(x - event.deltaX, zoomScale, "x"));
-        setPanY((y) => clampPanAxis(y - event.deltaY, zoomScale, "y"));
+        const scale = zoomScaleRef.current;
+        setPanX((x) => clampPanAxis(x - event.deltaX, scale, "x"));
+        setPanY((y) => clampPanAxis(y - event.deltaY, scale, "y"));
       }
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [zoomScale, minScale, zoomAtPoint, viewportRef, clampPanAxis]);
+  }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis]);
 
   // Fallback for input that never reaches the wheel handler above — e.g. a trackpad/OS/browser
   // combination that doesn't translate a pinch gesture into a ctrlKey wheel event at all.
@@ -126,12 +261,12 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       if (!viewport) return;
       const rect = viewport.getBoundingClientRect();
       zoomAtPoint(
-        computeZoomScaleForButton(zoomScale, direction, minScale),
+        (current) => computeZoomScaleForButton(current, direction, minScaleRef.current),
         rect.left + rect.width / 2,
         rect.top + rect.height / 2,
       );
     },
-    [zoomAtPoint, zoomScale, minScale, viewportRef],
+    [zoomAtPoint, viewportRef],
   );
 
   // Generalizes zoomAtPoint's screen->content conversion from a single point to the union
@@ -180,7 +315,14 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
         ZOOM_FIT_PADDING,
       );
 
-      setMinScale(Math.min(ZOOM_MIN_SCALE, fitScale));
+      // Keep zoomScaleRef/minScaleRef current immediately so a wheel/pinch event firing right after
+      // fitToFrame reads the new scale instead of a stale one from before this render commits.
+      const newMinScale = Math.min(ZOOM_MIN_SCALE, fitScale);
+      // eslint-disable-next-line react-hooks/immutability -- see comment above
+      minScaleRef.current = newMinScale;
+      setMinScale(newMinScale);
+      // eslint-disable-next-line react-hooks/immutability -- see comment above
+      zoomScaleRef.current = fitScale;
       setZoomScale(fitScale);
       setPanX(viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale);
       setPanY(viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale);
@@ -195,16 +337,11 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // handlePointerDown/handlePointerMove/handlePointerUp are registered as window listeners via
   // referentially-stable wrappers (see stablePointerMove/stablePointerUp below), so they can't just
   // read zoomScale/minScale directly — that would freeze them at whatever value was current when
-  // the listener was attached. Mirroring them into refs, kept current via the effects below, gives
-  // the closures a live read instead.
+  // the listener was attached. Mirroring them into refs gives the closures a live read instead; every
+  // setZoomScale/setMinScale call site updates its ref in the same spot, so there's no separate
+  // effect racing those writes.
   const zoomScaleRef = useRef(zoomScale);
-  useEffect(() => {
-    zoomScaleRef.current = zoomScale;
-  }, [zoomScale]);
   const minScaleRef = useRef(minScale);
-  useEffect(() => {
-    minScaleRef.current = minScale;
-  }, [minScale]);
 
   // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
@@ -242,12 +379,18 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
           pinchStartRef.current = { ids: [idA, idB], distance, scale: zoomScaleRef.current };
           return;
         }
-        if (current.distance <= 0) return;
-        const newScale = clampZoomScale(
-          current.scale * Math.pow(distance / current.distance, ZOOM_PINCH_SCALE_SPEED),
-          minScaleRef.current,
+        if (current.distance <= 0) {
+          return;
+        }
+        zoomAtPoint(
+          () =>
+            clampZoomScale(
+              current.scale * Math.pow(distance / current.distance, ZOOM_PINCH_SCALE_SPEED),
+              minScaleRef.current,
+            ),
+          (a.x + b.x) / 2,
+          (a.y + b.y) / 2,
         );
-        zoomAtPoint(newScale, (a.x + b.x) / 2, (a.y + b.y) / 2);
         return;
       }
 
@@ -335,6 +478,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       pointers.clear();
       suppressed.clear();
       pinchStartRef.current = null;
+      if (animationFrameIdRef.current !== null) cancelAnimationFrame(animationFrameIdRef.current);
     };
   }, [stablePointerMove, stablePointerUp]);
 

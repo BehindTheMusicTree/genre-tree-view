@@ -1,4 +1,10 @@
-import { ZOOM_BUTTON_SCALE_STEP, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_WHEEL_SCALE_SPEED } from "./constants";
+import {
+  ZOOM_BUTTON_SCALE_STEP,
+  ZOOM_MAX_SCALE,
+  ZOOM_MIN_SCALE,
+  ZOOM_WHEEL_MAX_EXPONENT,
+  ZOOM_WHEEL_SCALE_SPEED,
+} from "./constants";
 
 /** `minScale` defaults to ZOOM_MIN_SCALE but accepts an override so manual zoom-out's floor can
  * be relaxed to match a "fit to frame" scale computed for content too large for the static
@@ -8,13 +14,62 @@ export function clampZoomScale(scale: number, minScale: number = ZOOM_MIN_SCALE)
 }
 
 /** Exponential response to wheel delta so the zoom feels proportional at any current scale —
- * a fixed step would feel abrupt when zoomed far out and sluggish when zoomed far in. */
+ * a fixed step would feel abrupt when zoomed far out and sluggish when zoomed far in. The exponent
+ * is clamped to ±ZOOM_WHEEL_MAX_EXPONENT so an unusually fast swipe (large |wheelDeltaY| in one
+ * event) can't produce a runaway multiplicative jump — see that constant's doc comment. */
 export function computeZoomScale(currentScale: number, wheelDeltaY: number, minScale: number = ZOOM_MIN_SCALE): number {
-  return clampZoomScale(currentScale * Math.exp(-wheelDeltaY * ZOOM_WHEEL_SCALE_SPEED), minScale);
+  const exponent = Math.max(
+    -ZOOM_WHEEL_MAX_EXPONENT,
+    Math.min(ZOOM_WHEEL_MAX_EXPONENT, -wheelDeltaY * ZOOM_WHEEL_SCALE_SPEED),
+  );
+  return clampZoomScale(currentScale * Math.exp(exponent), minScale);
 }
 
 export function computeZoomScaleForButton(currentScale: number, direction: 1 | -1, minScale: number = ZOOM_MIN_SCALE): number {
   return clampZoomScale(currentScale * Math.pow(ZOOM_BUTTON_SCALE_STEP, direction), minScale);
+}
+
+/** Cross-browser quantum a physical mouse wheel's deltaY always lands on exact multiples of
+ * (a long-documented Firefox/Chrome quirk); trackpad-generated deltaY values essentially never
+ * do. Used by classifyWheelEvent below. */
+const WHEEL_TICK_DELTA = 4.000244140625;
+
+export interface WheelClassifierState {
+  lastTime: number;
+  lastType: "wheel" | "trackpad" | null;
+}
+
+export function createWheelClassifierState(): WheelClassifierState {
+  return { lastTime: 0, lastType: null };
+}
+
+/** Classifies a ctrl+wheel event as a physical mouse wheel (few large, quantized deltaY steps) or
+ * a trackpad ctrl+wheel/pinch gesture (many small deltaY events) — adapted from MapLibre/Mapbox
+ * GL's scroll-zoom heuristic, so each can get its own response curve instead of sharing one.
+ * `state` carries the running classification across a gesture's repeated events and is mutated
+ * in place. */
+export function classifyWheelEvent(deltaY: number, now: number, state: WheelClassifierState): "wheel" | "trackpad" {
+  const timeDelta = now - state.lastTime;
+  state.lastTime = now;
+
+  let type: "wheel" | "trackpad";
+  if (deltaY !== 0 && deltaY % WHEEL_TICK_DELTA === 0) {
+    // Definitely a mouse wheel: this exact quantization essentially never occurs by chance.
+    type = "wheel";
+  } else if (Math.abs(deltaY) < 4) {
+    // Definitely a trackpad: too small to be a real wheel notch.
+    type = "trackpad";
+  } else if (timeDelta > 400 || !state.lastType) {
+    // New or unknown gesture: infer from delta-per-time — a fast trackpad still moves less per ms
+    // than a wheel notch does.
+    type = Math.abs(timeDelta * deltaY) < 200 ? "trackpad" : "wheel";
+  } else {
+    // Ambiguous repeat within the same gesture: stay with whatever this gesture already is.
+    type = state.lastType;
+  }
+
+  state.lastType = type;
+  return type;
 }
 
 /** Selector for the elements "fit to frame" should measure: the tree's actually-rendered cards
