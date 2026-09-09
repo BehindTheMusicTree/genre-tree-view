@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
 import { calculateRootAnchorClearance } from "../NodeHelper";
@@ -157,7 +157,7 @@ describe("GenreTreeWheel", () => {
     expect(container.querySelectorAll("g.node").length).toBe(0);
   });
 
-  it("ctrl+wheel scales the shared stage that anchors both the tree and the wheel", () => {
+  it("ctrl+wheel scales the shared stage that anchors both the tree and the wheel", async () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
@@ -165,7 +165,7 @@ describe("GenreTreeWheel", () => {
 
     fireEvent.wheel(wheelContainer, { ctrlKey: true, deltaY: -100, clientX: 50, clientY: 50 });
 
-    expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+    await waitFor(() => expect(getScale(transformDiv)).toBeGreaterThan(baseScale));
   });
 
   it("drag-panning the container moves the shared stage that both the tree and wheel sit inside", () => {

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   clampZoomScale,
+  classifyWheelEvent,
   computeFitScale,
   computeZoomScale,
   computeZoomScaleForButton,
+  createWheelClassifierState,
   queryTreeContentElements,
 } from "../zoom-pan";
 import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
@@ -47,8 +49,17 @@ describe("computeZoomScale", () => {
   });
 
   it("clamps below a caller-supplied minScale instead of ZOOM_MIN_SCALE", () => {
-    const minScale = ZOOM_MIN_SCALE / 10;
+    // minScale set just above what one exponent-capped event can reach from ZOOM_MIN_SCALE (see
+    // ZOOM_WHEEL_MAX_EXPONENT), so the clamp — not the cap — is what's under test here.
+    const minScale = ZOOM_MIN_SCALE * 0.8;
     expect(computeZoomScale(ZOOM_MIN_SCALE, 10000, minScale)).toBe(minScale);
+  });
+
+  it("saturates the per-event ratio for an unusually fast swipe instead of scaling it further", () => {
+    // Both deltas are far past the exponent cap (see ZOOM_WHEEL_MAX_EXPONENT) — an even faster
+    // swipe must not zoom any more than a moderately fast one already at the cap.
+    expect(computeZoomScale(1, -1000)).toBeCloseTo(computeZoomScale(1, -50));
+    expect(computeZoomScale(1, 1000)).toBeCloseTo(computeZoomScale(1, 50));
   });
 });
 
@@ -74,6 +85,40 @@ describe("computeZoomScaleForButton", () => {
   it("clamps below a caller-supplied minScale instead of ZOOM_MIN_SCALE", () => {
     const minScale = ZOOM_MIN_SCALE / 10;
     expect(computeZoomScaleForButton(minScale / 100, -1, minScale)).toBe(minScale);
+  });
+});
+
+describe("classifyWheelEvent", () => {
+  it("classifies a deltaY exactly quantized to the wheel tick as 'wheel'", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(4.000244140625 * 3, 0, state)).toBe("wheel");
+  });
+
+  it("classifies a very small deltaY as 'trackpad'", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(1, 0, state)).toBe("trackpad");
+  });
+
+  it("infers 'trackpad' for a new gesture with small delta-per-time", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(5, 0, state)).toBe("trackpad");
+  });
+
+  it("infers 'wheel' for a new gesture with large delta-per-time", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(500, 1000, state)).toBe("wheel");
+  });
+
+  it("sticks with the gesture's established type on an ambiguous repeat", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(5, 0, state)).toBe("trackpad");
+    expect(classifyWheelEvent(5, 10, state)).toBe("trackpad");
+  });
+
+  it("resets classification after a 400ms+ gap (new gesture) instead of sticking with the old type", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(5, 0, state)).toBe("trackpad");
+    expect(classifyWheelEvent(500, 1000, state)).toBe("wheel");
   });
 });
 

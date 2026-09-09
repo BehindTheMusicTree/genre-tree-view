@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { GenreTree } from "../GenreTree";
 import { getGenreTreeColor, tintSurface } from "../constants";
 import type { GenreTreeAction, GenreTreeNode } from "../types";
@@ -244,7 +244,7 @@ describe("GenreTree", () => {
       toJSON: () => ({}),
     });
 
-    it("ctrl+wheel scales the shared transform, anchored on the cursor", () => {
+    it("ctrl+wheel scales the shared transform, anchored on the cursor", async () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
       const transformDiv = getTransformDiv(container);
@@ -252,7 +252,7 @@ describe("GenreTree", () => {
 
       fireEvent.wheel(wrapper, { ctrlKey: true, deltaY: -100, clientX: 50, clientY: 50 });
 
-      expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+      await waitFor(() => expect(getScale(transformDiv)).toBeGreaterThan(baseScale));
     });
 
     it("ignores plain wheel scroll (no ctrlKey) and leaves the svg size unchanged", () => {

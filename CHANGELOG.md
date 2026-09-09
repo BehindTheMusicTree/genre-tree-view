@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Ctrl+wheel zoom no longer produces a runaway jump on an unusually fast swipe: the per-event
+  wheel-zoom exponent is now clamped (`ZOOM_WHEEL_MAX_EXPONENT`), bounding any single event to
+  roughly a 1.65x scale change while leaving normal-speed gestures untouched. Physical mouse-wheel
+  ctrl+wheel events also now animate toward their target with an eased "glide" (matching Google
+  Maps-style scroll zoom) instead of jumping instantly, while trackpad ctrl+wheel/pinch gestures
+  remain instant to avoid perceived lag during continuous gestures.
+
 ### Added
 
 - `GenreTreeWheelRadialPopCore`'s center "Mainstream Pop" chip now toggles its own sub-genres
