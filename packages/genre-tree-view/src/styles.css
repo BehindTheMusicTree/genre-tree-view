@@ -349,12 +349,17 @@
    (both are centered on the same wheel pivot) so pop-core-radial-layout's polar-projected
    coordinates, whose origin is the wheel's own center, land in the right place without any extra
    JS-computed offset. */
+/* pointer-events: none because, unlike inner SVG shapes, the root <svg> box itself hit-tests as
+   an ordinary rectangle over its full (huge, canvas-sized) area regardless of paint — without
+   this, empty background here would swallow clicks meant for .gtv-wheel-middle-circle--collapsible
+   underneath it. Nodes opt back in via their own rect.gtv-hover-hit-area (pointer-events: all). */
 .gtv-wheel-pop-layer {
   position: absolute;
   top: 0;
   left: 50%;
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   overflow: visible;
+  pointer-events: none;
 }
 
 /* GenreTreeWheelRadialPopCore only: the svg's own width/height (set inline from JS) is
@@ -510,6 +515,26 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: extra whitening layered on top of .gtv-wheel-inner-tint, but
+   confined to the expanded mainstream circle's own radius (--gtv-wheel-middle-radius) instead of
+   the whole pop region, since that circle should read as more washed-out than the rest of the pop
+   area. Radial gradient (not a flat fill) so it fades from center to edge, blending into the
+   surrounding inner tint rather than showing a hard boundary at the mainstream circle's rim. Sits
+   in the same background .gtv-wheel layer, after .gtv-wheel-inner-tint, so it still paints under
+   the node svg and doesn't dull developed nodes/links. */
+.gtv-wheel-middle-tint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  height: calc(var(--gtv-wheel-middle-radius, 0px) * 2);
+  margin-left: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  margin-top: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 65%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
 /* Counter-rotates against both the wheel's and the slot's rotation so the chip (and its hover
    toolbar, a sibling below) stay upright regardless of where on the wheel they land. Carries the
    rotation instead of .gtv-wheel-chip itself so the toolbar can sit outside the chip's own
@@ -551,9 +576,12 @@
 
 /* GenreTreeWheelRadialPopCore's center chip, collapsed: a circular pivot instead of a
    rectangular card — width/height are set equal inline (see centerChipDiameter) so this actually
-   renders as a circle rather than an ellipse. */
+   renders as a circle rather than an ellipse. Same drop-shadow as .gtv-zoom-controls/.gtv-menu-card
+   above but with a much wider blur radius, for a consistent elevated-surface look;
+   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. */
 .gtv-wheel-chip--circle {
   border-radius: 50%;
+  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
 }
 
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
@@ -561,6 +589,73 @@
 .gtv-wheel-chip--center {
   border-width: 2px;
   color: #27272a;
+}
+
+/* Center chip's own expand/collapse affordance — only applied when the "Mainstream Pop" node has
+   a subtree (see the disabled rule below). Mirrors the separate .gtv-zoom-btn toggle in
+   .gtv-wheel-floating-controls (kept for discoverability/accessibility) so the two controls feel
+   like one action rather than disconnected UI.
+   Collapsed (circular) state: a soft white glow fading to fully transparent, its radius pinned to
+   half the circle's own radius. box-shadow's blur can't express a true 100%-to-0% opacity ramp, so
+   this uses a radial-gradient on ::after instead: --gtv-wheel-chip-base-height is the circle's
+   diameter here (see .gtv-wheel-chip--circle above), so the glow layer's own diameter (base-height
+   * 1.5, via the -25% inset on every side) extends base-height/4 — i.e. half the circle's radius —
+   past the chip's edge. `closest-side` pins the gradient's 100% mark to this box's own half-width
+   (rather than the default farthest-corner, which — for a square box — is the diagonal, well past
+   the visible circle) so percentages below map onto this box's actual radius. The gradient stays
+   fully transparent up to the chip's own edge (2/3 of the glow layer's radius), peaks at opacity 1
+   right at that edge, then fades back to transparent by the outer edge. */
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable {
+  position: relative;
+}
+
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--gtv-wheel-chip-base-height) / -4);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 66.67%,
+    rgba(255, 255, 255, 1) 66.67%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable:hover::after,
+.gtv-wheel-chip--circle.gtv-wheel-chip--expandable:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip--circle.gtv-wheel-chip--expandable::after {
+    transition: opacity 120ms ease;
+  }
+}
+
+/* Expanded (rectangular) state: the glow radius above only makes sense for the circle, so this
+   state gets a plain ring instead. */
+.gtv-wheel-chip--expandable:not(.gtv-wheel-chip--circle):hover,
+.gtv-wheel-chip--expandable:not(.gtv-wheel-chip--circle):focus-visible {
+  box-shadow: 0 0 0 3px rgba(39, 39, 42, 0.18);
+}
+
+.gtv-wheel-chip--expandable:focus-visible {
+  outline: none;
+}
+
+/* No subtree to expand: the center chip is a plain label, not a control. */
+.gtv-wheel-chip--center:disabled {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip--expandable {
+    transition: box-shadow 120ms ease;
+  }
 }
 
 /* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
@@ -893,7 +988,41 @@
   border-radius: 50%;
   border: 1px solid #e4e4e7;
   background: #ffffff;
+  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
   pointer-events: none;
+}
+
+/* Lets clicking anywhere in the expanded pop subtree's empty background collapse it back, without
+   stealing clicks from the nodes/edges painted on top of it (their own svg shapes, further up in
+   paint order, still win the hit-test) or from the center chip (also painted after this in the
+   DOM). Re-enables pointer-events (off by default above, like every other decorative wheel layer)
+   only for this collapsible variant. */
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Hover affordance for the collapsible background: strengthens its own drop-shadow and, via the
+   general sibling combinator, the .gtv-wheel-middle-tint painted on top of it in .gtv-wheel (which
+   comes later in the DOM, see GenreTreeWheelRadialPopCoreBase.tsx) — pointer-events stays off on
+   every layer between them so the hit-test still lands on this element despite it being visually
+   underneath. */
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover {
+  filter: drop-shadow(0 4px 1000px rgba(255, 255, 255, 0.24));
+}
+
+.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover ~ .gtv-wheel .gtv-wheel-middle-tint {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 65%, rgba(255, 255, 255, 0) 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible {
+    transition: filter 120ms ease;
+  }
+
+  .gtv-wheel-middle-tint {
+    transition: background 120ms ease;
+  }
 }
 
 .gtv-wheel-container--radial .gtv-wheel-center-label {
