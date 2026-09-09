@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Clicking a node now glides the viewport to center on it (an eased pan+zoom animation, matching
+  Google Maps' own click-to-center behavior) instead of jumping instantly, and settles at a much
+  less zoomed-in fixed scale (`ZOOM_FOCUS_SCALE` 1 -> 0.2) so surrounding context stays visible.
+
 ## [1.5.0] - 2026-09-09
 
 ### Fixed
