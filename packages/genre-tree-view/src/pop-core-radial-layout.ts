@@ -58,13 +58,20 @@ export function getRadialDepthRadius(depth: number, coreRootCircleRadius: number
 // splitRootGroupBySide (pop-core-split.ts) returns the pop subtree rooted at the pop child, whose
 // own parentId still points at the (excluded) root — d3.stratify requires every parentId to
 // either be null or resolve within the given set, so that dangling reference is normalized to
-// null here, making the pop child stratify's root.
+// null here, making the pop child stratify's root. Each resulting hierarchy node's `.data` is then
+// restored to its original (un-normalized) node so the real parentId still reaches
+// renderers/click handlers/the info panel.
 export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTreeNode[]): D3Node {
   const ids = new Set(popNodes.map((node) => node.id));
+  const byId = new Map(popNodes.map((node) => [node.id, node]));
   const normalized = popNodes.map((node) =>
     node.parentId !== null && !ids.has(node.parentId) ? { ...node, parentId: null } : node,
   );
-  return buildTreeHierarchyStructure(d3Lib, normalized);
+  const hierarchy = buildTreeHierarchyStructure(d3Lib, normalized);
+  hierarchy.each((d) => {
+    d.data = byId.get(d.data.id) ?? d.data;
+  });
+  return hierarchy;
 }
 
 /** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without

@@ -37,6 +37,31 @@ const popRock: GenreTreeNode[] = [
   { id: "yacht-rock", parentId: "arena-rock", name: "Yacht Rock", itemCount: 0 },
 ];
 
+describe("buildPopHierarchy", () => {
+  const popWithExcludedRootParent: GenreTreeNode[] = [
+    { id: "rock-pop", parentId: "root-a", name: "Pop Rock", itemCount: 0 },
+    { id: "arena-rock", parentId: "rock-pop", name: "Arena Rock", itemCount: 0 },
+  ];
+
+  it("roots the d3 hierarchy at the pop child, despite its parentId pointing at the excluded ring root", () => {
+    const hierarchy = buildPopHierarchy(d3, popWithExcludedRootParent);
+    expect(hierarchy.data.id).toBe("rock-pop");
+    expect(hierarchy.parent).toBeNull();
+  });
+
+  it("keeps the root pop child's own parentId pointing at the real (excluded) ring root, not normalized to null", () => {
+    const hierarchy = buildPopHierarchy(d3, popWithExcludedRootParent);
+    expect(hierarchy.data.id).toBe("rock-pop");
+    expect(hierarchy.data.parentId).toBe("root-a");
+  });
+
+  it("leaves non-root descendants' data untouched, still pointing at their real in-subtree parent", () => {
+    const hierarchy = buildPopHierarchy(d3, popWithExcludedRootParent);
+    const arenaRock = hierarchy.descendants().find((d) => d.data.id === "arena-rock")!;
+    expect(arenaRock.data.parentId).toBe("rock-pop");
+  });
+});
+
 describe("computePopRadialLayout", () => {
   it("places the pop child (depth 0) one depthSpacing inside coreRootCircleRadius, on the wedge's center angle", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
