@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeWheelRadialPopCore`'s center "Mainstream Pop" chip now toggles its own sub-genres
+  subtree when clicked — expanding and collapsing without requiring the separate `.gtv-zoom-btn`
+  toggle (still present for discoverability/accessibility). Clicking anywhere in the expanded
+  subtree's own empty background also collapses it back. The expanded mainstream circle gets a
+  center-to-edge white gradient wash, a drop-shadow matching the collapsed chip, and a hover
+  affordance that brightens both.
+
 ## [1.4.1] - 2026-09-08
 
 ### Fixed
