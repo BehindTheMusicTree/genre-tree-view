@@ -17,6 +17,8 @@ import {
   RadialSlot,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
+import { useNodeInfoPanel } from "./use-node-info-panel";
+import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
@@ -102,12 +104,17 @@ export function WheelRadialCore({
   const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
   const centerOnElementRef = useRef(panZoom.centerOnElement);
   useEffect(() => {
     centerOnElementRef.current = panZoom.centerOnElement;
+  });
+  const showNodeInfoRef = useRef(showNodeInfo);
+  useEffect(() => {
+    showNodeInfoRef.current = showNodeInfo;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const coreSvgRef = useRef<SVGSVGElement>(null);
@@ -291,6 +298,7 @@ export function WheelRadialCore({
           },
           onNodeClick: (data, event) => {
             centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+            showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
             onNodeClick?.(data, event);
           },
           additionalActions,
@@ -464,7 +472,10 @@ export function WheelRadialCore({
                       onClick={(event) => {
                         panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
                         handleChipClick(group.root.id);
-                        if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
+                        if (!reparentingNodeId) {
+                          showNodeInfo(group.root, event.currentTarget, viewportRef.current);
+                          onNodeClick?.(group.root, event.nativeEvent);
+                        }
                       }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
@@ -517,6 +528,8 @@ export function WheelRadialCore({
           </div>
         </div>
       </div>
+
+      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
 
       <div className="gtv-zoom-controls">
         <button

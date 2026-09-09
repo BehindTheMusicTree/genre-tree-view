@@ -12,7 +12,7 @@ const rockCore: GenreTreeNode[] = [
 ];
 
 describe("buildCoreHierarchy", () => {
-  it("normalizes a core child's parentId to null when it points at the excluded ring root", () => {
+  it("roots the d3 hierarchy at the core child, despite its parentId pointing at the excluded ring root", () => {
     const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
     expect(hierarchy.data.id).toBe("punk");
     expect(hierarchy.parent).toBeNull();
@@ -22,6 +22,18 @@ describe("buildCoreHierarchy", () => {
     const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
     const hardcore = hierarchy.descendants().find((d) => d.data.id === "hardcore")!;
     expect(hardcore.parent?.data.id).toBe("punk");
+  });
+
+  it("keeps the root core child's own parentId pointing at the real (excluded) ring root, not normalized to null", () => {
+    const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
+    expect(hierarchy.data.id).toBe("punk");
+    expect(hierarchy.data.parentId).toBe("root-a");
+  });
+
+  it("leaves non-root descendants' data untouched, still pointing at their real in-subtree parent", () => {
+    const hierarchy = buildCoreHierarchy(d3, rockCore.slice(1));
+    const hardcore = hierarchy.descendants().find((d) => d.data.id === "hardcore")!;
+    expect(hardcore.data.parentId).toBe("punk");
   });
 });
 

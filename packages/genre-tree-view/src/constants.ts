@@ -305,3 +305,8 @@ export const CENTER_ON_ELEMENT_DURATION_MS = 450;
 // or wheel-panning can bring the tree to this close to sliding fully out of the viewport, but no
 // closer, so the user can never lose it entirely and have no visible edge to drag back from.
 export const PAN_MIN_VISIBLE_PX = 80;
+
+// Fixed width (px) of the node info panel (see InfoPanel.tsx) — also the collision threshold
+// resolveInfoPanelSide compares a clicked node's screen rect against, so the panel never renders
+// directly on top of the node that opened it.
+export const INFO_PANEL_WIDTH = 280;

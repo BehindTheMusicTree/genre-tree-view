@@ -28,6 +28,8 @@ import {
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
+import { useNodeInfoPanel } from "./use-node-info-panel";
+import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   calculateNodeDimensions,
@@ -191,12 +193,20 @@ export function WheelRadialPopCoreCore({
   const [isPopExpanded, setIsPopExpanded] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
+  // exactly one hook instance for the whole component instance, so only one panel is ever open at
+  // a time regardless of which sector's node was clicked.
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
   const centerOnElementRef = useRef(panZoom.centerOnElement);
   useEffect(() => {
     centerOnElementRef.current = panZoom.centerOnElement;
+  });
+  const showNodeInfoRef = useRef(showNodeInfo);
+  useEffect(() => {
+    showNodeInfoRef.current = showNodeInfo;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
@@ -464,6 +474,7 @@ export function WheelRadialPopCoreCore({
           },
           onNodeClick: (data, event) => {
             centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+            showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
             onNodeClick?.(data, event);
           },
           additionalActions,
@@ -516,6 +527,7 @@ export function WheelRadialPopCoreCore({
           },
           onNodeClick: (data, event) => {
             centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+            showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
             onNodeClick?.(data, event);
           },
           additionalActions,
@@ -562,6 +574,7 @@ export function WheelRadialPopCoreCore({
           },
           onNodeClick: (data, event) => {
             centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+            showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
             onNodeClick?.(data, event);
           },
           additionalActions,
@@ -840,7 +853,10 @@ export function WheelRadialPopCoreCore({
                       onClick={(event) => {
                         panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
                         handleChipClick(group.root.id);
-                        if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
+                        if (!reparentingNodeId) {
+                          showNodeInfo(group.root, event.currentTarget, viewportRef.current);
+                          onNodeClick?.(group.root, event.nativeEvent);
+                        }
                       }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
@@ -886,6 +902,8 @@ export function WheelRadialPopCoreCore({
           </div>
         </div>
       </div>
+
+      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
 
       <div className="gtv-wheel-floating-controls">
         {centerSubtreeHierarchy && (

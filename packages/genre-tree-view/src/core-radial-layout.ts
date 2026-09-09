@@ -13,13 +13,20 @@ const CORE_SUBTREE_OUTER_MARGIN = 24;
 
 /** Builds a root's core subtree hierarchy, rooted at the root's own first core child (root not
  * included) — mirrors buildPopHierarchy: that child's own parentId still points at the (excluded)
- * ring root, which d3.stratify would reject, so it's normalized to null here. */
+ * ring root, which d3.stratify would reject, so it's normalized to null here for structure-building
+ * only; each resulting hierarchy node's `.data` is then restored to its original (un-normalized)
+ * node so the real parentId still reaches renderers/click handlers/the info panel. */
 export function buildCoreHierarchy(d3Lib: typeof import("d3"), coreNodes: GenreTreeNode[]): D3Node {
   const ids = new Set(coreNodes.map((node) => node.id));
+  const byId = new Map(coreNodes.map((node) => [node.id, node]));
   const normalized = coreNodes.map((node) =>
     node.parentId !== null && !ids.has(node.parentId) ? { ...node, parentId: null } : node,
   );
-  return buildTreeHierarchyStructure(d3Lib, normalized);
+  const hierarchy = buildTreeHierarchyStructure(d3Lib, normalized);
+  hierarchy.each((d) => {
+    d.data = byId.get(d.data.id) ?? d.data;
+  });
+  return hierarchy;
 }
 
 /**
