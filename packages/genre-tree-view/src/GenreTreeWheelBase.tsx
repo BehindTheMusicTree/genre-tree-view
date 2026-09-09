@@ -31,6 +31,7 @@ import {
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
+  ZOOM_FOCUS_SCALE,
 } from "./constants";
 
 export interface WheelCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
@@ -254,7 +255,10 @@ export function WheelCore({
                 onDeleteRequest={onDeleteRequest}
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
-                onNodeClick={onNodeClick}
+                onNodeClick={(data, event) => {
+                  panZoom.centerOnElement(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+                  onNodeClick?.(data, event);
+                }}
                 additionalActions={additionalActions}
                 showToolbar={showToolbar}
               />
@@ -319,6 +323,7 @@ export function WheelCore({
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
+                        panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
                         handleChipClick(group.root.id, angle);
                         if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
                       }}

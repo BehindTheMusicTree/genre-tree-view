@@ -7,7 +7,7 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
-import { getGenreTreeColor } from "./constants";
+import { getGenreTreeColor, ZOOM_FOCUS_SCALE } from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 
@@ -40,6 +40,13 @@ export function GenreTree({
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
+  // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
+  // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
+  const centerOnElementRef = useRef(panZoom.centerOnElement);
+  useEffect(() => {
+    centerOnElementRef.current = panZoom.centerOnElement;
+  });
 
   const { treeData, resolvedRootColor, svgWidth, svgHeight } = useMemo(() => {
     const root = buildTreeHierarchyStructure(d3, nodes);
@@ -102,7 +109,10 @@ export function GenreTree({
             void onReparent?.(reparentingNodeId, newParentId);
           }
         },
-        onNodeClick,
+        onNodeClick: (data, event) => {
+          centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+          onNodeClick?.(data, event);
+        },
         additionalActions,
         playingNodeId,
         playState,

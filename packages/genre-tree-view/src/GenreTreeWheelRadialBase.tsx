@@ -31,6 +31,7 @@ import {
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
+  ZOOM_FOCUS_SCALE,
 } from "./constants";
 
 export interface WheelRadialCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
@@ -101,6 +102,13 @@ export function WheelRadialCore({
   const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
+  // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
+  // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
+  const centerOnElementRef = useRef(panZoom.centerOnElement);
+  useEffect(() => {
+    centerOnElementRef.current = panZoom.centerOnElement;
+  });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const coreSvgRef = useRef<SVGSVGElement>(null);
 
@@ -281,7 +289,10 @@ export function WheelRadialCore({
           onReparentTargetSelect: (newParentId) => {
             if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
           },
-          onNodeClick,
+          onNodeClick: (data, event) => {
+            centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+            onNodeClick?.(data, event);
+          },
           additionalActions,
           playingNodeId,
           playState,
@@ -451,6 +462,7 @@ export function WheelRadialCore({
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
+                        panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
                       }}

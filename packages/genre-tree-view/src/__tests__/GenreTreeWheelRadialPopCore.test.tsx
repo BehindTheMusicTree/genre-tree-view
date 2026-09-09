@@ -455,6 +455,46 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onNodeClick).not.toHaveBeenCalled();
   });
 
+  it("fires onNodeClick with a pop-hierarchy node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);
+
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
+    fireEvent.click(popGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-pop" }));
+  });
+
+  it("fires onNodeClick with a core-hierarchy node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);
+
+    const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
+    fireEvent.click(coreGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-core-child" }));
+  });
+
+  it("fires onNodeClick with a center-subtree node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const nodesWithCenterChildren: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+    ];
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} onNodeClick={onNodeClick} />,
+    );
+
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+    const centerChildGroup = container.querySelector(".gtv-wheel-center-sector #group-pop-child") as SVGGElement;
+    fireEvent.click(centerChildGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "pop-child" }));
+  });
+
   it("still fires onRootSelect on click but leaves every chip's angle unchanged when allowWheelRotation is false", () => {
     const onRootSelect = vi.fn();
     const { container } = render(
