@@ -10,6 +10,8 @@ import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree }
 import { getGenreTreeColor, ZOOM_FOCUS_SCALE } from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
+import { useNodeInfoPanel } from "./use-node-info-panel";
+import { InfoPanel } from "./InfoPanel";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -40,6 +42,11 @@ export function GenreTree({
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
+  const showNodeInfoRef = useRef(showNodeInfo);
+  useEffect(() => {
+    showNodeInfoRef.current = showNodeInfo;
+  });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -111,6 +118,7 @@ export function GenreTree({
         },
         onNodeClick: (data, event) => {
           centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+          showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
           onNodeClick?.(data, event);
         },
         additionalActions,
@@ -202,6 +210,7 @@ export function GenreTree({
       <div style={{ position: "absolute", top: 0, left: 0, transform: panZoom.transform, transformOrigin: "0 0" }}>
         {svg}
       </div>
+      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
       <div className="gtv-zoom-controls">
         <button
           type="button"

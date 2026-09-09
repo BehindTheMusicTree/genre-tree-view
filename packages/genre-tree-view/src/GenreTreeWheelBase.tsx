@@ -17,6 +17,8 @@ import {
 } from "./wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
+import { useNodeInfoPanel } from "./use-node-info-panel";
+import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
   calculateNodeDimensions,
@@ -126,6 +128,7 @@ export function WheelCore({
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
   const panZoom = usePanZoom(viewportRef);
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
   const wheelCircleRef = useRef<HTMLDivElement>(null);
@@ -257,6 +260,7 @@ export function WheelCore({
                 onReparent={onReparent}
                 onNodeClick={(data, event) => {
                   panZoom.centerOnElement(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
+                  showNodeInfo(data, event.currentTarget as Element | null, viewportRef.current);
                   onNodeClick?.(data, event);
                 }}
                 additionalActions={additionalActions}
@@ -325,7 +329,10 @@ export function WheelCore({
                       onClick={(event) => {
                         panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
                         handleChipClick(group.root.id, angle);
-                        if (!reparentingNodeId) onNodeClick?.(group.root, event.nativeEvent);
+                        if (!reparentingNodeId) {
+                          showNodeInfo(group.root, event.currentTarget, viewportRef.current);
+                          onNodeClick?.(group.root, event.nativeEvent);
+                        }
                       }}
                     >
                       {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
@@ -378,6 +385,8 @@ export function WheelCore({
           </div>
         </div>
       </div>
+
+      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
 
       <div className="gtv-zoom-controls">
         <button

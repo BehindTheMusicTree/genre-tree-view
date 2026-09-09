@@ -284,6 +284,94 @@
   color: #18181b;
 }
 
+/* Node info panel — shows a clicked node's own fields, anchored to the left of the tree
+   viewport by default, flipped to the right when it would cover the clicked node itself (see
+   info-panel-geometry.ts). Positioned absolutely against the same viewport as .gtv-zoom-controls,
+   so it stays fixed regardless of pan/zoom state. */
+.gtv-info-panel {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  width: 280px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 10;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
+}
+
+.gtv-info-panel--left {
+  left: 12px;
+}
+
+.gtv-info-panel--right {
+  right: 12px;
+}
+
+.gtv-info-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 8px 10px 14px;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.gtv-info-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #18181b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gtv-info-panel-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #52525b;
+  cursor: pointer;
+}
+
+.gtv-info-panel-close:hover {
+  background-color: #f4f4f5;
+  color: #18181b;
+}
+
+.gtv-info-panel-fields {
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.gtv-info-panel-fields dt {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+  margin-top: 10px;
+}
+
+.gtv-info-panel-fields dt:first-child {
+  margin-top: 0;
+}
+
+.gtv-info-panel-fields dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #18181b;
+  word-break: break-word;
+}
+
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
    container, its full circle always on screen. Only the selected root's subtree is mounted,
    growing upward from the wheel's top-center anchor. */
