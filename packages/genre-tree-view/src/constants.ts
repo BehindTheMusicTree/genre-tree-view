@@ -258,17 +258,36 @@ export const WHEEL_ROTATION_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 // growing so large that a single wheel tick jumps an unreasonable amount.
 export const ZOOM_MIN_SCALE = 0.05;
 export const ZOOM_MAX_SCALE = 3;
-// Exponent multiplier applied to a wheel event's deltaY — small because deltaY is typically
-// tens to hundreds of pixels per tick, and exp() amplifies fast.
-export const ZOOM_WHEEL_SCALE_SPEED = 0.0015;
+// Exponent multiplier applied to a trackpad ctrl+wheel/pinch event's deltaY (see
+// classifyWheelEvent in zoom-pan.ts — physical mouse wheel notches use ZOOM_BUTTON_SCALE_STEP
+// instead) — small because deltaY is typically tens to hundreds of pixels per tick, and exp()
+// amplifies fast. Raised repeatedly (0.0015 -> 0.003 -> 0.006 -> 0.012 -> 0.03): even with the
+// per-event animation delay removed, trackpad zoom still felt less sensitive than Google Maps'.
+export const ZOOM_WHEEL_SCALE_SPEED = 0.03;
+// Caps the exponent (currentScale's multiplier is exp(this)) any single wheel/trackpad event can
+// apply, regardless of ZOOM_WHEEL_SCALE_SPEED. Researched d3-zoom's own wheel handling (the
+// library this project is built on) and Mapbox GL's scroll-zoom: both scale multiplicatively per
+// event exactly like computeZoomScale does, with no special curve to counter it — "a faster swipe
+// zooms more" is inherent to any proportional response, not a bug, since deltaY already grows with
+// gesture speed. What those implementations don't hit is an occasional very fast swipe producing a
+// runaway multiplicative jump in one single event; this cap bounds that per-event ratio to
+// exp(0.5) ≈ 1.65x without touching the feel of normal-speed gestures (which stay well under it).
+export const ZOOM_WHEEL_MAX_EXPONENT = 0.5;
 // Multiplicative step applied per click of the zoom in/out buttons — a fallback control for
 // ctrl+scroll/pinch, which some trackpad/OS/browser combinations never translate into a
 // ctrlKey wheel event at all.
 export const ZOOM_BUTTON_SCALE_STEP = 1.2;
 // Exponent applied to a touch pinch gesture's finger-distance ratio, amplifying the scale change
 // per unit of finger travel — touch pinch reaches JS as raw pointer events (see use-pan-zoom.ts),
-// with no OS-level amplification like trackpad pinch gets, so a 1:1 ratio feels sluggish.
-export const ZOOM_PINCH_SCALE_SPEED = 1.5;
+// with no OS-level amplification like trackpad pinch gets, so a 1:1 ratio feels sluggish. Lowered
+// from 1.5: on Android touchscreens that amplification made pinch-zoom feel too fast/twitchy.
+export const ZOOM_PINCH_SCALE_SPEED = 1;
+// Duration (ms) of the eased glide between physical-mouse-wheel notches (see classifyWheelEvent
+// in zoom-pan.ts) — mirrors Google Maps' smooth zoom-and-settle for that chunky, low-frequency
+// input. Trackpad ctrl+wheel/pinch is applied instantly instead (see handleWheel in
+// use-pan-zoom.ts): it's already a continuous, high-frequency stream, so easing each event would
+// only stack added latency behind it rather than smooth anything.
+export const ZOOM_ANIMATION_DURATION_MS = 220;
 // Breathing room (px) kept around content when "fit to frame" computes a scale — content is
 // never scaled to touch the viewport's edges exactly.
 export const ZOOM_FIT_PADDING = 40;

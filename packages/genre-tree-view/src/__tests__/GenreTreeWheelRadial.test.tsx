@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
 import { POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
@@ -361,7 +361,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(coreSectors(container).length).toBe(0);
   });
 
-  it("ctrl+wheel scales the shared stage that anchors both the core sectors and the wheel", () => {
+  it("ctrl+wheel scales the shared stage that anchors both the core sectors and the wheel", async () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
@@ -369,7 +369,7 @@ describe("GenreTreeWheelRadial", () => {
 
     fireEvent.wheel(wheelContainer, { ctrlKey: true, deltaY: -100, clientX: 50, clientY: 50 });
 
-    expect(getScale(transformDiv)).toBeGreaterThan(baseScale);
+    await waitFor(() => expect(getScale(transformDiv)).toBeGreaterThan(baseScale));
   });
 
   it("drag-panning the container moves the shared stage that the trees and wheel sit inside", () => {

@@ -491,8 +491,8 @@ export function App() {
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
-  const [showToolbar, setShowToolbar] = useState(true);
-  const [allowWheelRotation, setAllowWheelRotation] = useState(true);
+  const [showToolbar, setShowToolbar] = useState(false);
+  const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 

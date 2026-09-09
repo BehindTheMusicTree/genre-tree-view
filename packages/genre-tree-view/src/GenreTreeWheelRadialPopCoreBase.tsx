@@ -656,8 +656,9 @@ export function WheelRadialPopCoreCore({
 
           {isPopExpanded && centerSubtreeHierarchy && (
             <div
-              className="gtv-wheel-middle-circle"
+              className="gtv-wheel-middle-circle gtv-wheel-middle-circle--collapsible"
               style={{ "--gtv-wheel-middle-radius": `${middleCircleFloor}px` } as React.CSSProperties}
+              onClick={() => setIsPopExpanded(false)}
             />
           )}
 
@@ -681,6 +682,13 @@ export function WheelRadialPopCoreCore({
             ))}
 
             <div className="gtv-wheel-inner-tint" />
+
+            {isPopExpanded && centerSubtreeHierarchy && (
+              <div
+                className="gtv-wheel-middle-tint"
+                style={{ "--gtv-wheel-middle-radius": `${middleCircleFloor}px` } as React.CSSProperties}
+              />
+            )}
           </div>
 
           <svg
@@ -696,8 +704,14 @@ export function WheelRadialPopCoreCore({
                 .filter(Boolean)
                 .join(" ")}
             >
-              <div
-                className={["gtv-wheel-chip", "gtv-wheel-chip--center", !isPopExpanded && "gtv-wheel-chip--circle"]
+              <button
+                type="button"
+                className={[
+                  "gtv-wheel-chip",
+                  "gtv-wheel-chip--center",
+                  !isPopExpanded && "gtv-wheel-chip--circle",
+                  centerSubtreeHierarchy && "gtv-wheel-chip--expandable",
+                ]
                   .filter(Boolean)
                   .join(" ")}
                 style={
@@ -714,6 +728,16 @@ export function WheelRadialPopCoreCore({
                         "--gtv-chip-color": centerNodeColor,
                       } as React.CSSProperties)
                 }
+                disabled={!centerSubtreeHierarchy}
+                onClick={() => setIsPopExpanded((expanded) => !expanded)}
+                aria-label={
+                  centerSubtreeHierarchy
+                    ? isPopExpanded
+                      ? "Hide Mainstream Pop sub-genres"
+                      : "Show Mainstream Pop sub-genres"
+                    : centerNode.name
+                }
+                aria-pressed={centerSubtreeHierarchy ? isPopExpanded : undefined}
               >
                 {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
                 <span className="gtv-node-label gtv-node-label--root" style={{ fontSize: centerNodeFontSize }}>
@@ -724,7 +748,7 @@ export function WheelRadialPopCoreCore({
                   {centerNode.name}
                 </span>
                 )}
-              </div>
+              </button>
               {showToolbar && (
               <div
                 className={[
