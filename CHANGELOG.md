@@ -5,6 +5,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Clicking a node now also opens a read-only info panel showing that node's own fields (id,
+  parent id, name, item count, actionable, side), anchored to the left edge of the tree viewport
+  by default and flipping to the right when opening on the left would cover the clicked node.
+  Present across all five renderers; closes only via its own close button, and switching to a
+  different node updates its content without requiring a close first. The existing `onNodeClick`
+  callback is unaffected and keeps firing unchanged.
+
+### Fixed
+
+- A ring root's core or pop child (e.g. a root with only one, non-branching subgenre) now shows
+  its real parent id in the info panel instead of a blank dash — the internal hierarchy-building
+  step that excludes the ring root itself from that child's subtree was clearing the child's own
+  `parentId` field as a side effect of preparing the tree structure for `d3.stratify`.
+
 ### Changed
 
 - Clicking a node now glides the viewport to center on it (an eased pan+zoom animation, matching
