@@ -473,19 +473,6 @@ describe("GenreTree", () => {
         rectSpy.mockRestore();
       });
 
-      it("flips to the right when the panel would cover the clicked node", () => {
-        const { container } = render(<GenreTree nodes={TREE} />);
-        const wrapper = container.firstChild as HTMLElement;
-        const rectSpy = mockRects(container, wrapper, 100);
-
-        fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
-
-        const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-        expect(panel.classList.contains("gtv-info-panel--right")).toBe(true);
-
-        rectSpy.mockRestore();
-      });
-
       it("updates content when a different node is clicked, without closing", () => {
         const { container } = render(<GenreTree nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;

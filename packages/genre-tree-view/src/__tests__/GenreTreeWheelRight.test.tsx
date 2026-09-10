@@ -329,18 +329,17 @@ describe("GenreTreeWheelRight", () => {
   });
 
   describe("node info panel", () => {
-    it("opens on the left by default, flips right on collision, switches nodes without closing, and closes via its own button", () => {
+    it("opens on the left, switches nodes without closing, and closes via its own button", () => {
       const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
       const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
       const chip = chipFor(container, "Electronic");
-      let nodeLeft = 400;
 
       const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
         this: Element,
       ) {
         if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        if (this === nodeGroup || this === chip) return makeRect(nodeLeft, 0, 10, 10);
+        if (this === nodeGroup || this === chip) return makeRect(400, 0, 10, 10);
         return makeRect(0, 0, 0, 0);
       });
 
@@ -349,11 +348,10 @@ describe("GenreTreeWheelRight", () => {
       expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
       expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
 
-      nodeLeft = 100;
       fireEvent.click(chip);
       expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
       panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(panel.classList.contains("gtv-info-panel--right")).toBe(true);
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
       expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
 
       fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);

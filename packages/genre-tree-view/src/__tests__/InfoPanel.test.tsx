@@ -154,25 +154,6 @@ describe("InfoPanel", () => {
     expect(panel?.classList.contains("gtv-info-panel--right")).toBe(false);
   });
 
-  it("applies the right modifier class when side is right", () => {
-    const { container } = render(
-      <InfoPanel
-        node={MINIMAL_NODE}
-        fill="#F1F0FD"
-        textColor="#18181B"
-        parentNode={null}
-        childNodes={[]}
-        ancestorNodes={[]}
-        side="right"
-        onClose={vi.fn()}
-        onSelectNode={vi.fn()}
-      />,
-    );
-    const panel = container.querySelector(".gtv-info-panel");
-    expect(panel?.classList.contains("gtv-info-panel--right")).toBe(true);
-    expect(panel?.classList.contains("gtv-info-panel--left")).toBe(false);
-  });
-
   it("shows a zero count and no list when the node has no children", () => {
     const { getByText, container } = render(
       <InfoPanel

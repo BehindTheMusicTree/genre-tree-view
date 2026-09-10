@@ -25,7 +25,7 @@ export interface InfoPanelProps {
   /** `node`'s ancestors above its immediate parent, root-first — the Parent section already
    * shows the immediate parent, so this covers grandparent and up. Empty when there are none. */
   ancestorNodes: InfoPanelChild[];
-  side: "left" | "right";
+  side: "left";
   onClose: () => void;
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
    * navigates the panel (and the tree's own selection/centering) to it. */
