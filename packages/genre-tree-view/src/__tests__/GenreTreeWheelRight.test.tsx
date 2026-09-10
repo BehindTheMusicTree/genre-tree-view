@@ -61,12 +61,14 @@ describe("GenreTreeWheelRight", () => {
     expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Electronic")).toBeTruthy();
     expect(chipFor(container, "Jazz")).toBeTruthy();
-    // The selected root's own card is hidden — its tree grows directly out of its chip — but
-    // its descendants still render.
-    expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-a-child")).toBeTruthy();
-    expect(container.querySelector("#group-root-b")).toBeFalsy();
-    expect(container.querySelector("#group-root-c")).toBeFalsy();
+    // The selected root's own card is hidden from the SVG tree — its tree grows directly out of
+    // its chip (which now carries the same "#group-<id>" id for InfoPanel navigation) — but its
+    // descendants still render there.
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-a")).toBeFalsy();
+    expect(svg.querySelector("#group-a-child")).toBeTruthy();
+    expect(svg.querySelector("#group-root-b")).toBeFalsy();
+    expect(svg.querySelector("#group-root-c")).toBeFalsy();
   });
 
   it("renders a hover-revealed name label inside each root chip", () => {
@@ -97,9 +99,10 @@ describe("GenreTreeWheelRight", () => {
 
     fireEvent.click(chipFor(container, "Electronic"));
 
-    expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-root-b")).toBeFalsy();
-    expect(container.querySelector("#group-b-child")).toBeTruthy();
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-a")).toBeFalsy();
+    expect(svg.querySelector("#group-root-b")).toBeFalsy();
+    expect(svg.querySelector("#group-b-child")).toBeTruthy();
     expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
     expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Rock").className).not.toContain("gtv-wheel-chip--selected");
@@ -323,5 +326,38 @@ describe("GenreTreeWheelRight", () => {
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
     fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
+  });
+
+  describe("node info panel", () => {
+    it("opens on the left, switches nodes without closing, and closes via its own button", () => {
+      const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+      const chip = chipFor(container, "Electronic");
+
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === nodeGroup || this === chip) return makeRect(400, 0, 10, 10);
+        return makeRect(0, 0, 0, 0);
+      });
+
+      fireEvent.click(nodeGroup);
+      let panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      fireEvent.click(chip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
+
+      fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+
+      rectSpy.mockRestore();
+    });
   });
 });

@@ -6,8 +6,6 @@ import {
   GenreTreeWheelRadialPopCore,
   GenreTreeWheelRight,
   groupNodesByRoot,
-  DEFAULT_FRAME_WIDTH,
-  DEFAULT_FRAME_HEIGHT,
   type GenreTreeNode,
   type GenreTreePlayState,
 } from "@behindthemusictree/genre-tree-view";
@@ -480,6 +478,22 @@ function createNodeCallbacks(
         },
       },
     ],
+    // Demonstrates GenreTreeProps.renderExtraDetails: the library knows nothing about "essential
+    // tracks" — this is entirely playground-owned mock content/loading state.
+    renderExtraDetails: (node: GenreTreeNode) => (
+      <div style={{ padding: "12px 16px", borderTop: "1px solid #e4e4e7" }}>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>Essential tracks</div>
+        {node.itemCount === 0 ? (
+          <div style={{ color: "#71717a" }}>No tracks yet.</div>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {Array.from({ length: Math.min(3, node.itemCount) }, (_, i) => (
+              <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    ),
   };
 }
 
@@ -593,8 +607,8 @@ export function App() {
       {activeTab === "wheel" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -614,8 +628,8 @@ export function App() {
       {activeTab === "wheel-right" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -635,8 +649,8 @@ export function App() {
       {activeTab === "wheel-radial" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -655,8 +669,8 @@ export function App() {
       {activeTab === "wheel-radial-pop-core" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -678,8 +692,8 @@ export function App() {
             <div
               key={group.root.id}
               style={{
-                width: DEFAULT_FRAME_WIDTH,
-                height: DEFAULT_FRAME_HEIGHT,
+                width: "100%",
+                height: "70vh",
                 border: "1px solid #e4e4e7",
                 background: "#f4f4f5",
               }}

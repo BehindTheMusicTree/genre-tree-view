@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
 import { POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
@@ -130,7 +130,8 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={nodesWithChildlessRoot} />);
 
     expect(coreSectors(container).length).toBe(3);
-    expect(container.querySelector("#group-root-d")).toBeFalsy();
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 
   it("develops every root when there are fewer than 4, one core sector per root", () => {
@@ -142,11 +143,13 @@ describe("GenreTreeWheelRadial", () => {
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
     expect(coreSectors(container).length).toBe(3);
 
-    // Each root's own card is hidden (it grows out of its chip) but its descendants render.
-    expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-a-child")).toBeTruthy();
-    expect(container.querySelector("#group-b-child")).toBeTruthy();
-    expect(container.querySelector("#group-c-child")).toBeTruthy();
+    // Each root's own card is hidden from the SVG tree (it grows out of its chip, which now
+    // carries the same "#group-<id>" id for InfoPanel navigation) but its descendants render there.
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-a")).toBeFalsy();
+    expect(svg.querySelector("#group-a-child")).toBeTruthy();
+    expect(svg.querySelector("#group-b-child")).toBeTruthy();
+    expect(svg.querySelector("#group-c-child")).toBeTruthy();
   });
 
   it("still develops the lone root's core sector when there's only one root (no sibling to bisect a sector against)", () => {
@@ -322,6 +325,17 @@ describe("GenreTreeWheelRadial", () => {
     fireEvent.click(chipFor(container, "Jazz"));
 
     expect(onNodeClick).not.toHaveBeenCalled();
+  });
+
+  it("fires onNodeClick with a descendant node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
+
+    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+    fireEvent.click(nodeGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-child" }));
   });
 
   it("fires onRootSelect on mount with the default root and again on click", () => {
@@ -545,5 +559,64 @@ describe("GenreTreeWheelRadial", () => {
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
     fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
+  });
+
+  describe("node info panel", () => {
+    it("opens on the left, switches nodes without closing, and closes via its own button", () => {
+      const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
+      const chip = chipFor(container, "Electronic");
+
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === nodeGroup || this === chip) return makeRect(400, 0, 10, 10);
+        return makeRect(0, 0, 0, 0);
+      });
+
+      fireEvent.click(nodeGroup);
+      let panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      fireEvent.click(chip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
+
+      fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+
+      rectSpy.mockRestore();
+    });
+
+    it("switches to the parent node when its chip is clicked", () => {
+      const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
+
+      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+        "Rock",
+      );
+      fireEvent.click(parentChip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Rock");
+
+      qsSpy.mockRestore();
+      rectSpy.mockRestore();
+    });
   });
 });

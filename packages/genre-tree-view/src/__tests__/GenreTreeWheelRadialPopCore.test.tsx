@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
 import {
@@ -414,7 +414,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChildlessRoot} />);
 
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(3);
-    expect(container.querySelector("#group-root-d")).toBeFalsy();
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 
   it("omits the pop sector for a root that has no pop branch", () => {
@@ -453,6 +454,46 @@ describe("GenreTreeWheelRadialPopCore", () => {
     fireEvent.click(chipFor(container, "Jazz"));
 
     expect(onNodeClick).not.toHaveBeenCalled();
+  });
+
+  it("fires onNodeClick with a pop-hierarchy node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);
+
+    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
+    fireEvent.click(popGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-pop" }));
+  });
+
+  it("fires onNodeClick with a core-hierarchy node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);
+
+    const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
+    fireEvent.click(coreGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-core-child" }));
+  });
+
+  it("fires onNodeClick with a center-subtree node's data when its body is clicked", () => {
+    const onNodeClick = vi.fn();
+    const nodesWithCenterChildren: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+    ];
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} onNodeClick={onNodeClick} />,
+    );
+
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+    const centerChildGroup = container.querySelector(".gtv-wheel-center-sector #group-pop-child") as SVGGElement;
+    fireEvent.click(centerChildGroup);
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "pop-child" }));
   });
 
   it("still fires onRootSelect on click but leaves every chip's angle unchanged when allowWheelRotation is false", () => {
@@ -786,5 +827,99 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
     fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
     expect(container.querySelector("#toolbar-a-core-child")).toBeFalsy();
+  });
+
+  describe("node info panel", () => {
+    it("shares one panel across the pop branch, core branch, and chip click sites", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
+      const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
+      const chip = chipFor(container, "Jazz");
+
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === coreGroup || this === popGroup || this === chip) return makeRect(400, 0, 10, 10);
+        return makeRect(0, 0, 0, 0);
+      });
+
+      fireEvent.click(coreGroup);
+      let panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Hardcore");
+
+      fireEvent.click(popGroup);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Pop Rock");
+
+      fireEvent.click(chip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Jazz");
+
+      fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+
+      rectSpy.mockRestore();
+    });
+
+    it("also opens for a click inside the expandable center subtree", () => {
+      const nodesWithCenterChildren: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+      ];
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+
+      fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+      const centerChildGroup = container.querySelector(".gtv-wheel-center-sector #group-pop-child") as SVGGElement;
+
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === centerChildGroup) return makeRect(400, 0, 10, 10);
+        return makeRect(0, 0, 0, 0);
+      });
+
+      fireEvent.click(centerChildGroup);
+
+      const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel).toBeTruthy();
+      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Radio Hits");
+
+      rectSpy.mockRestore();
+    });
+
+    it("switches to the parent node when its chip is clicked", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      fireEvent.click(container.querySelector("#group-a-core-child") as SVGGElement);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Hardcore");
+
+      const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
+
+      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+        "Punk",
+      );
+      fireEvent.click(parentChip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      qsSpy.mockRestore();
+      rectSpy.mockRestore();
+    });
   });
 });

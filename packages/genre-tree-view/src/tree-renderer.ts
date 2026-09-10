@@ -18,10 +18,12 @@ import {
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   ROOT_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH,
   CORNER_RADIUS,
   ELEVATION,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
+  ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
@@ -31,8 +33,16 @@ import {
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
-import { appendPaths, openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
-import { addHoverNameLabel, addReparentTargetOverlay, addToolbarActions } from "./NodeHelper";
+import {
+  appendPaths,
+  openBottomBorderPath,
+  roundedRectPath,
+} from "./d3-helper/d3-path-helper";
+import {
+  addHoverNameLabel,
+  addReparentTargetOverlay,
+  addToolbarActions,
+} from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -70,8 +80,10 @@ export function calculateSvgDimensions(
   // (see calculateNodeDimensions), so the layout budget can use those constants directly.
   const maxNodeDimensions = { WIDTH: MAX_NODE_WIDTH, HEIGHT: MAX_NODE_HEIGHT };
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
-  const depthSeparation = VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
-  const depthSeparationHorizontal = HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale;
+  const depthSeparation =
+    VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
+  const depthSeparationHorizontal =
+    HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale;
 
   if (isVerticalOrientation(orientation)) {
     // Root sits at the bottom edge ("vertical") or top edge ("vertical-flipped"), so only that
@@ -82,7 +94,9 @@ export function calculateSvgDimensions(
     // clearance — the svg's bottom edge instead lands exactly on the root's anchor point.
     const svgHeight = hideRoot
       ? maximumLevel * depthSeparation
-      : maximumLevel * depthSeparation + maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT / 2;
+      : maximumLevel * depthSeparation +
+        maxNodeDimensions.HEIGHT +
+        ACTIONS_OVERLAY_HEIGHT / 2;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate — rather than the bounding box's midpoint — keeps the root
@@ -95,14 +109,21 @@ export function calculateSvgDimensions(
     // this convention), so it has to be centered on that same point, not on the bare `d.x`.
     // Skipping the `+ width / 2` here left the root's card/chip sitting half its own width left
     // of where its children's links actually converge.
-    const rootWidth = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).WIDTH;
+    const rootWidth = calculateNodeDimensions(
+      treeData.data.itemCount,
+      itemCountRange,
+    ).WIDTH;
     const rootAnchorX = treeData.x! + rootWidth / 2;
 
     const leftmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
     const rightmostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
-    const leftHalfExtent = rootAnchorX - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
+    const leftHalfExtent =
+      rootAnchorX - leftmostBreadthCoordinate + maxNodeDimensions.WIDTH / 2;
     const rightHalfExtent =
-      rightmostBreadthCoordinate - rootAnchorX + maxNodeDimensions.WIDTH / 2 + ACTIONS_OVERLAY_WIDTH;
+      rightmostBreadthCoordinate -
+      rootAnchorX +
+      maxNodeDimensions.WIDTH / 2 +
+      ACTIONS_OVERLAY_WIDTH;
     const svgWidth = Math.max(leftHalfExtent, rightHalfExtent) * 2;
 
     // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, rather
@@ -118,27 +139,50 @@ export function calculateSvgDimensions(
     // `+ height / 2` convention pushes a hidden root's anchor point *away* from y = 0 by exactly
     // one half-height — the mirror of "horizontal-anchored" needing `-rootWidth`, this needs an
     // analogous `-rootHeight` pulled back into the depth axis so the push lands exactly at y = 0.
-    const rootHeight = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).HEIGHT;
+    const rootHeight = calculateNodeDimensions(
+      treeData.data.itemCount,
+      itemCountRange,
+    ).HEIGHT;
     const rootDepthOffset = hideRoot ? -rootHeight : 0;
 
-    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset };
+    return {
+      svgWidth,
+      svgHeight,
+      highestVerticalCoordinate: rootCenteringOffset,
+      rootDepthOffset,
+    };
   }
 
-  if (orientation === "horizontal-anchored" || orientation === "horizontal-anchored-flipped") {
-    const svgWidth = maximumLevel * depthSeparationHorizontal + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
+  if (
+    orientation === "horizontal-anchored" ||
+    orientation === "horizontal-anchored-flipped"
+  ) {
+    const svgWidth =
+      maximumLevel * depthSeparationHorizontal +
+      maxNodeDimensions.WIDTH +
+      ACTIONS_OVERLAY_WIDTH;
 
     // Root is centered over its children (Reingold–Tilford), so anchoring the whole svg on the
     // root's own breadth coordinate keeps the root exactly at svgHeight/2 — same technique as the
     // vertical branch above, but on the Y (breadth) axis since depth grows along X here instead.
-    const rootHeight = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).HEIGHT;
+    const rootHeight = calculateNodeDimensions(
+      treeData.data.itemCount,
+      itemCountRange,
+    ).HEIGHT;
     const rootAnchorY = treeData.x! + rootHeight / 2;
 
     const topmostBreadthCoordinate = d3Lib.min(nodes, (d) => d.x)!;
     const bottommostBreadthCoordinate = d3Lib.max(nodes, (d) => d.x)!;
     const topHalfExtent =
-      rootAnchorY - topmostBreadthCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
+      rootAnchorY -
+      topmostBreadthCoordinate +
+      maxNodeDimensions.HEIGHT / 2 +
+      ACTIONS_OVERLAY_HEIGHT / 2;
     const bottomHalfExtent =
-      bottommostBreadthCoordinate - rootAnchorY + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
+      bottommostBreadthCoordinate -
+      rootAnchorY +
+      maxNodeDimensions.HEIGHT / 2 +
+      ACTIONS_OVERLAY_HEIGHT / 2;
     const svgHeight = Math.max(topHalfExtent, bottomHalfExtent) * 2;
 
     // Reuses this slot to carry the root-centering offset applied in setupTreeLayout, same as
@@ -157,18 +201,30 @@ export function calculateSvgDimensions(
     // the root would leave the root→depth-1 link one rootWidth longer than every later
     // depth-to-depth link, since a per-depth offset cancels out of a distance calculation only
     // when it's the same on both ends.
-    const rootWidth = calculateNodeDimensions(treeData.data.itemCount, itemCountRange).WIDTH;
+    const rootWidth = calculateNodeDimensions(
+      treeData.data.itemCount,
+      itemCountRange,
+    ).WIDTH;
     const rootDepthOffset = hideRoot ? -rootWidth : 0;
 
-    return { svgWidth, svgHeight, highestVerticalCoordinate: rootCenteringOffset, rootDepthOffset };
+    return {
+      svgWidth,
+      svgHeight,
+      highestVerticalCoordinate: rootCenteringOffset,
+      rootDepthOffset,
+    };
   }
 
   const highestNodeVerticalCoordinate = d3Lib.min(nodes, (d) => d.x)!;
   const highestVerticalCoordinate =
-    highestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 - ACTIONS_OVERLAY_HEIGHT / 2;
+    highestNodeVerticalCoordinate +
+    maxNodeDimensions.HEIGHT / 2 -
+    ACTIONS_OVERLAY_HEIGHT / 2;
   const lowestNodeVerticalCoordinate = d3Lib.max(nodes, (d) => d.x)!;
   const lowestVerticalCoordinate =
-    lowestNodeVerticalCoordinate + maxNodeDimensions.HEIGHT / 2 + ACTIONS_OVERLAY_HEIGHT / 2;
+    lowestNodeVerticalCoordinate +
+    maxNodeDimensions.HEIGHT / 2 +
+    ACTIONS_OVERLAY_HEIGHT / 2;
   // When every node shares the same breadth coordinate (a single root, or a childless/straight
   // chain), the spread above collapses to just ACTIONS_OVERLAY_HEIGHT, dropping the node's own
   // height from the sum entirely. Floor at a single node's full footprint so the card always fits.
@@ -177,7 +233,10 @@ export function calculateSvgDimensions(
     maxNodeDimensions.HEIGHT + ACTIONS_OVERLAY_HEIGHT,
   );
 
-  const svgWidth = maximumLevel * depthSeparationHorizontal + maxNodeDimensions.WIDTH + ACTIONS_OVERLAY_WIDTH;
+  const svgWidth =
+    maximumLevel * depthSeparationHorizontal +
+    maxNodeDimensions.WIDTH +
+    ACTIONS_OVERLAY_WIDTH;
 
   return { svgWidth, svgHeight, highestVerticalCoordinate, rootDepthOffset: 0 };
 }
@@ -193,7 +252,8 @@ export function setupTreeLayout(
 ): D3Node {
   if (isVerticalOrientation(orientation)) {
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
-    const depthSeparation = VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
+    const depthSeparation =
+      VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
       // "vertical": root anchored at the bottom (depthAxisSign -1), depth grows toward y=0.
@@ -207,7 +267,10 @@ export function setupTreeLayout(
     return treeData;
   }
 
-  if (orientation === "horizontal-anchored" || orientation === "horizontal-anchored-flipped") {
+  if (
+    orientation === "horizontal-anchored" ||
+    orientation === "horizontal-anchored-flipped"
+  ) {
     // Applied to every node, not just the root: a root-only offset would leave the
     // root→depth-1 gap one rootWidth wider than every later depth-to-depth gap, since it'd
     // shift only one end of that first link. Shifting the whole depth axis instead keeps every
@@ -225,7 +288,10 @@ export function setupTreeLayout(
     // top double-counts that shift and pulls the root a full extra width off the anchor.
     treeData.each(function (d) {
       const tempX = d.x!;
-      d.x = orientation === "horizontal-anchored" ? d.y! + rootDepthOffset : svgWidth - d.y!;
+      d.x =
+        orientation === "horizontal-anchored"
+          ? d.y! + rootDepthOffset
+          : svgWidth - d.y!;
       d.y = tempX + highestVerticalCoordinate;
     });
     return treeData;
@@ -246,13 +312,22 @@ export function createTreeLayout(
   depthSpacingScale = 1,
 ): D3Node {
   const nodeSize: [number, number] = isVerticalOrientation(orientation)
-    ? [SIBLING_SEPARATION_BETWEEN_NODES, VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale]
-    : [VERTICAL_SEPARATION_BETWEEN_NODES, HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale];
+    ? [
+        SIBLING_SEPARATION_BETWEEN_NODES,
+        VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale,
+      ]
+    : [
+        VERTICAL_SEPARATION_BETWEEN_NODES,
+        HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale,
+      ];
   // d3's default separation() doubles the gap between same-depth nodes that don't share a
   // parent, which compounds up the tree for deeply-branching data and produces gaps several
   // times wider than the nodeSize slot itself. Every node already reserves its own slot via
   // nodeSize, so a flat 1 keeps that slot's spacing consistent regardless of parentage.
-  const treeLayout = d3Lib.tree<GenreTreeNode>().nodeSize(nodeSize).separation(() => 1);
+  const treeLayout = d3Lib
+    .tree<GenreTreeNode>()
+    .nodeSize(nodeSize)
+    .separation(() => 1);
   return treeLayout(root);
 }
 
@@ -269,15 +344,24 @@ export function renderTree(
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
   showToolbar = true,
+  selectedNodeId: string | null = null,
 ): D3Selection {
-  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
-    callbacks;
+  const {
+    onPlayPause,
+    onAddChild,
+    onRenameRequest,
+    onDeleteRequest,
+    onReparentTargetSelect,
+    onNodeClick,
+  } = callbacks;
 
   if (!svgRef.current) {
     throw new Error("SVG reference is null");
   }
 
-  const itemCountRange = getItemCountRange(treeData.descendants().map((d) => d.data));
+  const itemCountRange = getItemCountRange(
+    treeData.descendants().map((d) => d.data),
+  );
 
   const svg = d3Lib
     .select<SVGSVGElement, unknown>(svgRef.current)
@@ -312,9 +396,22 @@ export function renderTree(
 
   addGrid(svg, svgWidth, svgHeight, true);
 
-  appendPaths(d3Lib, svg, treeData, itemCountRange, orientation);
+  appendPaths(
+    d3Lib,
+    svg,
+    treeData,
+    itemCountRange,
+    orientation,
+    selectedNodeId,
+  );
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
+  const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
+  // A node is "related" to the selected node when it's the selected node's own parent or one of
+  // its children — these dim less than the rest of the tree.
+  const isRelatedNode = (d: D3Node) =>
+    d.parent?.data.id === selectedNodeId ||
+    (d.children ?? []).some((c) => c.data.id === selectedNodeId);
 
   // With the actual root hidden, the whole visible subtree grows directly out of the root chip —
   // styling every node the same way (solid root color, bold white label) reads as a continuation
@@ -332,17 +429,32 @@ export function renderTree(
     .data(visibleDescendants)
     .enter()
     .append("g")
-    .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
+    .attr(
+      "class",
+      (d) =>
+        "node" +
+        (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (selectedNodeId && !isSelected(d)
+          ? isRelatedNode(d)
+            ? " gtv-node--dimmed-related"
+            : " gtv-node--dimmed"
+          : ""),
+    )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", function (d) {
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
       const translateX = d.x! + dimensions.WIDTH / 2;
       const translateY = d.y! + dimensions.HEIGHT / 2;
       return `translate(${translateX}, ${translateY})`;
     })
     // Exposed so the toolbar foreignObject (which overlays the card on hover) can mask the
     // label beneath it with the card's own fill instead of a hardcoded color.
-    .style("--gtv-node-fill", (d) => (isSubtreeCore(d) ? rootColor : tintSurface(rootColor)));
+    .style("--gtv-node-fill", (d) =>
+      isSubtreeCore(d) ? rootColor : tintSurface(rootColor),
+    );
 
   // Invisible hit-region spanning the node body, appended before any visible content so painted
   // siblings (rect, label, toolbar) take pointer-event priority over it wherever they overlap
@@ -351,10 +463,24 @@ export function renderTree(
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
+    .attr(
+      "width",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
+    )
+    .attr(
+      "height",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
+    )
+    .attr(
+      "x",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
+    )
+    .attr(
+      "y",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
+    )
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
@@ -376,79 +502,134 @@ export function renderTree(
     .append("path")
     .attr("class", "gtv-node-rect")
     .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-        tl: CORNER_RADIUS,
-        tr: CORNER_RADIUS,
-        br: CORNER_RADIUS,
-        bl: CORNER_RADIUS,
-      });
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      return roundedRectPath(
+        -dimensions.WIDTH / 2,
+        -dimensions.HEIGHT / 2,
+        dimensions.WIDTH,
+        dimensions.HEIGHT,
+        {
+          tl: CORNER_RADIUS,
+          tr: CORNER_RADIUS,
+          br: CORNER_RADIUS,
+          bl: CORNER_RADIUS,
+        },
+      );
     })
-    .attr("fill", (d) => (isSubtreeCore(d) ? rootColor : tintSurface(rootColor)));
+    .attr("fill", (d) =>
+      isSubtreeCore(d) ? rootColor : tintSurface(rootColor),
+    );
 
   nodes
     .append("path")
     .attr("class", "gtv-node-border")
     .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-        tl: CORNER_RADIUS,
-        tr: CORNER_RADIUS,
-        br: CORNER_RADIUS,
-        bl: CORNER_RADIUS,
-      });
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      return roundedRectPath(
+        -dimensions.WIDTH / 2,
+        -dimensions.HEIGHT / 2,
+        dimensions.WIDTH,
+        dimensions.HEIGHT,
+        {
+          tl: CORNER_RADIUS,
+          tr: CORNER_RADIUS,
+          br: CORNER_RADIUS,
+          bl: CORNER_RADIUS,
+        },
+      );
     })
     .attr("fill", "none")
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
+    .attr("stroke", (d) =>
+      isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
+    )
+    .attr("stroke-width", (d) =>
+      isSelected(d)
+        ? SELECTED_BORDER_WIDTH
+        : d.depth === 0
+          ? ROOT_BORDER_WIDTH
+          : SURFACE_BORDER_WIDTH,
+    );
 
   nodes
     .append("foreignObject")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
+    .attr(
+      "width",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
+    )
+    .attr(
+      "height",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
+    )
+    .attr(
+      "x",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
+    )
+    .attr(
+      "y",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
+    )
     .html((d) => {
-      const rootClass = d.depth === 0 || isSubtreeCore(d) ? " gtv-node-label--root" : "";
-      const color = isForbidden(d) ? TEXT_MUTED_COLOR : isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
+      const rootClass =
+        d.depth === 0 || isSubtreeCore(d) ? " gtv-node-label--root" : "";
+      const color = isForbidden(d)
+        ? TEXT_MUTED_COLOR
+        : isSubtreeCore(d)
+          ? ACCENT_TEXT_COLOR
+          : TEXT_COLOR;
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
     })
     .on("mouseover", function (event, d) {
       if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
 
-      const group = d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
-        SVGGElement,
-        unknown,
-        HTMLElement,
-        unknown
-      >;
+      const group = d3Lib.select<SVGGElement, unknown>(
+        this.parentNode as SVGGElement,
+      ) as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
 
       // Square off the top corners while the hover label sits on top of them — the label only
       // overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS, so the
       // card's own rounded corners would otherwise show through beneath the label's straight
       // bottom edge.
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      group
-        .select<SVGPathElement>(".gtv-node-rect")
-        .attr(
-          "d",
-          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      group.select<SVGPathElement>(".gtv-node-rect").attr(
+        "d",
+        roundedRectPath(
+          -dimensions.WIDTH / 2,
+          -dimensions.HEIGHT / 2,
+          dimensions.WIDTH,
+          dimensions.HEIGHT,
+          {
             tl: 0,
             tr: 0,
             br: CORNER_RADIUS,
             bl: CORNER_RADIUS,
-          }),
-        );
-      group
-        .select<SVGPathElement>(".gtv-node-border")
-        .attr(
-          "d",
-          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+          },
+        ),
+      );
+      group.select<SVGPathElement>(".gtv-node-border").attr(
+        "d",
+        openBottomBorderPath(
+          -dimensions.WIDTH / 2,
+          -dimensions.HEIGHT / 2,
+          dimensions.WIDTH,
+          dimensions.HEIGHT,
+          {
             br: CORNER_RADIUS,
             bl: CORNER_RADIUS,
-          }),
-        );
+          },
+        ),
+      );
 
       // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
       // never changes the card's own filtered silhouette — the card's shadow must look identical
@@ -494,7 +675,12 @@ export function renderTree(
       if (reparentingNodeId && d.data.actionable !== false && !isForbidden(d)) {
         addReparentTargetOverlay(
           d3Lib,
-          group as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+          group as unknown as d3.Selection<
+            SVGGElement,
+            unknown,
+            HTMLElement,
+            unknown
+          >,
           onReparentTargetSelect,
           itemCountRange,
         );
@@ -508,24 +694,47 @@ export function renderTree(
         // re-parented to the root layer (see toggleLightActionsMenu), so reaching it with the
         // mouse necessarily exits this node's <g> and fires this handler; removing the toolbar
         // here would delete the kebab that anchors the still-open menu.
-        if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
+        if (
+          d3Lib
+            .select<SVGGElement, unknown>("#overflow-menu-" + d.data.id)
+            .empty()
+        ) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
-          d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+          d3Lib
+            .select<SVGGElement, unknown>("#hover-label-" + d.data.id)
+            .remove();
 
-          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+          const dimensions = calculateNodeDimensions(
+            d.data.itemCount,
+            itemCountRange,
+          );
           const fullyRounded = roundedRectPath(
             -dimensions.WIDTH / 2,
             -dimensions.HEIGHT / 2,
             dimensions.WIDTH,
             dimensions.HEIGHT,
-            { tl: CORNER_RADIUS, tr: CORNER_RADIUS, br: CORNER_RADIUS, bl: CORNER_RADIUS },
+            {
+              tl: CORNER_RADIUS,
+              tr: CORNER_RADIUS,
+              br: CORNER_RADIUS,
+              bl: CORNER_RADIUS,
+            },
           );
-          group.select<SVGPathElement>(".gtv-node-rect").attr("d", fullyRounded);
-          group.select<SVGPathElement>(".gtv-node-border").attr("d", fullyRounded);
+          group
+            .select<SVGPathElement>(".gtv-node-rect")
+            .attr("d", fullyRounded);
+          group
+            .select<SVGPathElement>(".gtv-node-border")
+            .attr("d", fullyRounded);
         }
         // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
         // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
-        d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
+        d3Lib
+          .select<
+            SVGGElement,
+            unknown
+          >("#select-as-new-parent-group-" + d.data.id)
+          .remove();
       }, 100);
     });
 

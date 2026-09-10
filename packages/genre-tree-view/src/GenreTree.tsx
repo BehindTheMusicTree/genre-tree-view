@@ -6,10 +6,26 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
-import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
-import { getGenreTreeColor } from "./constants";
+import {
+  calculateSvgDimensions,
+  createTreeLayout,
+  setupTreeLayout,
+  renderTree,
+} from "./tree-renderer";
+import {
+  ACCENT_TEXT_COLOR,
+  getGenreTreeColor,
+  INFO_PANEL_WIDTH,
+  TEXT_COLOR,
+  tintSurface,
+  ZOOM_FOCUS_SCALE,
+} from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
+import { useNodeInfoPanel } from "./use-node-info-panel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
+import { computeAncestorChain } from "./root-grouping";
+import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -36,20 +52,45 @@ export function GenreTree({
   interactive = true,
   depthSpacingScale = 1,
   showToolbar = true,
+  selectedNodeId: selectedNodeIdProp,
+  renderExtraDetails,
 }: GenreTreeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
+  const showNodeInfoRef = useRef(showNodeInfo);
+  useEffect(() => {
+    showNodeInfoRef.current = showNodeInfo;
+  });
+  // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
+  // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
+  // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
+  const centerOnElementRef = useRef(panZoom.centerOnElement);
+  useEffect(() => {
+    centerOnElementRef.current = panZoom.centerOnElement;
+  });
 
   const { treeData, resolvedRootColor, svgWidth, svgHeight } = useMemo(() => {
     const root = buildTreeHierarchyStructure(d3, nodes);
-    const originalTreeData = createTreeLayout(d3, root, orientation, depthSpacingScale);
+    const originalTreeData = createTreeLayout(
+      d3,
+      root,
+      orientation,
+      depthSpacingScale,
+    );
     const {
       svgWidth: width,
       svgHeight: height,
       highestVerticalCoordinate,
       rootDepthOffset,
-    } = calculateSvgDimensions(d3, originalTreeData, orientation, hideRoot, depthSpacingScale);
+    } = calculateSvgDimensions(
+      d3,
+      originalTreeData,
+      orientation,
+      hideRoot,
+      depthSpacingScale,
+    );
     const reshapedTreeData = setupTreeLayout(
       d3,
       originalTreeData,
@@ -72,10 +113,15 @@ export function GenreTree({
   // root). Only the tree that actually contains it needs to block self/descendants as targets.
   const reparentForbiddenIds = useMemo(() => {
     if (!reparentingNodeId) return [];
-    const reparentingHierarchyNode = treeData.descendants().find((d) => d.data.id === reparentingNodeId);
+    const reparentingHierarchyNode = treeData
+      .descendants()
+      .find((d) => d.data.id === reparentingNodeId);
     if (!reparentingHierarchyNode) return [];
     return reparentingHierarchyNode.descendants().map((d) => d.data.id);
   }, [treeData, reparentingNodeId]);
+
+  const effectiveSelectedNodeId =
+    selectedNodeIdProp !== undefined ? selectedNodeIdProp : (panel?.node.id ?? null);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -102,7 +148,20 @@ export function GenreTree({
             void onReparent?.(reparentingNodeId, newParentId);
           }
         },
-        onNodeClick,
+        onNodeClick: (data, event) => {
+          const clickedElement = event.currentTarget as Element | null;
+          centerOnElementRef.current(
+            clickedElement,
+            ZOOM_FOCUS_SCALE,
+            resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
+          );
+          showNodeInfoRef.current(
+            data,
+            event.currentTarget as Element | null,
+            viewportRef.current,
+          );
+          onNodeClick?.(data, event);
+        },
         additionalActions,
         playingNodeId,
         playState,
@@ -110,6 +169,7 @@ export function GenreTree({
       orientation,
       hideRoot,
       showToolbar,
+      effectiveSelectedNodeId,
     );
   }, [
     treeData,
@@ -131,6 +191,7 @@ export function GenreTree({
     orientation,
     hideRoot,
     showToolbar,
+    effectiveSelectedNodeId,
   ]);
 
   useEffect(() => {
@@ -154,7 +215,14 @@ export function GenreTree({
     panZoom.fitToFrame(elements);
   });
 
-  const svg = <svg ref={svgRef} width={svgWidth} height={svgHeight} style={{ overflow: "visible", display: "block" }} />;
+  const svg = (
+    <svg
+      ref={svgRef}
+      width={svgWidth}
+      height={svgHeight}
+      style={{ overflow: "visible", display: "block" }}
+    />
+  );
 
   if (!interactive) {
     // No own viewport, transform, or controls — an ancestor (e.g. GenreTreeWheel's shared stage)
@@ -166,36 +234,114 @@ export function GenreTree({
     <div
       ref={viewportRef}
       className={className}
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        width: "100%",
-        height: "100%",
-        // The tree content below is position: absolute, so it contributes nothing to this div's
-        // own layout size — an explicit-sized ancestor still resolves width/height: 100% normally,
-        // but without one this div can collapse to whatever static-position content remains (the
-        // zoom controls), shrinking below ZOOM_FIT_PADDING. usePanZoom's fitToFrame already no-ops
-        // rather than fit into a viewport that small (see ZOOM_FIT_PADDING guard in use-pan-zoom.ts),
-        // so no minWidth/minHeight floor is applied here — flooring at the tree's own size used to
-        // force this div larger than a smaller explicit-sized ancestor for any tree bigger than it,
-        // which broke fitToFrame's viewport measurement and left content clipped against that
-        // ancestor's actual (smaller) visible bounds.
-        cursor: "grab",
-        // Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes
-        // it as native page zoom before usePanZoom's pointer handlers see either touch point.
-        touchAction: "none",
-      } as React.CSSProperties}
+      style={
+        {
+          position: "relative",
+          overflow: "hidden",
+          width: "100%",
+          height: "100%",
+          // The tree content below is position: absolute, so it contributes nothing to this div's
+          // own layout size — an explicit-sized ancestor still resolves width/height: 100% normally,
+          // but without one this div can collapse to whatever static-position content remains (the
+          // zoom controls), shrinking below ZOOM_FIT_PADDING. usePanZoom's fitToFrame already no-ops
+          // rather than fit into a viewport that small (see ZOOM_FIT_PADDING guard in use-pan-zoom.ts),
+          // so no minWidth/minHeight floor is applied here — flooring at the tree's own size used to
+          // force this div larger than a smaller explicit-sized ancestor for any tree bigger than it,
+          // which broke fitToFrame's viewport measurement and left content clipped against that
+          // ancestor's actual (smaller) visible bounds.
+          cursor: "grab",
+          // Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes
+          // it as native page zoom before usePanZoom's pointer handlers see either touch point.
+          touchAction: "none",
+        } as React.CSSProperties
+      }
       onPointerDown={panZoom.handlePointerDown}
     >
       {/* transform-origin: 0 0 so panX/panY/zoomScale compose in one consistent coordinate
           system — see use-pan-zoom.ts. */}
-      <div style={{ position: "absolute", top: 0, left: 0, transform: panZoom.transform, transformOrigin: "0 0" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transform: panZoom.transform,
+          transformOrigin: "0 0",
+        }}
+      >
         {svg}
       </div>
+      {panel && (
+        <InfoPanel
+          node={panel.node}
+          // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1. panel.node is
+          // only ever set from a click on a rendered node, and the root (depth 0) is excluded from
+          // rendering entirely when hideRoot is true, so panel.node is guaranteed to have a parent
+          // whenever hideRoot is true — leaving hideRoot as the only variable, as with the children
+          // below.
+          fill={hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor)}
+          textColor={hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR}
+          parentNode={
+            nodes.find((n) => n.id === panel.node.parentId)
+              ? {
+                  node: nodes.find((n) => n.id === panel.node.parentId)!,
+                  fill: hideRoot
+                    ? resolvedRootColor
+                    : tintSurface(resolvedRootColor),
+                  textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+                }
+              : null
+          }
+          childNodes={nodes
+            .filter((n) => n.parentId === panel.node.id)
+            .map((n) => ({
+              node: n,
+              // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1 — every
+              // direct child here has a parent, so depth >= 1 always holds, leaving hideRoot as
+              // the only variable.
+              fill: hideRoot
+                ? resolvedRootColor
+                : tintSurface(resolvedRootColor),
+              textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+            }))}
+          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+            (n): InfoPanelChild => ({
+              node: n,
+              // Same fill/textColor expression as parentNode/childNodes above, including for
+              // the root itself when the chain reaches it.
+              fill: hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor),
+              textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+            }),
+          )}
+          side={panel.side}
+          onClose={closeNodeInfo}
+          onSelectNode={(id) => {
+            const targetNode = nodes.find((n) => n.id === id)!;
+            const element = svgRef.current!.querySelector(
+              `#group-${CSS.escape(id)}`,
+            );
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
+            showNodeInfo(
+              targetNode,
+              element ?? viewportRef.current,
+              viewportRef.current,
+            );
+          }}
+          renderExtraDetails={renderExtraDetails}
+        />
+      )}
       <div className="gtv-zoom-controls">
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomIn && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomIn}
           onClick={panZoom.zoomIn}
           aria-label="Zoom in"
@@ -204,7 +350,12 @@ export function GenreTree({
         </button>
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomOut && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomOut}
           onClick={panZoom.zoomOut}
           aria-label="Zoom out"
@@ -214,7 +365,9 @@ export function GenreTree({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() => panZoom.fitToFrame(queryTreeContentElements(svgRef.current))}
+          onClick={() =>
+            panZoom.fitToFrame(queryTreeContentElements(svgRef.current))
+          }
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />

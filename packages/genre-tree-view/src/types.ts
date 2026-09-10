@@ -88,7 +88,8 @@ export interface GenreTreeProps {
   onReparent?: (nodeId: string, newParentId: string) => void | Promise<void>;
   /** Fired when the user clicks a node's body (its card, or its chip in the wheel renderers) —
    * anywhere but a toolbar/menu action or, while `reparentingNodeId` is set, the reparent-target
-   * overlay. The consumer owns any resulting selection state and highlighting. */
+   * overlay. The library itself opens its own read-only info panel for the clicked node
+   * alongside this callback; the consumer owns any additional selection state or highlighting. */
   onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
   /** Extra actions rendered alongside the built-in play/add-child/rename/delete/reparent set —
    * placement "primary" renders inline on the node (the upload slot from earlier versions used),
@@ -107,4 +108,14 @@ export interface GenreTreeProps {
    * inner toolbar and hover name-label (the chips themselves — their name label, click-to-select
    * /expand behavior — stay visible). Defaults to true. */
   showToolbar?: boolean;
+  /** Overrides which node is shown highlighted (with unrelated nodes/links dimmed) instead of
+   * GenreTree's own internally-tracked clicked node — used by `interactive={false}` instances
+   * (e.g. GenreTreeWheel's nested tree) whose own info panel, and thus own selection, is owned
+   * by an ancestor rather than by this instance. Leave unset to use the internal selection. */
+  selectedNodeId?: string | null;
+  /** Renders extra content into the built-in info panel for the clicked node, below its built-in
+   * fields — e.g. a consumer-fetched detail like essential tracks. The library has no knowledge
+   * of what this renders (loading state, data fetching, etc. are entirely the consumer's
+   * responsibility, mirroring `additionalActions`); omit for no extra section. */
+  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
 }

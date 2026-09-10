@@ -5,6 +5,48 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-10
+
+### Added
+
+- Clicking a node now also opens a read-only info panel showing that node's song count and side,
+  always anchored to the left edge of the tree viewport. Present across all five renderers; closes
+  only via its own close button, and switching to a different node updates its content without
+  requiring a close first. The existing `onNodeClick` callback is unaffected and keeps firing
+  unchanged.
+- The info panel now also lists the clicked node's direct children as chips, each styled with the
+  same fill and text color the child itself uses as its own `gtv-node-rect` out in the tree. The
+  panel's header background and title/close-button text color likewise now match how the clicked
+  node itself renders, instead of a fixed neutral header.
+- The info panel now also lists the clicked node's ancestors above its immediate parent (which the
+  existing Parent section already covers) as chips, root-first, so the full lineage is reachable
+  without repeated clicks.
+- Clicking a node or an info panel chip now centers that node within the space that remains
+  visible beside the info panel, instead of the viewport's full width.
+- `GenreTreeProps.renderExtraDetails`, an optional `(node) => ReactNode` rendered below the info
+  panel's built-in fields — lets a consumer show extra, consumer-fetched detail (e.g. essential
+  tracks) without this library knowing anything about it, mirroring `additionalActions`.
+- The tree viewport now keeps its current pan center fixed on screen when its container is
+  resized, instead of only re-centering the next time a node is clicked.
+
+### Changed
+
+- `GenreTreeWheel`/`GenreTreeWheelRight`'s floating zoom controls now anchor to the right edge of
+  the tree viewport instead of the left.
+
+### Fixed
+
+- A ring root's core or pop child (e.g. a root with only one, non-branching subgenre) now shows
+  its real parent id in the info panel instead of a blank dash — the internal hierarchy-building
+  step that excludes the ring root itself from that child's subtree was clearing the child's own
+  `parentId` field as a side effect of preparing the tree structure for `d3.stratify`.
+
+### Changed
+
+- Clicking a node now glides the viewport to center on it (an eased pan+zoom animation, matching
+  Google Maps' own click-to-center behavior) instead of jumping instantly, and settles at a much
+  less zoomed-in fixed scale (`ZOOM_FOCUS_SCALE` 1 -> 0.2) so surrounding context stays visible.
+
 ## [1.5.0] - 2026-09-09
 
 ### Fixed

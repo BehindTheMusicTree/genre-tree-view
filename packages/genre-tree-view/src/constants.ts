@@ -23,6 +23,12 @@ export const TEXT_MUTED_COLOR = "#A1A1AA";
 export const ACCENT_COLOR = "#4F46E5";
 export const ACCENT_TEXT_COLOR = "#FFFFFF";
 
+// The selected node (the one whose info panel is open) gets a heavier accent-colored border,
+// while every other node dims (see .gtv-node--dimmed in styles.css) — reuses ACCENT_COLOR
+// rather than a separate color so the highlight reads as the same "accent" language as the
+// reparent-target overlay (NodeHelper.tsx).
+export const SELECTED_BORDER_WIDTH = 2.5;
+
 // Tokens for the toolbar's inline icon row and its overflow menu — reuse the surface/text/
 // accent tokens above so both read as part of the same light, neutral card language.
 export const DANGER_COLOR = "#DC2626";
@@ -291,7 +297,22 @@ export const ZOOM_ANIMATION_DURATION_MS = 220;
 // Breathing room (px) kept around content when "fit to frame" computes a scale — content is
 // never scaled to touch the viewport's edges exactly.
 export const ZOOM_FIT_PADDING = 40;
+// Scale a clicked node is zoomed/centered to (see usePanZoom's centerOnElement) — a fixed,
+// comfortable reading scale applied consistently regardless of the scale the user was already at,
+// so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
+// 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
+export const ZOOM_FOCUS_SCALE = 0.2;
+// Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer
+// than ZOOM_ANIMATION_DURATION_MS's wheel-notch glide since this one also covers a pan distance,
+// not just a scale change, and should read as one deliberate "fly to" (Google Maps' own
+// click-to-center glide) rather than an instant jump.
+export const CENTER_ON_ELEMENT_DURATION_MS = 450;
 // Minimum content (px) usePanZoom's pan clamp always keeps on-screen along each axis — dragging
 // or wheel-panning can bring the tree to this close to sliding fully out of the viewport, but no
 // closer, so the user can never lose it entirely and have no visible edge to drag back from.
 export const PAN_MIN_VISIBLE_PX = 80;
+
+// Fixed width (px) of the node info panel (see InfoPanel.tsx) — also the collision threshold
+// resolveInfoPanelSide compares a clicked node's screen rect against, so the panel never renders
+// directly on top of the node that opened it.
+export const INFO_PANEL_WIDTH = 280;

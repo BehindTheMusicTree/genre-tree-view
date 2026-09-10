@@ -7,8 +7,12 @@ import {
   addToolbarActions,
   buildTreeHierarchyStructure,
 } from "./NodeHelper";
-import { openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import {
+  openBottomBorderPath,
+  roundedRectPath,
+} from "./d3-helper/d3-path-helper";
+import {
+  ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
   ItemCountRange,
@@ -18,6 +22,7 @@ import {
   RADIAL_LINK_COLOR,
   RADIAL_LINK_WIDTH,
   ROOT_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
@@ -48,7 +53,11 @@ const POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH = 1;
  * own circle (`coreRootCircleRadius`) — the single formula every radial depth (ring roots, their
  * pop branches, and the center "Mainstream Pop" subtree) shares, so that any two nodes at the same
  * absolute depth always land on the same circle regardless of which branch/subtree they belong to. */
-export function getRadialDepthRadius(depth: number, coreRootCircleRadius: number, depthSpacing: number): number {
+export function getRadialDepthRadius(
+  depth: number,
+  coreRootCircleRadius: number,
+  depthSpacing: number,
+): number {
   return coreRootCircleRadius + depth * depthSpacing;
 }
 
@@ -58,13 +67,25 @@ export function getRadialDepthRadius(depth: number, coreRootCircleRadius: number
 // splitRootGroupBySide (pop-core-split.ts) returns the pop subtree rooted at the pop child, whose
 // own parentId still points at the (excluded) root — d3.stratify requires every parentId to
 // either be null or resolve within the given set, so that dangling reference is normalized to
-// null here, making the pop child stratify's root.
-export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTreeNode[]): D3Node {
+// null here, making the pop child stratify's root. Each resulting hierarchy node's `.data` is then
+// restored to its original (un-normalized) node so the real parentId still reaches
+// renderers/click handlers/the info panel.
+export function buildPopHierarchy(
+  d3Lib: typeof import("d3"),
+  popNodes: GenreTreeNode[],
+): D3Node {
   const ids = new Set(popNodes.map((node) => node.id));
+  const byId = new Map(popNodes.map((node) => [node.id, node]));
   const normalized = popNodes.map((node) =>
-    node.parentId !== null && !ids.has(node.parentId) ? { ...node, parentId: null } : node,
+    node.parentId !== null && !ids.has(node.parentId)
+      ? { ...node, parentId: null }
+      : node,
   );
-  return buildTreeHierarchyStructure(d3Lib, normalized);
+  const hierarchy = buildTreeHierarchyStructure(d3Lib, normalized);
+  hierarchy.each((d) => {
+    d.data = byId.get(d.data.id) ?? d.data;
+  });
+  return hierarchy;
 }
 
 /** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without
@@ -77,7 +98,10 @@ export function buildPopHierarchy(d3Lib: typeof import("d3"), popNodes: GenreTre
  * `computePopRadialLayout`'s own base radius — pass 0 to get the extent as a delta past the ring
  * roots' own circle (e.g. when that circle's own size is still being determined from this delta),
  * or the wheel's actual `coreRootCircleRadius` to get the subtree's true outer radius. */
-export function calculatePopSubtreeRadialExtent(hierarchy: D3Node, coreRootCircleRadius = 0): number {
+export function calculatePopSubtreeRadialExtent(
+  hierarchy: D3Node,
+  coreRootCircleRadius = 0,
+): number {
   return (
     getRadialDepthRadius(
       POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + hierarchy.height,
@@ -139,8 +163,14 @@ export function computePopRadialLayout(
     const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
     // Negative depth walks getRadialDepthRadius inward from coreRootCircleRadius rather than
     // outward from it — deliberate, not a sign error.
-    const depthStepsInwardFromCore = -(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + d.depth);
-    const radius = getRadialDepthRadius(depthStepsInwardFromCore, coreRootCircleRadius, depthSpacing);
+    const depthStepsInwardFromCore = -(
+      POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + d.depth
+    );
+    const radius = getRadialDepthRadius(
+      depthStepsInwardFromCore,
+      coreRootCircleRadius,
+      depthSpacing,
+    );
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -176,7 +206,11 @@ export function computeCenterRadialLayout(
       return;
     }
     const angleRad = d.x!;
-    const radius = getRadialDepthRadius(d.depth, coreRootCircleRadius, depthSpacing);
+    const radius = getRadialDepthRadius(
+      d.depth,
+      coreRootCircleRadius,
+      depthSpacing,
+    );
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -194,7 +228,11 @@ export function calculateMainstreamPopOuterCircleRadius(
   coreRootCircleRadius: number,
   depthSpacing: number,
 ): number {
-  return getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN;
+  return (
+    getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) +
+    MAX_NODE_WIDTH / 2 +
+    POP_SUBTREE_OUTER_MARGIN
+  );
 }
 
 /** Cartesian (x, y) position on the circle of the given radius, at the given angle in the CSS
@@ -203,7 +241,10 @@ export function calculateMainstreamPopOuterCircleRadius(
  * `rotate(...) translateY(-radius)` (styles.css) positions the root's own JSX-rendered chip with.
  * Used to find where that chip sits in the D3 hierarchy's coordinate space, so the root->depth1
  * link can be drawn even though the root itself isn't part of the hierarchy. */
-export function getRadialPointOnCircle(angleDegrees: number, radius: number): { x: number; y: number } {
+export function getRadialPointOnCircle(
+  angleDegrees: number,
+  radius: number,
+): { x: number; y: number } {
   const angleRad = (angleDegrees * Math.PI) / 180;
   return { x: radius * Math.sin(angleRad), y: -radius * Math.cos(angleRad) };
 }
@@ -266,6 +307,9 @@ export function renderPopSubtree(
     // When false, suppresses the hover toolbar and hover name-label on every node in this
     // subtree. Defaults to true.
     showToolbar?: boolean;
+    // The node whose info panel is currently open (see use-node-info-panel.ts) — gets a heavier
+    // accent-colored border while every other node in the subtree dims.
+    selectedNodeId?: string | null;
   } = {},
 ): void {
   const {
@@ -275,25 +319,62 @@ export function renderPopSubtree(
     rootLinkOrigin,
     isMainstreamSector = false,
     showToolbar = true,
+    selectedNodeId = null,
   } = options;
-  const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
-    callbacks;
+  const {
+    onPlayPause,
+    onAddChild,
+    onRenameRequest,
+    onDeleteRequest,
+    onReparentTargetSelect,
+    onNodeClick,
+  } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
-  const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
+  const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
+  // A node is "related" to the selected node when it's the selected node's own parent or one of
+  // its children — these dim less than the rest of the tree.
+  const isRelatedNode = (d: D3Node) =>
+    d.parent?.data.id === selectedNodeId ||
+    (d.children ?? []).some((c) => c.data.id === selectedNodeId);
+  const nodeFill = isCoreSector
+    ? rootColor
+    : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
-  const drawnNodes = skipRootNode ? hierarchy.descendants().filter((d) => d.depth > 0) : hierarchy.descendants();
-  const linkStrokeWidth = RADIAL_LINK_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
+  const drawnNodes = skipRootNode
+    ? hierarchy.descendants().filter((d) => d.depth > 0)
+    : hierarchy.descendants();
+  const linkStrokeWidth =
+    RADIAL_LINK_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
   const rootLinks = rootLinkOrigin
     ? hierarchy
         .descendants()
         .filter((d) => d.depth === 0)
-        .map((d) => ({ source: rootLinkOrigin, target: { x: d.x!, y: d.y! } }))
+        .map((d) => ({
+          source: rootLinkOrigin,
+          target: { x: d.x!, y: d.y! },
+          sourceId: null,
+          targetId: d.data.id,
+        }))
     : [];
-  const links: { source: { x?: number; y?: number }; target: { x?: number; y?: number } }[] = [
-    ...hierarchy.links(),
+  const links: {
+    source: { x?: number; y?: number };
+    target: { x?: number; y?: number };
+    sourceId: string | null;
+    targetId: string | null;
+  }[] = [
+    ...hierarchy.links().map((d) => ({
+      source: d.source,
+      target: d.target,
+      sourceId: d.source.data.id,
+      targetId: d.target.data.id,
+    })),
     ...rootLinks,
   ];
+  // A link is "related" to the selected node when the selected node is one of its two endpoints
+  // (its parent link, or a link to one of its children) — every other link in this subtree dims.
+  const isRelatedLink = (d: (typeof links)[number]) =>
+    d.sourceId === selectedNodeId || d.targetId === selectedNodeId;
 
   // Cartesian (x, y) here is always a point on a circle centered on the wheel's own center (see
   // computePopRadialLayout/computeCenterRadialLayout), so it's exactly invertible back to the
@@ -305,7 +386,10 @@ export function renderPopSubtree(
     return { x: Math.atan2(x, -y), y: Math.hypot(x, y) };
   };
   const radialLinkGenerator = d3Lib
-    .linkRadial<{ source: { x: number; y: number }; target: { x: number; y: number } }, { x: number; y: number }>()
+    .linkRadial<
+      { source: { x: number; y: number }; target: { x: number; y: number } },
+      { x: number; y: number }
+    >()
     .angle((d) => d.x)
     .radius((d) => d.y);
 
@@ -314,8 +398,18 @@ export function renderPopSubtree(
     .data(links)
     .enter()
     .append("path")
-    .attr("class", "gtv-link")
-    .attr("d", (d) => radialLinkGenerator({ source: toPolar(d.source), target: toPolar(d.target) }))
+    .attr(
+      "class",
+      (d) =>
+        "gtv-link" +
+        (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
+    )
+    .attr("d", (d) =>
+      radialLinkGenerator({
+        source: toPolar(d.source),
+        target: toPolar(d.target),
+      }),
+    )
     .style("fill", "none")
     .style("stroke", RADIAL_LINK_COLOR)
     .style("stroke-width", linkStrokeWidth)
@@ -326,7 +420,17 @@ export function renderPopSubtree(
     .data(drawnNodes)
     .enter()
     .append("g")
-    .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
+    .attr(
+      "class",
+      (d) =>
+        "node" +
+        (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (selectedNodeId && !isSelected(d)
+          ? isRelatedNode(d)
+            ? " gtv-node--dimmed-related"
+            : " gtv-node--dimmed"
+          : ""),
+    )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", nodeFill);
@@ -334,10 +438,24 @@ export function renderPopSubtree(
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
+    .attr(
+      "width",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
+    )
+    .attr(
+      "height",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
+    )
+    .attr(
+      "x",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
+    )
+    .attr(
+      "y",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
+    )
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
@@ -345,13 +463,22 @@ export function renderPopSubtree(
     .append("path")
     .attr("class", "gtv-node-rect")
     .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-        tl: CORNER_RADIUS,
-        tr: CORNER_RADIUS,
-        br: CORNER_RADIUS,
-        bl: CORNER_RADIUS,
-      });
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      return roundedRectPath(
+        -dimensions.WIDTH / 2,
+        -dimensions.HEIGHT / 2,
+        dimensions.WIDTH,
+        dimensions.HEIGHT,
+        {
+          tl: CORNER_RADIUS,
+          tr: CORNER_RADIUS,
+          br: CORNER_RADIUS,
+          bl: CORNER_RADIUS,
+        },
+      );
     })
     .attr("fill", nodeFill);
 
@@ -359,24 +486,55 @@ export function renderPopSubtree(
     .append("path")
     .attr("class", "gtv-node-border")
     .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      return roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
-        tl: CORNER_RADIUS,
-        tr: CORNER_RADIUS,
-        br: CORNER_RADIUS,
-        bl: CORNER_RADIUS,
-      });
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      return roundedRectPath(
+        -dimensions.WIDTH / 2,
+        -dimensions.HEIGHT / 2,
+        dimensions.WIDTH,
+        dimensions.HEIGHT,
+        {
+          tl: CORNER_RADIUS,
+          tr: CORNER_RADIUS,
+          br: CORNER_RADIUS,
+          bl: CORNER_RADIUS,
+        },
+      );
     })
     .attr("fill", "none")
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 || isCoreSector ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
+    .attr("stroke", (d) =>
+      isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
+    )
+    .attr("stroke-width", (d) =>
+      isSelected(d)
+        ? SELECTED_BORDER_WIDTH
+        : d.depth === 0 || isCoreSector
+          ? ROOT_BORDER_WIDTH
+          : SURFACE_BORDER_WIDTH,
+    );
 
   nodes
     .append("foreignObject")
-    .attr("width", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH)
-    .attr("height", (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT)
-    .attr("x", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2)
-    .attr("y", (d) => -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2)
+    .attr(
+      "width",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
+    )
+    .attr(
+      "height",
+      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
+    )
+    .attr(
+      "x",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
+    )
+    .attr(
+      "y",
+      (d) =>
+        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
+    )
     .html((d) => {
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       const rootClass = isCoreSector ? " gtv-node-label--root" : "";
@@ -386,34 +544,42 @@ export function renderPopSubtree(
     .on("mouseover", function (_event, d) {
       if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
 
-      const group = d3Lib.select<SVGGElement, unknown>(this.parentNode as SVGGElement) as unknown as d3.Selection<
-        SVGGElement,
-        unknown,
-        HTMLElement,
-        unknown
-      >;
+      const group = d3Lib.select<SVGGElement, unknown>(
+        this.parentNode as SVGGElement,
+      ) as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
 
-      const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
-      group
-        .select<SVGPathElement>(".gtv-node-rect")
-        .attr(
-          "d",
-          roundedRectPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+      const dimensions = calculateNodeDimensions(
+        d.data.itemCount,
+        itemCountRange,
+      );
+      group.select<SVGPathElement>(".gtv-node-rect").attr(
+        "d",
+        roundedRectPath(
+          -dimensions.WIDTH / 2,
+          -dimensions.HEIGHT / 2,
+          dimensions.WIDTH,
+          dimensions.HEIGHT,
+          {
             tl: 0,
             tr: 0,
             br: CORNER_RADIUS,
             bl: CORNER_RADIUS,
-          }),
-        );
-      group
-        .select<SVGPathElement>(".gtv-node-border")
-        .attr(
-          "d",
-          openBottomBorderPath(-dimensions.WIDTH / 2, -dimensions.HEIGHT / 2, dimensions.WIDTH, dimensions.HEIGHT, {
+          },
+        ),
+      );
+      group.select<SVGPathElement>(".gtv-node-border").attr(
+        "d",
+        openBottomBorderPath(
+          -dimensions.WIDTH / 2,
+          -dimensions.HEIGHT / 2,
+          dimensions.WIDTH,
+          dimensions.HEIGHT,
+          {
             br: CORNER_RADIUS,
             bl: CORNER_RADIUS,
-          }),
-        );
+          },
+        ),
+      );
 
       const labelColor = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
@@ -451,7 +617,12 @@ export function renderPopSubtree(
       if (reparentingNodeId && d.data.actionable !== false && !isForbidden(d)) {
         addReparentTargetOverlay(
           d3Lib,
-          group as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+          group as unknown as d3.Selection<
+            SVGGElement,
+            unknown,
+            HTMLElement,
+            unknown
+          >,
           onReparentTargetSelect,
           itemCountRange,
         );
@@ -461,22 +632,45 @@ export function renderPopSubtree(
     group.on("mouseleave", function () {
       leaveTimeoutId = setTimeout(() => {
         leaveTimeoutId = null;
-        if (d3Lib.select<SVGGElement, unknown>("#overflow-menu-" + d.data.id).empty()) {
+        if (
+          d3Lib
+            .select<SVGGElement, unknown>("#overflow-menu-" + d.data.id)
+            .empty()
+        ) {
           d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
-          d3Lib.select<SVGGElement, unknown>("#hover-label-" + d.data.id).remove();
+          d3Lib
+            .select<SVGGElement, unknown>("#hover-label-" + d.data.id)
+            .remove();
 
-          const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
+          const dimensions = calculateNodeDimensions(
+            d.data.itemCount,
+            itemCountRange,
+          );
           const fullyRounded = roundedRectPath(
             -dimensions.WIDTH / 2,
             -dimensions.HEIGHT / 2,
             dimensions.WIDTH,
             dimensions.HEIGHT,
-            { tl: CORNER_RADIUS, tr: CORNER_RADIUS, br: CORNER_RADIUS, bl: CORNER_RADIUS },
+            {
+              tl: CORNER_RADIUS,
+              tr: CORNER_RADIUS,
+              br: CORNER_RADIUS,
+              bl: CORNER_RADIUS,
+            },
           );
-          group.select<SVGPathElement>(".gtv-node-rect").attr("d", fullyRounded);
-          group.select<SVGPathElement>(".gtv-node-border").attr("d", fullyRounded);
+          group
+            .select<SVGPathElement>(".gtv-node-rect")
+            .attr("d", fullyRounded);
+          group
+            .select<SVGPathElement>(".gtv-node-border")
+            .attr("d", fullyRounded);
         }
-        d3Lib.select<SVGGElement, unknown>("#select-as-new-parent-group-" + d.data.id).remove();
+        d3Lib
+          .select<
+            SVGGElement,
+            unknown
+          >("#select-as-new-parent-group-" + d.data.id)
+          .remove();
       }, 100);
     });
 

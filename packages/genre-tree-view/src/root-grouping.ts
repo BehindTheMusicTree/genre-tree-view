@@ -6,6 +6,22 @@ export interface GenreTreeRootGroup {
 }
 
 /**
+ * Walks `nodeId`'s `parentId` chain up through `nodes` to find its top-level ancestor (a node
+ * with `parentId === null`). Returns `null` if the chain terminates on a `parentId` absent from
+ * `nodes` (dangling reference) or `nodeId` itself isn't in `nodes`.
+ */
+export function findRootId(nodeId: string, nodes: GenreTreeNode[]): string | null {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+  const rootIdOf = (id: string): string | null => {
+    const node = nodeById.get(id);
+    return !node ? null : node.parentId === null ? node.id : rootIdOf(node.parentId);
+  };
+
+  return rootIdOf(nodeId);
+}
+
+/**
  * Groups a flat node list by top-level ancestor (a node with `parentId === null`), walking each
  * node's `parentId` chain up to find which root it belongs to. A node whose chain terminates on a
  * `parentId` absent from `nodes` (dangling reference) belongs to no group.
@@ -34,4 +50,21 @@ export function groupNodesByRoot(nodes: GenreTreeNode[]): GenreTreeRootGroup[] {
   return nodes
     .filter((node) => node.parentId === null)
     .map((root) => ({ root, nodes: nodesByRootId.get(root.id)! }));
+}
+
+/**
+ * Walks upward from `parentId` through `nodes`, collecting every ancestor above it (root-first) —
+ * excludes `parentId`'s own node, since callers already show the immediate parent separately.
+ * Stops if the chain terminates on a `parentId` absent from `nodes` (dangling reference).
+ */
+export function computeAncestorChain(nodes: GenreTreeNode[], parentId: string | null): GenreTreeNode[] {
+  const ancestors: GenreTreeNode[] = [];
+  let current = nodes.find((n) => n.id === parentId);
+  while (current && current.parentId !== null) {
+    const parent = nodes.find((n) => n.id === current!.parentId);
+    if (!parent) break;
+    ancestors.unshift(parent);
+    current = parent;
+  }
+  return ancestors;
 }
