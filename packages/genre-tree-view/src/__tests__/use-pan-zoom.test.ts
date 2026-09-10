@@ -590,6 +590,66 @@ describe("usePanZoom", () => {
     document.body.removeChild(element);
   });
 
+  it("centerOnElement centers within the strip beside a left-obscuring overlay instead of the viewport's full width", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      result.current.centerOnElement(element, 2, { width: 300, side: "left" });
+    });
+
+    await waitFor(() => expect(result.current.zoomScale).toBe(2));
+    // Element's center (140, 220) at scale 2 must land at the midpoint of the visible strip to
+    // the right of the 300px-wide overlay: 300 + (1200 - 300) / 2 = 750.
+    expect(result.current.panX + 140 * 2).toBeCloseTo(750);
+    expect(result.current.panY + 220 * 2).toBeCloseTo(375);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
+  it("keeps the viewport's pan center fixed on screen when its box is resized", () => {
+    let resizeCallback: ((entries: { contentRect: { width: number; height: number } }[]) => void) | null = null;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    const originalResizeObserver = global.ResizeObserver;
+    global.ResizeObserver = vi.fn().mockImplementation((callback) => {
+      resizeCallback = callback;
+      return { observe, disconnect, unobserve: vi.fn() };
+    }) as unknown as typeof ResizeObserver;
+
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    expect(observe).toHaveBeenCalledWith(viewport);
+
+    act(() => {
+      resizeCallback!([{ contentRect: { width: 800, height: 600 } }]);
+    });
+    // First observation just records the initial size; nothing to compare against yet.
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+
+    act(() => {
+      resizeCallback!([{ contentRect: { width: 1000, height: 500 } }]);
+    });
+    // Growing 200px wider / 100px shorter shifts pan by half the delta on each axis, so the point
+    // that was centered in the old box stays centered in the new one.
+    expect(result.current.panX).toBeCloseTo(100);
+    expect(result.current.panY).toBeCloseTo(-50);
+
+    document.body.removeChild(viewport);
+    global.ResizeObserver = originalResizeObserver;
+  });
+
   it("removes its window pointer listeners on unmount even mid-gesture", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
