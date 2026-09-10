@@ -49,6 +49,7 @@ export function GenreTree({
   interactive = true,
   depthSpacingScale = 1,
   showToolbar = true,
+  selectedNodeId: selectedNodeIdProp,
 }: GenreTreeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -115,6 +116,9 @@ export function GenreTree({
     return reparentingHierarchyNode.descendants().map((d) => d.data.id);
   }, [treeData, reparentingNodeId]);
 
+  const effectiveSelectedNodeId =
+    selectedNodeIdProp !== undefined ? selectedNodeIdProp : (panel?.node.id ?? null);
+
   useEffect(() => {
     if (!svgRef.current) return;
 
@@ -159,7 +163,7 @@ export function GenreTree({
       orientation,
       hideRoot,
       showToolbar,
-      panel?.node.id ?? null,
+      effectiveSelectedNodeId,
     );
   }, [
     treeData,
@@ -181,7 +185,7 @@ export function GenreTree({
     orientation,
     hideRoot,
     showToolbar,
-    panel?.node.id,
+    effectiveSelectedNodeId,
   ]);
 
   useEffect(() => {

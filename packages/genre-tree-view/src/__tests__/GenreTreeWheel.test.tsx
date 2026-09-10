@@ -431,6 +431,36 @@ describe("GenreTreeWheel", () => {
       qsSpy.mockRestore();
       rectSpy.mockRestore();
     });
+
+    it("dims unrelated nodes in the nested tree when a node is selected via the info panel's parent chip", () => {
+      const { container } = render(<GenreTreeWheel nodes={NODES} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
+      expect(container.querySelector("#group-a-child")?.getAttribute("class")).not.toMatch(
+        /gtv-node--dimmed/,
+      );
+
+      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+        "Rock",
+      );
+      fireEvent.click(parentChip);
+
+      // "Rock" (root-a) is the wheel's own root chip, hidden from the nested tree's rendered
+      // groups (hideRoot) — so its only visible descendant, "Punk" (a-child), is related to the
+      // selection (its parent) rather than the selection itself.
+      expect(container.querySelector("#group-a-child")?.getAttribute("class")).toMatch(
+        /gtv-node--dimmed-related/,
+      );
+
+      rectSpy.mockRestore();
+    });
   });
 
   it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {

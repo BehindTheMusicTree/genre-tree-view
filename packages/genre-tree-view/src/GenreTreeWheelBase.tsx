@@ -317,6 +317,7 @@ export function WheelCore({
                 }}
                 additionalActions={additionalActions}
                 showToolbar={showToolbar}
+                selectedNodeId={panel?.node.id ?? null}
               />
             </div>
           )}
