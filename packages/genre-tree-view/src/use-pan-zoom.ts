@@ -223,6 +223,37 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     [stepZoomAnimation],
   );
 
+  // Keeps the viewport's current center point fixed on screen when its box is resized (matching
+  // Google Maps: resizing the map container never re-fits or re-zooms, it just reveals/hides edges
+  // around the same center) — panX/panY shift by half the size delta so the point that was in the
+  // middle of the old box is still in the middle of the new one, then get re-clamped in case the
+  // resize shrank the viewport below what the current pan allows.
+  const viewportSizeRef = useRef<{ width: number; height: number } | null>(null);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+
+      const previous = viewportSizeRef.current;
+      viewportSizeRef.current = { width, height };
+      if (!previous) return;
+
+      const dx = (width - previous.width) / 2;
+      const dy = (height - previous.height) / 2;
+      if (dx === 0 && dy === 0) return;
+
+      const scale = zoomScaleRef.current;
+      setPanX((x) => clampPanAxis(x + dx, scale, "x"));
+      setPanY((y) => clampPanAxis(y + dy, scale, "y"));
+    });
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [viewportRef, clampPanAxis]);
+
   // Non-passive + attached directly to the DOM node (rather than React's onWheel) because
   // React's wheel handler is passive by default, which silently drops preventDefault() — and
   // without it, ctrl+wheel triggers the browser's own page zoom instead of this one. Registered

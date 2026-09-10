@@ -53,6 +53,19 @@ const PARENT_NODE: InfoPanelChild = {
   textColor: "#FFFFFF",
 };
 
+const ANCESTOR_NODES: InfoPanelChild[] = [
+  {
+    node: { id: "root", parentId: null, name: "Music", itemCount: 20 },
+    fill: "#111827",
+    textColor: "#FFFFFF",
+  },
+  {
+    node: { id: "root-genre", parentId: "root", name: "Genres", itemCount: 15 },
+    fill: "#4F46E5",
+    textColor: "#FFFFFF",
+  },
+];
+
 describe("InfoPanel", () => {
   it("renders all fields for a fully-populated node", () => {
     const { container, getByText } = render(
@@ -62,18 +75,17 @@ describe("InfoPanel", () => {
         textColor="#FFFFFF"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
       />,
     );
 
-    expect(getByText("root-a")).toBeTruthy();
     expect(
       container.querySelectorAll(".gtv-info-panel-title")[0].textContent,
     ).toBe("Rock");
     expect(getByText("5")).toBeTruthy();
-    expect(getByText("No")).toBeTruthy();
     expect(getByText("pop")).toBeTruthy();
 
     const header = container.querySelector(
@@ -91,13 +103,13 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
       />,
     );
 
-    expect(getByText("Yes")).toBeTruthy();
     expect(getByText("core")).toBeTruthy();
   });
 
@@ -110,6 +122,7 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={onClose}
         onSelectNode={vi.fn()}
@@ -130,6 +143,7 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -148,6 +162,7 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="right"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -166,6 +181,7 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -184,6 +200,7 @@ describe("InfoPanel", () => {
         textColor="#18181B"
         parentNode={null}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -204,6 +221,7 @@ describe("InfoPanel", () => {
         textColor="#FFFFFF"
         parentNode={null}
         childNodes={CHILD_NODES}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -228,6 +246,7 @@ describe("InfoPanel", () => {
         textColor="#FFFFFF"
         parentNode={PARENT_NODE}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={vi.fn()}
@@ -250,6 +269,7 @@ describe("InfoPanel", () => {
         textColor="#FFFFFF"
         parentNode={PARENT_NODE}
         childNodes={[]}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={onSelectNode}
@@ -270,6 +290,7 @@ describe("InfoPanel", () => {
         textColor="#FFFFFF"
         parentNode={null}
         childNodes={CHILD_NODES}
+        ancestorNodes={[]}
         side="left"
         onClose={vi.fn()}
         onSelectNode={onSelectNode}
@@ -279,5 +300,67 @@ describe("InfoPanel", () => {
     fireEvent.click(getByText("Indie Rock"));
     expect(onSelectNode).toHaveBeenCalledTimes(1);
     expect(onSelectNode).toHaveBeenCalledWith("root-a-2");
+  });
+
+  it("omits the ancestors section when there are no ancestors", () => {
+    const { queryByText } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    expect(queryByText("Ancestors")).toBeNull();
+  });
+
+  it("lists each ancestor's name, root-first, as a chip styled with its own fill and text color", () => {
+    const { getByText } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={ANCESTOR_NODES}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    expect(getByText("Ancestors")).toBeTruthy();
+    const music = getByText("Music");
+    expect(music.classList.contains("gtv-info-panel-child")).toBe(true);
+    expect(music.style.backgroundColor).toBe("rgb(17, 24, 39)");
+    const genres = getByText("Genres");
+    expect(genres.style.backgroundColor).toBe("rgb(79, 70, 229)");
+  });
+
+  it("fires onSelectNode with an ancestor's id when an ancestor chip is clicked", () => {
+    const onSelectNode = vi.fn();
+    const { getByText } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={ANCESTOR_NODES}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={onSelectNode}
+      />,
+    );
+
+    fireEvent.click(getByText("Genres"));
+    expect(onSelectNode).toHaveBeenCalledTimes(1);
+    expect(onSelectNode).toHaveBeenCalledWith("root-genre");
   });
 });

@@ -30,7 +30,7 @@ import {
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { InfoPanel } from "./InfoPanel";
+import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -678,6 +678,23 @@ export function WheelRadialCore({
               // split in this renderer), so every node gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
+          ancestorNodes={(() => {
+            // Excludes the immediate parent, which the Parent section above already shows —
+            // this walks from the grandparent upward.
+            const ancestors: InfoPanelChild[] = [];
+            let current = nodes.find((n) => n.id === panel.node.parentId);
+            while (current && current.parentId !== null) {
+              const parent = nodes.find((n) => n.id === current!.parentId);
+              if (!parent) break;
+              ancestors.unshift({
+                node: parent,
+                fill: getGenreTreeColor(findRootId(parent.id, nodes) ?? parent.id),
+                textColor: ACCENT_TEXT_COLOR,
+              });
+              current = parent;
+            }
+            return ancestors;
+          })()}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {

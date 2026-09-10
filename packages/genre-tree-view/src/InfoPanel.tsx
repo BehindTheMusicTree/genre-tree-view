@@ -22,6 +22,9 @@ export interface InfoPanelProps {
    * none. */
   parentNode: InfoPanelChild | null;
   childNodes: InfoPanelChild[];
+  /** `node`'s ancestors above its immediate parent, root-first — the Parent section already
+   * shows the immediate parent, so this covers grandparent and up. Empty when there are none. */
+  ancestorNodes: InfoPanelChild[];
   side: "left" | "right";
   onClose: () => void;
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
@@ -39,6 +42,7 @@ export function InfoPanel({
   textColor,
   parentNode,
   childNodes,
+  ancestorNodes,
   side,
   onClose,
   onSelectNode,
@@ -63,17 +67,30 @@ export function InfoPanel({
         </button>
       </div>
       <dl className="gtv-info-panel-fields">
-        <dt>Id</dt>
-        <dd>{node.id}</dd>
-        <dt>Name</dt>
-        <dd>{node.name}</dd>
-        <dt>Item count</dt>
+        <dt>Song count</dt>
         <dd>{node.itemCount}</dd>
-        <dt>Actionable</dt>
-        <dd>{(node.actionable ?? true) ? "Yes" : "No"}</dd>
         <dt>Side</dt>
         <dd>{node.side ?? "core"}</dd>
       </dl>
+      {ancestorNodes.length > 0 && (
+        <div className="gtv-info-panel-children">
+          <span className="gtv-info-panel-children-title">Ancestors</span>
+          <ul className="gtv-info-panel-children-list">
+            {ancestorNodes.map(({ node: ancestor, fill, textColor }) => (
+              <li key={ancestor.id}>
+                <button
+                  type="button"
+                  className="gtv-info-panel-child"
+                  style={{ background: fill, color: textColor }}
+                  onClick={() => onSelectNode(ancestor.id)}
+                >
+                  {ancestor.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {parentNode && (
         <div className="gtv-info-panel-children">
           <span className="gtv-info-panel-children-title">Parent</span>

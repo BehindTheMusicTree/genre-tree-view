@@ -42,7 +42,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { InfoPanel } from "./InfoPanel";
+import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -1169,6 +1169,19 @@ export function WheelRadialPopCoreCore({
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => ({ node: n, ...getNodeVisualStyle(n) }))}
+          ancestorNodes={(() => {
+            // Excludes the immediate parent, which the Parent section above already shows —
+            // this walks from the grandparent upward.
+            const ancestors: InfoPanelChild[] = [];
+            let current = nodes.find((n) => n.id === panel.node.parentId);
+            while (current && current.parentId !== null) {
+              const parent = nodes.find((n) => n.id === current!.parentId);
+              if (!parent) break;
+              ancestors.unshift({ node: parent, ...getNodeVisualStyle(parent) });
+              current = parent;
+            }
+            return ancestors;
+          })()}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {

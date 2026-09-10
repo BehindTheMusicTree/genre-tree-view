@@ -22,7 +22,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { InfoPanel } from "./InfoPanel";
+import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -297,6 +297,27 @@ export function GenreTree({
                 : tintSurface(resolvedRootColor),
               textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
             }))}
+          ancestorNodes={(() => {
+            // Excludes the immediate parent, which the Parent section above already shows —
+            // this walks from the grandparent upward.
+            const ancestors: InfoPanelChild[] = [];
+            let current = nodes.find((n) => n.id === panel.node.parentId);
+            while (current && current.parentId !== null) {
+              const parent = nodes.find((n) => n.id === current!.parentId);
+              if (!parent) break;
+              ancestors.unshift({
+                node: parent,
+                // Same fill/textColor expression as parentNode/childNodes above, including for
+                // the root itself when the chain reaches it.
+                fill: hideRoot
+                  ? resolvedRootColor
+                  : tintSurface(resolvedRootColor),
+                textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+              });
+              current = parent;
+            }
+            return ancestors;
+          })()}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
