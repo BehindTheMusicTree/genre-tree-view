@@ -27,6 +27,10 @@
   opacity: 0.45;
 }
 
+.gtv-node--dimmed {
+  opacity: 0.35;
+}
+
 .gtv-icon {
   display: block;
 }

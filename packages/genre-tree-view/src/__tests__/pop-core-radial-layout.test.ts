@@ -444,6 +444,45 @@ describe("renderPopSubtree onNodeClick", () => {
   });
 });
 
+describe("renderPopSubtree selection highlight", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 2 },
+  ];
+
+  it("gives the selected node an accent border and dims every other node", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      selectedNodeId: "arena-rock",
+    });
+
+    const rootGroup = svg.select<SVGGElement>("#group-pop-rock").node()!;
+    const childGroup = svg.select<SVGGElement>("#group-arena-rock").node()!;
+    expect(rootGroup.getAttribute("class")).toContain("gtv-node--dimmed");
+    expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+
+    const childBorder = childGroup.querySelector(".gtv-node-border") as SVGPathElement;
+    expect(childBorder.getAttribute("stroke")).toBe("#4F46E5");
+    expect(childBorder.getAttribute("stroke-width")).toBe("2.5");
+  });
+
+  it("leaves every node undimmed and unaccented when no node is selected", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    const rootGroup = svg.select<SVGGElement>("#group-pop-rock").node()!;
+    const childGroup = svg.select<SVGGElement>("#group-arena-rock").node()!;
+    expect(rootGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+    expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+  });
+});
+
 describe("getRadialPointOnCircle", () => {
   it("places angle 0 (top) at (0, -radius)", () => {
     const point = getRadialPointOnCircle(0, 100);

@@ -23,6 +23,12 @@ export const TEXT_MUTED_COLOR = "#A1A1AA";
 export const ACCENT_COLOR = "#4F46E5";
 export const ACCENT_TEXT_COLOR = "#FFFFFF";
 
+// The selected node (the one whose info panel is open) gets a heavier accent-colored border,
+// while every other node dims (see .gtv-node--dimmed in styles.css) — reuses ACCENT_COLOR
+// rather than a separate color so the highlight reads as the same "accent" language as the
+// reparent-target overlay (NodeHelper.tsx).
+export const SELECTED_BORDER_WIDTH = 2.5;
+
 // Tokens for the toolbar's inline icon row and its overflow menu — reuse the surface/text/
 // accent tokens above so both read as part of the same light, neutral card language.
 export const DANGER_COLOR = "#DC2626";

@@ -9,6 +9,7 @@ import {
 } from "./NodeHelper";
 import { openBottomBorderPath, roundedRectPath } from "./d3-helper/d3-path-helper";
 import {
+  ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   CORNER_RADIUS,
   ItemCountRange,
@@ -18,6 +19,7 @@ import {
   RADIAL_LINK_COLOR,
   RADIAL_LINK_WIDTH,
   ROOT_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
@@ -273,6 +275,9 @@ export function renderPopSubtree(
     // When false, suppresses the hover toolbar and hover name-label on every node in this
     // subtree. Defaults to true.
     showToolbar?: boolean;
+    // The node whose info panel is currently open (see use-node-info-panel.ts) — gets a heavier
+    // accent-colored border while every other node in the subtree dims.
+    selectedNodeId?: string | null;
   } = {},
 ): void {
   const {
@@ -282,10 +287,12 @@ export function renderPopSubtree(
     rootLinkOrigin,
     isMainstreamSector = false,
     showToolbar = true,
+    selectedNodeId = null,
   } = options;
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
     callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
+  const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
   const nodeFill = isCoreSector ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
@@ -333,7 +340,13 @@ export function renderPopSubtree(
     .data(drawnNodes)
     .enter()
     .append("g")
-    .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
+    .attr(
+      "class",
+      (d) =>
+        "node" +
+        (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (selectedNodeId && !isSelected(d) ? " gtv-node--dimmed" : ""),
+    )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", nodeFill);
@@ -375,8 +388,14 @@ export function renderPopSubtree(
       });
     })
     .attr("fill", "none")
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 || isCoreSector ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
+    .attr("stroke", (d) => (isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR))
+    .attr("stroke-width", (d) =>
+      isSelected(d)
+        ? SELECTED_BORDER_WIDTH
+        : d.depth === 0 || isCoreSector
+          ? ROOT_BORDER_WIDTH
+          : SURFACE_BORDER_WIDTH,
+    );
 
   nodes
     .append("foreignObject")

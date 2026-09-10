@@ -508,7 +508,12 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
+        {
+          radialReferenceRadius: coreRootCircleRadius,
+          rootLinkOrigin,
+          showToolbar,
+          selectedNodeId: panel?.node.id ?? null,
+        },
       );
     });
 
@@ -561,7 +566,13 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { isCoreSector: true, radialReferenceRadius: coreRootCircleRadius, rootLinkOrigin, showToolbar },
+        {
+          isCoreSector: true,
+          radialReferenceRadius: coreRootCircleRadius,
+          rootLinkOrigin,
+          showToolbar,
+          selectedNodeId: panel?.node.id ?? null,
+        },
       );
     });
 
@@ -608,7 +619,13 @@ export function WheelRadialPopCoreCore({
           playState,
         },
         wheelItemCountRange,
-        { skipRootNode: true, radialReferenceRadius: coreRootCircleRadius, isMainstreamSector: true, showToolbar },
+        {
+          skipRootNode: true,
+          radialReferenceRadius: coreRootCircleRadius,
+          isMainstreamSector: true,
+          showToolbar,
+          selectedNodeId: panel?.node.id ?? null,
+        },
       );
     }
   }, [
@@ -634,6 +651,7 @@ export function WheelRadialPopCoreCore({
     centerNodeColor,
     wheelItemCountRange,
     showToolbar,
+    panel?.node.id,
   ]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —

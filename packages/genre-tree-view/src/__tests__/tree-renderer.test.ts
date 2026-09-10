@@ -360,6 +360,40 @@ describe("renderTree", () => {
     expect(childGroup.getAttribute("class")).toContain("gtv-node--forbidden");
   });
 
+  it("gives the selected node an accent border and dims every other node", () => {
+    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+
+    renderTree(d3, svgRef, treeData, svgWidth, svgHeight, null, [], "#4F46E5", baseCallbacks(), "horizontal", false, true, "child");
+
+    const rootGroup = svgEl.querySelector("#group-root") as SVGGElement;
+    const childGroup = svgEl.querySelector("#group-child") as SVGGElement;
+    expect(rootGroup.getAttribute("class")).toContain("gtv-node--dimmed");
+    expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+
+    const rootBorder = rootGroup.querySelector(".gtv-node-border") as SVGPathElement;
+    const childBorder = childGroup.querySelector(".gtv-node-border") as SVGPathElement;
+    expect(childBorder.getAttribute("stroke")).toBe("#4F46E5");
+    expect(childBorder.getAttribute("stroke-width")).toBe("2.5");
+    expect(rootBorder.getAttribute("stroke")).not.toBe("#4F46E5");
+  });
+
+  it("leaves every node undimmed and unaccented when no node is selected", () => {
+    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+
+    renderTree(d3, svgRef, treeData, svgWidth, svgHeight, null, [], "#4F46E5", baseCallbacks());
+
+    const rootGroup = svgEl.querySelector("#group-root") as SVGGElement;
+    const childGroup = svgEl.querySelector("#group-child") as SVGGElement;
+    expect(rootGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+    expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+  });
+
   it("renders the label as just the node name, with no item count suffix", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");

@@ -18,10 +18,12 @@ import {
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   ROOT_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH,
   CORNER_RADIUS,
   ELEVATION,
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
+  ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
@@ -269,6 +271,7 @@ export function renderTree(
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
   showToolbar = true,
+  selectedNodeId: string | null = null,
 ): D3Selection {
   const { onPlayPause, onAddChild, onRenameRequest, onDeleteRequest, onReparentTargetSelect, onNodeClick } =
     callbacks;
@@ -315,6 +318,7 @@ export function renderTree(
   appendPaths(d3Lib, svg, treeData, itemCountRange, orientation);
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
+  const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
 
   // With the actual root hidden, the whole visible subtree grows directly out of the root chip —
   // styling every node the same way (solid root color, bold white label) reads as a continuation
@@ -332,7 +336,13 @@ export function renderTree(
     .data(visibleDescendants)
     .enter()
     .append("g")
-    .attr("class", (d) => "node" + (isForbidden(d) ? " gtv-node--forbidden" : ""))
+    .attr(
+      "class",
+      (d) =>
+        "node" +
+        (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (selectedNodeId && !isSelected(d) ? " gtv-node--dimmed" : ""),
+    )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", function (d) {
       const dimensions = calculateNodeDimensions(d.data.itemCount, itemCountRange);
@@ -399,8 +409,10 @@ export function renderTree(
       });
     })
     .attr("fill", "none")
-    .attr("stroke", SURFACE_BORDER_COLOR)
-    .attr("stroke-width", (d) => (d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH));
+    .attr("stroke", (d) => (isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR))
+    .attr("stroke-width", (d) =>
+      isSelected(d) ? SELECTED_BORDER_WIDTH : d.depth === 0 ? ROOT_BORDER_WIDTH : SURFACE_BORDER_WIDTH,
+    );
 
   nodes
     .append("foreignObject")
