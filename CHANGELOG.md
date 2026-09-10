@@ -13,6 +13,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Present across all five renderers; closes only via its own close button, and switching to a
   different node updates its content without requiring a close first. The existing `onNodeClick`
   callback is unaffected and keeps firing unchanged.
+- The info panel now also lists the clicked node's direct children as chips, each styled with the
+  same fill and text color the child itself uses as its own `gtv-node-rect` out in the tree. The
+  panel's header background and title/close-button text color likewise now match how the clicked
+  node itself renders, instead of a fixed neutral header.
+
+### Changed
+
+- `GenreTreeWheel`/`GenreTreeWheelRight`'s floating zoom controls now anchor to the right edge of
+  the tree viewport instead of the left.
 
 ### Fixed
 
