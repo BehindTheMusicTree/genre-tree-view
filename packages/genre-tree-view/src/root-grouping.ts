@@ -12,14 +12,10 @@ export interface GenreTreeRootGroup {
  */
 export function findRootId(nodeId: string, nodes: GenreTreeNode[]): string | null {
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const rootIdCache = new Map<string, string | null>();
 
   const rootIdOf = (id: string): string | null => {
-    if (rootIdCache.has(id)) return rootIdCache.get(id)!;
     const node = nodeById.get(id);
-    const rootId = !node ? null : node.parentId === null ? node.id : rootIdOf(node.parentId);
-    rootIdCache.set(id, rootId);
-    return rootId;
+    return !node ? null : node.parentId === null ? node.id : rootIdOf(node.parentId);
   };
 
   return rootIdOf(nodeId);

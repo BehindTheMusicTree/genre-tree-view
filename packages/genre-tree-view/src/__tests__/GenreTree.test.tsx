@@ -431,6 +431,22 @@ describe("GenreTree", () => {
         rectSpy.mockRestore();
       });
 
+      it("uses the solid root color and white text for the header when hideRoot is true", () => {
+        const { container } = render(<GenreTree nodes={TREE} hideRoot />);
+        const wrapper = container.firstChild as HTMLElement;
+        const rectSpy = mockRects(container, wrapper, 400);
+
+        fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
+
+        const header = container.querySelector(".gtv-info-panel-header") as HTMLElement;
+        const probe = document.createElement("div");
+        probe.style.backgroundColor = getGenreTreeColor("root");
+        expect(header.style.backgroundColor).toBe(probe.style.backgroundColor);
+        expect(header.style.color).toBe("rgb(255, 255, 255)");
+
+        rectSpy.mockRestore();
+      });
+
       it("flips to the right when the panel would cover the clicked node", () => {
         const { container } = render(<GenreTree nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
