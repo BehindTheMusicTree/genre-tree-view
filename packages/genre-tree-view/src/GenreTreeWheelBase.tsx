@@ -7,7 +7,7 @@ import * as d3 from "d3";
 import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
-import { findRootId, groupNodesByRoot } from "./root-grouping";
+import { computeAncestorChain, findRootId, groupNodesByRoot } from "./root-grouping";
 import {
   buildWheelSectorGradient,
   calculateWheelRadius,
@@ -522,23 +522,13 @@ export function WheelCore({
               // visible node — including every child listed here — gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
-          ancestorNodes={(() => {
-            // Excludes the immediate parent, which the Parent section above already shows —
-            // this walks from the grandparent upward.
-            const ancestors: InfoPanelChild[] = [];
-            let current = nodes.find((n) => n.id === panel.node.parentId);
-            while (current && current.parentId !== null) {
-              const parent = nodes.find((n) => n.id === current!.parentId);
-              if (!parent) break;
-              ancestors.unshift({
-                node: parent,
-                fill: getGenreTreeColor(findRootId(parent.id, nodes) ?? parent.id),
-                textColor: ACCENT_TEXT_COLOR,
-              });
-              current = parent;
-            }
-            return ancestors;
-          })()}
+          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+            (n): InfoPanelChild => ({
+              node: n,
+              fill: getGenreTreeColor(findRootId(n.id, nodes) ?? n.id),
+              textColor: ACCENT_TEXT_COLOR,
+            }),
+          )}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {

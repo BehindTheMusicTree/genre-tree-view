@@ -12,6 +12,7 @@ import * as d3 from "d3";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
 import {
+  computeAncestorChain,
   findRootId,
   GenreTreeRootGroup,
   groupNodesByRoot,
@@ -1178,19 +1179,9 @@ export function WheelRadialPopCoreCore({
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => ({ node: n, ...getNodeVisualStyle(n) }))}
-          ancestorNodes={(() => {
-            // Excludes the immediate parent, which the Parent section above already shows —
-            // this walks from the grandparent upward.
-            const ancestors: InfoPanelChild[] = [];
-            let current = nodes.find((n) => n.id === panel.node.parentId);
-            while (current && current.parentId !== null) {
-              const parent = nodes.find((n) => n.id === current!.parentId);
-              if (!parent) break;
-              ancestors.unshift({ node: parent, ...getNodeVisualStyle(parent) });
-              current = parent;
-            }
-            return ancestors;
-          })()}
+          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+            (n): InfoPanelChild => ({ node: n, ...getNodeVisualStyle(n) }),
+          )}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
