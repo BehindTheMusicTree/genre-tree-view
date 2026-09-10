@@ -7,7 +7,7 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { calculateSvgDimensions, createTreeLayout, setupTreeLayout, renderTree } from "./tree-renderer";
-import { getGenreTreeColor, ZOOM_FOCUS_SCALE } from "./constants";
+import { ACCENT_TEXT_COLOR, getGenreTreeColor, TEXT_COLOR, tintSurface, ZOOM_FOCUS_SCALE } from "./constants";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
@@ -210,7 +210,30 @@ export function GenreTree({
       <div style={{ position: "absolute", top: 0, left: 0, transform: panZoom.transform, transformOrigin: "0 0" }}>
         {svg}
       </div>
-      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
+      {panel && (
+        <InfoPanel
+          node={panel.node}
+          // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1. panel.node is
+          // only ever set from a click on a rendered node, and the root (depth 0) is excluded from
+          // rendering entirely when hideRoot is true, so panel.node is guaranteed to have a parent
+          // whenever hideRoot is true — leaving hideRoot as the only variable, as with the children
+          // below.
+          fill={hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor)}
+          textColor={hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR}
+          childNodes={nodes
+            .filter((n) => n.parentId === panel.node.id)
+            .map((n) => ({
+              node: n,
+              // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1 — every
+              // direct child here has a parent, so depth >= 1 always holds, leaving hideRoot as
+              // the only variable.
+              fill: hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor),
+              textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+            }))}
+          side={panel.side}
+          onClose={closeNodeInfo}
+        />
+      )}
       <div className="gtv-zoom-controls">
         <button
           type="button"

@@ -5,7 +5,7 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { NodeToolbar } from "./NodeToolbar";
-import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
+import { findRootId, GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
 import { getRadialPointOnCircle, POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
 import { splitRootGroupBySide } from "./pop-core-split";
@@ -21,6 +21,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
+  ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getGenreTreeColor,
@@ -529,7 +530,23 @@ export function WheelRadialCore({
         </div>
       </div>
 
-      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
+      {panel && (
+        <InfoPanel
+          node={panel.node}
+          fill={getGenreTreeColor(findRootId(panel.node.id, nodes) ?? panel.node.id)}
+          textColor={ACCENT_TEXT_COLOR}
+          childNodes={nodes
+            .filter((n) => n.parentId === panel.node.id)
+            .map((n) => {
+              const rootColor = getGenreTreeColor(findRootId(n.id, nodes) ?? n.id);
+              // renderPopSubtree is always called here with isCoreSector: true (no pop/core
+              // split in this renderer), so every node gets a solid rootColor fill.
+              return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
+            })}
+          side={panel.side}
+          onClose={closeNodeInfo}
+        />
+      )}
 
       <div className="gtv-zoom-controls">
         <button

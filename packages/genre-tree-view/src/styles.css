@@ -230,7 +230,7 @@
 .gtv-wheel-floating-controls {
   position: absolute;
   bottom: 12px;
-  left: 12px;
+  right: 12px;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -317,12 +317,16 @@
   gap: 8px;
   padding: 10px 8px 10px 14px;
   border-bottom: 1px solid #e4e4e7;
+  /* Matches .gtv-info-panel's own radius on the two corners it shares with the panel — the
+     header's own background (the clicked node's fill, set inline by InfoPanel.tsx) would
+     otherwise square them off against the panel's rounded outline. */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .gtv-info-panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #18181b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -339,13 +343,15 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #52525b;
+  color: inherit;
   cursor: pointer;
 }
 
+/* A neutral dark overlay rather than a fixed light background/text pair — the header's own
+   background now varies with the clicked node's fill (light tint or solid saturated color), and
+   this reads as a hover on either. */
 .gtv-info-panel-close:hover {
-  background-color: #f4f4f5;
-  color: #18181b;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .gtv-info-panel-fields {
@@ -370,6 +376,46 @@
   font-size: 13px;
   color: #18181b;
   word-break: break-word;
+}
+
+.gtv-info-panel-children {
+  padding: 0 14px 10px;
+  border-top: 1px solid #e4e4e7;
+}
+
+.gtv-info-panel-children-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+  margin-top: 10px;
+}
+
+.gtv-info-panel-children-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Same surface as a `gtv-node-rect` out in the tree (border, weight) — reads as the same kind of
+   chip, just laid out in a wrapping list instead of the tree's own layout. This chip is only
+   ~24px tall versus a real node's 35-120px (MIN/MAX_NODE_HEIGHT), so reusing the tree's 8px
+   CORNER_RADIUS as-is would read as a pill rather than a card corner — scaled down to keep the
+   radius-to-height ratio close to a real node's. */
+.gtv-info-panel-child {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
