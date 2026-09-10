@@ -27,6 +27,18 @@
   opacity: 0.45;
 }
 
+.gtv-node--dimmed {
+  opacity: 0.35;
+}
+
+.gtv-node--dimmed-related {
+  opacity: 0.7;
+}
+
+.gtv-link--dimmed {
+  opacity: 0.35;
+}
+
 .gtv-icon {
   display: block;
 }
@@ -104,7 +116,11 @@
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   font-weight: 500;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -510,8 +526,12 @@
 .gtv-wheel-container--radial .gtv-wheel-pop-layer {
   top: 50%;
   left: 50%;
-  margin-top: calc(var(--gtv-wheel-svg-radius, var(--gtv-wheel-radius, 260px)) * -1);
-  margin-left: calc(var(--gtv-wheel-svg-radius, var(--gtv-wheel-radius, 260px)) * -1);
+  margin-top: calc(
+    var(--gtv-wheel-svg-radius, var(--gtv-wheel-radius, 260px)) * -1
+  );
+  margin-left: calc(
+    var(--gtv-wheel-svg-radius, var(--gtv-wheel-radius, 260px)) * -1
+  );
 }
 
 /* .gtv-wheel-pop-sector: one <g> per developed root with a pop branch, identified by its own
@@ -582,7 +602,8 @@
   left: 50%;
   width: 0;
   height: 0;
-  transform: rotate(var(--gtv-chip-angle, 0deg)) translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
+  transform: rotate(var(--gtv-chip-angle, 0deg))
+    translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
 }
 
 /* Straight radial line separating two angularly-adjacent root subtrees, from the wheel's pivot
@@ -671,7 +692,12 @@
   margin-left: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
   margin-top: calc(var(--gtv-wheel-middle-radius, 0px) * -1);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 65%, rgba(255, 255, 255, 0) 100%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
   pointer-events: none;
 }
 
@@ -686,7 +712,9 @@
   position: absolute;
   z-index: 2;
   transform: translate(-50%, -50%)
-    rotate(calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg))));
+    rotate(
+      calc(-1 * (var(--gtv-wheel-rotation, 0deg) + var(--gtv-chip-angle, 0deg)))
+    );
   pointer-events: auto;
 }
 
@@ -816,7 +844,10 @@
   z-index: 2;
   opacity: 0;
   pointer-events: none;
-  font-size: max(calc(26px / 1.2), var(--gtv-toolbar-font-size, calc(26px / 1.2)));
+  font-size: max(
+    calc(26px / 1.2),
+    var(--gtv-toolbar-font-size, calc(26px / 1.2))
+  );
 }
 
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {
@@ -853,7 +884,9 @@
    inline per chip (see GenreTreeWheelBase.tsx/GenreTreeWheelRadialBase.tsx) from the same
    dimensions.HEIGHT the SVG-side label uses, so both scale with the node in sync. */
 .gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
-  height: calc(var(--gtv-wheel-chip-base-height) + var(--gtv-hover-label-height, 22px));
+  height: calc(
+    var(--gtv-wheel-chip-base-height) + var(--gtv-hover-label-height, 22px)
+  );
   padding-top: var(--gtv-hover-label-height, 22px);
   margin-top: calc(-1 * var(--gtv-hover-label-height, 22px));
 }
@@ -907,7 +940,11 @@
   box-sizing: border-box;
   padding: 0 8px;
   font-weight: 500;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1151,8 +1188,16 @@
   filter: drop-shadow(0 4px 1000px rgba(255, 255, 255, 0.24));
 }
 
-.gtv-wheel-container--radial .gtv-wheel-middle-circle--collapsible:hover ~ .gtv-wheel .gtv-wheel-middle-tint {
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 65%, rgba(255, 255, 255, 0) 100%);
+.gtv-wheel-container--radial
+  .gtv-wheel-middle-circle--collapsible:hover
+  ~ .gtv-wheel
+  .gtv-wheel-middle-tint {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.5) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 @media (prefers-reduced-motion: no-preference) {

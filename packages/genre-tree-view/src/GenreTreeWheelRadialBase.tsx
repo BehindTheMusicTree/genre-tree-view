@@ -369,7 +369,13 @@ export function WheelRadialCore({
           playState,
         },
         wheelItemCountRange,
-        { isCoreSector: true, radialReferenceRadius: wheelRadius, rootLinkOrigin, showToolbar },
+        {
+          isCoreSector: true,
+          radialReferenceRadius: wheelRadius,
+          rootLinkOrigin,
+          showToolbar,
+          selectedNodeId: panel?.node.id ?? null,
+        },
       );
     });
   }, [
@@ -389,6 +395,7 @@ export function WheelRadialCore({
     additionalActions,
     wheelItemCountRange,
     showToolbar,
+    panel?.node.id,
   ]);
 
   // Starts the view fit to the wheel + rendered subtrees instead of at scale 1 / pan (0, 0) —

@@ -159,6 +159,7 @@ export function GenreTree({
       orientation,
       hideRoot,
       showToolbar,
+      panel?.node.id ?? null,
     );
   }, [
     treeData,
@@ -180,6 +181,7 @@ export function GenreTree({
     orientation,
     hideRoot,
     showToolbar,
+    panel?.node.id,
   ]);
 
   useEffect(() => {
