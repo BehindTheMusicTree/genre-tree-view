@@ -18,19 +18,37 @@ export interface InfoPanelProps {
    * tree — computed by the caller for the same reason as `InfoPanelChild`'s (see above). */
   fill: string;
   textColor: string;
+  /** `node`'s own parent, styled the same way as `InfoPanelChild` — null for a root, which has
+   * none. */
+  parentNode: InfoPanelChild | null;
   childNodes: InfoPanelChild[];
   side: "left" | "right";
   onClose: () => void;
+  /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
+   * navigates the panel (and the tree's own selection/centering) to it. */
+  onSelectNode: (nodeId: string) => void;
 }
 
-/** Displays a clicked node's own fields and its direct children — no fetching, no mutation,
- * purely presentational (see ARCHITECTURE.md). Anchored to `side`
+/** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
+ * mutation, purely presentational (see ARCHITECTURE.md). Anchored to `side`
  * (see use-node-info-panel.ts/info-panel-geometry.ts for how that's decided) by the caller's own
  * layout, not by this component. */
-export function InfoPanel({ node, fill, textColor, childNodes, side, onClose }: InfoPanelProps) {
+export function InfoPanel({
+  node,
+  fill,
+  textColor,
+  parentNode,
+  childNodes,
+  side,
+  onClose,
+  onSelectNode,
+}: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
-      <div className="gtv-info-panel-header" style={{ background: fill, color: textColor }}>
+      <div
+        className="gtv-info-panel-header"
+        style={{ background: fill, color: textColor }}
+      >
         <span className="gtv-info-panel-title" style={{ color: textColor }}>
           {node.name}
         </span>
@@ -47,8 +65,6 @@ export function InfoPanel({ node, fill, textColor, childNodes, side, onClose }: 
       <dl className="gtv-info-panel-fields">
         <dt>Id</dt>
         <dd>{node.id}</dd>
-        <dt>Parent id</dt>
-        <dd>{node.parentId ?? "—"}</dd>
         <dt>Name</dt>
         <dd>{node.name}</dd>
         <dt>Item count</dt>
@@ -58,13 +74,42 @@ export function InfoPanel({ node, fill, textColor, childNodes, side, onClose }: 
         <dt>Side</dt>
         <dd>{node.side ?? "core"}</dd>
       </dl>
+      {parentNode && (
+        <div className="gtv-info-panel-children">
+          <span className="gtv-info-panel-children-title">Parent</span>
+          <ul className="gtv-info-panel-children-list">
+            <li>
+              <button
+                type="button"
+                className="gtv-info-panel-child"
+                style={{
+                  background: parentNode.fill,
+                  color: parentNode.textColor,
+                }}
+                onClick={() => onSelectNode(parentNode.node.id)}
+              >
+                {parentNode.node.name}
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
       <div className="gtv-info-panel-children">
-        <span className="gtv-info-panel-children-title">Children ({childNodes.length})</span>
+        <span className="gtv-info-panel-children-title">
+          Children ({childNodes.length})
+        </span>
         {childNodes.length > 0 && (
           <ul className="gtv-info-panel-children-list">
             {childNodes.map(({ node: child, fill, textColor }) => (
-              <li key={child.id} className="gtv-info-panel-child" style={{ background: fill, color: textColor }}>
-                {child.name}
+              <li key={child.id}>
+                <button
+                  type="button"
+                  className="gtv-info-panel-child"
+                  style={{ background: fill, color: textColor }}
+                  onClick={() => onSelectNode(child.id)}
+                >
+                  {child.name}
+                </button>
               </li>
             ))}
           </ul>

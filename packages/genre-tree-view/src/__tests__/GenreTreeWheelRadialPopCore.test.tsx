@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
 import {
@@ -414,7 +414,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChildlessRoot} />);
 
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(3);
-    expect(container.querySelector("#group-root-d")).toBeFalsy();
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 
   it("omits the pop sector for a root that has no pop branch", () => {
@@ -895,6 +896,32 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(panel).toBeTruthy();
       expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Radio Hits");
 
+      rectSpy.mockRestore();
+    });
+
+    it("switches to the parent node when its chip is clicked", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      fireEvent.click(container.querySelector("#group-a-core-child") as SVGGElement);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Hardcore");
+
+      const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
+
+      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+        "Punk",
+      );
+      fireEvent.click(parentChip);
+      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      qsSpy.mockRestore();
       rectSpy.mockRestore();
     });
   });

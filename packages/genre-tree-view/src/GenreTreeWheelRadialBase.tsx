@@ -5,9 +5,21 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { NodeToolbar } from "./NodeToolbar";
-import { findRootId, GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
-import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
-import { getRadialPointOnCircle, POP_WEDGE_SPAN_DEGREES, renderPopSubtree } from "./pop-core-radial-layout";
+import {
+  findRootId,
+  GenreTreeRootGroup,
+  groupNodesByRoot,
+} from "./root-grouping";
+import {
+  buildCoreHierarchy,
+  calculateCoreSubtreeRadialExtent,
+  computeCoreRadialLayout,
+} from "./core-radial-layout";
+import {
+  getRadialPointOnCircle,
+  POP_WEDGE_SPAN_DEGREES,
+  renderPopSubtree,
+} from "./pop-core-radial-layout";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
   buildSectorClipPathPolygon,
@@ -37,7 +49,8 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-export interface WheelRadialCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
+export interface WheelRadialCoreProps
+  extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
   nodes: GenreTreeNode[];
   /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
    * and on every chip click. */
@@ -62,7 +75,10 @@ function computeContinuousAngles(
   groups.forEach((group, index) => {
     const rawAngle = layout[index]?.angle ?? 0;
     const previousAngle = previous.get(group.root.id);
-    const laps = previousAngle === undefined ? 0 : Math.round((previousAngle - rawAngle) / 360);
+    const laps =
+      previousAngle === undefined
+        ? 0
+        : Math.round((previousAngle - rawAngle) / 360);
     angles.set(group.root.id, rawAngle + 360 * laps);
   });
   return angles;
@@ -102,7 +118,9 @@ export function WheelRadialCore({
 }: WheelRadialCoreProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
-  const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
+  const [topRootId, setTopRootId] = useState<string | null>(
+    groups[0]?.root.id ?? null,
+  );
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
@@ -157,7 +175,10 @@ export function WheelRadialCore({
     angles: computeContinuousAngles(groups, layout, new Map()),
   }));
   if (angleMemo.layout !== layout) {
-    setAngleMemo({ layout, angles: computeContinuousAngles(groups, layout, angleMemo.angles) });
+    setAngleMemo({
+      layout,
+      angles: computeContinuousAngles(groups, layout, angleMemo.angles),
+    });
   }
   const continuousAngleByRootId = angleMemo.angles;
 
@@ -166,14 +187,21 @@ export function WheelRadialCore({
   const aggregatedRootItemCountById = useMemo(
     () =>
       new Map(
-        groups.map((group) => [group.root.id, group.nodes.reduce((sum, node) => sum + node.itemCount, 0)]),
+        groups.map((group) => [
+          group.root.id,
+          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
+        ]),
       ),
     [groups],
   );
 
   const rootItemCountRange = useMemo(
     () =>
-      getItemCountRange(groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id)! }))),
+      getItemCountRange(
+        groups.map((group) => ({
+          itemCount: aggregatedRootItemCountById.get(group.root.id)!,
+        })),
+      ),
     [groups, aggregatedRootItemCountById],
   );
 
@@ -188,12 +216,20 @@ export function WheelRadialCore({
   // rendering path and mixing both branches' direct children into buildCoreHierarchy would leave
   // more than one node with no in-set parent — d3.stratify() rejects that as "multiple roots".
   const coreHierarchyByRootId = useMemo(() => {
-    const map = new Map<string, { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number }>();
+    const map = new Map<
+      string,
+      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number }
+    >();
     groups.forEach((group, index) => {
       const { coreNodes } = splitRootGroupBySide(group);
-      const coreChildNodes = coreNodes.filter((node) => node.id !== group.root.id);
+      const coreChildNodes = coreNodes.filter(
+        (node) => node.id !== group.root.id,
+      );
       if (coreChildNodes.length === 0) return;
-      map.set(group.root.id, { hierarchy: buildCoreHierarchy(d3, coreChildNodes), angle: layout[index]?.angle ?? 0 });
+      map.set(group.root.id, {
+        hierarchy: buildCoreHierarchy(d3, coreChildNodes),
+        angle: layout[index]?.angle ?? 0,
+      });
     });
     return map;
   }, [groups, layout]);
@@ -213,14 +249,23 @@ export function WheelRadialCore({
   }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
-    (rootId: string) => Math.min(POP_WEDGE_SPAN_DEGREES, sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES),
+    (rootId: string) =>
+      Math.min(
+        POP_WEDGE_SPAN_DEGREES,
+        sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES,
+      ),
     [sectorSpanByRootId],
   );
 
   // Floor every ring root sits on, driven purely by chip clearance — the base every root's
   // core wedge measures outward from, before the deepest developed subtree's extent is folded in.
   const chipClearanceFloor = useMemo(
-    () => calculateWheelRadiusForAngles(layout.map((slot) => slot.angle), MAX_NODE_WIDTH, WHEEL_RADIUS),
+    () =>
+      calculateWheelRadiusForAngles(
+        layout.map((slot) => slot.angle),
+        MAX_NODE_WIDTH,
+        WHEEL_RADIUS,
+      ),
     [layout],
   );
 
@@ -230,7 +275,14 @@ export function WheelRadialCore({
   const maxCoreExtentDelta = useMemo(() => {
     let extent = 0;
     coreHierarchyByRootId.forEach(({ hierarchy }) => {
-      extent = Math.max(extent, calculateCoreSubtreeRadialExtent(hierarchy, POP_TREE_DEPTH_RADIAL_SPACING, 0));
+      extent = Math.max(
+        extent,
+        calculateCoreSubtreeRadialExtent(
+          hierarchy,
+          POP_TREE_DEPTH_RADIAL_SPACING,
+          0,
+        ),
+      );
     });
     return extent;
   }, [coreHierarchyByRootId]);
@@ -256,7 +308,9 @@ export function WheelRadialCore({
 
     const svg = d3.select(coreSvgRef.current);
     svg.selectAll("*").remove();
-    const originGroup = svg.append("g").attr("transform", `translate(${wheelRadius}, ${wheelRadius})`);
+    const originGroup = svg
+      .append("g")
+      .attr("transform", `translate(${wheelRadius}, ${wheelRadius})`);
 
     coreHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
       const laidOut = computeCoreRadialLayout(
@@ -295,11 +349,19 @@ export function WheelRadialCore({
           onDeleteRequest,
           onReparentRequest,
           onReparentTargetSelect: (newParentId) => {
-            if (reparentingNodeId) void onReparent?.(reparentingNodeId, newParentId);
+            if (reparentingNodeId)
+              void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
-            centerOnElementRef.current(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
-            showNodeInfoRef.current(data, event.currentTarget as Element | null, viewportRef.current);
+            centerOnElementRef.current(
+              event.currentTarget as Element | null,
+              ZOOM_FOCUS_SCALE,
+            );
+            showNodeInfoRef.current(
+              data,
+              event.currentTarget as Element | null,
+              viewportRef.current,
+            );
             onNodeClick?.(data, event);
           },
           additionalActions,
@@ -370,7 +432,10 @@ export function WheelRadialCore({
         rootId: group.root.id,
         start: angle - width / 2,
         clipPath: buildSectorClipPathPolygon(width),
-        color: hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
+        color: hexToRgba(
+          getGenreTreeColor(group.root.id),
+          ROOT_SECTOR_FILL_OPACITY,
+        ),
       };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
@@ -378,7 +443,13 @@ export function WheelRadialCore({
   return (
     <div
       ref={viewportRef}
-      className={["gtv-wheel-container", "gtv-wheel-container--radial", className].filter(Boolean).join(" ")}
+      className={[
+        "gtv-wheel-container",
+        "gtv-wheel-container--radial",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={
         {
           "--gtv-wheel-radius": `${wheelRadius}px`,
@@ -423,39 +494,65 @@ export function WheelRadialCore({
             ))}
           </div>
 
-          <svg ref={coreSvgRef} className="gtv-wheel-pop-layer" width={wheelRadius * 2} height={wheelRadius * 2} />
+          <svg
+            ref={coreSvgRef}
+            className="gtv-wheel-pop-layer"
+            width={wheelRadius * 2}
+            height={wheelRadius * 2}
+          />
 
-          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
+          {centerLabel && (
+            <div className="gtv-wheel-center-label">{centerLabel}</div>
+          )}
 
           <div className="gtv-wheel">
             {dividerAngles.map((angle, index) => (
               <div
                 key={`divider-${groups[index].root.id}`}
                 className="gtv-wheel-divider"
-                style={{ "--gtv-divider-angle": `${angle}deg` } as React.CSSProperties}
+                style={
+                  {
+                    "--gtv-divider-angle": `${angle}deg`,
+                  } as React.CSSProperties
+                }
               />
             ))}
 
             {groups.map((group, index) => {
               const slot = layout[index];
-              const angle = continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
+              const angle =
+                continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const chipColor = getGenreTreeColor(group.root.id);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
-              const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
-              const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
+              const aggregatedItemCount = aggregatedRootItemCountById.get(
+                group.root.id,
+              )!;
+              const dimensions = calculateNodeDimensions(
+                aggregatedItemCount,
+                rootItemCountRange,
+              );
+              const fontSize = calculateNodeFontSize(
+                aggregatedItemCount,
+                rootItemCountRange,
+              );
               return (
                 <div
                   key={group.root.id}
                   className="gtv-wheel-slot"
-                  style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
+                  style={
+                    { "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties
+                  }
                 >
                   <div
-                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                    className={[
+                      "gtv-wheel-chip-anchor",
+                      !showToolbar && "gtv-wheel-chip-anchor--no-toolbar",
+                    ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <button
                       type="button"
+                      id={`group-${group.root.id}`}
                       className="gtv-wheel-chip gtv-wheel-chip--selected"
                       style={
                         {
@@ -471,22 +568,37 @@ export function WheelRadialCore({
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
-                        panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
+                        panZoom.centerOnElement(
+                          event.currentTarget,
+                          ZOOM_FOCUS_SCALE,
+                        );
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
-                          showNodeInfo(group.root, event.currentTarget, viewportRef.current);
+                          showNodeInfo(
+                            group.root,
+                            event.currentTarget,
+                            viewportRef.current,
+                          );
                           onNodeClick?.(group.root, event.nativeEvent);
                         }
                       }}
                     >
-                      {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                      <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
+                      {PER_TREE_ACCENT_DOT && (
+                        <span className="gtv-wheel-chip-dot" />
+                      )}
+                      <span
+                        className="gtv-node-label gtv-node-label--root"
+                        style={{ fontSize }}
+                      >
                         {group.root.name}
                       </span>
                       {showToolbar && (
-                      <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
-                        {group.root.name}
-                      </span>
+                        <span
+                          className="gtv-wheel-chip-hover-name"
+                          style={{ fontSize }}
+                        >
+                          {group.root.name}
+                        </span>
                       )}
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
@@ -497,30 +609,30 @@ export function WheelRadialCore({
                         .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
                         unconditionally to stay legible against it. */}
                     {showToolbar && (
-                    <div
-                      className="gtv-wheel-chip-toolbar"
-                      style={
-                        {
-                          "--gtv-node-fill": chipColor,
-                          "--gtv-toolbar-icon-color": "#ffffff",
-                          "--gtv-toolbar-font-size": `${fontSize}px`,
-                        } as React.CSSProperties
-                      }
-                      onPointerDown={(event) => event.stopPropagation()}
-                    >
-                      <NodeToolbar
-                        node={group.root}
-                        itemCount={aggregatedItemCount}
-                        playingNodeId={playingNodeId}
-                        playState={playState}
-                        onPlayPause={onPlayPause}
-                        onAddChild={onAddChild}
-                        onRenameRequest={onRenameRequest}
-                        onDeleteRequest={onDeleteRequest}
-                        onReparentRequest={onReparentRequest}
-                        additionalActions={additionalActions}
-                      />
-                    </div>
+                      <div
+                        className="gtv-wheel-chip-toolbar"
+                        style={
+                          {
+                            "--gtv-node-fill": chipColor,
+                            "--gtv-toolbar-icon-color": "#ffffff",
+                            "--gtv-toolbar-font-size": `${fontSize}px`,
+                          } as React.CSSProperties
+                        }
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        <NodeToolbar
+                          node={group.root}
+                          itemCount={aggregatedItemCount}
+                          playingNodeId={playingNodeId}
+                          playState={playState}
+                          onPlayPause={onPlayPause}
+                          onAddChild={onAddChild}
+                          onRenameRequest={onRenameRequest}
+                          onDeleteRequest={onDeleteRequest}
+                          onReparentRequest={onReparentRequest}
+                          additionalActions={additionalActions}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -533,25 +645,58 @@ export function WheelRadialCore({
       {panel && (
         <InfoPanel
           node={panel.node}
-          fill={getGenreTreeColor(findRootId(panel.node.id, nodes) ?? panel.node.id)}
+          fill={getGenreTreeColor(
+            findRootId(panel.node.id, nodes) ?? panel.node.id,
+          )}
           textColor={ACCENT_TEXT_COLOR}
+          parentNode={(() => {
+            const parent = nodes.find((n) => n.id === panel.node.parentId);
+            return parent
+              ? {
+                  node: parent,
+                  fill: getGenreTreeColor(
+                    findRootId(parent.id, nodes) ?? parent.id,
+                  ),
+                  textColor: ACCENT_TEXT_COLOR,
+                }
+              : null;
+          })()}
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => {
-              const rootColor = getGenreTreeColor(findRootId(n.id, nodes) ?? n.id);
+              const rootColor = getGenreTreeColor(
+                findRootId(n.id, nodes) ?? n.id,
+              );
               // renderPopSubtree is always called here with isCoreSector: true (no pop/core
               // split in this renderer), so every node gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
           side={panel.side}
           onClose={closeNodeInfo}
+          onSelectNode={(id) => {
+            const targetNode = nodes.find((n) => n.id === id)!;
+            const element = viewportRef.current!.querySelector(
+              `#group-${CSS.escape(id)}`,
+            );
+            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            showNodeInfo(
+              targetNode,
+              element ?? viewportRef.current,
+              viewportRef.current,
+            );
+          }}
         />
       )}
 
       <div className="gtv-zoom-controls">
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomIn && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomIn}
           onClick={panZoom.zoomIn}
           aria-label="Zoom in"
@@ -560,7 +705,12 @@ export function WheelRadialCore({
         </button>
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomOut && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomOut}
           onClick={panZoom.zoomOut}
           aria-label="Zoom out"
@@ -570,7 +720,9 @@ export function WheelRadialCore({
         <button
           type="button"
           className="gtv-zoom-btn"
-          onClick={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}
+          onClick={() =>
+            panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])
+          }
           aria-label="Fit to frame"
         >
           <MdFitScreen className="gtv-icon" size={18} />

@@ -61,12 +61,14 @@ describe("GenreTreeWheelRight", () => {
     expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Electronic")).toBeTruthy();
     expect(chipFor(container, "Jazz")).toBeTruthy();
-    // The selected root's own card is hidden — its tree grows directly out of its chip — but
-    // its descendants still render.
-    expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-a-child")).toBeTruthy();
-    expect(container.querySelector("#group-root-b")).toBeFalsy();
-    expect(container.querySelector("#group-root-c")).toBeFalsy();
+    // The selected root's own card is hidden from the SVG tree — its tree grows directly out of
+    // its chip (which now carries the same "#group-<id>" id for InfoPanel navigation) — but its
+    // descendants still render there.
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-a")).toBeFalsy();
+    expect(svg.querySelector("#group-a-child")).toBeTruthy();
+    expect(svg.querySelector("#group-root-b")).toBeFalsy();
+    expect(svg.querySelector("#group-root-c")).toBeFalsy();
   });
 
   it("renders a hover-revealed name label inside each root chip", () => {
@@ -97,9 +99,10 @@ describe("GenreTreeWheelRight", () => {
 
     fireEvent.click(chipFor(container, "Electronic"));
 
-    expect(container.querySelector("#group-root-a")).toBeFalsy();
-    expect(container.querySelector("#group-root-b")).toBeFalsy();
-    expect(container.querySelector("#group-b-child")).toBeTruthy();
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("#group-root-a")).toBeFalsy();
+    expect(svg.querySelector("#group-root-b")).toBeFalsy();
+    expect(svg.querySelector("#group-b-child")).toBeTruthy();
     expect(onRootSelect).toHaveBeenLastCalledWith("root-b");
     expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
     expect(chipFor(container, "Rock").className).not.toContain("gtv-wheel-chip--selected");

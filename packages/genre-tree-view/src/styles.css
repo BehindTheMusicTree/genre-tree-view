@@ -407,6 +407,7 @@
    CORNER_RADIUS as-is would read as a pill rather than a card corner — scaled down to keep the
    radius-to-height ratio close to a real node's. */
 .gtv-info-panel-child {
+  font: inherit;
   font-size: 12px;
   font-weight: 500;
   padding: 4px 10px;
@@ -416,6 +417,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  cursor: pointer;
+}
+
+.gtv-info-panel-child:hover {
+  opacity: 0.85;
 }
 
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
