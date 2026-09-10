@@ -1,20 +1,17 @@
 import { useCallback, useState } from "react";
 
 import { GenreTreeNode } from "./types";
-import { INFO_PANEL_WIDTH } from "./constants";
 import { resolveInfoPanelSide } from "./info-panel-geometry";
 
 export interface NodeInfoPanelState {
   node: GenreTreeNode;
-  side: "left" | "right";
+  side: "left";
 }
 
 export interface UseNodeInfoPanelResult {
   panel: NodeInfoPanelState | null;
-  /** Opens (or updates, if already open) the panel for `node`, freezing its side against the
-   * clicked element's/viewport's current rects — a different node clicked later re-evaluates the
-   * side fresh, but panning/zooming while it's open does not. No-ops if either rect isn't
-   * measurable (e.g. not yet mounted in jsdom). */
+  /** Opens (or updates, if already open) the panel for `node`. No-ops if `element` or `viewport`
+   * is missing (e.g. not yet mounted in jsdom). */
   showNodeInfo: (node: GenreTreeNode, element: Element | null | undefined, viewport: Element | null | undefined) => void;
   closeNodeInfo: () => void;
 }
@@ -28,8 +25,7 @@ export function useNodeInfoPanel(): UseNodeInfoPanelResult {
   const showNodeInfo = useCallback(
     (node: GenreTreeNode, element: Element | null | undefined, viewport: Element | null | undefined) => {
       if (!element || !viewport) return;
-      const side = resolveInfoPanelSide(element.getBoundingClientRect(), viewport.getBoundingClientRect(), INFO_PANEL_WIDTH);
-      setPanel({ node, side });
+      setPanel({ node, side: resolveInfoPanelSide() });
     },
     [],
   );

@@ -35,11 +35,17 @@ export interface UsePanZoomResult {
    * Also relaxes manual zoom-out's floor to match, when this content needs to go further out
    * than ZOOM_MIN_SCALE — see minScale below. */
   fitToFrame: (elements: (Element | null | undefined)[]) => void;
-  /** Animates pan/scale so `element`'s center glides to the viewport's center at `targetScale`
-   * (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node to a fixed, comfortable
-   * reading scale regardless of the scale the user was already at. No-ops if the element/viewport
-   * isn't present/measurable. */
-  centerOnElement: (element: Element | null | undefined, targetScale: number) => void;
+  /** Animates pan/scale so `element`'s center glides to the center of the viewport's *available*
+   * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
+   * to a fixed, comfortable reading scale regardless of the scale the user was already at. Pass
+   * `obscuredWidth`/`obscuredSide` when an overlay (e.g. the info panel) will cover part of the
+   * viewport, so the element centers within the space that remains visible beside it rather than
+   * the viewport's full width. No-ops if the element/viewport isn't present/measurable. */
+  centerOnElement: (
+    element: Element | null | undefined,
+    targetScale: number,
+    obscured?: { width: number; side: "left" | "right" } | null,
+  ) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
 }
 
@@ -223,6 +229,37 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     [stepZoomAnimation],
   );
 
+  // Keeps the viewport's current center point fixed on screen when its box is resized (matching
+  // Google Maps: resizing the map container never re-fits or re-zooms, it just reveals/hides edges
+  // around the same center) — panX/panY shift by half the size delta so the point that was in the
+  // middle of the old box is still in the middle of the new one, then get re-clamped in case the
+  // resize shrank the viewport below what the current pan allows.
+  const viewportSizeRef = useRef<{ width: number; height: number } | null>(null);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+
+      const previous = viewportSizeRef.current;
+      viewportSizeRef.current = { width, height };
+      if (!previous) return;
+
+      const dx = (width - previous.width) / 2;
+      const dy = (height - previous.height) / 2;
+      if (dx === 0 && dy === 0) return;
+
+      const scale = zoomScaleRef.current;
+      setPanX((x) => clampPanAxis(x + dx, scale, "x"));
+      setPanY((y) => clampPanAxis(y + dy, scale, "y"));
+    });
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [viewportRef, clampPanAxis]);
+
   // Non-passive + attached directly to the DOM node (rather than React's onWheel) because
   // React's wheel handler is passive by default, which silently drops preventDefault() — and
   // without it, ctrl+wheel triggers the browser's own page zoom instead of this one. Registered
@@ -405,7 +442,11 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // comfortable reading scale, centered" instead of "fit everything on screen". Glides there via
   // stepCenterAnimation rather than jumping instantly.
   const centerOnElement = useCallback(
-    (element: Element | null | undefined, targetScale: number) => {
+    (
+      element: Element | null | undefined,
+      targetScale: number,
+      obscured?: { width: number; side: "left" | "right" } | null,
+    ) => {
       const viewport = viewportRef.current;
       if (!viewport || !element) return;
 
@@ -422,7 +463,15 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       const newScale = clampZoomScale(targetScale, minScaleRef.current);
       const centerX = (rect.left + rect.width / 2 - viewportRect.left - panXRef.current) / currentScale;
       const centerY = (rect.top + rect.height / 2 - viewportRect.top - panYRef.current) / currentScale;
-      const targetPanX = viewportRect.width / 2 - centerX * newScale;
+      // With an overlay obscuring one side, "centered on screen" means centered in the strip that
+      // remains visible beside it, not the viewport's full width — otherwise the element ends up
+      // right where the overlay covers it.
+      const availableCenterX = !obscured
+        ? viewportRect.width / 2
+        : obscured.side === "left"
+          ? obscured.width + (viewportRect.width - obscured.width) / 2
+          : (viewportRect.width - obscured.width) / 2;
+      const targetPanX = availableCenterX - centerX * newScale;
       const targetPanY = viewportRect.height / 2 - centerY * newScale;
 
       // Cancel any in-flight wheel-notch glide so it doesn't fight this animation over the same

@@ -30,7 +30,7 @@ describe("useNodeInfoPanel", () => {
     expect(result.current.panel).toEqual({ node: nodeA, side: "left" });
   });
 
-  it("switches to a different node's content without closing, and re-evaluates side", () => {
+  it("switches to a different node's content without closing", () => {
     const { result } = renderHook(() => useNodeInfoPanel());
     const viewport = elementAt(0);
 
@@ -42,7 +42,7 @@ describe("useNodeInfoPanel", () => {
     act(() => {
       result.current.showNodeInfo(nodeB, elementAt(100), viewport);
     });
-    expect(result.current.panel).toEqual({ node: nodeB, side: "right" });
+    expect(result.current.panel).toEqual({ node: nodeB, side: "left" });
   });
 
   it("closes only via closeNodeInfo", () => {

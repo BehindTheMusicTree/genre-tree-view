@@ -51,3 +51,20 @@ export function groupNodesByRoot(nodes: GenreTreeNode[]): GenreTreeRootGroup[] {
     .filter((node) => node.parentId === null)
     .map((root) => ({ root, nodes: nodesByRootId.get(root.id)! }));
 }
+
+/**
+ * Walks upward from `parentId` through `nodes`, collecting every ancestor above it (root-first) —
+ * excludes `parentId`'s own node, since callers already show the immediate parent separately.
+ * Stops if the chain terminates on a `parentId` absent from `nodes` (dangling reference).
+ */
+export function computeAncestorChain(nodes: GenreTreeNode[], parentId: string | null): GenreTreeNode[] {
+  const ancestors: GenreTreeNode[] = [];
+  let current = nodes.find((n) => n.id === parentId);
+  while (current && current.parentId !== null) {
+    const parent = nodes.find((n) => n.id === current!.parentId);
+    if (!parent) break;
+    ancestors.unshift(parent);
+    current = parent;
+  }
+  return ancestors;
+}

@@ -1,11 +1,16 @@
-/** Decides which side of the viewport the info panel should render on: "left" (default) unless
- * the panel would cover the clicked node's own rect, in which case "right" keeps the node
- * visible. Computed once at click time (see use-node-info-panel.ts) rather than continuously, so
- * the panel's side doesn't flicker as the tree pans/zooms underneath it. */
-export function resolveInfoPanelSide(
-  nodeRect: { left: number },
-  viewportRect: { left: number },
+/** The info panel always renders on the left side of the viewport. */
+export function resolveInfoPanelSide(): "left" {
+  return "left";
+}
+
+/** Packages the panel's side as the `centerOnElement` "obscured" argument (use-pan-zoom.ts) so a
+ * node click can center the node within the space that remains visible once the panel covers the
+ * left side. */
+export function resolveInfoPanelObscuredArea(
+  element: Element | null | undefined,
+  viewport: Element | null | undefined,
   panelWidth: number,
-): "left" | "right" {
-  return nodeRect.left < viewportRect.left + panelWidth ? "right" : "left";
+): { width: number; side: "left" } | null {
+  if (!element || !viewport) return null;
+  return { width: panelWidth, side: resolveInfoPanelSide() };
 }

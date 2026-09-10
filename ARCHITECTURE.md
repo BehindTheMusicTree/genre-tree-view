@@ -117,20 +117,19 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
-- **Node info panel**: clicking any node opens a read-only panel showing that node's own
-  `GenreTreeNode` fields (id, parentId, name, itemCount, actionable, side) — internal
-  presentational chrome, like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to
-  consumers and independent of the `onNodeClick` callback, which keeps firing unchanged. It
-  anchors to the left edge of the renderer's viewport by default and flips to the right only
-  when opening on the left would cover the clicked node, via `resolveInfoPanelSide` in
-  `info-panel-geometry.ts` comparing `getBoundingClientRect()`s of the clicked element and the
-  viewport. That side is resolved once at click time and frozen until the panel closes or a
-  different node is clicked (which re-evaluates it fresh) — it never recomputes during
-  pan/zoom. Each top-level renderer owns exactly one `useNodeInfoPanel()` hook instance
-  (`use-node-info-panel.ts`), so only one panel is ever open per component instance;
-  `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all three of its D3
-  click sites (a root's pop branch, its core branch, the center "Mainstream Pop" subtree) plus
-  its ring chip buttons. The panel only closes via its own close button. Rendered by
+- **Node info panel**: clicking any node opens a read-only panel showing that node's song count
+  and side, its parent and ancestors above the parent (root-first), and its direct children, each
+  as clickable chips styled with that node's own fill/text color — internal presentational chrome,
+  like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
+  the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of
+  the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); clicking a node or
+  a panel chip centers that node within the space that remains visible beside the panel rather
+  than the viewport's full width, via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s
+  `obscured` argument in `use-pan-zoom.ts`. Each top-level renderer owns exactly one
+  `useNodeInfoPanel()` hook instance (`use-node-info-panel.ts`), so only one panel is ever open per
+  component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
+  three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
+  subtree) plus its ring chip buttons. The panel only closes via its own close button. Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
   pan/zoom-transformed content so it never scales or pans with the tree.
 

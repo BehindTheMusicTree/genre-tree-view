@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupNodesByRoot } from "../root-grouping";
+import { computeAncestorChain, groupNodesByRoot } from "../root-grouping";
 import type { GenreTreeNode } from "../types";
 
 describe("groupNodesByRoot", () => {
@@ -44,5 +44,34 @@ describe("groupNodesByRoot", () => {
     const groups = groupNodesByRoot(nodes);
     expect(groups).toHaveLength(1);
     expect(groups[0].nodes.map((n) => n.id)).toEqual(["root"]);
+  });
+});
+
+describe("computeAncestorChain", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "root", parentId: null, name: "Root", itemCount: 0 },
+    { id: "parent", parentId: "root", name: "Parent", itemCount: 0 },
+    { id: "child", parentId: "parent", name: "Child", itemCount: 0 },
+  ];
+
+  it("returns an empty array when parentId is a top-level root", () => {
+    expect(computeAncestorChain(nodes, "root")).toEqual([]);
+  });
+
+  it("returns every ancestor above parentId, root-first", () => {
+    expect(computeAncestorChain(nodes, "parent").map((n) => n.id)).toEqual(["root"]);
+    expect(computeAncestorChain(nodes, "child").map((n) => n.id)).toEqual(["root", "parent"]);
+  });
+
+  it("returns an empty array when parentId is null", () => {
+    expect(computeAncestorChain(nodes, null)).toEqual([]);
+  });
+
+  it("stops walking when the chain dangles on a parentId missing from nodes", () => {
+    const withOrphan: GenreTreeNode[] = [
+      ...nodes,
+      { id: "orphan-child", parentId: "missing-parent", name: "Orphan Child", itemCount: 0 },
+    ];
+    expect(computeAncestorChain(withOrphan, "orphan-child")).toEqual([]);
   });
 });

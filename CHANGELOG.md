@@ -7,16 +7,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Clicking a node now also opens a read-only info panel showing that node's own fields (id,
-  parent id, name, item count, actionable, side), anchored to the left edge of the tree viewport
-  by default and flipping to the right when opening on the left would cover the clicked node.
-  Present across all five renderers; closes only via its own close button, and switching to a
-  different node updates its content without requiring a close first. The existing `onNodeClick`
-  callback is unaffected and keeps firing unchanged.
+- Clicking a node now also opens a read-only info panel showing that node's song count and side,
+  always anchored to the left edge of the tree viewport. Present across all five renderers; closes
+  only via its own close button, and switching to a different node updates its content without
+  requiring a close first. The existing `onNodeClick` callback is unaffected and keeps firing
+  unchanged.
 - The info panel now also lists the clicked node's direct children as chips, each styled with the
   same fill and text color the child itself uses as its own `gtv-node-rect` out in the tree. The
   panel's header background and title/close-button text color likewise now match how the clicked
   node itself renders, instead of a fixed neutral header.
+- The info panel now also lists the clicked node's ancestors above its immediate parent (which the
+  existing Parent section already covers) as chips, root-first, so the full lineage is reachable
+  without repeated clicks.
+- Clicking a node or an info panel chip now centers that node within the space that remains
+  visible beside the info panel, instead of the viewport's full width.
+- The tree viewport now keeps its current pan center fixed on screen when its container is
+  resized, instead of only re-centering the next time a node is clicked.
 
 ### Changed
 

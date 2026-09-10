@@ -6,6 +6,7 @@ import * as d3 from "d3";
 
 import { NodeToolbar } from "./NodeToolbar";
 import {
+  computeAncestorChain,
   findRootId,
   GenreTreeRootGroup,
   groupNodesByRoot,
@@ -30,7 +31,8 @@ import {
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { InfoPanel } from "./InfoPanel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
+import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -39,6 +41,7 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
+  INFO_PANEL_WIDTH,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
@@ -353,13 +356,15 @@ export function WheelRadialCore({
               void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
+            const clickedElement = event.currentTarget as Element | null;
             centerOnElementRef.current(
-              event.currentTarget as Element | null,
+              clickedElement,
               ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
-              event.currentTarget as Element | null,
+              clickedElement,
               viewportRef.current,
             );
             onNodeClick?.(data, event);
@@ -578,6 +583,7 @@ export function WheelRadialCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
+                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
@@ -678,6 +684,13 @@ export function WheelRadialCore({
               // split in this renderer), so every node gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
+          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+            (n): InfoPanelChild => ({
+              node: n,
+              fill: getGenreTreeColor(findRootId(n.id, nodes) ?? n.id),
+              textColor: ACCENT_TEXT_COLOR,
+            }),
+          )}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
@@ -685,7 +698,11 @@ export function WheelRadialCore({
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
-            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
             showNodeInfo(
               targetNode,
               element ?? viewportRef.current,

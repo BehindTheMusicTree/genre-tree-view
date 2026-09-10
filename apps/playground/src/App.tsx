@@ -6,8 +6,6 @@ import {
   GenreTreeWheelRadialPopCore,
   GenreTreeWheelRight,
   groupNodesByRoot,
-  DEFAULT_FRAME_WIDTH,
-  DEFAULT_FRAME_HEIGHT,
   type GenreTreeNode,
   type GenreTreePlayState,
 } from "@behindthemusictree/genre-tree-view";
@@ -593,8 +591,8 @@ export function App() {
       {activeTab === "wheel" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -614,8 +612,8 @@ export function App() {
       {activeTab === "wheel-right" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -635,8 +633,8 @@ export function App() {
       {activeTab === "wheel-radial" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -655,8 +653,8 @@ export function App() {
       {activeTab === "wheel-radial-pop-core" && (
         <div
           style={{
-            width: DEFAULT_FRAME_WIDTH,
-            height: DEFAULT_FRAME_HEIGHT,
+            width: "100%",
+            height: "70vh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -678,8 +676,8 @@ export function App() {
             <div
               key={group.root.id}
               style={{
-                width: DEFAULT_FRAME_WIDTH,
-                height: DEFAULT_FRAME_HEIGHT,
+                width: "100%",
+                height: "70vh",
                 border: "1px solid #e4e4e7",
                 background: "#f4f4f5",
               }}
