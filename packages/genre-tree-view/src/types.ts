@@ -113,4 +113,9 @@ export interface GenreTreeProps {
    * (e.g. GenreTreeWheel's nested tree) whose own info panel, and thus own selection, is owned
    * by an ancestor rather than by this instance. Leave unset to use the internal selection. */
   selectedNodeId?: string | null;
+  /** Renders extra content into the built-in info panel for the clicked node, below its built-in
+   * fields — e.g. a consumer-fetched detail like essential tracks. The library has no knowledge
+   * of what this renders (loading state, data fetching, etc. are entirely the consumer's
+   * responsibility, mirroring `additionalActions`); omit for no extra section. */
+  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
 }

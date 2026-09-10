@@ -131,7 +131,10 @@ pnpm workspace with two members:
   three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
   subtree) plus its ring chip buttons. The panel only closes via its own close button. Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
-  pan/zoom-transformed content so it never scales or pans with the tree.
+  pan/zoom-transformed content so it never scales or pans with the tree. `GenreTreeProps.renderExtraDetails`
+  (an optional `(node) => ReactNode`, threaded through all five renderers to `InfoPanel`) renders
+  extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
+  tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
 
 ## Public surface
 

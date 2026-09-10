@@ -132,6 +132,7 @@ export function WheelRadialPopCoreCore({
   onNodeClick,
   additionalActions,
   showToolbar = true,
+  renderExtraDetails,
   allowWheelRotation = true,
 }: WheelRadialPopCoreProps) {
   const centerNode = nodes.find(
@@ -1200,6 +1201,7 @@ export function WheelRadialPopCoreCore({
               viewportRef.current,
             );
           }}
+          renderExtraDetails={renderExtraDetails}
         />
       )}
 

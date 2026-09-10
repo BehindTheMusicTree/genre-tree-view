@@ -478,6 +478,22 @@ function createNodeCallbacks(
         },
       },
     ],
+    // Demonstrates GenreTreeProps.renderExtraDetails: the library knows nothing about "essential
+    // tracks" — this is entirely playground-owned mock content/loading state.
+    renderExtraDetails: (node: GenreTreeNode) => (
+      <div style={{ padding: "12px 16px", borderTop: "1px solid #e4e4e7" }}>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>Essential tracks</div>
+        {node.itemCount === 0 ? (
+          <div style={{ color: "#71717a" }}>No tracks yet.</div>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {Array.from({ length: Math.min(3, node.itemCount) }, (_, i) => (
+              <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    ),
   };
 }
 
