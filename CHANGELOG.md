@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-10
+
 ### Added
 
 - Clicking a node now also opens a read-only info panel showing that node's song count and side,
