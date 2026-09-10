@@ -6,6 +6,26 @@ export interface GenreTreeRootGroup {
 }
 
 /**
+ * Walks `nodeId`'s `parentId` chain up through `nodes` to find its top-level ancestor (a node
+ * with `parentId === null`). Returns `null` if the chain terminates on a `parentId` absent from
+ * `nodes` (dangling reference) or `nodeId` itself isn't in `nodes`.
+ */
+export function findRootId(nodeId: string, nodes: GenreTreeNode[]): string | null {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const rootIdCache = new Map<string, string | null>();
+
+  const rootIdOf = (id: string): string | null => {
+    if (rootIdCache.has(id)) return rootIdCache.get(id)!;
+    const node = nodeById.get(id);
+    const rootId = !node ? null : node.parentId === null ? node.id : rootIdOf(node.parentId);
+    rootIdCache.set(id, rootId);
+    return rootId;
+  };
+
+  return rootIdOf(nodeId);
+}
+
+/**
  * Groups a flat node list by top-level ancestor (a node with `parentId === null`), walking each
  * node's `parentId` chain up to find which root it belongs to. A node whose chain terminates on a
  * `parentId` absent from `nodes` (dangling reference) belongs to no group.

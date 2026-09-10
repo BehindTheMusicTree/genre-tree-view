@@ -6,7 +6,7 @@ import * as d3 from "d3";
 
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
-import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
+import { findRootId, GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { splitRootGroupBySide } from "./pop-core-split";
 import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "./core-radial-layout";
 import {
@@ -32,6 +32,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
+  ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getGenreTreeColor,
@@ -39,8 +40,11 @@ import {
   hexToRgba,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
+  POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
+  TEXT_COLOR,
+  tintSurface,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -180,6 +184,28 @@ export function WheelRadialPopCoreCore({
   const splitByRootId = useMemo(
     () => new Map(groups.map((group) => [group.root.id, splitRootGroupBySide(group)])),
     [groups],
+  );
+
+  // Mirrors renderPopSubtree's nodeFill/text-color rules (pop-core-radial-layout.ts) for whichever
+  // sector a given node actually renders in here: the center "Mainstream Pop" subtree (tinted,
+  // dark text), a ring root's core branch (solid, light text), or its pop branch (tinted, light
+  // text) — used to style InfoPanel's child chips the same way their real chip renders.
+  const getNodeVisualStyle = useCallback(
+    (node: GenreTreeNode): { fill: string; textColor: string } => {
+      if (centerSubtreeNodeIds.has(node.id)) {
+        // Matches centerNodeColor below — the fixed white rootColor renderPopSubtree uses for the
+        // center "Mainstream Pop" subtree.
+        return { fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO), textColor: TEXT_COLOR };
+      }
+      const rootId = findRootId(node.id, nodes) ?? node.id;
+      const rootColor = getGenreTreeColor(rootId);
+      const isCore = splitByRootId.get(rootId)?.coreNodes.some((coreNode) => coreNode.id === node.id) ?? false;
+      return {
+        fill: isCore ? rootColor : tintSurface(rootColor, POP_SECTOR_TINT_RATIO),
+        textColor: ACCENT_TEXT_COLOR,
+      };
+    },
+    [centerSubtreeNodeIds, splitByRootId, nodes],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(groups[0]?.root.id ?? null);
@@ -903,7 +929,16 @@ export function WheelRadialPopCoreCore({
         </div>
       </div>
 
-      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
+      {panel && (
+        <InfoPanel
+          node={panel.node}
+          childNodes={nodes
+            .filter((n) => n.parentId === panel.node.id)
+            .map((n) => ({ node: n, ...getNodeVisualStyle(n) }))}
+          side={panel.side}
+          onClose={closeNodeInfo}
+        />
+      )}
 
       <div className="gtv-wheel-floating-controls">
         {centerSubtreeHierarchy && (

@@ -7,7 +7,7 @@ import * as d3 from "d3";
 import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
-import { groupNodesByRoot } from "./root-grouping";
+import { findRootId, groupNodesByRoot } from "./root-grouping";
 import {
   buildWheelSectorGradient,
   calculateWheelRadius,
@@ -21,6 +21,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { InfoPanel } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
+  ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getGenreTreeColor,
@@ -386,7 +387,21 @@ export function WheelCore({
         </div>
       </div>
 
-      {panel && <InfoPanel node={panel.node} side={panel.side} onClose={closeNodeInfo} />}
+      {panel && (
+        <InfoPanel
+          node={panel.node}
+          childNodes={nodes
+            .filter((n) => n.parentId === panel.node.id)
+            .map((n) => {
+              const rootColor = getGenreTreeColor(findRootId(n.id, nodes) ?? n.id);
+              // This wheel's inner subtree always renders via <GenreTree hideRoot ... />, so every
+              // visible node — including every child listed here — gets a solid rootColor fill.
+              return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
+            })}
+          side={panel.side}
+          onClose={closeNodeInfo}
+        />
+      )}
 
       <div className="gtv-zoom-controls">
         <button
