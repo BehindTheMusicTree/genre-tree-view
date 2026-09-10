@@ -30,6 +30,7 @@ import {
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -39,6 +40,7 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
+  INFO_PANEL_WIDTH,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
@@ -353,13 +355,15 @@ export function WheelRadialCore({
               void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
+            const clickedElement = event.currentTarget as Element | null;
             centerOnElementRef.current(
-              event.currentTarget as Element | null,
+              clickedElement,
               ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
-              event.currentTarget as Element | null,
+              clickedElement,
               viewportRef.current,
             );
             onNodeClick?.(data, event);
@@ -578,6 +582,7 @@ export function WheelRadialCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
+                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
@@ -702,7 +707,11 @@ export function WheelRadialCore({
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
-            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
             showNodeInfo(
               targetNode,
               element ?? viewportRef.current,

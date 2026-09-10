@@ -35,11 +35,17 @@ export interface UsePanZoomResult {
    * Also relaxes manual zoom-out's floor to match, when this content needs to go further out
    * than ZOOM_MIN_SCALE — see minScale below. */
   fitToFrame: (elements: (Element | null | undefined)[]) => void;
-  /** Animates pan/scale so `element`'s center glides to the viewport's center at `targetScale`
-   * (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node to a fixed, comfortable
-   * reading scale regardless of the scale the user was already at. No-ops if the element/viewport
-   * isn't present/measurable. */
-  centerOnElement: (element: Element | null | undefined, targetScale: number) => void;
+  /** Animates pan/scale so `element`'s center glides to the center of the viewport's *available*
+   * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
+   * to a fixed, comfortable reading scale regardless of the scale the user was already at. Pass
+   * `obscuredWidth`/`obscuredSide` when an overlay (e.g. the info panel) will cover part of the
+   * viewport, so the element centers within the space that remains visible beside it rather than
+   * the viewport's full width. No-ops if the element/viewport isn't present/measurable. */
+  centerOnElement: (
+    element: Element | null | undefined,
+    targetScale: number,
+    obscured?: { width: number; side: "left" | "right" } | null,
+  ) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
 }
 
@@ -436,7 +442,11 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
   // comfortable reading scale, centered" instead of "fit everything on screen". Glides there via
   // stepCenterAnimation rather than jumping instantly.
   const centerOnElement = useCallback(
-    (element: Element | null | undefined, targetScale: number) => {
+    (
+      element: Element | null | undefined,
+      targetScale: number,
+      obscured?: { width: number; side: "left" | "right" } | null,
+    ) => {
       const viewport = viewportRef.current;
       if (!viewport || !element) return;
 
@@ -453,7 +463,15 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       const newScale = clampZoomScale(targetScale, minScaleRef.current);
       const centerX = (rect.left + rect.width / 2 - viewportRect.left - panXRef.current) / currentScale;
       const centerY = (rect.top + rect.height / 2 - viewportRect.top - panYRef.current) / currentScale;
-      const targetPanX = viewportRect.width / 2 - centerX * newScale;
+      // With an overlay obscuring one side, "centered on screen" means centered in the strip that
+      // remains visible beside it, not the viewport's full width — otherwise the element ends up
+      // right where the overlay covers it.
+      const availableCenterX = !obscured
+        ? viewportRect.width / 2
+        : obscured.side === "left"
+          ? obscured.width + (viewportRect.width - obscured.width) / 2
+          : (viewportRect.width - obscured.width) / 2;
+      const targetPanX = availableCenterX - centerX * newScale;
       const targetPanY = viewportRect.height / 2 - centerY * newScale;
 
       // Cancel any in-flight wheel-notch glide so it doesn't fight this animation over the same

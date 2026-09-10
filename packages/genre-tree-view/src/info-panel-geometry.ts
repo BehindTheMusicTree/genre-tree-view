@@ -9,3 +9,19 @@ export function resolveInfoPanelSide(
 ): "left" | "right" {
   return nodeRect.left < viewportRect.left + panelWidth ? "right" : "left";
 }
+
+/** Same side decision `showNodeInfo` (use-node-info-panel.ts) makes, packaged as the
+ * `centerOnElement` "obscured" argument (use-pan-zoom.ts) so a node click can center the node
+ * within the space that will remain visible once the panel it's about to open covers the other
+ * side — computed independently (not read from panel state), since the panel may not be open yet. */
+export function resolveInfoPanelObscuredArea(
+  element: Element | null | undefined,
+  viewport: Element | null | undefined,
+  panelWidth: number,
+): { width: number; side: "left" | "right" } | null {
+  if (!element || !viewport) return null;
+  return {
+    width: panelWidth,
+    side: resolveInfoPanelSide(element.getBoundingClientRect(), viewport.getBoundingClientRect(), panelWidth),
+  };
+}

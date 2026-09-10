@@ -15,6 +15,7 @@ import {
 import {
   ACCENT_TEXT_COLOR,
   getGenreTreeColor,
+  INFO_PANEL_WIDTH,
   TEXT_COLOR,
   tintSurface,
   ZOOM_FOCUS_SCALE,
@@ -22,6 +23,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 
 /**
@@ -145,9 +147,11 @@ export function GenreTree({
           }
         },
         onNodeClick: (data, event) => {
+          const clickedElement = event.currentTarget as Element | null;
           centerOnElementRef.current(
-            event.currentTarget as Element | null,
+            clickedElement,
             ZOOM_FOCUS_SCALE,
+            resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
           );
           showNodeInfoRef.current(
             data,
@@ -325,7 +329,11 @@ export function GenreTree({
             const element = svgRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
-            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
             showNodeInfo(
               targetNode,
               element ?? viewportRef.current,

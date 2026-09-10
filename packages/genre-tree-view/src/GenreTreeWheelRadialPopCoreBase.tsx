@@ -42,6 +42,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -51,6 +52,7 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
+  INFO_PANEL_WIDTH,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_SECTOR_TINT_RATIO,
@@ -615,13 +617,15 @@ export function WheelRadialPopCoreCore({
               void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
+            const clickedElement = event.currentTarget as Element | null;
             centerOnElementRef.current(
-              event.currentTarget as Element | null,
+              clickedElement,
               ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
-              event.currentTarget as Element | null,
+              clickedElement,
               viewportRef.current,
             );
             onNodeClick?.(data, event);
@@ -684,13 +688,15 @@ export function WheelRadialPopCoreCore({
               void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
+            const clickedElement = event.currentTarget as Element | null;
             centerOnElementRef.current(
-              event.currentTarget as Element | null,
+              clickedElement,
               ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
-              event.currentTarget as Element | null,
+              clickedElement,
               viewportRef.current,
             );
             onNodeClick?.(data, event);
@@ -747,13 +753,15 @@ export function WheelRadialPopCoreCore({
               void onReparent?.(reparentingNodeId, newParentId);
           },
           onNodeClick: (data, event) => {
+            const clickedElement = event.currentTarget as Element | null;
             centerOnElementRef.current(
-              event.currentTarget as Element | null,
+              clickedElement,
               ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
-              event.currentTarget as Element | null,
+              clickedElement,
               viewportRef.current,
             );
             onNodeClick?.(data, event);
@@ -1092,6 +1100,7 @@ export function WheelRadialPopCoreCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
+                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
@@ -1189,7 +1198,11 @@ export function WheelRadialPopCoreCore({
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
-            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
             showNodeInfo(
               targetNode,
               element ?? viewportRef.current,

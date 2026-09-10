@@ -18,6 +18,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
@@ -27,6 +28,7 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
+  INFO_PANEL_WIDTH,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
@@ -304,13 +306,15 @@ export function WheelCore({
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
                 onNodeClick={(data, event) => {
+                  const clickedElement = event.currentTarget as Element | null;
                   panZoom.centerOnElement(
-                    event.currentTarget as Element | null,
+                    clickedElement,
                     ZOOM_FOCUS_SCALE,
+                    resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
                   );
                   showNodeInfo(
                     data,
-                    event.currentTarget as Element | null,
+                    clickedElement,
                     viewportRef.current,
                   );
                   onNodeClick?.(data, event);
@@ -417,6 +421,7 @@ export function WheelCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
+                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id, angle);
                         if (!reparentingNodeId) {
@@ -541,7 +546,11 @@ export function WheelCore({
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
-            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            panZoom.centerOnElement(
+              element,
+              ZOOM_FOCUS_SCALE,
+              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+            );
             showNodeInfo(
               targetNode,
               element ?? viewportRef.current,
