@@ -12,7 +12,13 @@ import {
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH, RADIAL_LINK_WIDTH, WHEEL_RADIUS, getItemCountRange } from "../constants";
+import {
+  POP_TREE_DEPTH_RADIAL_SPACING,
+  MAX_NODE_WIDTH,
+  RADIAL_LINK_WIDTH,
+  WHEEL_RADIUS,
+  getItemCountRange,
+} from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -23,7 +29,12 @@ afterEach(() => {
 function createSvg() {
   const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   document.body.appendChild(svgEl);
-  return d3.select(svgEl).append("g") as unknown as d3.Selection<SVGGElement, unknown, null, undefined>;
+  return d3.select(svgEl).append("g") as unknown as d3.Selection<
+    SVGGElement,
+    unknown,
+    null,
+    undefined
+  >;
 }
 
 const noopCallbacks: RenderPopSubtreeCallbacks = {
@@ -34,13 +45,23 @@ const popRock: GenreTreeNode[] = [
   { id: "rock-pop", parentId: null, name: "Pop Rock", itemCount: 0 },
   { id: "arena-rock", parentId: "rock-pop", name: "Arena Rock", itemCount: 0 },
   { id: "soft-rock", parentId: "rock-pop", name: "Soft Rock", itemCount: 0 },
-  { id: "yacht-rock", parentId: "arena-rock", name: "Yacht Rock", itemCount: 0 },
+  {
+    id: "yacht-rock",
+    parentId: "arena-rock",
+    name: "Yacht Rock",
+    itemCount: 0,
+  },
 ];
 
 describe("buildPopHierarchy", () => {
   const popWithExcludedRootParent: GenreTreeNode[] = [
     { id: "rock-pop", parentId: "root-a", name: "Pop Rock", itemCount: 0 },
-    { id: "arena-rock", parentId: "rock-pop", name: "Arena Rock", itemCount: 0 },
+    {
+      id: "arena-rock",
+      parentId: "rock-pop",
+      name: "Arena Rock",
+      itemCount: 0,
+    },
   ];
 
   it("roots the d3 hierarchy at the pop child, despite its parentId pointing at the excluded ring root", () => {
@@ -57,7 +78,9 @@ describe("buildPopHierarchy", () => {
 
   it("leaves non-root descendants' data untouched, still pointing at their real in-subtree parent", () => {
     const hierarchy = buildPopHierarchy(d3, popWithExcludedRootParent);
-    const arenaRock = hierarchy.descendants().find((d) => d.data.id === "arena-rock")!;
+    const arenaRock = hierarchy
+      .descendants()
+      .find((d) => d.data.id === "arena-rock")!;
     expect(arenaRock.data.parentId).toBe("rock-pop");
   });
 });
@@ -66,8 +89,15 @@ describe("computePopRadialLayout", () => {
   it("places the pop child (depth 0) one depthSpacing inside coreRootCircleRadius, on the wedge's center angle", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const coreRootCircleRadius = 1000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 0, coreRootCircleRadius);
-    const popChild = laidOut.descendants().find((d) => d.data.id === "rock-pop")!;
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      0,
+      coreRootCircleRadius,
+    );
+    const popChild = laidOut
+      .descendants()
+      .find((d) => d.data.id === "rock-pop")!;
     const expectedRadius = coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING;
 
     expect(Math.hypot(popChild.x!, popChild.y!)).toBeCloseTo(expectedRadius, 5);
@@ -79,11 +109,19 @@ describe("computePopRadialLayout", () => {
   it("places every node at coreRootCircleRadius - (depth + 1) * depthSpacing, shallowest nodes fixed just inside coreRootCircleRadius regardless of subtree height", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const coreRootCircleRadius = 5000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 90, coreRootCircleRadius);
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      90,
+      coreRootCircleRadius,
+    );
 
     laidOut.each((d) => {
       const radius = Math.hypot(d.x!, d.y!);
-      expect(radius).toBeCloseTo(coreRootCircleRadius - (d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING, 5);
+      expect(radius).toBeCloseTo(
+        coreRootCircleRadius - (d.depth + 1) * POP_TREE_DEPTH_RADIAL_SPACING,
+        5,
+      );
     });
   });
 
@@ -103,7 +141,13 @@ describe("computePopRadialLayout", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const wedgeCenterDeg = 90;
     const wedgeSpanDegrees = 30;
-    const laidOut = computePopRadialLayout(d3, hierarchy, wedgeCenterDeg, 5000, wedgeSpanDegrees);
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      wedgeCenterDeg,
+      5000,
+      wedgeSpanDegrees,
+    );
 
     laidOut.each((d) => {
       const angleDeg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
@@ -113,39 +157,70 @@ describe("computePopRadialLayout", () => {
   });
 
   it("keeps a single-node subtree (no children) at the wedge center, one depthSpacing inside coreRootCircleRadius", () => {
-    const solo: GenreTreeNode[] = [{ id: "solo-pop", parentId: null, name: "Solo Pop", itemCount: 0 }];
+    const solo: GenreTreeNode[] = [
+      { id: "solo-pop", parentId: null, name: "Solo Pop", itemCount: 0 },
+    ];
     const hierarchy = buildPopHierarchy(d3, solo);
     const coreRootCircleRadius = 1000;
-    const laidOut = computePopRadialLayout(d3, hierarchy, 180, coreRootCircleRadius);
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      180,
+      coreRootCircleRadius,
+    );
     const node = laidOut.descendants()[0];
 
     expect(node.x!).toBeCloseTo(0, 5);
-    expect(node.y!).toBeCloseTo(coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING, 5);
+    expect(node.y!).toBeCloseTo(
+      coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING,
+      5,
+    );
   });
 
   it("places the shallowest node (the branch's own root) the same fixed distance inside coreRootCircleRadius, regardless of subtree height", () => {
-    const shallow = buildPopHierarchy(d3, [{ id: "shallow-pop", parentId: null, name: "Shallow Pop", itemCount: 0 }]);
+    const shallow = buildPopHierarchy(d3, [
+      { id: "shallow-pop", parentId: null, name: "Shallow Pop", itemCount: 0 },
+    ]);
     const deep = buildPopHierarchy(d3, popRock);
     const coreRootCircleRadius = 5000;
 
-    const laidOutShallow = computePopRadialLayout(d3, shallow, 0, coreRootCircleRadius);
-    const laidOutDeep = computePopRadialLayout(d3, deep, 180, coreRootCircleRadius);
+    const laidOutShallow = computePopRadialLayout(
+      d3,
+      shallow,
+      0,
+      coreRootCircleRadius,
+    );
+    const laidOutDeep = computePopRadialLayout(
+      d3,
+      deep,
+      180,
+      coreRootCircleRadius,
+    );
 
-    const shallowRoot = laidOutShallow.descendants().find((d) => d.data.id === "shallow-pop")!;
-    const deepRoot = laidOutDeep.descendants().find((d) => d.data.id === "rock-pop")!;
+    const shallowRoot = laidOutShallow
+      .descendants()
+      .find((d) => d.data.id === "shallow-pop")!;
+    const deepRoot = laidOutDeep
+      .descendants()
+      .find((d) => d.data.id === "rock-pop")!;
 
     // Every branch's own root lands the same fixed distance inside coreRootCircleRadius,
     // regardless of how tall the subtree beneath its ring root grows — only the deepest node's
     // distance from the mainstream circle should vary with height, not this.
     const expectedRadius = coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING;
-    expect(Math.hypot(shallowRoot.x!, shallowRoot.y!)).toBeCloseTo(expectedRadius, 5);
+    expect(Math.hypot(shallowRoot.x!, shallowRoot.y!)).toBeCloseTo(
+      expectedRadius,
+      5,
+    );
     expect(Math.hypot(deepRoot.x!, deepRoot.y!)).toBeCloseTo(expectedRadius, 5);
   });
 });
 
 describe("calculatePopSubtreeRadialExtent", () => {
   it("grows with the subtree's depth", () => {
-    const shallow = buildPopHierarchy(d3, [{ id: "a", parentId: null, name: "A", itemCount: 0 }]);
+    const shallow = buildPopHierarchy(d3, [
+      { id: "a", parentId: null, name: "A", itemCount: 0 },
+    ]);
     const deep = buildPopHierarchy(d3, popRock);
 
     const shallowExtent = calculatePopSubtreeRadialExtent(shallow);
@@ -159,7 +234,10 @@ describe("calculatePopSubtreeRadialExtent", () => {
     const extent = calculatePopSubtreeRadialExtent(hierarchy);
     const maxDepth = hierarchy.height;
 
-    expect(extent).toBeCloseTo((maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24, 5);
+    expect(extent).toBeCloseTo(
+      (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
+      5,
+    );
   });
 });
 
@@ -173,7 +251,12 @@ const centerWithSubtree: GenreTreeNode[] = [
 describe("computeCenterRadialLayout", () => {
   it("pins the depth-0 center node exactly at the origin", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
-    const laidOut = computeCenterRadialLayout(d3, hierarchy, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const laidOut = computeCenterRadialLayout(
+      d3,
+      hierarchy,
+      100,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
     const center = laidOut.descendants().find((d) => d.data.id === "pop")!;
 
     expect(center.x!).toBeCloseTo(0, 5);
@@ -183,18 +266,31 @@ describe("computeCenterRadialLayout", () => {
   it("places depth-1 nodes one depthSpacing past coreRootCircleRadius, and each deeper generation one further step out", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
     const coreRootCircleRadius = 100;
-    const laidOut = computeCenterRadialLayout(d3, hierarchy, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+    const laidOut = computeCenterRadialLayout(
+      d3,
+      hierarchy,
+      coreRootCircleRadius,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
 
     laidOut.each((d) => {
       if (d.depth === 0) return;
       const radius = Math.hypot(d.x!, d.y!);
-      expect(radius).toBeCloseTo(coreRootCircleRadius + d.depth * POP_TREE_DEPTH_RADIAL_SPACING, 5);
+      expect(radius).toBeCloseTo(
+        coreRootCircleRadius + d.depth * POP_TREE_DEPTH_RADIAL_SPACING,
+        5,
+      );
     });
   });
 
   it("spreads depth-1 siblings proportional to their own subtree size rather than equally", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
-    const laidOut = computeCenterRadialLayout(d3, hierarchy, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const laidOut = computeCenterRadialLayout(
+      d3,
+      hierarchy,
+      100,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
     const [a, b] = hierarchy.children!;
 
     // pop-a has a child (pop-a-1), pop-b doesn't: d3.tree's default separation should not split the
@@ -216,8 +312,16 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
     ]);
     const deep = buildTreeHierarchyStructure(d3, centerWithSubtree);
 
-    const shallowExtent = calculateMainstreamPopOuterCircleRadius(shallow, 100, POP_TREE_DEPTH_RADIAL_SPACING);
-    const deepExtent = calculateMainstreamPopOuterCircleRadius(deep, 100, POP_TREE_DEPTH_RADIAL_SPACING);
+    const shallowExtent = calculateMainstreamPopOuterCircleRadius(
+      shallow,
+      100,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
+    const deepExtent = calculateMainstreamPopOuterCircleRadius(
+      deep,
+      100,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
 
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
@@ -225,10 +329,17 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
   it("matches the coreRootCircleRadius + height * depthSpacing + half node width + margin formula", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
     const coreRootCircleRadius = 100;
-    const extent = calculateMainstreamPopOuterCircleRadius(hierarchy, coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+    const extent = calculateMainstreamPopOuterCircleRadius(
+      hierarchy,
+      coreRootCircleRadius,
+      POP_TREE_DEPTH_RADIAL_SPACING,
+    );
 
     expect(extent).toBeCloseTo(
-      coreRootCircleRadius + hierarchy.height * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
+      coreRootCircleRadius +
+        hierarchy.height * POP_TREE_DEPTH_RADIAL_SPACING +
+        MAX_NODE_WIDTH / 2 +
+        24,
       5,
     );
   });
@@ -244,7 +355,12 @@ describe("getRadialDepthRadius", () => {
 describe("renderPopSubtree link rendering", () => {
   const nodes: GenreTreeNode[] = [
     { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
-    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 2 },
+    {
+      id: "arena-rock",
+      parentId: "pop-rock",
+      name: "Arena Rock",
+      itemCount: 2,
+    },
   ];
 
   it("renders one path.gtv-link per link, visible (non-zero stroke-width, not none/transparent)", () => {
@@ -252,7 +368,16 @@ describe("renderPopSubtree link rendering", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+    );
 
     const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     expect(links.size()).toBe(laidOut.links().length);
@@ -268,11 +393,23 @@ describe("renderPopSubtree link rendering", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      radialReferenceRadius: WHEEL_RADIUS,
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        radialReferenceRadius: WHEEL_RADIUS,
+      },
+    );
 
-    const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
+    const strokeWidth = parseFloat(
+      svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
+    );
     expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH, 5);
   });
 
@@ -282,32 +419,64 @@ describe("renderPopSubtree link rendering", () => {
     const svg = createSvg();
     const grownRadius = WHEEL_RADIUS * 10;
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      radialReferenceRadius: grownRadius,
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        radialReferenceRadius: grownRadius,
+      },
+    );
 
-    const strokeWidth = parseFloat(svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"));
-    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS), 5);
+    const strokeWidth = parseFloat(
+      svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
+    );
+    expect(strokeWidth).toBeCloseTo(
+      RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS),
+      5,
+    );
   });
 
   it("draws an extra root->depth1 link from rootLinkOrigin to the hierarchy's own depth-0 node, since the ring root itself isn't part of the hierarchy", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const coreRootCircleRadius = 1000;
     const angle = 0;
-    const laidOut = computePopRadialLayout(d3, hierarchy, angle, coreRootCircleRadius);
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      angle,
+      coreRootCircleRadius,
+    );
     const svg = createSvg();
     const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      radialReferenceRadius: WHEEL_RADIUS,
-      rootLinkOrigin,
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        radialReferenceRadius: WHEEL_RADIUS,
+        rootLinkOrigin,
+      },
+    );
 
     const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     // hierarchy.links() (pop-rock -> arena-rock) plus the extra root -> pop-rock link.
     expect(links.size()).toBe(laidOut.links().length + 1);
 
-    const popRoot = laidOut.descendants().find((d) => d.data.id === "pop-rock")!;
+    const popRoot = laidOut
+      .descendants()
+      .find((d) => d.data.id === "pop-rock")!;
     const rootLink = links.filter((_, i, nodesArr) => {
       const d3Node = d3.select<SVGPathElement, unknown>(nodesArr[i]);
       const { start, end } = linkPathEndpoints(d3Node.attr("d")!);
@@ -326,7 +495,16 @@ describe("renderPopSubtree link rendering", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+    );
 
     const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     expect(links.size()).toBe(laidOut.links().length);
@@ -334,26 +512,41 @@ describe("renderPopSubtree link rendering", () => {
 });
 
 describe("renderPopSubtree label text color", () => {
-  const nodes: GenreTreeNode[] = [{ id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 }];
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+  ];
 
   it("uses white ACCENT_TEXT_COLOR for pop-tint sectors (isMainstreamSector false/omitted)", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+    );
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(255, 255, 255)");
 
-    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    const foreignObject = svg
+      .select<SVGForeignObjectElement>("foreignObject")
+      .node()!;
     foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
 
     const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
-    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#FFFFFF");
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe(
+      "#FFFFFF",
+    );
   });
 
   it("uses white ACCENT_TEXT_COLOR for solid-colored core sectors (isCoreSector true)", () => {
@@ -361,21 +554,35 @@ describe("renderPopSubtree label text color", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      isCoreSector: true,
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        isCoreSector: true,
+      },
+    );
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(255, 255, 255)");
 
-    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    const foreignObject = svg
+      .select<SVGForeignObjectElement>("foreignObject")
+      .node()!;
     foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
 
     const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
-    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#FFFFFF");
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe(
+      "#FFFFFF",
+    );
   });
 
   it("uses dark TEXT_COLOR for the mainstream center sector (isMainstreamSector true)", () => {
@@ -383,27 +590,43 @@ describe("renderPopSubtree label text color", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      radialReferenceRadius: WHEEL_RADIUS,
-      isMainstreamSector: true,
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        radialReferenceRadius: WHEEL_RADIUS,
+        isMainstreamSector: true,
+      },
+    );
 
     const label = svg.select<HTMLDivElement>(".gtv-node-label");
     expect(label.style("color")).toBe("rgb(24, 24, 27)");
 
-    const foreignObject = svg.select<SVGForeignObjectElement>("foreignObject").node()!;
+    const foreignObject = svg
+      .select<SVGForeignObjectElement>("foreignObject")
+      .node()!;
     foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(24, 24, 27)");
 
     const toolbar = svg.select<HTMLDivElement>(".gtv-toolbar").node()!;
-    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe("#18181B");
+    expect(toolbar.style.getPropertyValue("--gtv-toolbar-icon-color")).toBe(
+      "#18181B",
+    );
   });
 });
 
 describe("renderPopSubtree onNodeClick", () => {
-  const nodes: GenreTreeNode[] = [{ id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 }];
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+  ];
 
   it("fires onNodeClick with the node's data when its group is clicked", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
@@ -411,13 +634,24 @@ describe("renderPopSubtree onNodeClick", () => {
     const svg = createSvg();
     const onNodeClick = vi.fn();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], { ...noopCallbacks, onNodeClick }, getItemCountRange(nodes));
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      { ...noopCallbacks, onNodeClick },
+      getItemCountRange(nodes),
+    );
 
     const group = svg.select<SVGGElement>("g.node").node()!;
     group.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     expect(onNodeClick).toHaveBeenCalledTimes(1);
-    expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "pop-rock" }));
+    expect(onNodeClick.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ id: "pop-rock" }),
+    );
   });
 
   it("does not fire onNodeClick while a reparent is in progress", () => {
@@ -447,7 +681,12 @@ describe("renderPopSubtree onNodeClick", () => {
 describe("renderPopSubtree selection highlight", () => {
   const nodes: GenreTreeNode[] = [
     { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
-    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 2 },
+    {
+      id: "arena-rock",
+      parentId: "pop-rock",
+      name: "Arena Rock",
+      itemCount: 2,
+    },
   ];
 
   it("gives the selected node an accent border and dims every other node", () => {
@@ -455,16 +694,28 @@ describe("renderPopSubtree selection highlight", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
-      selectedNodeId: "arena-rock",
-    });
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      {
+        selectedNodeId: "arena-rock",
+      },
+    );
 
     const rootGroup = svg.select<SVGGElement>("#group-pop-rock").node()!;
     const childGroup = svg.select<SVGGElement>("#group-arena-rock").node()!;
     expect(rootGroup.getAttribute("class")).toContain("gtv-node--dimmed");
     expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
 
-    const childBorder = childGroup.querySelector(".gtv-node-border") as SVGPathElement;
+    const childBorder = childGroup.querySelector(
+      ".gtv-node-border",
+    ) as SVGPathElement;
     expect(childBorder.getAttribute("stroke")).toBe("#4F46E5");
     expect(childBorder.getAttribute("stroke-width")).toBe("2.5");
   });
@@ -474,12 +725,103 @@ describe("renderPopSubtree selection highlight", () => {
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
 
-    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+    );
 
     const rootGroup = svg.select<SVGGElement>("#group-pop-rock").node()!;
     const childGroup = svg.select<SVGGElement>("#group-arena-rock").node()!;
     expect(rootGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
     expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
+  });
+
+  it("dims only links not touching the selected node, leaving its parent-link and children-links undimmed", () => {
+    const hierarchy = buildPopHierarchy(d3, popRock);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(popRock),
+      {
+        selectedNodeId: "arena-rock",
+      },
+    );
+
+    const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    const dimmed = links.filter(function () {
+      return (
+        (this as SVGPathElement)
+          .getAttribute("class")
+          ?.includes("gtv-link--dimmed") ?? false
+      );
+    });
+
+    // arena-rock's own links: rock-pop -> arena-rock, arena-rock -> yacht-rock (undimmed);
+    // rock-pop -> soft-rock is unrelated (dimmed).
+    expect(links.size()).toBe(3);
+    expect(dimmed.size()).toBe(1);
+  });
+
+  it("keeps the synthetic root->depth1 link undimmed when the hierarchy's own root node is selected", () => {
+    const hierarchy = buildPopHierarchy(d3, popRock);
+    const coreRootCircleRadius = 1000;
+    const angle = 0;
+    const laidOut = computePopRadialLayout(
+      d3,
+      hierarchy,
+      angle,
+      coreRootCircleRadius,
+    );
+    const svg = createSvg();
+    const rootLinkOrigin = getRadialPointOnCircle(angle, coreRootCircleRadius);
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(popRock),
+      {
+        radialReferenceRadius: WHEEL_RADIUS,
+        rootLinkOrigin,
+        selectedNodeId: "rock-pop",
+      },
+    );
+
+    const links = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
+    const popRoot = laidOut
+      .descendants()
+      .find((d) => d.data.id === "rock-pop")!;
+    const rootLink = links.filter((_, i, nodesArr) => {
+      const d3Node = d3.select<SVGPathElement, unknown>(nodesArr[i]);
+      const { start, end } = linkPathEndpoints(d3Node.attr("d")!);
+      return (
+        Math.abs(start[0] - rootLinkOrigin.x) < 1e-6 &&
+        Math.abs(start[1] - rootLinkOrigin.y) < 1e-6 &&
+        Math.abs(end[0] - popRoot.x!) < 1e-6 &&
+        Math.abs(end[1] - popRoot.y!) < 1e-6
+      );
+    });
+
+    expect(rootLink.size()).toBe(1);
+    expect(rootLink.attr("class")).not.toContain("gtv-link--dimmed");
   });
 });
 
