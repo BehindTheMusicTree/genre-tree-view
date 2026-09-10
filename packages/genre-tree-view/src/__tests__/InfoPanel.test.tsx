@@ -27,7 +27,7 @@ const CHILD_NODES: InfoPanelChild[] = [
 describe("InfoPanel", () => {
   it("renders all fields for a fully-populated node", () => {
     const { container, getByText } = render(
-      <InfoPanel node={FULL_NODE} childNodes={[]} side="left" onClose={vi.fn()} />,
+      <InfoPanel node={FULL_NODE} fill="#4F46E5" textColor="#FFFFFF" childNodes={[]} side="left" onClose={vi.fn()} />,
     );
 
     expect(getByText("root-a")).toBeTruthy();
@@ -36,10 +36,14 @@ describe("InfoPanel", () => {
     expect(getByText("5")).toBeTruthy();
     expect(getByText("No")).toBeTruthy();
     expect(getByText("pop")).toBeTruthy();
+
+    const header = container.querySelector(".gtv-info-panel-header") as HTMLElement;
+    expect(header.style.backgroundColor).toBe("rgb(79, 70, 229)");
+    expect(header.style.color).toBe("rgb(255, 255, 255)");
   });
 
   it("falls back to defaults for a minimal node (no parentId, actionable, or side)", () => {
-    const { getByText } = render(<InfoPanel node={MINIMAL_NODE} childNodes={[]} side="left" onClose={vi.fn()} />);
+    const { getByText } = render(<InfoPanel node={MINIMAL_NODE} fill="#F1F0FD" textColor="#18181B" childNodes={[]} side="left" onClose={vi.fn()} />);
 
     expect(getByText("—")).toBeTruthy();
     expect(getByText("Yes")).toBeTruthy();
@@ -48,21 +52,21 @@ describe("InfoPanel", () => {
 
   it("fires onClose when the close button is clicked", () => {
     const onClose = vi.fn();
-    const { container } = render(<InfoPanel node={MINIMAL_NODE} childNodes={[]} side="left" onClose={onClose} />);
+    const { container } = render(<InfoPanel node={MINIMAL_NODE} fill="#F1F0FD" textColor="#18181B" childNodes={[]} side="left" onClose={onClose} />);
 
     fireEvent.click(container.querySelector('[aria-label="Close"]') as HTMLButtonElement);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("applies the left modifier class when side is left", () => {
-    const { container } = render(<InfoPanel node={MINIMAL_NODE} childNodes={[]} side="left" onClose={vi.fn()} />);
+    const { container } = render(<InfoPanel node={MINIMAL_NODE} fill="#F1F0FD" textColor="#18181B" childNodes={[]} side="left" onClose={vi.fn()} />);
     const panel = container.querySelector(".gtv-info-panel");
     expect(panel?.classList.contains("gtv-info-panel--left")).toBe(true);
     expect(panel?.classList.contains("gtv-info-panel--right")).toBe(false);
   });
 
   it("applies the right modifier class when side is right", () => {
-    const { container } = render(<InfoPanel node={MINIMAL_NODE} childNodes={[]} side="right" onClose={vi.fn()} />);
+    const { container } = render(<InfoPanel node={MINIMAL_NODE} fill="#F1F0FD" textColor="#18181B" childNodes={[]} side="right" onClose={vi.fn()} />);
     const panel = container.querySelector(".gtv-info-panel");
     expect(panel?.classList.contains("gtv-info-panel--right")).toBe(true);
     expect(panel?.classList.contains("gtv-info-panel--left")).toBe(false);
@@ -70,7 +74,7 @@ describe("InfoPanel", () => {
 
   it("shows a zero count and no list when the node has no children", () => {
     const { getByText, container } = render(
-      <InfoPanel node={MINIMAL_NODE} childNodes={[]} side="left" onClose={vi.fn()} />,
+      <InfoPanel node={MINIMAL_NODE} fill="#F1F0FD" textColor="#18181B" childNodes={[]} side="left" onClose={vi.fn()} />,
     );
 
     expect(getByText("Children (0)")).toBeTruthy();
@@ -79,7 +83,7 @@ describe("InfoPanel", () => {
 
   it("lists each child's name as a chip styled with its own fill and text color", () => {
     const { getByText } = render(
-      <InfoPanel node={FULL_NODE} childNodes={CHILD_NODES} side="left" onClose={vi.fn()} />,
+      <InfoPanel node={FULL_NODE} fill="#4F46E5" textColor="#FFFFFF" childNodes={CHILD_NODES} side="left" onClose={vi.fn()} />,
     );
 
     expect(getByText("Children (2)")).toBeTruthy();

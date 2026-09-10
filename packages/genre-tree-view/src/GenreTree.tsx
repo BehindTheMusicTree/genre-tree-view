@@ -213,6 +213,11 @@ export function GenreTree({
       {panel && (
         <InfoPanel
           node={panel.node}
+          // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1. Unlike the
+          // children below, panel.node can itself be the root (depth 0), so depth >= 1 isn't
+          // guaranteed here and must be checked explicitly via parentId.
+          fill={hideRoot && panel.node.parentId !== null ? resolvedRootColor : tintSurface(resolvedRootColor)}
+          textColor={hideRoot && panel.node.parentId !== null ? ACCENT_TEXT_COLOR : TEXT_COLOR}
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => ({

@@ -533,6 +533,8 @@ export function WheelRadialCore({
       {panel && (
         <InfoPanel
           node={panel.node}
+          fill={getGenreTreeColor(findRootId(panel.node.id, nodes) ?? panel.node.id)}
+          textColor={ACCENT_TEXT_COLOR}
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => {

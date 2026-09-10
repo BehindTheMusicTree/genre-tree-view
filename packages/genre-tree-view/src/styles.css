@@ -317,12 +317,16 @@
   gap: 8px;
   padding: 10px 8px 10px 14px;
   border-bottom: 1px solid #e4e4e7;
+  /* Matches .gtv-info-panel's own radius on the two corners it shares with the panel — the
+     header's own background (the clicked node's fill, set inline by InfoPanel.tsx) would
+     otherwise square them off against the panel's rounded outline. */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .gtv-info-panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #18181b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -339,13 +343,15 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #52525b;
+  color: inherit;
   cursor: pointer;
 }
 
+/* A neutral dark overlay rather than a fixed light background/text pair — the header's own
+   background now varies with the clicked node's fill (light tint or solid saturated color), and
+   this reads as a hover on either. */
 .gtv-info-panel-close:hover {
-  background-color: #f4f4f5;
-  color: #18181b;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .gtv-info-panel-fields {

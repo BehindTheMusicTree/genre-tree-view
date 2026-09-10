@@ -14,6 +14,10 @@ export interface InfoPanelChild {
 
 export interface InfoPanelProps {
   node: GenreTreeNode;
+  /** Fill and text color matching how `node` itself renders as its own `gtv-node-rect` out in the
+   * tree — computed by the caller for the same reason as `InfoPanelChild`'s (see above). */
+  fill: string;
+  textColor: string;
   childNodes: InfoPanelChild[];
   side: "left" | "right";
   onClose: () => void;
@@ -23,12 +27,20 @@ export interface InfoPanelProps {
  * purely presentational (see ARCHITECTURE.md). Anchored to `side`
  * (see use-node-info-panel.ts/info-panel-geometry.ts for how that's decided) by the caller's own
  * layout, not by this component. */
-export function InfoPanel({ node, childNodes, side, onClose }: InfoPanelProps) {
+export function InfoPanel({ node, fill, textColor, childNodes, side, onClose }: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
-      <div className="gtv-info-panel-header">
-        <span className="gtv-info-panel-title">{node.name}</span>
-        <button type="button" className="gtv-info-panel-close" onClick={onClose} aria-label="Close">
+      <div className="gtv-info-panel-header" style={{ background: fill, color: textColor }}>
+        <span className="gtv-info-panel-title" style={{ color: textColor }}>
+          {node.name}
+        </span>
+        <button
+          type="button"
+          className="gtv-info-panel-close"
+          style={{ color: textColor }}
+          onClick={onClose}
+          aria-label="Close"
+        >
           <MdClose className="gtv-icon" size={16} />
         </button>
       </div>

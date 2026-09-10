@@ -932,6 +932,7 @@ export function WheelRadialPopCoreCore({
       {panel && (
         <InfoPanel
           node={panel.node}
+          {...getNodeVisualStyle(panel.node)}
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => ({ node: n, ...getNodeVisualStyle(n) }))}
