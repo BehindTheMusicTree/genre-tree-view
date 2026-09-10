@@ -83,6 +83,7 @@ export function WheelCore({
   onNodeClick,
   additionalActions,
   showToolbar = true,
+  renderExtraDetails,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation =
     direction === "left" ? "horizontal-anchored" : "vertical";
@@ -547,6 +548,7 @@ export function WheelCore({
               viewportRef.current,
             );
           }}
+          renderExtraDetails={renderExtraDetails}
         />
       )}
 

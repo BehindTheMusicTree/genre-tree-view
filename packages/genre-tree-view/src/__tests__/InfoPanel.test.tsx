@@ -344,4 +344,47 @@ describe("InfoPanel", () => {
     expect(onSelectNode).toHaveBeenCalledTimes(1);
     expect(onSelectNode).toHaveBeenCalledWith("root-genre");
   });
+
+  it("renders renderExtraDetails' output, called with the panel's node, below the built-in sections", () => {
+    const renderExtraDetails = vi.fn((node: GenreTreeNode) => (
+      <div data-testid="extra-details">Essential tracks for {node.name}</div>
+    ));
+    const { getByTestId } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+        renderExtraDetails={renderExtraDetails}
+      />,
+    );
+
+    expect(renderExtraDetails).toHaveBeenCalledWith(FULL_NODE);
+    expect(getByTestId("extra-details").textContent).toBe(
+      "Essential tracks for Rock",
+    );
+  });
+
+  it("omits any extra section when renderExtraDetails is not passed", () => {
+    const { container } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="extra-details"]')).toBeNull();
+  });
 });

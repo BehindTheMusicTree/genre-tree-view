@@ -118,6 +118,7 @@ export function WheelRadialCore({
   onNodeClick,
   additionalActions,
   showToolbar = true,
+  renderExtraDetails,
 }: WheelRadialCoreProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
@@ -709,6 +710,7 @@ export function WheelRadialCore({
               viewportRef.current,
             );
           }}
+          renderExtraDetails={renderExtraDetails}
         />
       )}
 

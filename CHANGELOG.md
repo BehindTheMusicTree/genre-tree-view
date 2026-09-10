@@ -21,6 +21,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   without repeated clicks.
 - Clicking a node or an info panel chip now centers that node within the space that remains
   visible beside the info panel, instead of the viewport's full width.
+- `GenreTreeProps.renderExtraDetails`, an optional `(node) => ReactNode` rendered below the info
+  panel's built-in fields — lets a consumer show extra, consumer-fetched detail (e.g. essential
+  tracks) without this library knowing anything about it, mirroring `additionalActions`.
 - The tree viewport now keeps its current pan center fixed on screen when its container is
   resized, instead of only re-centering the next time a node is clicked.
 

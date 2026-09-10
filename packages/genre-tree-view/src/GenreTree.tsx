@@ -53,6 +53,7 @@ export function GenreTree({
   depthSpacingScale = 1,
   showToolbar = true,
   selectedNodeId: selectedNodeIdProp,
+  renderExtraDetails,
 }: GenreTreeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -329,6 +330,7 @@ export function GenreTree({
               viewportRef.current,
             );
           }}
+          renderExtraDetails={renderExtraDetails}
         />
       )}
       <div className="gtv-zoom-controls">

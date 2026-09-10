@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { MdClose } from "react-icons/md";
 
 import { GenreTreeNode } from "./types";
@@ -30,6 +31,8 @@ export interface InfoPanelProps {
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
    * navigates the panel (and the tree's own selection/centering) to it. */
   onSelectNode: (nodeId: string) => void;
+  /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
+  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
 }
 
 /** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
@@ -46,6 +49,7 @@ export function InfoPanel({
   side,
   onClose,
   onSelectNode,
+  renderExtraDetails,
 }: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
@@ -132,6 +136,7 @@ export function InfoPanel({
           </ul>
         )}
       </div>
+      {renderExtraDetails?.(node)}
     </div>
   );
 }
