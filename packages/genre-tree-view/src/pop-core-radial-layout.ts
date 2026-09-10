@@ -331,6 +331,11 @@ export function renderPopSubtree(
   } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
+  // A node is "related" to the selected node when it's the selected node's own parent or one of
+  // its children — these dim less than the rest of the tree.
+  const isRelatedNode = (d: D3Node) =>
+    d.parent?.data.id === selectedNodeId ||
+    (d.children ?? []).some((c) => c.data.id === selectedNodeId);
   const nodeFill = isCoreSector
     ? rootColor
     : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
@@ -358,14 +363,12 @@ export function renderPopSubtree(
     sourceId: string | null;
     targetId: string | null;
   }[] = [
-    ...hierarchy
-      .links()
-      .map((d) => ({
-        source: d.source,
-        target: d.target,
-        sourceId: d.source.data.id,
-        targetId: d.target.data.id,
-      })),
+    ...hierarchy.links().map((d) => ({
+      source: d.source,
+      target: d.target,
+      sourceId: d.source.data.id,
+      targetId: d.target.data.id,
+    })),
     ...rootLinks,
   ];
   // A link is "related" to the selected node when the selected node is one of its two endpoints
@@ -422,7 +425,11 @@ export function renderPopSubtree(
       (d) =>
         "node" +
         (isForbidden(d) ? " gtv-node--forbidden" : "") +
-        (selectedNodeId && !isSelected(d) ? " gtv-node--dimmed" : ""),
+        (selectedNodeId && !isSelected(d)
+          ? isRelatedNode(d)
+            ? " gtv-node--dimmed-related"
+            : " gtv-node--dimmed"
+          : ""),
     )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)

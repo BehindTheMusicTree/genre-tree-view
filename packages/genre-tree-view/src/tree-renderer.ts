@@ -407,6 +407,11 @@ export function renderTree(
 
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
+  // A node is "related" to the selected node when it's the selected node's own parent or one of
+  // its children — these dim less than the rest of the tree.
+  const isRelatedNode = (d: D3Node) =>
+    d.parent?.data.id === selectedNodeId ||
+    (d.children ?? []).some((c) => c.data.id === selectedNodeId);
 
   // With the actual root hidden, the whole visible subtree grows directly out of the root chip —
   // styling every node the same way (solid root color, bold white label) reads as a continuation
@@ -429,7 +434,11 @@ export function renderTree(
       (d) =>
         "node" +
         (isForbidden(d) ? " gtv-node--forbidden" : "") +
-        (selectedNodeId && !isSelected(d) ? " gtv-node--dimmed" : ""),
+        (selectedNodeId && !isSelected(d)
+          ? isRelatedNode(d)
+            ? " gtv-node--dimmed-related"
+            : " gtv-node--dimmed"
+          : ""),
     )
     .attr("id", (d) => "group-" + d.data.id)
     .attr("transform", function (d) {

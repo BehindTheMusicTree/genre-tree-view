@@ -608,6 +608,49 @@ describe("renderTree", () => {
     expect(dimmedCount).toBe(1);
   });
 
+  it("dims the selected node's parent and children less than unrelated nodes", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root", parentId: null, name: "Root", itemCount: 5 },
+      { id: "child1", parentId: "root", name: "Child1", itemCount: 2 },
+      { id: "child2", parentId: "root", name: "Child2", itemCount: 0 },
+      {
+        id: "grandchild",
+        parentId: "child1",
+        name: "Grandchild",
+        itemCount: 0,
+      },
+    ];
+    const { treeData, svgWidth, svgHeight } = buildTreeData(nodes);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+
+    renderTree(
+      d3,
+      svgRef,
+      treeData,
+      svgWidth,
+      svgHeight,
+      null,
+      [],
+      "#4F46E5",
+      baseCallbacks(),
+      "horizontal",
+      false,
+      true,
+      "child1",
+    );
+
+    const classOf = (id: string) =>
+      svgEl.querySelector(`#group-${id}`)?.getAttribute("class");
+
+    expect(classOf("child1")).not.toContain("gtv-node--dimmed");
+    expect(classOf("root")).toContain("gtv-node--dimmed-related");
+    expect(classOf("grandchild")).toContain("gtv-node--dimmed-related");
+    expect(classOf("child2")).toContain("gtv-node--dimmed");
+    expect(classOf("child2")).not.toContain("gtv-node--dimmed-related");
+  });
+
   it("renders the label as just the node name, with no item count suffix", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");

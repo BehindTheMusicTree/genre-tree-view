@@ -776,6 +776,35 @@ describe("renderPopSubtree selection highlight", () => {
     expect(dimmed.size()).toBe(1);
   });
 
+  it("dims the selected node's parent and children less than unrelated nodes", () => {
+    const hierarchy = buildPopHierarchy(d3, popRock);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(popRock),
+      {
+        selectedNodeId: "arena-rock",
+      },
+    );
+
+    const classOf = (id: string) =>
+      svg.select<SVGGElement>(`#group-${id}`).node()?.getAttribute("class");
+
+    expect(classOf("arena-rock")).not.toContain("gtv-node--dimmed");
+    expect(classOf("rock-pop")).toContain("gtv-node--dimmed-related");
+    expect(classOf("yacht-rock")).toContain("gtv-node--dimmed-related");
+    expect(classOf("soft-rock")).toContain("gtv-node--dimmed");
+    expect(classOf("soft-rock")).not.toContain("gtv-node--dimmed-related");
+  });
+
   it("keeps the synthetic root->depth1 link undimmed when the hierarchy's own root node is selected", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const coreRootCircleRadius = 1000;
