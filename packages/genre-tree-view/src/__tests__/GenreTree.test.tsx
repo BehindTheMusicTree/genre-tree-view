@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
 import { GenreTree } from "../GenreTree";
 import { getGenreTreeColor, tintSurface } from "../constants";
 import type { GenreTreeAction, GenreTreeNode } from "../types";
@@ -447,6 +447,32 @@ describe("GenreTree", () => {
         rectSpy.mockRestore();
       });
 
+      it("styles the parent and children chips with the solid root color when hideRoot is true", () => {
+        const nested: GenreTreeNode[] = [
+          ...TREE,
+          { id: "grandchild-a", parentId: "child-a", name: "Grandchild A", itemCount: 1 },
+        ];
+        const { container } = render(<GenreTree nodes={nested} hideRoot />);
+        const wrapper = container.firstChild as HTMLElement;
+        const rectSpy = mockRects(container, wrapper, 400);
+
+        fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
+
+        const solidRootColor = getGenreTreeColor("root");
+        const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+          "Root",
+        );
+        const childChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+          "Grandchild A",
+        );
+        const probe = document.createElement("div");
+        probe.style.backgroundColor = solidRootColor;
+        expect(parentChip.style.backgroundColor).toBe(probe.style.backgroundColor);
+        expect(childChip.style.backgroundColor).toBe(probe.style.backgroundColor);
+
+        rectSpy.mockRestore();
+      });
+
       it("flips to the right when the panel would cover the clicked node", () => {
         const { container } = render(<GenreTree nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
@@ -494,6 +520,28 @@ describe("GenreTree", () => {
         fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
+        rectSpy.mockRestore();
+      });
+
+      it("switches to the parent node when its chip is clicked", () => {
+        const { container } = render(<GenreTree nodes={TREE} />);
+        const wrapper = container.firstChild as HTMLElement;
+        const rectSpy = mockRects(container, wrapper, 400);
+
+        fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
+        expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
+
+        const svg = container.querySelector("svg") as SVGSVGElement;
+        const qsSpy = vi.spyOn(svg, "querySelector").mockReturnValueOnce(null);
+
+        const parentChip = within(
+          container.querySelector(".gtv-info-panel") as HTMLElement,
+        ).getByText("Root");
+        fireEvent.click(parentChip);
+        expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
+        expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Root");
+
+        qsSpy.mockRestore();
         rectSpy.mockRestore();
       });
     });

@@ -108,4 +108,9 @@ export interface GenreTreeProps {
    * inner toolbar and hover name-label (the chips themselves — their name label, click-to-select
    * /expand behavior — stay visible). Defaults to true. */
   showToolbar?: boolean;
+  /** Overrides which node is shown highlighted (with unrelated nodes/links dimmed) instead of
+   * GenreTree's own internally-tracked clicked node — used by `interactive={false}` instances
+   * (e.g. GenreTreeWheel's nested tree) whose own info panel, and thus own selection, is owned
+   * by an ancestor rather than by this instance. Leave unset to use the internal selection. */
+  selectedNodeId?: string | null;
 }

@@ -1,7 +1,17 @@
 import * as d3 from "d3";
 
-import { GenreTreeNode, isVerticalOrientation, TreeOrientation } from "../types";
-import { CONNECTOR_COLOR, CONNECTOR_OPACITY, CONNECTOR_WIDTH, calculateNodeDimensions, ItemCountRange } from "../constants";
+import {
+  GenreTreeNode,
+  isVerticalOrientation,
+  TreeOrientation,
+} from "../types";
+import {
+  CONNECTOR_COLOR,
+  CONNECTOR_OPACITY,
+  CONNECTOR_WIDTH,
+  calculateNodeDimensions,
+  ItemCountRange,
+} from "../constants";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -17,7 +27,13 @@ export interface RoundedRectCorners {
 // SVG <rect> only takes one uniform rx/ry pair, so a node card needs a <path> instead to square
 // off just its top corners while its hover tab is attached (see tree-renderer.ts's mouseover/
 // mouseleave-timeout handlers), and stay fully rounded otherwise.
-export function roundedRectPath(x: number, y: number, width: number, height: number, corners: RoundedRectCorners) {
+export function roundedRectPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  corners: RoundedRectCorners,
+) {
   const { tl, tr, br, bl } = corners;
   return [
     `M ${x + tl} ${y}`,
@@ -66,20 +82,33 @@ export function appendPaths(
   treeData: D3Node,
   itemCountRange: ItemCountRange,
   orientation: TreeOrientation = "horizontal",
+  selectedNodeId: string | null = null,
 ) {
-  const x = (d: D3Node) => d.x! + calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2;
-  const y = (d: D3Node) => d.y! + calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2;
+  const x = (d: D3Node) =>
+    d.x! + calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2;
+  const y = (d: D3Node) =>
+    d.y! + calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2;
 
   const linkGenerator = isVerticalOrientation(orientation)
     ? d3Lib.linkVertical<D3Link, D3Node>().x(x).y(y)
     : d3Lib.linkHorizontal<D3Link, D3Node>().x(x).y(y);
+
+  // A link is "related" to the selected node when the selected node is one of its two endpoints
+  // (its parent link, or a link to one of its children) — every other link in the tree dims.
+  const isRelatedLink = (d: D3Link) =>
+    d.source.data.id === selectedNodeId || d.target.data.id === selectedNodeId;
 
   svg
     .selectAll("path.gtv-link")
     .data(treeData.links())
     .enter()
     .append("path")
-    .attr("class", "gtv-link")
+    .attr(
+      "class",
+      (d) =>
+        "gtv-link" +
+        (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
+    )
     .attr("d", linkGenerator)
     .style("fill", "none")
     .style("stroke", CONNECTOR_COLOR)

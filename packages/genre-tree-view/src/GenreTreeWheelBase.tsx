@@ -37,7 +37,8 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-export interface WheelCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
+export interface WheelCoreProps
+  extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
   nodes: GenreTreeNode[];
   /** Fired whenever the selected root changes — on mount with the default selection, and on every chip click. */
   onRootSelect?: (rootId: string) => void;
@@ -81,7 +82,8 @@ export function WheelCore({
   additionalActions,
   showToolbar = true,
 }: WheelCoreProps) {
-  const treeOrientation: TreeOrientation = direction === "left" ? "horizontal-anchored" : "vertical";
+  const treeOrientation: TreeOrientation =
+    direction === "left" ? "horizontal-anchored" : "vertical";
   // CSS `rotate()` + `translateY(-radius)` convention: local angle 0°=top, 90°=right, 180°=bottom,
   // 270°=left — measured against the disc's own unrotated box, since its CSS `top`/`left`/`right`
   // position (not its `rotate()` transform, which only spins rendered content around the box's
@@ -91,7 +93,10 @@ export function WheelCore({
   // angle 90 — so the selection has to land at 90, not at the "left" angle (270) the disc bulges
   // toward.
   const landingAngle = direction === "left" ? 90 : 0;
-  const chipHalfExtentVar = direction === "left" ? "--gtv-wheel-chip-half-width" : "--gtv-wheel-chip-half-height";
+  const chipHalfExtentVar =
+    direction === "left"
+      ? "--gtv-wheel-chip-half-width"
+      : "--gtv-wheel-chip-half-height";
 
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
@@ -112,18 +117,29 @@ export function WheelCore({
   const aggregatedRootItemCountById = useMemo(
     () =>
       new Map(
-        groups.map((group) => [group.root.id, group.nodes.reduce((sum, node) => sum + node.itemCount, 0)]),
+        groups.map((group) => [
+          group.root.id,
+          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
+        ]),
       ),
     [groups],
   );
-  const [selectedRootId, setSelectedRootId] = useState<string | null>(groups[0]?.root.id ?? null);
+  const [selectedRootId, setSelectedRootId] = useState<string | null>(
+    groups[0]?.root.id ?? null,
+  );
   // The default selection (chip index 0) must start already rotated to the anchor, not just at
   // 0deg — 0 only happens to be correct for direction="bottom", where landingAngle (0) coincides
   // with chip 0's own raw angle (getChipAngle(0, n) is always 0). For direction="left"
   // (landingAngle 270) those differ, so the initial rotation has to be computed the same way a
   // click's rotation is.
   const [rotationDeg, setRotationDeg] = useState(() =>
-    groups.length > 0 ? computeRotationForSelection(0, getChipAngle(0, groups.length), landingAngle) : 0,
+    groups.length > 0
+      ? computeRotationForSelection(
+          0,
+          getChipAngle(0, groups.length),
+          landingAngle,
+        )
+      : 0,
   );
   const viewportRef = useRef<HTMLDivElement>(null);
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
@@ -137,9 +153,11 @@ export function WheelCore({
 
   // Falls back to the first root without writing state back when the explicitly selected root
   // disappears from `nodes` — avoids a setState-in-effect cascading render for derived state.
-  const effectiveRootId = groups.some((group) => group.root.id === selectedRootId)
+  const effectiveRootId = groups.some(
+    (group) => group.root.id === selectedRootId,
+  )
     ? selectedRootId
-    : groups[0]?.root.id ?? null;
+    : (groups[0]?.root.id ?? null);
 
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
@@ -158,20 +176,28 @@ export function WheelCore({
   const hasInitialFitRef = useRef(false);
   useEffect(() => {
     if (hasInitialFitRef.current) return;
-    const elements = [wheelCircleRef.current, ...queryTreeContentElements(treeAnchorRef.current)];
+    const elements = [
+      wheelCircleRef.current,
+      ...queryTreeContentElements(treeAnchorRef.current),
+    ];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements);
   });
 
-  const selectedGroup = groups.find((group) => group.root.id === effectiveRootId) ?? null;
+  const selectedGroup =
+    groups.find((group) => group.root.id === effectiveRootId) ?? null;
 
   // Root chip size is proportional to itemCount relative to the other roots on the wheel, not
   // an absolute scale — the root with the fewest items always renders at MIN size and the one
   // with the most always at MAX, regardless of the actual counts involved.
   const rootItemCountRange = useMemo(
     () =>
-      getItemCountRange(groups.map((group) => ({ itemCount: aggregatedRootItemCountById.get(group.root.id)! }))),
+      getItemCountRange(
+        groups.map((group) => ({
+          itemCount: aggregatedRootItemCountById.get(group.root.id)!,
+        })),
+      ),
     [groups, aggregatedRootItemCountById],
   );
 
@@ -197,21 +223,32 @@ export function WheelCore({
   // Colors every root's chip index (i.e. getChipAngle(i, n)'s ordering) matches groups' own order,
   // so each color stop lines up with the sector buildWheelSectorGradient carves out for it.
   const sectorFillGradient = useMemo(
-    () => buildWheelSectorGradient(groups.map((group) => hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY))),
+    () =>
+      buildWheelSectorGradient(
+        groups.map((group) =>
+          hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
+        ),
+      ),
     [groups],
   );
 
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
     if (allowWheelRotation) {
-      setRotationDeg((current) => computeRotationForSelection(current, angle, landingAngle));
+      setRotationDeg((current) =>
+        computeRotationForSelection(current, angle, landingAngle),
+      );
     }
   };
 
   return (
     <div
       ref={viewportRef}
-      className={["gtv-wheel-container", direction === "left" && "gtv-wheel-container--left", className]
+      className={[
+        "gtv-wheel-container",
+        direction === "left" && "gtv-wheel-container--left",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       style={
@@ -240,7 +277,14 @@ export function WheelCore({
           transformOrigin: "0 0",
         }}
       >
-        <div className="gtv-wheel-stage" style={{ [chipHalfExtentVar]: `${rootChipHalfExtent}px` } as React.CSSProperties}>
+        <div
+          className="gtv-wheel-stage"
+          style={
+            {
+              [chipHalfExtentVar]: `${rootChipHalfExtent}px`,
+            } as React.CSSProperties
+          }
+        >
           {selectedGroup && (
             <div className="gtv-wheel-tree-anchor" ref={treeAnchorRef}>
               <GenreTree
@@ -260,25 +304,46 @@ export function WheelCore({
                 onReparentRequest={onReparentRequest}
                 onReparent={onReparent}
                 onNodeClick={(data, event) => {
-                  panZoom.centerOnElement(event.currentTarget as Element | null, ZOOM_FOCUS_SCALE);
-                  showNodeInfo(data, event.currentTarget as Element | null, viewportRef.current);
+                  panZoom.centerOnElement(
+                    event.currentTarget as Element | null,
+                    ZOOM_FOCUS_SCALE,
+                  );
+                  showNodeInfo(
+                    data,
+                    event.currentTarget as Element | null,
+                    viewportRef.current,
+                  );
                   onNodeClick?.(data, event);
                 }}
                 additionalActions={additionalActions}
                 showToolbar={showToolbar}
+                selectedNodeId={panel?.node.id ?? null}
               />
             </div>
           )}
 
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
-          {centerLabel && <div className="gtv-wheel-center-label">{centerLabel}</div>}
+          {centerLabel && (
+            <div className="gtv-wheel-center-label">{centerLabel}</div>
+          )}
 
-          <div className="gtv-wheel" style={{ "--gtv-wheel-rotation": `${rotationDeg}deg` } as React.CSSProperties}>
+          <div
+            className="gtv-wheel"
+            style={
+              {
+                "--gtv-wheel-rotation": `${rotationDeg}deg`,
+              } as React.CSSProperties
+            }
+          >
             {sectorFillGradient && (
               <div
                 className="gtv-wheel-sector-fill"
-                style={{ "--gtv-sector-fill-gradient": sectorFillGradient } as React.CSSProperties}
+                style={
+                  {
+                    "--gtv-sector-fill-gradient": sectorFillGradient,
+                  } as React.CSSProperties
+                }
               />
             )}
 
@@ -288,7 +353,9 @@ export function WheelCore({
                   key={`divider-${group.root.id}`}
                   className="gtv-wheel-divider"
                   style={
-                    { "--gtv-divider-angle": `${getWheelDividerAngle(index, groups.length)}deg` } as React.CSSProperties
+                    {
+                      "--gtv-divider-angle": `${getWheelDividerAngle(index, groups.length)}deg`,
+                    } as React.CSSProperties
                   }
                 />
               ))}
@@ -297,23 +364,42 @@ export function WheelCore({
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
               const chipColor = getGenreTreeColor(group.root.id);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(group.root.id)!;
-              const dimensions = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange);
-              const fontSize = calculateNodeFontSize(aggregatedItemCount, rootItemCountRange);
+              const aggregatedItemCount = aggregatedRootItemCountById.get(
+                group.root.id,
+              )!;
+              const dimensions = calculateNodeDimensions(
+                aggregatedItemCount,
+                rootItemCountRange,
+              );
+              const fontSize = calculateNodeFontSize(
+                aggregatedItemCount,
+                rootItemCountRange,
+              );
               return (
                 <div
                   key={group.root.id}
                   className="gtv-wheel-slot"
-                  style={{ "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties}
+                  style={
+                    { "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties
+                  }
                 >
                   <div
-                    className={["gtv-wheel-chip-anchor", !showToolbar && "gtv-wheel-chip-anchor--no-toolbar"]
+                    className={[
+                      "gtv-wheel-chip-anchor",
+                      !showToolbar && "gtv-wheel-chip-anchor--no-toolbar",
+                    ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <button
                       type="button"
-                      className={["gtv-wheel-chip", selected && "gtv-wheel-chip--selected"].filter(Boolean).join(" ")}
+                      id={`group-${group.root.id}`}
+                      className={[
+                        "gtv-wheel-chip",
+                        selected && "gtv-wheel-chip--selected",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       style={
                         {
                           width: dimensions.WIDTH,
@@ -328,22 +414,37 @@ export function WheelCore({
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
-                        panZoom.centerOnElement(event.currentTarget, ZOOM_FOCUS_SCALE);
+                        panZoom.centerOnElement(
+                          event.currentTarget,
+                          ZOOM_FOCUS_SCALE,
+                        );
                         handleChipClick(group.root.id, angle);
                         if (!reparentingNodeId) {
-                          showNodeInfo(group.root, event.currentTarget, viewportRef.current);
+                          showNodeInfo(
+                            group.root,
+                            event.currentTarget,
+                            viewportRef.current,
+                          );
                           onNodeClick?.(group.root, event.nativeEvent);
                         }
                       }}
                     >
-                      {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                      <span className="gtv-node-label gtv-node-label--root" style={{ fontSize }}>
+                      {PER_TREE_ACCENT_DOT && (
+                        <span className="gtv-wheel-chip-dot" />
+                      )}
+                      <span
+                        className="gtv-node-label gtv-node-label--root"
+                        style={{ fontSize }}
+                      >
                         {group.root.name}
                       </span>
                       {showToolbar && (
-                      <span className="gtv-wheel-chip-hover-name" style={{ fontSize }}>
-                        {group.root.name}
-                      </span>
+                        <span
+                          className="gtv-wheel-chip-hover-name"
+                          style={{ fontSize }}
+                        >
+                          {group.root.name}
+                        </span>
                       )}
                     </button>
                     {/* stopPropagation: keeps toolbar-button clicks from also landing on
@@ -354,30 +455,30 @@ export function WheelCore({
                         .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
                         unconditionally to stay legible against it. */}
                     {showToolbar && (
-                    <div
-                      className="gtv-wheel-chip-toolbar"
-                      style={
-                        {
-                          "--gtv-node-fill": chipColor,
-                          "--gtv-toolbar-icon-color": "#ffffff",
-                          "--gtv-toolbar-font-size": `${fontSize}px`,
-                        } as React.CSSProperties
-                      }
-                      onPointerDown={(event) => event.stopPropagation()}
-                    >
-                      <NodeToolbar
-                        node={group.root}
-                        itemCount={aggregatedItemCount}
-                        playingNodeId={playingNodeId}
-                        playState={playState}
-                        onPlayPause={onPlayPause}
-                        onAddChild={onAddChild}
-                        onRenameRequest={onRenameRequest}
-                        onDeleteRequest={onDeleteRequest}
-                        onReparentRequest={onReparentRequest}
-                        additionalActions={additionalActions}
-                      />
-                    </div>
+                      <div
+                        className="gtv-wheel-chip-toolbar"
+                        style={
+                          {
+                            "--gtv-node-fill": chipColor,
+                            "--gtv-toolbar-icon-color": "#ffffff",
+                            "--gtv-toolbar-font-size": `${fontSize}px`,
+                          } as React.CSSProperties
+                        }
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        <NodeToolbar
+                          node={group.root}
+                          itemCount={aggregatedItemCount}
+                          playingNodeId={playingNodeId}
+                          playState={playState}
+                          onPlayPause={onPlayPause}
+                          onAddChild={onAddChild}
+                          onRenameRequest={onRenameRequest}
+                          onDeleteRequest={onDeleteRequest}
+                          onReparentRequest={onReparentRequest}
+                          additionalActions={additionalActions}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -390,25 +491,58 @@ export function WheelCore({
       {panel && (
         <InfoPanel
           node={panel.node}
-          fill={getGenreTreeColor(findRootId(panel.node.id, nodes) ?? panel.node.id)}
+          fill={getGenreTreeColor(
+            findRootId(panel.node.id, nodes) ?? panel.node.id,
+          )}
           textColor={ACCENT_TEXT_COLOR}
+          parentNode={(() => {
+            const parent = nodes.find((n) => n.id === panel.node.parentId);
+            return parent
+              ? {
+                  node: parent,
+                  fill: getGenreTreeColor(
+                    findRootId(parent.id, nodes) ?? parent.id,
+                  ),
+                  textColor: ACCENT_TEXT_COLOR,
+                }
+              : null;
+          })()}
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => {
-              const rootColor = getGenreTreeColor(findRootId(n.id, nodes) ?? n.id);
+              const rootColor = getGenreTreeColor(
+                findRootId(n.id, nodes) ?? n.id,
+              );
               // This wheel's inner subtree always renders via <GenreTree hideRoot ... />, so every
               // visible node — including every child listed here — gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
           side={panel.side}
           onClose={closeNodeInfo}
+          onSelectNode={(id) => {
+            const targetNode = nodes.find((n) => n.id === id)!;
+            const element = viewportRef.current!.querySelector(
+              `#group-${CSS.escape(id)}`,
+            );
+            panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE);
+            showNodeInfo(
+              targetNode,
+              element ?? viewportRef.current,
+              viewportRef.current,
+            );
+          }}
         />
       )}
 
       <div className="gtv-zoom-controls">
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomIn && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomIn}
           onClick={panZoom.zoomIn}
           aria-label="Zoom in"
@@ -417,7 +551,12 @@ export function WheelCore({
         </button>
         <button
           type="button"
-          className={["gtv-zoom-btn", !panZoom.canZoomOut && "gtv-zoom-btn--disabled"].filter(Boolean).join(" ")}
+          className={[
+            "gtv-zoom-btn",
+            !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!panZoom.canZoomOut}
           onClick={panZoom.zoomOut}
           aria-label="Zoom out"
@@ -428,7 +567,10 @@ export function WheelCore({
           type="button"
           className="gtv-zoom-btn"
           onClick={() =>
-            panZoom.fitToFrame([wheelCircleRef.current, ...queryTreeContentElements(treeAnchorRef.current)])
+            panZoom.fitToFrame([
+              wheelCircleRef.current,
+              ...queryTreeContentElements(treeAnchorRef.current),
+            ])
           }
           aria-label="Fit to frame"
         >
