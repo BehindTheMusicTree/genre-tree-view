@@ -19,6 +19,14 @@ export default defineConfig(({ command }) => ({
               find: /^@behindthemusictree\/genre-tree-view$/,
               replacement: path.resolve(__dirname, "../../packages/genre-tree-view/src/index.ts"),
             },
+            // Same reasoning as the entry alias above: without this, the CSS subpath still
+            // resolves through package.json's exports map to dist/styles.css, which only a
+            // separately-running `tsup --watch` rebuilds — so a src/styles.css edit would
+            // silently not show up in the playground unless that watcher happened to be running.
+            {
+              find: /^@behindthemusictree\/genre-tree-view\/styles\.css$/,
+              replacement: path.resolve(__dirname, "../../packages/genre-tree-view/src/styles.css"),
+            },
           ],
         }
       : undefined,
