@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Scrolling/wheeling over the node info panel now scrolls the panel's own content instead of
+  panning/zooming the tree underneath it.
+
 ## [1.6.0] - 2026-09-10
 
 ### Added
