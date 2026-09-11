@@ -273,6 +273,12 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     }
 
     const handleWheel = (event: WheelEvent) => {
+      // Let the info panel handle its own scroll (it has overflow-y: auto) instead of panning/
+      // zooming the tree underneath it — it's rendered as a child of this same viewport, so its
+      // wheel events would otherwise bubble up here.
+      if ((event.target as Element).closest(".gtv-info-panel") !== null) {
+        return;
+      }
       event.preventDefault();
       if (event.ctrlKey) {
         const now = performance.now();

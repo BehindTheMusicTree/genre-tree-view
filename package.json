@@ -16,7 +16,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "test": "pnpm --filter @behindthemusictree/genre-tree-view test",
+    "test": "pnpm --filter @behindthemusictree/genre-tree-view test && pnpm --filter genre-tree-view-playground test",
     "coverage": "pnpm --filter @behindthemusictree/genre-tree-view coverage",
     "release": "bash scripts/release.sh"
   },

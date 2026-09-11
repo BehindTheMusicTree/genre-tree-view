@@ -54,6 +54,9 @@ importers:
       vite:
         specifier: 5.4.21
         version: 5.4.21(@types/node@22.20.1)
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.1)(jsdom@30.0.1)
 
   packages/genre-tree-view:
     dependencies:

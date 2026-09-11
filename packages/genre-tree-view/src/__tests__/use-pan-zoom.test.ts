@@ -248,6 +248,30 @@ describe("usePanZoom", () => {
     document.body.removeChild(content);
   });
 
+  it("ignores wheel events originating inside the info panel, leaving pan/zoom untouched", () => {
+    const viewport = document.createElement("div");
+    const panel = document.createElement("div");
+    panel.className = "gtv-info-panel";
+    const panelChild = document.createElement("p");
+    panel.appendChild(panelChild);
+    viewport.appendChild(panel);
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      panelChild.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true }));
+    });
+
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+    expect(result.current.zoomScale).toBe(1);
+
+    document.body.removeChild(viewport);
+  });
+
   it("clamps click-and-drag panning so content can never be dragged fully out of view", () => {
     const viewport = document.createElement("div");
     const content = document.createElement("div");
