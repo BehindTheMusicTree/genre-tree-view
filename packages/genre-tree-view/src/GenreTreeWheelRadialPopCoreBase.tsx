@@ -134,6 +134,7 @@ export function WheelRadialPopCoreCore({
   showToolbar = true,
   renderExtraDetails,
   allowWheelRotation = true,
+  selectedNodeId,
 }: WheelRadialPopCoreProps) {
   const centerNode = nodes.find(
     (node) => node.parentId === null && node.name === CENTER_NODE_NAME,
@@ -827,6 +828,44 @@ export function WheelRadialPopCoreCore({
     setTopRootId(rootId);
     if (allowWheelRotation) setRotationTopRootId(rootId);
   };
+
+  // Every ring root's core/pop branches are always mounted, but the center "Mainstream Pop" node's
+  // own subtree only renders once expanded — so an externally-controlled selection (e.g. from a
+  // search result) landing in there needs to expand it first. Adjusted during render rather than in
+  // an effect so the expansion is part of the same commit (see React's "adjusting state when a prop
+  // changes"), and only on an actual change of the prop so a later manual collapse isn't undone.
+  const [appliedSelectedNodeId, setAppliedSelectedNodeId] =
+    useState(selectedNodeId);
+  if (selectedNodeId !== appliedSelectedNodeId) {
+    setAppliedSelectedNodeId(selectedNodeId);
+    if (
+      selectedNodeId &&
+      selectedNodeId !== centerNode.id &&
+      centerSubtreeNodeIds.has(selectedNodeId) &&
+      !isPopExpanded
+    ) {
+      setIsPopExpanded(true);
+    }
+  }
+
+  // Mirrors the onNodeClick/onSelectNode handling below: once the node's sector (and, for a
+  // center-subtree node, the expanded center) is mounted, center the viewport on the
+  // externally-selected node and open its info panel exactly as a direct click would.
+  useEffect(() => {
+    if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
+    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const element = viewportRef.current?.querySelector(
+      `#group-${CSS.escape(selectedNodeId)}`,
+    );
+    if (!targetNode || !element) return;
+    panZoom.centerOnElement(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfo(targetNode, element, viewportRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
+  }, [selectedNodeId, nodes, panel, showNodeInfo, isPopExpanded]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its

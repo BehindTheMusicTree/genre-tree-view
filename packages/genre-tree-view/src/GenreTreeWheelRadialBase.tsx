@@ -119,6 +119,7 @@ export function WheelRadialCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  selectedNodeId,
 }: WheelRadialCoreProps) {
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
 
@@ -419,6 +420,25 @@ export function WheelRadialCore({
   const handleChipClick = (rootId: string) => {
     setTopRootId(rootId);
   };
+
+  // Every root's core subtree is always mounted (see the SVG-building effect above), so an
+  // externally-controlled selection (e.g. from a search result) never needs a root swap — just
+  // locate its element and open the panel exactly as a direct click would.
+  useEffect(() => {
+    if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
+    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const element = viewportRef.current?.querySelector(
+      `#group-${CSS.escape(selectedNodeId)}`,
+    );
+    if (!targetNode || !element) return;
+    panZoom.centerOnElement(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfo(targetNode, element, viewportRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
+  }, [selectedNodeId, nodes, panel, showNodeInfo]);
 
   // One divider per boundary between two angularly-adjacent roots — each root's own continuous
   // (unwrapped) angle plus half its weight-proportional width (sectorSpanByRootId) lands exactly on

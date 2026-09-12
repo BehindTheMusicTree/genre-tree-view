@@ -896,6 +896,82 @@ describe("GenreTreeWheelRadialPopCore", () => {
       rectSpy.mockRestore();
     });
 
+    it("opens for an externally-controlled selectedNodeId in a ring sector", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId="c-child" />);
+
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bebop");
+
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} />);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bebop");
+
+      rectSpy.mockRestore();
+    });
+
+    it("ignores an externally-controlled selectedNodeId equal to the center node itself", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId="pop" />);
+
+      expect(container.querySelector(".gtv-wheel-chip--center.gtv-wheel-chip--circle")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+
+      rectSpy.mockRestore();
+    });
+
+    it("expands the center subtree first when an externally-controlled selectedNodeId lands in it", () => {
+      const nodesWithCenterChildren: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 },
+        { id: "pop-child-2", parentId: "pop", name: "Chart Toppers", itemCount: 1 },
+      ];
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+      expect(container.querySelector(".gtv-wheel-center-sector #group-pop-child")).toBeFalsy();
+
+      rerender(
+        <GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} selectedNodeId="pop-child" />,
+      );
+
+      expect(container.querySelector(".gtv-wheel-center-sector #group-pop-child")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Radio Hits");
+
+      rerender(
+        <GenreTreeWheelRadialPopCore nodes={nodesWithCenterChildren} selectedNodeId="pop-child-2" />,
+      );
+
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Chart Toppers");
+
+      rectSpy.mockRestore();
+    });
+
     it("switches to the parent node when its chip is clicked", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

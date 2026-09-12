@@ -111,7 +111,11 @@ export interface GenreTreeProps {
   /** Overrides which node is shown highlighted (with unrelated nodes/links dimmed) instead of
    * GenreTree's own internally-tracked clicked node — used by `interactive={false}` instances
    * (e.g. GenreTreeWheel's nested tree) whose own info panel, and thus own selection, is owned
-   * by an ancestor rather than by this instance. Leave unset to use the internal selection. */
+   * by an ancestor rather than by this instance. On the top-level exported renderers
+   * (`GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+   * `GenreTreeWheelRadialPopCore`, `GenreTree` itself), setting this also opens and centers the
+   * info panel for that node — the same effect a direct click on it would have — swapping in its
+   * owning root/sector first if needed. Leave unset to use the internal selection. */
   selectedNodeId?: string | null;
   /** Renders extra content into the built-in info panel for the clicked node, below its built-in
    * fields — e.g. a consumer-fetched detail like essential tracks. The library has no knowledge

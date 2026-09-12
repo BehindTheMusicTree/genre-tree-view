@@ -194,6 +194,26 @@ export function GenreTree({
     effectiveSelectedNodeId,
   ]);
 
+  // Mirrors the onNodeClick/onSelectNode handling: an externally-controlled selection (e.g. from a
+  // search result) centers the viewport on that node and opens its info panel exactly as a direct
+  // click would. Declared after the draw effect above so the node's group element already exists,
+  // and skipped when `interactive` is false since the panel then belongs to an ancestor.
+  useEffect(() => {
+    if (!interactive || !selectedNodeIdProp) return;
+    if (panel?.node.id === selectedNodeIdProp) return;
+    const targetNode = nodes.find((node) => node.id === selectedNodeIdProp);
+    const element = svgRef.current?.querySelector(
+      `#group-${CSS.escape(selectedNodeIdProp)}`,
+    );
+    if (!targetNode || !element) return;
+    centerOnElementRef.current(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfoRef.current(targetNode, element, viewportRef.current);
+  }, [interactive, selectedNodeIdProp, nodes, panel]);
+
   useEffect(() => {
     const svgElement = svgRef.current;
     return () => {
