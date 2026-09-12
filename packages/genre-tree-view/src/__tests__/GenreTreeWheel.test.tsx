@@ -404,6 +404,27 @@ describe("GenreTreeWheel", () => {
       rectSpy.mockRestore();
     });
 
+    it("opens for an externally-controlled selectedNodeId, swapping in its owning root first", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheel nodes={NODES} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
+
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId="b-child" />);
+
+      expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Techno");
+
+      rectSpy.mockRestore();
+    });
+
     it("switches to the parent node when its chip is clicked", () => {
       const { container } = render(<GenreTreeWheel nodes={NODES} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

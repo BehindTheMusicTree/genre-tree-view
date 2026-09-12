@@ -593,6 +593,25 @@ describe("GenreTreeWheelRadial", () => {
       rectSpy.mockRestore();
     });
 
+    it("opens for an externally-controlled selectedNodeId in any sector, no root swap needed", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheelRadial nodes={NODES_FIVE} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      rerender(<GenreTreeWheelRadial nodes={NODES_FIVE} selectedNodeId="d-child" />);
+
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bluegrass");
+
+      rectSpy.mockRestore();
+    });
+
     it("switches to the parent node when its chip is clicked", () => {
       const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

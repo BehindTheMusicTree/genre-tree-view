@@ -84,6 +84,7 @@ export function WheelCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  selectedNodeId,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation =
     direction === "left" ? "horizontal-anchored" : "vertical";
@@ -243,6 +244,50 @@ export function WheelCore({
       );
     }
   };
+
+  // An externally-controlled selection (e.g. from a search result) may belong to a root other than
+  // the one currently mounted — swap it in the same way a chip click would before trying to locate
+  // the node's DOM element below. Adjusted during render rather than in an effect so the swap is
+  // part of the same commit (see React's "adjusting state when a prop changes"), and only on an
+  // actual change of the prop so a later chip click isn't undone.
+  const [appliedSelectedNodeId, setAppliedSelectedNodeId] =
+    useState(selectedNodeId);
+  if (selectedNodeId !== appliedSelectedNodeId) {
+    setAppliedSelectedNodeId(selectedNodeId);
+    const owningGroupIndex = selectedNodeId
+      ? groups.findIndex((group) =>
+          group.nodes.some((node) => node.id === selectedNodeId),
+        )
+      : -1;
+    if (
+      owningGroupIndex !== -1 &&
+      groups[owningGroupIndex].root.id !== effectiveRootId
+    ) {
+      handleChipClick(
+        groups[owningGroupIndex].root.id,
+        getChipAngle(owningGroupIndex, groups.length),
+      );
+    }
+  }
+
+  // Mirrors the onNodeClick/onSelectNode handling below: once the owning root's subtree is
+  // mounted, center the viewport on the externally-selected node and open its info panel exactly
+  // as a direct click would.
+  useEffect(() => {
+    if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
+    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const element = treeAnchorRef.current?.querySelector(
+      `#group-${CSS.escape(selectedNodeId)}`,
+    );
+    if (!targetNode || !element) return;
+    panZoom.centerOnElement(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfo(targetNode, element, viewportRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
+  }, [selectedNodeId, effectiveRootId, nodes, panel, showNodeInfo]);
 
   return (
     <div

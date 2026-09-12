@@ -531,6 +531,31 @@ describe("GenreTree", () => {
         qsSpy.mockRestore();
         rectSpy.mockRestore();
       });
+
+      it("opens for an externally-controlled selectedNodeId, as a direct click would", () => {
+        const { container, rerender } = render(
+          <GenreTree nodes={TREE} selectedNodeId={null} />,
+        );
+        const wrapper = container.firstChild as HTMLElement;
+        const rectSpy = mockRects(container, wrapper, 400);
+        expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+
+        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" />);
+
+        expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
+
+        rectSpy.mockRestore();
+      });
+
+      it("leaves the panel to its ancestor when selectedNodeId is set on a non-interactive tree", () => {
+        const { container, rerender } = render(
+          <GenreTree nodes={TREE} interactive={false} selectedNodeId={null} />,
+        );
+
+        rerender(<GenreTree nodes={TREE} interactive={false} selectedNodeId="child-a" />);
+
+        expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+      });
     });
   });
 });
