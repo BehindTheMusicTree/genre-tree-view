@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-09-12
+
 ### Fixed
 
 - Setting `selectedNodeId` now opens and centers that node's info panel, exactly as a direct click
