@@ -404,6 +404,61 @@ describe("GenreTreeWheel", () => {
       rectSpy.mockRestore();
     });
 
+    it("opens for an externally-controlled selectedNodeId, swapping in its owning root first", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheel nodes={NODES} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
+
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId="b-child" />);
+
+      expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Techno");
+
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId={null} />);
+      expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
+
+      rectSpy.mockRestore();
+    });
+
+    it("does not swap roots for an externally-controlled selectedNodeId already in the active root", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheel nodes={NODES} selectedNodeId={null} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId="a-child" />);
+
+      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
+
+      rectSpy.mockRestore();
+    });
+
+    it("ignores an externally-controlled selectedNodeId that matches no node", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheel nodes={NODES} selectedNodeId={null} />,
+      );
+
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId="does-not-exist" />);
+
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
+    });
+
     it("switches to the parent node when its chip is clicked", () => {
       const { container } = render(<GenreTreeWheel nodes={NODES} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

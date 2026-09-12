@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Setting `selectedNodeId` now opens and centers that node's info panel, exactly as a direct click
+  on it would, instead of only highlighting it — so a consumer-driven selection (e.g. from its own
+  search box) produces the same visible result as clicking the node. `GenreTreeWheel` /
+  `GenreTreeWheelRight` swap in the node's owning root first, and `GenreTreeWheelRadialPopCore`
+  expands the center node's subtree first when the selection lands inside it.
+- `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial` and
+  `GenreTreeWheelRadialPopCore` now honour `selectedNodeId` at all — the prop was accepted by
+  their types but ignored, so it had no effect on those four renderers.
+
 ## [1.6.1] - 2026-09-11
 
 ### Fixed
