@@ -50,6 +50,31 @@ export function computeSectorWidths(weights: number[]): number[] {
   return weights.map((weight) => (weight / total) * 360);
 }
 
+/** Splits a wedge (centered on `wedgeCenterDeg`, spanning `wedgeSpanDeg`) into `weights.length`
+ * sub-wedges, each proportional to its own weight — same proportional-width logic as
+ * `computeSectorWidths`, applied within a wedge instead of the full 360deg circle. A wedge, unlike
+ * the full ring, never wraps past 360, so sub-wedges are simply laid out left to right from the
+ * wedge's own start angle. Returns each sub-wedge's own center angle and span, in the same order
+ * as `weights`. Empty for `weights.length <= 0`. */
+export function subdivideWedge(
+  wedgeCenterDeg: number,
+  wedgeSpanDeg: number,
+  weights: number[],
+): { centerDeg: number; spanDeg: number }[] {
+  if (weights.length <= 0) return [];
+
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const spans = weights.map((weight) => (weight / total) * wedgeSpanDeg);
+
+  const slices: { centerDeg: number; spanDeg: number }[] = [];
+  let boundary = wedgeCenterDeg - wedgeSpanDeg / 2;
+  for (const spanDeg of spans) {
+    slices.push({ centerDeg: boundary + spanDeg / 2, spanDeg });
+    boundary += spanDeg;
+  }
+  return slices;
+}
+
 /** Midpoint angle between two chip angles that may be continuous/unwrapped (e.g. from
  * computeContinuousAngles), taking the shorter arc between them rather than always going the
  * increasing-angle way — brings `b` within 180 degrees of `a` before averaging, so the divider

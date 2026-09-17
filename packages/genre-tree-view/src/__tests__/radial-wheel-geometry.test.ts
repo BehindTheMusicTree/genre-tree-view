@@ -7,6 +7,7 @@ import {
   computeSectorBounds,
   computeSectorSymmetricSpan,
   computeSectorWidths,
+  subdivideWedge,
 } from "../radial-wheel-geometry";
 
 describe("computeRadialLayout", () => {
@@ -173,6 +174,31 @@ describe("computeSectorWidths", () => {
   it("widths sum to 360", () => {
     const widths = computeSectorWidths([5, 12, 3, 40]);
     expect(widths.reduce((sum, width) => sum + width, 0)).toBeCloseTo(360, 10);
+  });
+});
+
+describe("subdivideWedge", () => {
+  it("returns [] for an empty weights array", () => {
+    expect(subdivideWedge(90, 80, [])).toEqual([]);
+  });
+
+  it("leaves a single weight's slice matching the whole wedge", () => {
+    const [slice] = subdivideWedge(90, 80, [1]);
+    expect(slice.centerDeg).toBeCloseTo(90, 10);
+    expect(slice.spanDeg).toBeCloseTo(80, 10);
+  });
+
+  it("splits equal weights into equal, adjacent slices spanning the whole wedge", () => {
+    const slices = subdivideWedge(0, 60, [1, 1, 1]);
+    expect(slices.map((s) => s.spanDeg)).toEqual([20, 20, 20]);
+    expect(slices.map((s) => s.centerDeg)).toEqual([-20, 0, 20]);
+  });
+
+  it("gives uneven weights proportionally uneven spans that still sum to the wedge span", () => {
+    const slices = subdivideWedge(0, 80, [1, 3]);
+    expect(slices[0].spanDeg).toBeCloseTo(20, 10);
+    expect(slices[1].spanDeg).toBeCloseTo(60, 10);
+    expect(slices.reduce((sum, s) => sum + s.spanDeg, 0)).toBeCloseTo(80, 10);
   });
 });
 

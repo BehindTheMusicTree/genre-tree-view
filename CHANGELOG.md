@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-17
+
+### Added
+
+- A root can now have multiple core (non-pop) direct children and multiple pop direct children,
+  each rendered as its own branch fanned out across the root's wedge — previously a root with more
+  than one core child threw, and extra pop children were silently dropped.
+
 ## [1.6.2] - 2026-09-12
 
 ### Fixed
