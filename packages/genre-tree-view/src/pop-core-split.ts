@@ -1,47 +1,46 @@
 import { GenreTreeRootGroup } from "./root-grouping";
 import { GenreTreeNode } from "./types";
 
+export interface PopCoreBranch {
+  /** The direct child this branch is rooted at. */
+  child: GenreTreeNode;
+  /** The child and its descendants. */
+  nodes: GenreTreeNode[];
+}
+
 export interface PopCoreSplit {
-  /** The root, its core (non-pop) child, and that child's descendants. */
+  /** The root plus every core (non-pop) branch's nodes, flattened. */
   coreNodes: GenreTreeNode[];
-  /** The pop child and its descendants, rooted at the pop child (root not included). Empty
-   * when the root has no pop side (e.g. classical). */
+  /** Every pop branch's nodes, flattened (root not included). Empty when the root has no pop
+   * side (e.g. classical). */
   popNodes: GenreTreeNode[];
+  /** One entry per direct core (non-pop) child, each paired with its own subtree. Order matches
+   * the child's position among the root's direct children. Empty when the root has no core
+   * children. */
+  coreBranches: PopCoreBranch[];
+  /** One entry per direct pop child, mirroring `coreBranches`. Empty when the root has no pop
+   * children. */
+  popBranches: PopCoreBranch[];
 }
 
 /**
  * Splits one root group's nodes into its core and pop branches, per the root's direct children's
  * `side` field ("pop" for the optional branch; unset/"core" for the required one).
  *
- * A root must have at most one direct child not flagged `side: "pop"` — that child (if any) is
- * "the" core child. A root with only one direct child (no pop side) yields an empty `popNodes`. A
- * root with zero direct children yields both `coreNodes` (just the root) and `popNodes` empty.
- *
- * Fails fast: if a root has more than one direct child that isn't the pop child, there is no
- * single unambiguous core branch to render, so this throws rather than silently picking one and
- * dropping the rest. Callers should let this propagate (per this component's established
- * fail-fast convention for malformed `nodes` input, e.g. the "Mainstream Pop" root check in
- * `GenreTreeWheelRadialPopCoreBase.tsx`) rather than catching it to recover a partial render.
+ * A root may have any number of core (non-pop) direct children and any number of pop direct
+ * children — each becomes its own branch in `coreBranches`/`popBranches`. A root with no pop
+ * children yields an empty `popBranches`/`popNodes`. A root with zero direct children yields
+ * both `coreBranches` and `popBranches` empty (`coreNodes` is just the root).
  */
 export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
   const { root, nodes } = group;
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const directChildren = nodes.filter((node) => node.parentId === root.id);
 
-  const popChild = directChildren.find((node) => node.side === "pop");
-  const coreCandidates = directChildren.filter((node) => node.id !== popChild?.id);
-  if (coreCandidates.length > 1) {
-    throw new Error(
-      `splitRootGroupBySide: root "${root.name}" (${root.id}) has ${coreCandidates.length} ` +
-        `non-pop direct children, expected at most 1: ${coreCandidates
-          .map((node) => `"${node.name}" (${node.id})`)
-          .join(", ")}`,
-    );
-  }
-  const coreChild = coreCandidates[0];
+  const popChildren = directChildren.filter((node) => node.side === "pop");
+  const coreChildren = directChildren.filter((node) => node.side !== "pop");
 
-  const collectSubtree = (startId: string | undefined): GenreTreeNode[] => {
-    if (startId === undefined) return [];
+  const collectSubtree = (startId: string): GenreTreeNode[] => {
     const childrenByParentId = new Map<string, GenreTreeNode[]>();
     for (const node of nodes) {
       if (node.parentId === null) continue;
@@ -50,8 +49,7 @@ export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
       else childrenByParentId.set(node.parentId, [node]);
     }
 
-    const start = nodeById.get(startId);
-    if (!start) return [];
+    const start = nodeById.get(startId)!;
 
     const subtree: GenreTreeNode[] = [];
     const stack = [start];
@@ -63,8 +61,11 @@ export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
     return subtree;
   };
 
-  const coreNodes = [root, ...collectSubtree(coreChild?.id)];
-  const popNodes = collectSubtree(popChild?.id);
+  const coreBranches = coreChildren.map((child) => ({ child, nodes: collectSubtree(child.id) }));
+  const popBranches = popChildren.map((child) => ({ child, nodes: collectSubtree(child.id) }));
 
-  return { coreNodes, popNodes };
+  const coreNodes = [root, ...coreBranches.flatMap((branch) => branch.nodes)];
+  const popNodes = popBranches.flatMap((branch) => branch.nodes);
+
+  return { coreNodes, popNodes, coreBranches, popBranches };
 }

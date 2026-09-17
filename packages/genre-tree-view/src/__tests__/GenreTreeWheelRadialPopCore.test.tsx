@@ -815,6 +815,48 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector("#group-a-core")).toBeTruthy();
   });
 
+  it("renders a root's multiple core children as distinct branches at distinct angles, without throwing", () => {
+    const nodes: GenreTreeNode[] = [
+      CENTER_NODE,
+      { id: "root-a", parentId: null, name: "Blues/Rock", itemCount: 5 },
+      { id: "blues", parentId: "root-a", name: "Blues", itemCount: 2 },
+      { id: "rock-music", parentId: "root-a", name: "Rock Music", itemCount: 2 },
+    ];
+    expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodes} />)).not.toThrow();
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(1);
+    const branches = coreSectorForRoot(container, "root-a")!.querySelectorAll(".gtv-wheel-core-branch");
+    expect(branches.length).toBe(2);
+    expect(container.querySelector("#group-blues")).toBeTruthy();
+    expect(container.querySelector("#group-rock-music")).toBeTruthy();
+
+    const [bluesX, bluesY] = nodeCoords(container, "blues");
+    const [rockX, rockY] = nodeCoords(container, "rock-music");
+    expect([bluesX, bluesY]).not.toEqual([rockX, rockY]);
+  });
+
+  it("renders a root's multiple pop children as distinct branches instead of dropping the extras", () => {
+    const nodes: GenreTreeNode[] = [
+      CENTER_NODE,
+      { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+      { id: "a-core", parentId: "root-a", name: "Punk", itemCount: 1 },
+      { id: "pop-1", parentId: "root-a", name: "Pop One", itemCount: 2, side: "pop" },
+      { id: "pop-2", parentId: "root-a", name: "Pop Two", itemCount: 2, side: "pop" },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+
+    expect(container.querySelectorAll(".gtv-wheel-pop-sector").length).toBe(1);
+    const branches = popSectorForRoot(container, "root-a")!.querySelectorAll(".gtv-wheel-pop-branch");
+    expect(branches.length).toBe(2);
+    expect(container.querySelector("#group-pop-1")).toBeTruthy();
+    expect(container.querySelector("#group-pop-2")).toBeTruthy();
+
+    const [pop1X, pop1Y] = nodeCoords(container, "pop-1");
+    const [pop2X, pop2Y] = nodeCoords(container, "pop-2");
+    expect([pop1X, pop1Y]).not.toEqual([pop2X, pop2Y]);
+  });
+
   it("keeps ring and center chips visible but hides their inner toolbar and suppresses the core sector's hover toolbar when showToolbar is false", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} showToolbar={false} />);
 
