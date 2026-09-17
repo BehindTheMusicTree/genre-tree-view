@@ -40,13 +40,17 @@ pnpm workspace with two members:
     overlap; the wheel's own circle (`wheelRadius`) grows past its normal chip-clearance floor to
     fit whichever developed branch reaches deepest. Clicking a chip re-lays-out the ring so that
     root lands on the right, recalculating every other root's angle.
-  - `GenreTreeWheelRadialPopCore` is `GenreTreeWheelRadial` for forests where each root optionally
-    splits into a required "core" child and an optional "pop" child (`GenreTreeNode.side`, see
-    `pop-core-split.ts`). Each developed root's outward branch is only its core branch, laid out
-    and rendered exactly as in `GenreTreeWheelRadial` above (`core-radial-layout.ts`, straight
-    links, `.gtv-wheel-core-sector` with `data-gtv-root-id`); if the root also has a pop branch,
-    that subtree renders as a second, full interactive tree fanned out *inside* the wheel's own
-    circle (in the same angular sector) via `pop-core-radial-layout.ts`'s pop layout. The circle
+  - `GenreTreeWheelRadialPopCore` is `GenreTreeWheelRadial` for forests where each root's direct
+    children optionally split into any number of "core" children and any number of "pop" children
+    (`GenreTreeNode.side`, see `pop-core-split.ts`). Each developed root's outward branches are
+    only its core children, one subtree per child, laid out and rendered exactly as in
+    `GenreTreeWheelRadial` above (`core-radial-layout.ts`, straight links, each root's own
+    `.gtv-wheel-core-sector` with `data-gtv-root-id`, one `.gtv-wheel-core-branch` per child inside
+    it); if the root also has pop children, each of those subtrees renders as a second, full
+    interactive tree fanned out *inside* the wheel's own circle (in the same angular sector, one
+    `.gtv-wheel-pop-branch` per child) via `pop-core-radial-layout.ts`'s pop layout. A root's wedge
+    is subdivided across its own branches proportionally to each branch's subtree size
+    (`subdivideWedge` in `radial-wheel-geometry.ts`). The circle
     grows past its normal chip-clearance floor to fit the largest developed core or pop subtree,
     whichever reaches deepest. Unlike the other three renderers (which take an optional `centerLabel`
     string), its wheel's pivot point renders a full interactive chip — the same
@@ -103,8 +107,8 @@ pnpm workspace with two members:
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
     wheel radius, rotation easing/timing) consumed by all renderers.
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
-    and pop branches (`GenreTreeWheelRadialPopCore` only); a root must have at most one non-pop
-    direct child, or it throws (fail-fast — no silently dropping ambiguous data).
+    and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and
+    pop direct children, each becoming its own branch.
   - `pop-core-radial-layout.ts` — self-contained polar tree layout/render module (angle + radius
     per node, node/link DOM construction, `renderPopSubtree`) for pop subtrees fanned out inside
     the wheel's circle (`GenreTreeWheelRadialPopCore`'s pop branches and its center "Mainstream
