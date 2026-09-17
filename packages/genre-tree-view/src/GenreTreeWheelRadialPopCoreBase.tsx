@@ -39,6 +39,7 @@ import {
   computeRadialLayout,
   computeSectorWidths,
   RadialSlot,
+  subdivideWedge,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
@@ -380,45 +381,6 @@ export function WheelRadialPopCoreCore({
     centerNodeDimensions.HEIGHT,
   );
 
-  // Only roots that actually have a pop branch get a hierarchy built — the common case (e.g.
-  // classical) has none, so this stays empty most of the time.
-  const popHierarchyByRootId = useMemo(() => {
-    const map = new Map<
-      string,
-      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number }
-    >();
-    groups.forEach((group, index) => {
-      const popNodes = splitByRootId.get(group.root.id)?.popNodes ?? [];
-      if (popNodes.length === 0) return;
-      map.set(group.root.id, {
-        hierarchy: buildPopHierarchy(d3, popNodes),
-        angle: layout[index]?.angle ?? 0,
-      });
-    });
-    return map;
-  }, [groups, layout, splitByRootId]);
-
-  // Only roots that actually have a core (non-pop) child get a hierarchy built — a root with zero
-  // children (splitRootGroupBySide's coreNodes = [root] only) has nothing to fan outward.
-  const coreHierarchyByRootId = useMemo(() => {
-    const map = new Map<
-      string,
-      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number }
-    >();
-    groups.forEach((group, index) => {
-      const coreNodes = splitByRootId.get(group.root.id)?.coreNodes ?? [];
-      // coreNodes always includes the root itself (splitRootGroupBySide) — drop it, mirroring
-      // popNodes, since the root already renders as its own wheel chip.
-      const coreChildNodes = coreNodes.slice(1);
-      if (coreChildNodes.length === 0) return;
-      map.set(group.root.id, {
-        hierarchy: buildCoreHierarchy(d3, coreChildNodes),
-        angle: layout[index]?.angle ?? 0,
-      });
-    });
-    return map;
-  }, [groups, layout, splitByRootId]);
-
   // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
   // the total — same widths computeRadialLayout placed chips with, so a root's pop/core wedge below
   // is guaranteed to fit within its actual sector without spilling into a neighbor's, regardless of
@@ -442,6 +404,78 @@ export function WheelRadialPopCoreCore({
     [sectorSpanByRootId],
   );
 
+  // Each root's own single angle on the ring — unlike a branch's sub-wedge angle (which fans that
+  // branch's subtree out at its own position within the root's wedge), a link from the root down
+  // to any of its branches must originate from the root's own unique chip position.
+  const rootAngleByRootId = useMemo(() => {
+    const map = new Map<string, number>();
+    groups.forEach((group, index) => {
+      map.set(group.root.id, layout[index]?.angle ?? 0);
+    });
+    return map;
+  }, [groups, layout]);
+
+  // Only roots that actually have a pop branch get a hierarchy built — the common case (e.g.
+  // classical) has none, so this stays empty most of the time. A root's pop wedge (capped at
+  // POP_WEDGE_SPAN_DEGREES) is subdivided across its own pop branches, weighted by each branch's
+  // node count — mirrors how ring roots themselves share the full circle.
+  const popHierarchyByRootId = useMemo(() => {
+    const map = new Map<
+      string,
+      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
+    >();
+    groups.forEach((group) => {
+      const branches = splitByRootId.get(group.root.id)?.popBranches ?? [];
+      if (branches.length === 0) return;
+      const rootAngle = rootAngleByRootId.get(group.root.id)!;
+      const wedgeSpan = wedgeSpanForRoot(group.root.id);
+      const slices = subdivideWedge(
+        rootAngle,
+        wedgeSpan,
+        branches.map((branch) => branch.nodes.length),
+      );
+      map.set(
+        group.root.id,
+        branches.map((branch, branchIndex) => ({
+          hierarchy: buildPopHierarchy(d3, branch.nodes),
+          angle: slices[branchIndex]!.centerDeg,
+          span: slices[branchIndex]!.spanDeg,
+        })),
+      );
+    });
+    return map;
+  }, [groups, rootAngleByRootId, splitByRootId, wedgeSpanForRoot]);
+
+  // Only roots that actually have a core (non-pop) child get a hierarchy built — a root with zero
+  // children (splitRootGroupBySide's coreBranches = []) has nothing to fan outward. Same
+  // per-branch wedge subdivision as popHierarchyByRootId, fanning outward instead of inward.
+  const coreHierarchyByRootId = useMemo(() => {
+    const map = new Map<
+      string,
+      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
+    >();
+    groups.forEach((group) => {
+      const branches = splitByRootId.get(group.root.id)?.coreBranches ?? [];
+      if (branches.length === 0) return;
+      const rootAngle = rootAngleByRootId.get(group.root.id)!;
+      const wedgeSpan = wedgeSpanForRoot(group.root.id);
+      const slices = subdivideWedge(
+        rootAngle,
+        wedgeSpan,
+        branches.map((branch) => branch.nodes.length),
+      );
+      map.set(
+        group.root.id,
+        branches.map((branch, branchIndex) => ({
+          hierarchy: buildCoreHierarchy(d3, branch.nodes),
+          angle: slices[branchIndex]!.centerDeg,
+          span: slices[branchIndex]!.spanDeg,
+        })),
+      );
+    });
+    return map;
+  }, [groups, rootAngleByRootId, splitByRootId, wedgeSpanForRoot]);
+
   // Floor every ring root sits on, driven purely by chip clearance — the base every radial depth
   // (ring roots, their pop branches, and the center subtree) measures outward from, before pop/
   // center subtree extents are folded in below.
@@ -460,8 +494,10 @@ export function WheelRadialPopCoreCore({
   // yet; folded into coreRootCircleRadius below, then re-applied at the real base for rendering.
   const maxPopExtentDelta = useMemo(() => {
     let extent = 0;
-    popHierarchyByRootId.forEach(({ hierarchy }) => {
-      extent = Math.max(extent, calculatePopSubtreeRadialExtent(hierarchy, 0));
+    popHierarchyByRootId.forEach((branches) => {
+      branches.forEach(({ hierarchy }) => {
+        extent = Math.max(extent, calculatePopSubtreeRadialExtent(hierarchy, 0));
+      });
     });
     return extent;
   }, [popHierarchyByRootId]);
@@ -503,15 +539,17 @@ export function WheelRadialPopCoreCore({
   // without being clipped.
   const maxCoreExtentDelta = useMemo(() => {
     let extent = 0;
-    coreHierarchyByRootId.forEach(({ hierarchy }) => {
-      extent = Math.max(
-        extent,
-        calculateCoreSubtreeRadialExtent(
-          hierarchy,
-          POP_TREE_DEPTH_RADIAL_SPACING,
-          0,
-        ),
-      );
+    coreHierarchyByRootId.forEach((branches) => {
+      branches.forEach(({ hierarchy }) => {
+        extent = Math.max(
+          extent,
+          calculateCoreSubtreeRadialExtent(
+            hierarchy,
+            POP_TREE_DEPTH_RADIAL_SPACING,
+            0,
+          ),
+        );
+      });
     });
     return extent;
   }, [coreHierarchyByRootId]);
@@ -577,146 +615,162 @@ export function WheelRadialPopCoreCore({
       .append("g")
       .attr("transform", `translate(${svgCanvasRadius}, ${svgCanvasRadius})`);
 
-    popHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
-      const laidOut = computePopRadialLayout(
-        d3,
-        hierarchy,
-        angle,
-        coreRootCircleRadius,
-        wedgeSpanForRoot(rootId),
-      );
+    popHierarchyByRootId.forEach((branches, rootId) => {
       const rootLinkOrigin = getRadialPointOnCircle(
-        angle,
+        rootAngleByRootId.get(rootId) ?? 0,
         coreRootCircleRadius,
       );
-      const reparentForbiddenIds = reparentingNodeId
-        ? (laidOut
-            .descendants()
-            .find((d) => d.data.id === reparentingNodeId)
-            ?.descendants()
-            .map((d) => d.data.id) ?? [])
-        : [];
 
       const sectorGroup = originGroup
         .append("g")
         .attr("class", "gtv-wheel-pop-sector")
         .attr("data-gtv-root-id", rootId);
 
-      renderPopSubtree(
-        d3,
-        sectorGroup,
-        laidOut,
-        getGenreTreeColor(rootId),
-        reparentingNodeId,
-        reparentForbiddenIds,
-        {
-          onPlayPause,
-          onAddChild,
-          onRenameRequest,
-          onDeleteRequest,
-          onReparentRequest,
-          onReparentTargetSelect: (newParentId) => {
-            if (reparentingNodeId)
-              void onReparent?.(reparentingNodeId, newParentId);
+      branches.forEach(({ hierarchy, angle, span }, branchIndex) => {
+        const laidOut = computePopRadialLayout(
+          d3,
+          hierarchy,
+          angle,
+          coreRootCircleRadius,
+          span,
+        );
+        const reparentForbiddenIds = reparentingNodeId
+          ? (laidOut
+              .descendants()
+              .find((d) => d.data.id === reparentingNodeId)
+              ?.descendants()
+              .map((d) => d.data.id) ?? [])
+          : [];
+
+        const branchGroup = sectorGroup
+          .append("g")
+          .attr("class", "gtv-wheel-pop-branch")
+          .attr("data-gtv-branch-index", branchIndex);
+
+        renderPopSubtree(
+          d3,
+          branchGroup,
+          laidOut,
+          getGenreTreeColor(rootId),
+          reparentingNodeId,
+          reparentForbiddenIds,
+          {
+            onPlayPause,
+            onAddChild,
+            onRenameRequest,
+            onDeleteRequest,
+            onReparentRequest,
+            onReparentTargetSelect: (newParentId) => {
+              if (reparentingNodeId)
+                void onReparent?.(reparentingNodeId, newParentId);
+            },
+            onNodeClick: (data, event) => {
+              const clickedElement = event.currentTarget as Element | null;
+              centerOnElementRef.current(
+                clickedElement,
+                ZOOM_FOCUS_SCALE,
+                resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
+              );
+              showNodeInfoRef.current(
+                data,
+                clickedElement,
+                viewportRef.current,
+              );
+              onNodeClick?.(data, event);
+            },
+            additionalActions,
+            playingNodeId,
+            playState,
           },
-          onNodeClick: (data, event) => {
-            const clickedElement = event.currentTarget as Element | null;
-            centerOnElementRef.current(
-              clickedElement,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfoRef.current(
-              data,
-              clickedElement,
-              viewportRef.current,
-            );
-            onNodeClick?.(data, event);
+          wheelItemCountRange,
+          {
+            radialReferenceRadius: coreRootCircleRadius,
+            rootLinkOrigin,
+            showToolbar,
+            selectedNodeId: panel?.node.id ?? null,
           },
-          additionalActions,
-          playingNodeId,
-          playState,
-        },
-        wheelItemCountRange,
-        {
-          radialReferenceRadius: coreRootCircleRadius,
-          rootLinkOrigin,
-          showToolbar,
-          selectedNodeId: panel?.node.id ?? null,
-        },
-      );
+        );
+      });
     });
 
-    coreHierarchyByRootId.forEach(({ hierarchy, angle }, rootId) => {
-      const laidOut = computeCoreRadialLayout(
-        d3,
-        hierarchy,
-        angle,
-        wedgeSpanForRoot(rootId),
-        coreRootCircleRadius,
-        POP_TREE_DEPTH_RADIAL_SPACING,
-      );
+    coreHierarchyByRootId.forEach((branches, rootId) => {
       const rootLinkOrigin = getRadialPointOnCircle(
-        angle,
+        rootAngleByRootId.get(rootId) ?? 0,
         coreRootCircleRadius,
       );
-      const reparentForbiddenIds = reparentingNodeId
-        ? (laidOut
-            .descendants()
-            .find((d) => d.data.id === reparentingNodeId)
-            ?.descendants()
-            .map((d) => d.data.id) ?? [])
-        : [];
 
       const sectorGroup = originGroup
         .append("g")
         .attr("class", "gtv-wheel-core-sector")
         .attr("data-gtv-root-id", rootId);
 
-      renderPopSubtree(
-        d3,
-        sectorGroup,
-        laidOut,
-        getGenreTreeColor(rootId),
-        reparentingNodeId,
-        reparentForbiddenIds,
-        {
-          onPlayPause,
-          onAddChild,
-          onRenameRequest,
-          onDeleteRequest,
-          onReparentRequest,
-          onReparentTargetSelect: (newParentId) => {
-            if (reparentingNodeId)
-              void onReparent?.(reparentingNodeId, newParentId);
+      branches.forEach(({ hierarchy, angle, span }, branchIndex) => {
+        const laidOut = computeCoreRadialLayout(
+          d3,
+          hierarchy,
+          angle,
+          span,
+          coreRootCircleRadius,
+          POP_TREE_DEPTH_RADIAL_SPACING,
+        );
+        const reparentForbiddenIds = reparentingNodeId
+          ? (laidOut
+              .descendants()
+              .find((d) => d.data.id === reparentingNodeId)
+              ?.descendants()
+              .map((d) => d.data.id) ?? [])
+          : [];
+
+        const branchGroup = sectorGroup
+          .append("g")
+          .attr("class", "gtv-wheel-core-branch")
+          .attr("data-gtv-branch-index", branchIndex);
+
+        renderPopSubtree(
+          d3,
+          branchGroup,
+          laidOut,
+          getGenreTreeColor(rootId),
+          reparentingNodeId,
+          reparentForbiddenIds,
+          {
+            onPlayPause,
+            onAddChild,
+            onRenameRequest,
+            onDeleteRequest,
+            onReparentRequest,
+            onReparentTargetSelect: (newParentId) => {
+              if (reparentingNodeId)
+                void onReparent?.(reparentingNodeId, newParentId);
+            },
+            onNodeClick: (data, event) => {
+              const clickedElement = event.currentTarget as Element | null;
+              centerOnElementRef.current(
+                clickedElement,
+                ZOOM_FOCUS_SCALE,
+                resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
+              );
+              showNodeInfoRef.current(
+                data,
+                clickedElement,
+                viewportRef.current,
+              );
+              onNodeClick?.(data, event);
+            },
+            additionalActions,
+            playingNodeId,
+            playState,
           },
-          onNodeClick: (data, event) => {
-            const clickedElement = event.currentTarget as Element | null;
-            centerOnElementRef.current(
-              clickedElement,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfoRef.current(
-              data,
-              clickedElement,
-              viewportRef.current,
-            );
-            onNodeClick?.(data, event);
+          wheelItemCountRange,
+          {
+            isCoreSector: true,
+            radialReferenceRadius: coreRootCircleRadius,
+            rootLinkOrigin,
+            showToolbar,
+            selectedNodeId: panel?.node.id ?? null,
           },
-          additionalActions,
-          playingNodeId,
-          playState,
-        },
-        wheelItemCountRange,
-        {
-          isCoreSector: true,
-          radialReferenceRadius: coreRootCircleRadius,
-          rootLinkOrigin,
-          showToolbar,
-          selectedNodeId: panel?.node.id ?? null,
-        },
-      );
+        );
+      });
     });
 
     if (isPopExpanded && centerSubtreeHierarchy) {
@@ -789,7 +843,7 @@ export function WheelRadialPopCoreCore({
     coreRootCircleRadius,
     svgCanvasRadius,
     mainstreamCircleRadius,
-    wedgeSpanForRoot,
+    rootAngleByRootId,
     reparentingNodeId,
     playingNodeId,
     playState,

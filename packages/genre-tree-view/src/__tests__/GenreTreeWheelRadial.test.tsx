@@ -177,6 +177,23 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelector("#group-a-core-child")).toBeTruthy();
   });
 
+  it("renders a root's multiple core children as distinct branches, without throwing", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "root-a", parentId: null, name: "Blues/Rock", itemCount: 5 },
+      { id: "blues", parentId: "root-a", name: "Blues", itemCount: 2 },
+      { id: "rock-music", parentId: "root-a", name: "Rock Music", itemCount: 2 },
+    ];
+
+    expect(() => render(<GenreTreeWheelRadial nodes={nodes} />)).not.toThrow();
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
+
+    expect(coreSectors(container).length).toBe(1);
+    const branches = coreSectorForRoot(container, "root-a")!.querySelectorAll(".gtv-wheel-core-branch");
+    expect(branches.length).toBe(2);
+    expect(container.querySelector("#group-blues")).toBeTruthy();
+    expect(container.querySelector("#group-rock-music")).toBeTruthy();
+  });
+
   it("places a root's depth-1 core child one depthSpacing step past the wheel's own radius, and grows the wheel to fit a deeper core branch", () => {
     const nodes: GenreTreeNode[] = [
       { id: "root-a", parentId: null, name: "Small", itemCount: 1 },

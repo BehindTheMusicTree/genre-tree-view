@@ -298,6 +298,14 @@ const POP_BRANCHES: Record<string, string[]> = {
   Pop: ["Mainstream Pop", "Adult Pop", "Pop Radio Hits"],
 };
 
+// Roots that get a second direct core child (see `extraCoreName` below), reproducing the
+// original "Blues/Rock" multi-core-children case for manual visual testing.
+const MULTI_CORE_ROOTS = new Set(["Rock", "Jazz", "Folk"]);
+
+// Roots that get two direct pop children instead of one chain, covering the multi-pop-children
+// case (previously a silent-drop bug) alongside MULTI_CORE_ROOTS above.
+const MULTI_POP_ROOTS = new Set(["Electronic", "Hip-Hop"]);
+
 /** One root plus its real subgenres, built as a spine of LARGE_ROOT_TARGET_DEPTHS[rootIndex]
  * nodes (fixing the max depth, and marked `side: "core"`) with the remaining subgenres attached
  * breadth-first onto any node below that depth, capping every node at 5 children total so
@@ -307,6 +315,11 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
   const rootId = `large-root-${rootIndex}`;
   const nodes: GenreTreeNode[] = [{ id: rootId, parentId: null, name: root.name, itemCount: 0 }];
   const remaining = [...root.subgenres];
+  // Reserved up front (before targetDepth/spine consume `remaining`) for roots in
+  // MULTI_CORE_ROOTS, so those roots end up with a second direct core child alongside the main
+  // spine — reproducing the "Blues/Rock" case (a root with multiple non-pop direct children)
+  // for visual/manual testing of subdivideWedge's multi-branch fan-out.
+  const extraCoreName = MULTI_CORE_ROOTS.has(root.name) ? remaining.pop() : undefined;
   const targetDepth = Math.min(LARGE_ROOT_TARGET_DEPTHS[rootIndex % LARGE_ROOT_TARGET_DEPTHS.length], remaining.length);
 
   const depthOf = new Map<string, number>([[rootId, 0]]);
@@ -356,22 +369,36 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
     if (capacity - count > 0 && parentDepth < targetDepth) queue.push(parentId);
   }
 
+  if (extraCoreName) {
+    const id = `${rootId}-${nodes.length}`;
+    nodes.push({ id, parentId: rootId, name: extraCoreName, itemCount: demoItemCount(nodes.length), side: "core" });
+  }
+
   const popNames = POP_BRANCHES[root.name];
   if (popNames) {
-    const popRootId = `${rootId}-pop`;
-    nodes.push({
-      id: popRootId,
-      parentId: rootId,
-      name: `${root.name} (Pop)`,
-      itemCount: demoItemCount(nodes.length),
-      side: "pop",
+    // Roots in MULTI_POP_ROOTS split their pop names across two separate direct pop children
+    // instead of one chain, so the demo also exercises a root with multiple pop branches (the
+    // silent-drop bug case) alongside MULTI_CORE_ROOTS' multiple core branches.
+    const popChains = MULTI_POP_ROOTS.has(root.name) && popNames.length >= 2
+      ? [popNames.slice(0, Math.ceil(popNames.length / 2)), popNames.slice(Math.ceil(popNames.length / 2))]
+      : [popNames];
+
+    popChains.forEach((chainNames, chainIndex) => {
+      const popRootId = `${rootId}-pop-${chainIndex}`;
+      nodes.push({
+        id: popRootId,
+        parentId: rootId,
+        name: chainIndex === 0 ? `${root.name} (Pop)` : `${root.name} (Pop Radio)`,
+        itemCount: demoItemCount(nodes.length),
+        side: "pop",
+      });
+      let popParentId = popRootId;
+      for (const name of chainNames) {
+        const id = `${rootId}-${nodes.length}`;
+        nodes.push({ id, parentId: popParentId, name, itemCount: demoItemCount(nodes.length) });
+        popParentId = id;
+      }
     });
-    let popParentId = popRootId;
-    for (const name of popNames) {
-      const id = `${rootId}-${nodes.length}`;
-      nodes.push({ id, parentId: popParentId, name, itemCount: demoItemCount(nodes.length) });
-      popParentId = id;
-    }
   }
 
   return nodes;
