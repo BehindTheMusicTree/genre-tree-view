@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-17
+
 ### Added
 
 - A root can now have multiple core (non-pop) direct children and multiple pop direct children,
