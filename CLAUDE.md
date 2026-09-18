@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pnpm workspace with two members:
 
 - `packages/genre-tree-view` — the published library (tsup build, Vitest tests).
-- `apps/playground` — a Vite app for manually exercising the component against mock data; not published, depends on the library via `workspace:*`.
+- `apps/playground` — a Vite app for manually exercising the component; not published, depends on the library via `workspace:*`. Most demo tabs use hand-crafted mock data, but `wheel-radial-pop-core` renders `src/fixtures/genre-tree.json`, a real Gold-exported canonical genre tree kept in sync by infrastructure's `music-tree-pipelines` (see that repo's `sync_to_genre_tree_view`).
 
 ## Repository guidelines
 

@@ -10,6 +10,7 @@ import {
   type GenreTreePlayState,
 } from "@behindthemusictree/genre-tree-view";
 import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
+import realGenreTreeFixture from "./fixtures/genre-tree.json";
 
 const MIN_DEMO_ITEM_COUNT = 50;
 const MAX_DEMO_ITEM_COUNT = 10000;
@@ -425,6 +426,13 @@ const largeWheelNodes: GenreTreeNode[] = [
   { id: "pop-radio-top40-trending", parentId: "pop-radio-top40-tiktok", name: "Trending Now", itemCount: 60 },
 ];
 
+// The pop/core wheel demo (only) shows the real Gold-exported canonical genre tree, refreshed by
+// music-tree-pipelines' sync_to_genre_tree_view (see infrastructure repo). GenreTreeWheelRadialPopCore
+// itself throws if the fixture lacks a root literally named "Mainstream Pop" (its pivot node) -
+// that's the correct behavior here too: a fixture missing it means the sync/export pipeline is
+// broken, and masking that with fallback demo data would hide the failure instead of surfacing it.
+const popCoreWheelNodes = realGenreTreeFixture as GenreTreeNode[];
+
 let nextId = 1;
 
 const TABS = [
@@ -532,6 +540,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<TabId>("wheel-radial-pop-core");
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
+  const [popCoreNodes, setPopCoreNodes] = useState<GenreTreeNode[]>(popCoreWheelNodes);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
@@ -582,6 +591,10 @@ export function App() {
     ...playCallbacks,
     ...createNodeCallbacks(wheelNodes, setWheelNodes, appendLog, setReparentingNodeId),
   };
+  const popCoreCallbacks = {
+    ...playCallbacks,
+    ...createNodeCallbacks(popCoreNodes, setPopCoreNodes, appendLog, setReparentingNodeId),
+  };
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
@@ -589,7 +602,7 @@ export function App() {
 
       <p>
         {reparentingNodeId
-          ? `Reparenting "${[...nodes, ...wheelNodes].find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
+          ? `Reparenting "${[...nodes, ...wheelNodes, ...popCoreNodes].find((n) => n.id === reparentingNodeId)?.name}" — hover a node in either tree and click "Select as new parent".`
           : "Hover a node to reveal an inline light icon row; the kebab holds the rest."}
       </p>
       {reparentingNodeId && (
@@ -708,8 +721,8 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadialPopCore
-            nodes={wheelNodes}
-            {...wheelCallbacks}
+            nodes={popCoreNodes}
+            {...popCoreCallbacks}
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
