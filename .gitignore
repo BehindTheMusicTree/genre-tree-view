@@ -8,3 +8,4 @@ coverage
 .env.local
 .local/
 .playwright-mcp/
+graphify-out/
