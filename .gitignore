@@ -9,3 +9,4 @@ coverage
 .local/
 .playwright-mcp/
 graphify-out/
+.github/pr-descriptions/
