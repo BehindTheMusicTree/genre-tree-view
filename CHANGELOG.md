@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Tree and wheel branch/connector lines render 4x thinner (`CONNECTOR_WIDTH` 1.5 → 0.375,
+  `RADIAL_LINK_WIDTH` 0.75 → 0.1875).
+
 ## [1.7.0] - 2026-09-17
 
 ### Added

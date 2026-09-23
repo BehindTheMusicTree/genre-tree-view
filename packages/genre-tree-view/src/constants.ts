@@ -9,13 +9,13 @@ export const CORNER_RADIUS = 8;
 export const ELEVATION = false;
 
 export const CONNECTOR_COLOR = "#D4D4D8";
-export const CONNECTOR_WIDTH = 1.5;
+export const CONNECTOR_WIDTH = 0.375;
 export const CONNECTOR_OPACITY = 1;
 
 // Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR/
 // WIDTH since those also style node chip borders and shouldn't move together with the links.
 export const RADIAL_LINK_COLOR = "#A1A1AA";
-export const RADIAL_LINK_WIDTH = 0.75;
+export const RADIAL_LINK_WIDTH = 0.1875;
 
 export const TEXT_COLOR = "#18181B";
 export const TEXT_MUTED_COLOR = "#A1A1AA";
