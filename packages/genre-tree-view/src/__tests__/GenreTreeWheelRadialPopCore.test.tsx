@@ -7,6 +7,7 @@ import {
   calculateMainstreamPopOuterCircleRadius,
   calculatePopSubtreeRadialExtent,
   getRadialPointOnCircle,
+  POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
@@ -834,6 +835,24 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const [bluesX, bluesY] = nodeCoords(container, "blues");
     const [rockX, rockY] = nodeCoords(container, "rock-music");
     expect([bluesX, bluesY]).not.toEqual([rockX, rockY]);
+  });
+
+  it("fans a root's core branches across its own sector rather than a fixed 80deg wedge", () => {
+    // root-a weighs 3 vs root-b's 1, so its sector spans 270deg — far past POP_WEDGE_SPAN_DEGREES.
+    const nodes: GenreTreeNode[] = [
+      CENTER_NODE,
+      { id: "root-a", parentId: null, name: "Blues/Rock", itemCount: 5 },
+      { id: "blues", parentId: "root-a", name: "Blues", itemCount: 2 },
+      { id: "rock-music", parentId: "root-a", name: "Rock Music", itemCount: 2 },
+      { id: "root-b", parentId: null, name: "Jazz", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+    const angleOf = (id: string) => {
+      const [x, y] = nodeCoords(container, id);
+      return (Math.atan2(x, -y) * 180) / Math.PI;
+    };
+
+    expect(Math.abs(angleOf("rock-music") - angleOf("blues"))).toBeGreaterThan(POP_WEDGE_SPAN_DEGREES);
   });
 
   it("renders a root's multiple pop children as distinct branches instead of dropping the extras", () => {
