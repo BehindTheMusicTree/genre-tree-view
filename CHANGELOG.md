@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeWheelRadialPopCore` root pop/core wedges now fill nearly all of their own root's
+  angular sector instead of being capped at a fixed 80°, so a large root (e.g. one spanning 110°+
+  of the wheel) no longer leaves a visible empty gap between its outermost node and its sector's
+  edge.
+
 ### Changed
 
 - Tree and wheel branch/connector lines render 4x thinner (`CONNECTOR_WIDTH` 1.5 → 0.375,
