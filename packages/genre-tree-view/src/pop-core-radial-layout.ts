@@ -40,6 +40,10 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 // matching the gutter every other radial-wheel element keeps from its neighbors.
 export const POP_WEDGE_SPAN_DEGREES = 80;
 
+// Angle (deg) trimmed off a root's own sector width to get its pop/core wedge span, so wedges of
+// neighboring roots never touch while still filling nearly all of their own sector.
+export const WEDGE_SECTOR_GUTTER_DEGREES = 4;
+
 // Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
 // never sits flush against the wheel's own circle edge.
 export const POP_SUBTREE_OUTER_MARGIN = 24;

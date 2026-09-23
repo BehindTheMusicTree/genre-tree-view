@@ -32,6 +32,7 @@ import {
   getRadialPointOnCircle,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
+  WEDGE_SECTOR_GUTTER_DEGREES,
 } from "./pop-core-radial-layout";
 import {
   buildSectorClipPathPolygon,
@@ -396,11 +397,12 @@ export function WheelRadialPopCoreCore({
   }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
-    (rootId: string) =>
-      Math.min(
-        POP_WEDGE_SPAN_DEGREES,
-        sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES,
-      ),
+    (rootId: string) => {
+      const sectorSpan = sectorSpanByRootId.get(rootId);
+      if (sectorSpan === undefined) return POP_WEDGE_SPAN_DEGREES;
+      // Tiny sectors (< 2x gutter) keep half their width rather than going to zero or negative.
+      return Math.max(sectorSpan / 2, sectorSpan - WEDGE_SECTOR_GUTTER_DEGREES);
+    },
     [sectorSpanByRootId],
   );
 
