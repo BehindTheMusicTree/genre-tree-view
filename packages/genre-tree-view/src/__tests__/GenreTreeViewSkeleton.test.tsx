@@ -13,6 +13,12 @@ describe("GenreTreeViewSkeleton", () => {
     },
   );
 
+  it("renders the outline skeleton for viewMode=outline", () => {
+    const { container } = render(<GenreTreeViewSkeleton viewMode="outline" />);
+
+    expect(container.querySelector(".gtv-outline-skeleton")).not.toBeNull();
+  });
+
   it("renders the stacked skeleton for viewMode=stacked", () => {
     const { container } = render(<GenreTreeViewSkeleton viewMode="stacked" />);
 
