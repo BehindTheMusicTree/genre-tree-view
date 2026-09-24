@@ -2,6 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeOutline } from "../GenreTreeOutline";
 import type { GenreTreeNode } from "../types";
+import { getGenreTreeColor, POP_SECTOR_TINT_RATIO, tintSurface } from "../constants";
 
 beforeAll(() => {
   // jsdom doesn't implement scrollIntoView.
@@ -39,6 +40,22 @@ describe("GenreTreeOutline", () => {
       'GenreTreeOutline requires a root node named "Mainstream Pop"',
     );
     vi.restoreAllMocks();
+  });
+
+  it("colors every row's bullet like its genre, and the panel header like the bullet", () => {
+    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const dot = (id: string) => (itemOf(container, id).querySelector(".gtv-outline-dot") as HTMLElement).style.background;
+    const style = (hex: string) => {
+      const probe = document.createElement("span");
+      probe.style.background = hex;
+      return probe.style.background;
+    };
+    expect(dot("a-core")).toBe(style(getGenreTreeColor("root-a")));
+    expect(dot("a-pop")).toBe(style(tintSurface(getGenreTreeColor("root-a"), POP_SECTOR_TINT_RATIO)));
+    expect(dot("pop-child")).toBe(style(tintSurface("#ffffff", POP_SECTOR_TINT_RATIO)));
+
+    fireEvent.click(nameButton(container, "a-pop"));
+    expect((container.querySelector(".gtv-info-panel-header") as HTMLElement).style.background).toBe(dot("a-pop"));
   });
 
   it("lists Mainstream Pop first, then the other roots in data order", () => {

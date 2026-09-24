@@ -147,7 +147,7 @@ export function GenreTreeOutline({
     const isReparentForbidden = reparentForbiddenIds.has(node.id);
     return (
       <span className={["gtv-outline-row", panel?.node.id === node.id && "gtv-outline-row--selected"].filter(Boolean).join(" ")}>
-        {isRoot && <span className="gtv-outline-dot" style={{ background: getGenreTreeColor(node.id) }} />}
+        <span className="gtv-outline-dot" style={{ background: getNodeVisualStyle(node).fill }} />
         <button
           type="button"
           className={[
