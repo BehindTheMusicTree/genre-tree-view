@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeOutline`: a text (non-graphical) pop/core view rendering the forest as nested
+  collapsible `<details>` lists — "Mainstream Pop" first, then each canonical root split into
+  "Core" and "Pop" sections — with the same toolbar, reparent and info-panel behavior as the
+  graphical renderers, plus its `GenreTreeOutlineSkeleton` loading placeholder
+  (`GenreTreeViewSkeleton viewMode="outline"`).
+
 ### Fixed
 
 - `GenreTreeWheelRadialPopCore` root pop/core wedges now fill nearly all of their own root's

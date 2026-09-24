@@ -66,8 +66,8 @@ flow.
 
 ## Architecture
 
-Five renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
-`GenreTreeWheelRadialPopCore`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
+Six renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+`GenreTreeWheelRadialPopCore`, `GenreTreeOutline`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
 breakdown of modules and the public export surface — keep that file in sync with this one instead
 of duplicating details here.
 

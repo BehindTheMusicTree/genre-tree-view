@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   GenreTree,
+  GenreTreeOutline,
   GenreTreeWheel,
   GenreTreeWheelRadial,
   GenreTreeWheelRadialPopCore,
@@ -437,6 +438,7 @@ let nextId = 1;
 
 const TABS = [
   { id: "wheel-radial-pop-core", label: "Genre wheel (radial, pop/core)" },
+  { id: "outline", label: "Genre outline (pop/core)" },
   { id: "wheel", label: "Genre wheel" },
   { id: "wheel-right", label: "Genre wheel (right)" },
   { id: "wheel-radial", label: "Genre wheel (radial)" },
@@ -727,6 +729,20 @@ export function App() {
             allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
           />
+        </div>
+      )}
+
+      {activeTab === "outline" && (
+        <div
+          style={{
+            width: "100%",
+            height: "70vh",
+            border: "1px solid #e4e4e7",
+            background: "#ffffff",
+            marginBottom: 32,
+          }}
+        >
+          <GenreTreeOutline nodes={popCoreNodes} {...popCoreCallbacks} showToolbar={showToolbar} />
         </div>
       )}
 
