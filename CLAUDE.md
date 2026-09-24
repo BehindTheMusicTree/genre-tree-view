@@ -59,7 +59,7 @@ Coverage thresholds are enforced at 95% (lines/branches/functions/statements) in
 `vitest.config.ts`, excluding `src/index.ts` and `src/types.ts`.
 
 Release: cut a `release/x.y.z` branch off `develop`, then run
-`pnpm release -- <patch|minor|major>` on it. Bumps the package version, updates `CHANGELOG.md`,
+`pnpm release <patch|minor|major>` on it. Bumps the package version, updates `CHANGELOG.md`,
 commits, and pushes the branch — merging into `main` and tagging triggers `publish.yml` to build
 and publish to GitHub Packages. See `CONTRIBUTING.md` for the full branching model and release
 flow.
