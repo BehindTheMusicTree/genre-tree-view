@@ -256,7 +256,7 @@ export function GenreTreeOutline({
           ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
             (n): InfoPanelChild => ({ node: n, ...getNodeVisualStyle(n) }),
           )}
-          side={panel.side}
+          side="right"
           onClose={closeNodeInfo}
           onSelectNode={selectNode}
           renderExtraDetails={renderExtraDetails}

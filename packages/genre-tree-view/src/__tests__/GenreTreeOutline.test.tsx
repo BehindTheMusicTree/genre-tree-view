@@ -121,6 +121,7 @@ describe("GenreTreeOutline", () => {
     expect(itemOf(container, "root-a").querySelector("details")!.open).toBe(false);
     const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
     expect(panel.querySelector(".gtv-info-panel-title")!.textContent).toBe("Rock");
+    expect(panel.className).toContain("gtv-info-panel--right");
     expect(container.querySelector(".gtv-outline")!.className).toContain("gtv-outline--panel-open");
     expect(itemOf(container, "root-a").querySelector(".gtv-outline-row--selected")).not.toBeNull();
 
