@@ -52,6 +52,7 @@ import {
   ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
+  CENTER_NODE_NAME,
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
@@ -79,11 +80,6 @@ export interface WheelRadialPopCoreProps
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
 }
-
-// The wheel's pivot point renders this specific root (by name) as a full interactive node
-// instead of a plain label, and it's excluded from the ring's own chips — see the center node
-// lookup in WheelRadialPopCoreCore for the fail-fast validation this name is tied to.
-const CENTER_NODE_NAME = "Mainstream Pop";
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.

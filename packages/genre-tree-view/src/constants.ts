@@ -60,6 +60,10 @@ export const POP_SECTOR_TINT_RATIO = 0.8;
 
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
+// The pop-core renderers (GenreTreeWheelRadialPopCore's wheel pivot, GenreTreeOutline's first
+// entry) single out this specific root by name and throw if it's missing.
+export const CENTER_NODE_NAME = "Mainstream Pop";
+
 // Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
 // derive a consistent per-tree color from a seed string (see getGenreTreeColor).
 export const TREE_COLORS = [

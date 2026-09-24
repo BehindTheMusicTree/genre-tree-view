@@ -1228,3 +1228,168 @@
   margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
   margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
 }
+
+/* GenreTreeOutline — nested collapsible lists (native <details>) instead of an SVG tree. The info
+   panel is absolutely positioned against .gtv-outline (not the scrolling list), so it stays put
+   while the list scrolls; the list pads itself clear of the panel while it's open. */
+.gtv-outline {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: #18181b;
+  font-size: 14px;
+}
+
+.gtv-outline-scroll {
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 12px 16px;
+}
+
+.gtv-outline--panel-open .gtv-outline-scroll {
+  padding-left: 304px;
+}
+
+.gtv-outline-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.gtv-outline-list--roots {
+  padding-left: 0;
+}
+
+.gtv-outline-item summary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  cursor: pointer;
+}
+
+.gtv-outline-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.gtv-outline-item summary::before,
+.gtv-outline-leaf::before {
+  content: "▸";
+  display: inline-block;
+  width: 1em;
+  flex: none;
+  color: #a1a1aa;
+  font-size: 0.8em;
+}
+
+.gtv-outline-item details[open] > summary::before {
+  content: "▾";
+}
+
+.gtv-outline-leaf {
+  display: flex;
+  align-items: center;
+}
+
+.gtv-outline-leaf::before {
+  visibility: hidden;
+}
+
+.gtv-outline-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 6px;
+  border-radius: 6px;
+}
+
+.gtv-outline-row:hover,
+.gtv-outline-row--selected {
+  background: #f4f4f5;
+}
+
+.gtv-outline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.gtv-outline-name {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gtv-outline-name:hover {
+  text-decoration: underline;
+}
+
+.gtv-outline-name--root {
+  font-weight: 600;
+}
+
+.gtv-outline-name--reparent-target {
+  color: #4f46e5;
+  text-decoration: underline dashed;
+}
+
+.gtv-outline-name:disabled {
+  color: #a1a1aa;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.gtv-outline-count {
+  color: #a1a1aa;
+  font-size: 0.85em;
+}
+
+.gtv-outline-section-label {
+  color: #71717a;
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* NodeToolbar fills its node card in the SVG renderers; here it sits inline after the name. */
+.gtv-outline-toolbar .gtv-toolbar {
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.gtv-outline-toolbar {
+  opacity: 0;
+}
+
+.gtv-outline-row:hover .gtv-outline-toolbar,
+.gtv-outline-row:focus-within .gtv-outline-toolbar,
+.gtv-outline-toolbar:has([aria-expanded="true"]) {
+  opacity: 1;
+}
+
+.gtv-outline-skeleton-row {
+  height: 14px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: #f4f4f5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-outline-skeleton-row {
+    animation: gtv-outline-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes gtv-outline-skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
