@@ -32,6 +32,7 @@ import {
   getRadialPointOnCircle,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
+  WEDGE_SECTOR_GUTTER_DEGREES,
 } from "./pop-core-radial-layout";
 import {
   buildSectorClipPathPolygon,
@@ -51,6 +52,7 @@ import {
   ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
+  CENTER_NODE_NAME,
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
@@ -78,11 +80,6 @@ export interface WheelRadialPopCoreProps
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
 }
-
-// The wheel's pivot point renders this specific root (by name) as a full interactive node
-// instead of a plain label, and it's excluded from the ring's own chips — see the center node
-// lookup in WheelRadialPopCoreCore for the fail-fast validation this name is tied to.
-const CENTER_NODE_NAME = "Mainstream Pop";
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
@@ -396,11 +393,12 @@ export function WheelRadialPopCoreCore({
   }, [groups, rootWeights]);
 
   const wedgeSpanForRoot = useCallback(
-    (rootId: string) =>
-      Math.min(
-        POP_WEDGE_SPAN_DEGREES,
-        sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES,
-      ),
+    (rootId: string) => {
+      const sectorSpan = sectorSpanByRootId.get(rootId);
+      if (sectorSpan === undefined) return POP_WEDGE_SPAN_DEGREES;
+      // Tiny sectors (< 2x gutter) keep half their width rather than going to zero or negative.
+      return Math.max(sectorSpan / 2, sectorSpan - WEDGE_SECTOR_GUTTER_DEGREES);
+    },
     [sectorSpanByRootId],
   );
 

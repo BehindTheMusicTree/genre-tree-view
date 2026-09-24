@@ -9,13 +9,13 @@ export const CORNER_RADIUS = 8;
 export const ELEVATION = false;
 
 export const CONNECTOR_COLOR = "#D4D4D8";
-export const CONNECTOR_WIDTH = 1.5;
+export const CONNECTOR_WIDTH = 0.375;
 export const CONNECTOR_OPACITY = 1;
 
 // Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR/
 // WIDTH since those also style node chip borders and shouldn't move together with the links.
 export const RADIAL_LINK_COLOR = "#A1A1AA";
-export const RADIAL_LINK_WIDTH = 0.75;
+export const RADIAL_LINK_WIDTH = 0.1875;
 
 export const TEXT_COLOR = "#18181B";
 export const TEXT_MUTED_COLOR = "#A1A1AA";
@@ -59,6 +59,10 @@ export const ROOT_TINT_RATIO = 0.08;
 export const POP_SECTOR_TINT_RATIO = 0.8;
 
 export const DEFAULT_NODE_COLOR = "#4F46E5";
+
+// The pop-core renderers (GenreTreeWheelRadialPopCore's wheel pivot, GenreTreeOutline's first
+// entry) single out this specific root by name and throw if it's missing.
+export const CENTER_NODE_NAME = "Mainstream Pop";
 
 // Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
 // derive a consistent per-tree color from a seed string (see getGenreTreeColor).

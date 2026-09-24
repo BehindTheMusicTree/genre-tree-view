@@ -16,9 +16,10 @@ export interface GenreTreeNode {
 export type GenreTreePlayState = "playing" | "paused" | "loading";
 
 /** "stacked" is the linear/card tree (GenreTree); "wheel"/"pop-core" are the radial layouts
- * (GenreTreeWheel* family). Shared by GenreTreeViewSkeleton so a consumer's loading state can
- * match whichever real layout it's about to render. */
-export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core";
+ * (GenreTreeWheel* family); "outline" is the nested-list text view (GenreTreeOutline). Shared by
+ * GenreTreeViewSkeleton so a consumer's loading state can match whichever real layout it's about
+ * to render. */
+export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core" | "outline";
 
 /** "horizontal" grows children rightward from a left root (default). "vertical" grows children
  * upward from a bottom-anchored root — used by GenreTreeWheel. "horizontal-anchored" grows

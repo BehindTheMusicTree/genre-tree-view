@@ -77,6 +77,12 @@ pnpm workspace with two members:
     `WheelRadialPopCoreCore`) rather than one parameterized core, since the pop-core variant's two
     deltas (core-only outward branch, in-circle pop rendering) touch enough of the render body that
     sharing it would need its own branching throughout.
+- **`GenreTreeOutline.tsx`** is the non-graphical counterpart of `GenreTreeWheelRadialPopCore`:
+  the same forest as nested native `<details>` lists (all collapsed initially), "Mainstream Pop"
+  first, then each other root with its direct children split into "Core" and "Pop" sections via
+  `splitRootGroupBySide`. It reuses the React `NodeToolbar`, `InfoPanel` and `useNodeInfoPanel`;
+  panel chip navigation and `selectedNodeId` open the target row's ancestor sections and scroll it
+  into view. `GenreTreeOutlineSkeleton` is its `viewMode="outline"` loading placeholder.
 - All four renderers pull from the same tree-building/layout pipeline:
   - `NodeHelper.tsx` — `buildTreeHierarchyStructure` turns the flat `GenreTreeNode[]` into a d3
     hierarchy.
@@ -136,7 +142,7 @@ pnpm workspace with two members:
   subtree) plus its ring chip buttons. The panel only closes via its own close button. Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
   pan/zoom-transformed content so it never scales or pans with the tree. `GenreTreeProps.renderExtraDetails`
-  (an optional `(node) => ReactNode`, threaded through all five renderers to `InfoPanel`) renders
+  (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
 
@@ -145,12 +151,12 @@ pnpm workspace with two members:
 `index.ts` is the sole export boundary:
 
 - Components: `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
-  `GenreTreeWheelRadialPopCore`.
+  `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`.
 - Helpers: `getGenreTreeColor`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
   `groupNodesByRoot`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
-  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeRootGroup`.
+  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

@@ -3,6 +3,7 @@
 import type { GenreTreeViewMode } from "./types";
 import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 import { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
+import { GenreTreeOutlineSkeleton } from "./GenreTreeOutlineSkeleton";
 
 export type GenreTreeViewSkeletonProps = {
   viewMode: GenreTreeViewMode;
@@ -19,5 +20,6 @@ export function GenreTreeViewSkeleton({ viewMode }: GenreTreeViewSkeletonProps) 
       </div>
     );
   }
+  if (viewMode === "outline") return <GenreTreeOutlineSkeleton />;
   return <GenreTreeSkeleton />;
 }

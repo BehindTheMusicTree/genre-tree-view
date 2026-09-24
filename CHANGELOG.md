@@ -5,6 +5,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-24
+
+### Added
+
+- `GenreTreeOutline`: a text (non-graphical) pop/core view rendering the forest as nested
+  collapsible `<details>` lists — "Mainstream Pop" first, then each canonical root split into
+  "Core" and "Pop" sections — with the same toolbar, reparent and info-panel behavior as the
+  graphical renderers, plus its `GenreTreeOutlineSkeleton` loading placeholder
+  (`GenreTreeViewSkeleton viewMode="outline"`).
+
+### Fixed
+
+- `GenreTreeWheelRadialPopCore` root pop/core wedges now fill nearly all of their own root's
+  angular sector instead of being capped at a fixed 80°, so a large root (e.g. one spanning 110°+
+  of the wheel) no longer leaves a visible empty gap between its outermost node and its sector's
+  edge.
+
+### Changed
+
+- Tree and wheel branch/connector lines render 4x thinner (`CONNECTOR_WIDTH` 1.5 → 0.375,
+  `RADIAL_LINK_WIDTH` 0.75 → 0.1875).
+
 ## [1.7.0] - 2026-09-17
 
 ### Added

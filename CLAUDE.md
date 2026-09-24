@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pnpm workspace with two members:
 
 - `packages/genre-tree-view` — the published library (tsup build, Vitest tests).
-- `apps/playground` — a Vite app for manually exercising the component against mock data; not published, depends on the library via `workspace:*`.
+- `apps/playground` — a Vite app for manually exercising the component; not published, depends on the library via `workspace:*`. Most demo tabs use hand-crafted mock data, but `wheel-radial-pop-core` renders `src/fixtures/genre-tree.json`, a real Gold-exported canonical genre tree kept in sync by infrastructure's `music-tree-pipelines` (see that repo's `sync_to_genre_tree_view`).
 
 ## Repository guidelines
 
@@ -66,7 +66,17 @@ flow.
 
 ## Architecture
 
-Five renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
-`GenreTreeWheelRadialPopCore`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
+Six renderers (`GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
+`GenreTreeWheelRadialPopCore`, `GenreTreeOutline`) share one tree-building/layout pipeline. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full
 breakdown of modules and the public export surface — keep that file in sync with this one instead
 of duplicating details here.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
