@@ -5,12 +5,8 @@ import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { NodeToolbar } from "./NodeToolbar";
-import {
-  computeAncestorChain,
-  findRootId,
-  GenreTreeRootGroup,
-  groupNodesByRoot,
-} from "./root-grouping";
+import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
+import { useTreeIndex } from "./use-tree-index";
 import {
   buildCoreHierarchy,
   calculateCoreSubtreeRadialExtent,
@@ -122,7 +118,10 @@ export function WheelRadialCore({
   renderExtraDetails,
   selectedNodeId,
 }: WheelRadialCoreProps) {
+  const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
+  const rootColorOf = (node: GenreTreeNode) =>
+    getGenreTreeColor(index.rootIdById.get(node.id) ?? node.id);
 
   const [topRootId, setTopRootId] = useState<string | null>(
     groups[0]?.root.id ?? null,
@@ -460,7 +459,7 @@ export function WheelRadialCore({
   // locate its element and open the panel exactly as a direct click would.
   useEffect(() => {
     if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
-    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const targetNode = index.byId.get(selectedNodeId);
     const element = viewportRef.current?.querySelector(
       `#group-${CSS.escape(selectedNodeId)}`,
     );
@@ -472,7 +471,7 @@ export function WheelRadialCore({
     );
     showNodeInfo(targetNode, element, viewportRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
-  }, [selectedNodeId, nodes, panel, showNodeInfo]);
+  }, [selectedNodeId, index, panel, showNodeInfo]);
 
   // One divider per boundary between two angularly-adjacent roots — each root's own continuous
   // (unwrapped) angle plus half its weight-proportional width (sectorSpanByRootId) lands exactly on
@@ -713,43 +712,34 @@ export function WheelRadialCore({
       {panel && (
         <InfoPanel
           node={panel.node}
-          fill={getGenreTreeColor(
-            findRootId(panel.node.id, nodes) ?? panel.node.id,
-          )}
+          fill={rootColorOf(panel.node)}
           textColor={ACCENT_TEXT_COLOR}
           parentNode={(() => {
-            const parent = nodes.find((n) => n.id === panel.node.parentId);
+            const parent = index.byId.get(panel.node.parentId ?? "");
             return parent
               ? {
                   node: parent,
-                  fill: getGenreTreeColor(
-                    findRootId(parent.id, nodes) ?? parent.id,
-                  ),
+                  fill: rootColorOf(parent),
                   textColor: ACCENT_TEXT_COLOR,
                 }
               : null;
           })()}
-          childNodes={nodes
-            .filter((n) => n.parentId === panel.node.id)
-            .map((n) => {
-              const rootColor = getGenreTreeColor(
-                findRootId(n.id, nodes) ?? n.id,
-              );
-              // renderPopSubtree is always called here with isCoreSector: true (no pop/core
-              // split in this renderer), so every node gets a solid rootColor fill.
-              return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
-            })}
-          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+          // renderPopSubtree is always called here with isCoreSector: true (no pop/core split in
+          // this renderer), so every node gets a solid rootColor fill.
+          childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
+            (n) => ({ node: n, fill: rootColorOf(n), textColor: ACCENT_TEXT_COLOR }),
+          )}
+          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
             (n): InfoPanelChild => ({
               node: n,
-              fill: getGenreTreeColor(findRootId(n.id, nodes) ?? n.id),
+              fill: rootColorOf(n),
               textColor: ACCENT_TEXT_COLOR,
             }),
           )}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
-            const targetNode = nodes.find((n) => n.id === id)!;
+            const targetNode = index.byId.get(id)!;
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );

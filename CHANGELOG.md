@@ -5,6 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `onNodeHover?: (node) => void` on `GenreTreeProps`: fired on pointerenter (and, in
+  `GenreTreeOutline`, focus) of a node, e.g. to prefetch what the consumer loads on click.
+  Fired by `GenreTreeOutline` and `GenreTreeWheelRadialPopCore`.
+
+### Changed
+
+- `GenreTreeOutline` selection is much cheaper: rows are memoized and subscribe to a per-instance
+  store, so selecting a node re-renders only the previously and newly selected rows plus the info
+  panel (was every row), and collapsed sections no longer render their descendants at all.
+- `GenreTree`, `GenreTreeWheelRadial`, `GenreTreeWheelRadialPopCore` and `GenreTreeOutline` build
+  one tree index per `nodes` identity instead of rescanning `nodes` for every root, parent,
+  children and ancestor lookup.
+
 ## [1.8.0] - 2026-09-24
 
 ### Added
