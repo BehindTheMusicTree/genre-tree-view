@@ -23,8 +23,8 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { useTreeIndex } from "./use-tree-index";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
-import { computeAncestorChain } from "./root-grouping";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 
 /**
@@ -55,6 +55,7 @@ export function GenreTree({
   selectedNodeId: selectedNodeIdProp,
   renderExtraDetails,
 }: GenreTreeProps) {
+  const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef);
@@ -201,7 +202,7 @@ export function GenreTree({
   useEffect(() => {
     if (!interactive || !selectedNodeIdProp) return;
     if (panel?.node.id === selectedNodeIdProp) return;
-    const targetNode = nodes.find((node) => node.id === selectedNodeIdProp);
+    const targetNode = index.byId.get(selectedNodeIdProp);
     const element = svgRef.current?.querySelector(
       `#group-${CSS.escape(selectedNodeIdProp)}`,
     );
@@ -212,7 +213,7 @@ export function GenreTree({
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
     );
     showNodeInfoRef.current(targetNode, element, viewportRef.current);
-  }, [interactive, selectedNodeIdProp, nodes, panel]);
+  }, [interactive, selectedNodeIdProp, index, panel]);
 
   useEffect(() => {
     const svgElement = svgRef.current;
@@ -301,9 +302,9 @@ export function GenreTree({
           fill={hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor)}
           textColor={hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR}
           parentNode={
-            nodes.find((n) => n.id === panel.node.parentId)
+            index.byId.get(panel.node.parentId ?? "")
               ? {
-                  node: nodes.find((n) => n.id === panel.node.parentId)!,
+                  node: index.byId.get(panel.node.parentId!)!,
                   fill: hideRoot
                     ? resolvedRootColor
                     : tintSurface(resolvedRootColor),
@@ -311,8 +312,7 @@ export function GenreTree({
                 }
               : null
           }
-          childNodes={nodes
-            .filter((n) => n.parentId === panel.node.id)
+          childNodes={(index.childrenByParentId.get(panel.node.id) ?? [])
             .map((n) => ({
               node: n,
               // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1 — every
@@ -323,7 +323,7 @@ export function GenreTree({
                 : tintSurface(resolvedRootColor),
               textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
             }))}
-          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
             (n): InfoPanelChild => ({
               node: n,
               // Same fill/textColor expression as parentNode/childNodes above, including for
@@ -335,7 +335,7 @@ export function GenreTree({
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
-            const targetNode = nodes.find((n) => n.id === id)!;
+            const targetNode = index.byId.get(id)!;
             const element = svgRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );

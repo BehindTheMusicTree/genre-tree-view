@@ -40,15 +40,15 @@ export function splitRootGroupBySide(group: GenreTreeRootGroup): PopCoreSplit {
   const popChildren = directChildren.filter((node) => node.side === "pop");
   const coreChildren = directChildren.filter((node) => node.side !== "pop");
 
-  const collectSubtree = (startId: string): GenreTreeNode[] => {
-    const childrenByParentId = new Map<string, GenreTreeNode[]>();
-    for (const node of nodes) {
-      if (node.parentId === null) continue;
-      const siblings = childrenByParentId.get(node.parentId);
-      if (siblings) siblings.push(node);
-      else childrenByParentId.set(node.parentId, [node]);
-    }
+  const childrenByParentId = new Map<string, GenreTreeNode[]>();
+  for (const node of nodes) {
+    if (node.parentId === null) continue;
+    const siblings = childrenByParentId.get(node.parentId);
+    if (siblings) siblings.push(node);
+    else childrenByParentId.set(node.parentId, [node]);
+  }
 
+  const collectSubtree = (startId: string): GenreTreeNode[] => {
     const start = nodeById.get(startId)!;
 
     const subtree: GenreTreeNode[] = [];

@@ -261,6 +261,7 @@ export interface RenderPopSubtreeCallbacks {
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
   onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
+  onNodeHover?: (node: GenreTreeNode) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
@@ -332,6 +333,7 @@ export function renderPopSubtree(
     onDeleteRequest,
     onReparentTargetSelect,
     onNodeClick,
+    onNodeHover,
   } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
@@ -632,6 +634,8 @@ export function renderPopSubtree(
         );
       }
     });
+
+    group.on("pointerenter", () => onNodeHover?.(d.data));
 
     group.on("mouseleave", function () {
       leaveTimeoutId = setTimeout(() => {

@@ -92,6 +92,10 @@ export interface GenreTreeProps {
    * overlay. The library itself opens its own read-only info panel for the clicked node
    * alongside this callback; the consumer owns any additional selection state or highlighting. */
   onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
+  /** Fired when the pointer enters a node (or, in `GenreTreeOutline`, its name receives focus) —
+   * e.g. to prefetch whatever the consumer loads on click. Fired by `GenreTreeOutline` and
+   * `GenreTreeWheelRadialPopCore`; accepted and ignored by the other renderers. */
+  onNodeHover?: (node: GenreTreeNode) => void;
   /** Extra actions rendered alongside the built-in play/add-child/rename/delete/reparent set —
    * placement "primary" renders inline on the node (the upload slot from earlier versions used),
    * "overflow" (the default) renders in the kebab menu alongside rename/delete. */

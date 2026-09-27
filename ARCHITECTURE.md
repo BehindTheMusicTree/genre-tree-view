@@ -78,11 +78,17 @@ pnpm workspace with two members:
     deltas (core-only outward branch, in-circle pop rendering) touch enough of the render body that
     sharing it would need its own branching throughout.
 - **`GenreTreeOutline.tsx`** is the non-graphical counterpart of `GenreTreeWheelRadialPopCore`:
-  the same forest as nested native `<details>` lists (all collapsed initially), "Mainstream Pop"
+  the same forest as nested `<details>` lists (all collapsed initially), "Mainstream Pop"
   first, then each other root with its direct children split into "Core" and "Pop" sections via
-  `splitRootGroupBySide`. It reuses the React `NodeToolbar`, `InfoPanel` and `useNodeInfoPanel`;
-  panel chip navigation and `selectedNodeId` open the target row's ancestor sections and scroll it
-  into view. `GenreTreeOutlineSkeleton` is its `viewMode="outline"` loading placeholder.
+  `splitRootGroupBySide`. It reuses the React `NodeToolbar` and `InfoPanel`. Selection, open
+  sections, play state and reparent mode live in a small external store created once per
+  instance; each row is a memoized recursive `OutlineNode` that subscribes to its own slice via
+  `useSyncExternalStore`, and receives only stable props (node id, a model memoized on `nodes`,
+  and a callbacks object that reads the latest callback props through a ref). Selecting a node
+  therefore re-renders only the previously and newly selected rows plus the panel. `<details>`
+  open state is controlled and a section's children only render while it is open. Panel chip
+  navigation and `selectedNodeId` open the target row's ancestor sections and scroll it into view
+  after the commit. `GenreTreeOutlineSkeleton` is its `viewMode="outline"` loading placeholder.
 - All four renderers pull from the same tree-building/layout pipeline:
   - `NodeHelper.tsx` — `buildTreeHierarchyStructure` turns the flat `GenreTreeNode[]` into a d3
     hierarchy.
@@ -97,6 +103,10 @@ pnpm workspace with two members:
     geometry helpers used by the renderer.
   - `root-grouping.ts` — `groupNodesByRoot` partitions the flat node list into per-root subtrees
     for the wheel renderers.
+  - `tree-index.ts` — `buildTreeIndex` builds, in one pass, the by-id, children-by-parent,
+    root-id and ancestor lookups; `use-tree-index.ts`'s `useTreeIndex` memoizes it per `nodes`
+    identity. `GenreTree`, `GenreTreeWheelRadialBase`, `GenreTreeWheelRadialPopCoreBase` and
+    `GenreTreeOutline` use it instead of rescanning `nodes` per lookup.
   - `wheel-geometry.ts` and `radial-wheel-geometry.ts` — chip placement and rotation math
     (`calculateWheelRadius`, `computeRotationForSelection`, `getChipAngle`, `computeRadialLayout`,
     `calculateWheelRadiusForAngles`) shared by the wheel renderers, plus the radial divider/sector
@@ -136,8 +146,8 @@ pnpm workspace with two members:
   a panel chip centers that node within the space that remains visible beside the panel rather
   than the viewport's full width, via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s
   `obscured` argument in `use-pan-zoom.ts`. Each top-level renderer owns exactly one
-  `useNodeInfoPanel()` hook instance (`use-node-info-panel.ts`), so only one panel is ever open per
-  component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
+  `useNodeInfoPanel()` hook instance (`use-node-info-panel.ts`) — except `GenreTreeOutline`, which
+  keeps the selected id in its own store — so only one panel is ever open per component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
   three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
   subtree) plus its ring chip buttons. The panel only closes via its own close button. Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
@@ -145,6 +155,10 @@ pnpm workspace with two members:
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
+- **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
+  `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
+  on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
+  `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
 
 ## Public surface
 
