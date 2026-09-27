@@ -50,7 +50,7 @@ enforced at 95% (lines/branches/functions/statements) in
 # Cutting a release
 
 1. Branch `release/x.y.z` off `develop`.
-2. On that branch, run `pnpm release -- <patch|minor|major>`. This bumps the package version,
+2. On that branch, run `pnpm release <patch|minor|major>`. This bumps the package version,
    moves the `CHANGELOG.md` `[Unreleased]` section into a dated entry, commits, and pushes the
    branch (see `scripts/release.sh`).
 3. Open a PR from `release/x.y.z` into `main` and merge it.

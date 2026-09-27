@@ -68,7 +68,7 @@ package is put together.
 ## Release
 
 ```bash
-pnpm release -- patch   # or minor / major
+pnpm release patch   # or minor / major
 ```
 
 Run from a `release/x.y.z` branch — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full release

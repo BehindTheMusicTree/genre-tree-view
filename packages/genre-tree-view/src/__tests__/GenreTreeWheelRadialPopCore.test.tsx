@@ -105,6 +105,22 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(chipFor(container, "Rock").closest(".gtv-wheel-center-node")).toBeNull();
   });
 
+  it("fires onNodeHover on pointerenter of a ring chip and of core, pop and center subtree nodes", () => {
+    const onNodeHover = vi.fn();
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore
+        nodes={[...NODES_WITH_POP, { id: "pop-child", parentId: "pop", name: "Radio Hits", itemCount: 1 }]}
+        onNodeHover={onNodeHover}
+      />,
+    );
+    fireEvent.click(container.querySelector('[aria-label="Show Mainstream Pop sub-genres"]')!);
+    fireEvent.pointerEnter(chipFor(container, "Electronic"));
+    for (const id of ["a-core-child", "a-pop-child", "pop-child"]) {
+      fireEvent.pointerEnter(container.querySelector(`#group-${id}`)!);
+    }
+    expect(onNodeHover.mock.calls.map(([node]) => node.id)).toEqual(["root-b", "a-core-child", "a-pop-child", "pop-child"]);
+  });
+
   it("throws when nodes has no root named 'Mainstream Pop'", () => {
     const nodesWithoutCenter = NODES_WITH_POP.filter((node) => node.id !== "pop");
     expect(() => render(<GenreTreeWheelRadialPopCore nodes={nodesWithoutCenter} />)).toThrow(

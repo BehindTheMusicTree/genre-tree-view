@@ -11,12 +11,8 @@ import * as d3 from "d3";
 
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { NodeToolbar } from "./NodeToolbar";
-import {
-  computeAncestorChain,
-  findRootId,
-  GenreTreeRootGroup,
-  groupNodesByRoot,
-} from "./root-grouping";
+import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
+import { useTreeIndex } from "./use-tree-index";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
   buildCoreHierarchy,
@@ -128,12 +124,14 @@ export function WheelRadialPopCoreCore({
   onReparentRequest,
   onReparent,
   onNodeClick,
+  onNodeHover,
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
   allowWheelRotation = true,
   selectedNodeId,
 }: WheelRadialPopCoreProps) {
+  const index = useTreeIndex(nodes);
   const centerNode = nodes.find(
     (node) => node.parentId === null && node.name === CENTER_NODE_NAME,
   );
@@ -147,22 +145,15 @@ export function WheelRadialPopCoreCore({
   // centerSubtreeHierarchy below) rather than as a ring root, so it — and all its descendants —
   // must be excluded from ringNodes, not just the center node itself.
   const centerSubtreeNodes = useMemo(() => {
-    const childrenByParentId = new Map<string, GenreTreeNode[]>();
-    for (const node of nodes) {
-      if (node.parentId === null) continue;
-      const siblings = childrenByParentId.get(node.parentId);
-      if (siblings) siblings.push(node);
-      else childrenByParentId.set(node.parentId, [node]);
-    }
     const subtree: GenreTreeNode[] = [];
     const stack = [centerNode];
     while (stack.length > 0) {
       const current = stack.pop()!;
       subtree.push(current);
-      stack.push(...(childrenByParentId.get(current.id) ?? []));
+      stack.push(...(index.childrenByParentId.get(current.id) ?? []));
     }
     return subtree;
-  }, [nodes, centerNode]);
+  }, [index, centerNode]);
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
@@ -176,13 +167,7 @@ export function WheelRadialPopCoreCore({
   // one. Unlike the ring roots, the center node's own pop branch (if any) has no dedicated wedge
   // rendering path today, so excluding it here also drops it from view entirely.
   const centerCoreSubtreeNodes = useMemo(() => {
-    const childrenByParentId = new Map<string, GenreTreeNode[]>();
-    for (const node of centerSubtreeNodes) {
-      if (node.parentId === null) continue;
-      const siblings = childrenByParentId.get(node.parentId);
-      if (siblings) siblings.push(node);
-      else childrenByParentId.set(node.parentId, [node]);
-    }
+    const { childrenByParentId } = index;
     const coreChildren = (childrenByParentId.get(centerNode.id) ?? []).filter(
       (child) => child.side !== "pop",
     );
@@ -194,7 +179,7 @@ export function WheelRadialPopCoreCore({
       stack.push(...(childrenByParentId.get(current.id) ?? []));
     }
     return subtree;
-  }, [centerSubtreeNodes, centerNode]);
+  }, [index, centerNode]);
 
   const centerSubtreeHierarchy = useMemo(
     () =>
@@ -217,6 +202,15 @@ export function WheelRadialPopCoreCore({
       ),
     [groups],
   );
+  const coreNodeIds = useMemo(
+    () =>
+      new Set(
+        [...splitByRootId.values()].flatMap((split) =>
+          split.coreNodes.map((node) => node.id),
+        ),
+      ),
+    [splitByRootId],
+  );
 
   // Mirrors renderPopSubtree's nodeFill/text-color rules (pop-core-radial-layout.ts) for whichever
   // sector a given node actually renders in here: the center "Mainstream Pop" subtree (tinted,
@@ -232,20 +226,16 @@ export function WheelRadialPopCoreCore({
           textColor: TEXT_COLOR,
         };
       }
-      const rootId = findRootId(node.id, nodes) ?? node.id;
+      const rootId = index.rootIdById.get(node.id) ?? node.id;
       const rootColor = getGenreTreeColor(rootId);
-      const isCore =
-        splitByRootId
-          .get(rootId)
-          ?.coreNodes.some((coreNode) => coreNode.id === node.id) ?? false;
       return {
-        fill: isCore
+        fill: coreNodeIds.has(node.id)
           ? rootColor
           : tintSurface(rootColor, POP_SECTOR_TINT_RATIO),
         textColor: ACCENT_TEXT_COLOR,
       };
     },
-    [centerSubtreeNodeIds, splitByRootId, nodes],
+    [centerSubtreeNodeIds, coreNodeIds, index],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -277,6 +267,11 @@ export function WheelRadialPopCoreCore({
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
     showNodeInfoRef.current = showNodeInfo;
+  });
+  // Read via a ref so a consumer's fresh closure each render doesn't re-mount the D3 tree.
+  const onNodeHoverRef = useRef(onNodeHover);
+  useEffect(() => {
+    onNodeHoverRef.current = onNodeHover;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
@@ -676,6 +671,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
             playState,
@@ -755,6 +751,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
             playState,
@@ -821,6 +818,7 @@ export function WheelRadialPopCoreCore({
             );
             onNodeClick?.(data, event);
           },
+          onNodeHover: (data) => onNodeHoverRef.current?.(data),
           additionalActions,
           playingNodeId,
           playState,
@@ -905,7 +903,7 @@ export function WheelRadialPopCoreCore({
   // externally-selected node and open its info panel exactly as a direct click would.
   useEffect(() => {
     if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
-    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const targetNode = index.byId.get(selectedNodeId);
     const element = viewportRef.current?.querySelector(
       `#group-${CSS.escape(selectedNodeId)}`,
     );
@@ -917,7 +915,7 @@ export function WheelRadialPopCoreCore({
     );
     showNodeInfo(targetNode, element, viewportRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
-  }, [selectedNodeId, nodes, panel, showNodeInfo, isPopExpanded]);
+  }, [selectedNodeId, index, panel, showNodeInfo, isPopExpanded]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its
@@ -1189,6 +1187,7 @@ export function WheelRadialPopCoreCore({
                           "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
+                      onPointerEnter={() => onNodeHover?.(group.root)}
                       onClick={(event) => {
                         panZoom.centerOnElement(
                           event.currentTarget,
@@ -1263,21 +1262,21 @@ export function WheelRadialPopCoreCore({
           node={panel.node}
           {...getNodeVisualStyle(panel.node)}
           parentNode={(() => {
-            const parent = nodes.find((n) => n.id === panel.node.parentId);
+            const parent = index.byId.get(panel.node.parentId ?? "");
             return parent
               ? { node: parent, ...getNodeVisualStyle(parent) }
               : null;
           })()}
-          childNodes={nodes
-            .filter((n) => n.parentId === panel.node.id)
-            .map((n) => ({ node: n, ...getNodeVisualStyle(n) }))}
-          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+          childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
+            (n) => ({ node: n, ...getNodeVisualStyle(n) }),
+          )}
+          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
             (n): InfoPanelChild => ({ node: n, ...getNodeVisualStyle(n) }),
           )}
           side={panel.side}
           onClose={closeNodeInfo}
           onSelectNode={(id) => {
-            const targetNode = nodes.find((n) => n.id === id)!;
+            const targetNode = index.byId.get(id)!;
             const element = viewportRef.current!.querySelector(
               `#group-${CSS.escape(id)}`,
             );
