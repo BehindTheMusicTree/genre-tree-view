@@ -3326,6 +3326,12 @@
     "itemCount": 0
   },
   {
+    "id": "ht-pop",
+    "parentId": null,
+    "name": "HT-Pop",
+    "itemCount": 0
+  },
+  {
     "id": "reggae-dub-grouping",
     "parentId": null,
     "name": "Reggae/Dub (grouping)",
@@ -4537,6 +4543,12 @@
     "id": "jumpstyle",
     "parentId": "hard-dance",
     "name": "Jumpstyle",
+    "itemCount": 0
+  },
+  {
+    "id": "frenchtek",
+    "parentId": "jumpstyle",
+    "name": "Frenchtek",
     "itemCount": 0
   },
   {
@@ -6310,12 +6322,6 @@
     "itemCount": 0
   },
   {
-    "id": "freeform-hardcore",
-    "parentId": "hardcore",
-    "name": "Freeform hardcore",
-    "itemCount": 0
-  },
-  {
     "id": "happy-hardcore",
     "parentId": "hardcore",
     "name": "Happy hardcore",
@@ -6388,6 +6394,12 @@
     "itemCount": 0
   },
   {
+    "id": "dutch-trancecore",
+    "parentId": "gabber",
+    "name": "Dutch trancecore",
+    "itemCount": 0
+  },
+  {
     "id": "mainstream-hardcore",
     "parentId": "gabber",
     "name": "Mainstream hardcore",
@@ -6457,6 +6469,12 @@
     "id": "trancecore",
     "parentId": "hardcore",
     "name": "Trancecore",
+    "itemCount": 0
+  },
+  {
+    "id": "freeform-hardcore",
+    "parentId": "trancecore",
+    "name": "Freeform hardcore",
     "itemCount": 0
   },
   {
@@ -9735,6 +9753,12 @@
     "id": "toytown-pop",
     "parentId": "mainstream-pop",
     "name": "Toytown pop",
+    "itemCount": 0
+  },
+  {
+    "id": "y2k-pop",
+    "parentId": "mainstream-pop",
+    "name": "Y2K pop",
     "itemCount": 0
   },
   {
