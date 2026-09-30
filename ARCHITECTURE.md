@@ -159,6 +159,11 @@ pnpm workspace with two members:
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
+- **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
+  to `usePanZoom`. In `"modifier"` mode a wheel without Ctrl/Meta is left un-`preventDefault`ed
+  so the page scrolls, and `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each
+  interactive renderer applies to its viewport — for trees stacked in a scrolling page.
+  `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
 
 ## Public surface
 
