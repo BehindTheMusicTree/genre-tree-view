@@ -59,7 +59,7 @@ pnpm workspace with two members:
     throws — and that root (plus its own descendants, if any) is excluded from the ring's own
     chips. The center "Mainstream Pop" node may have its own subtree: hidden by default, it
     toggles open/closed either by clicking the center chip itself or via a dedicated floating
-    button stacked above the zoom controls in the bottom-left corner (both rendered only when the
+    button stacked above the zoom controls in the bottom-right corner (both rendered only when the
     center node has a subtree; local component state, not exposed via props) — clicking anywhere
     in the expanded subtree's own empty background also collapses it back. When expanded, its direct
     children spread around a full-circle invisible **mainstream pop root circle** proportional to
@@ -159,6 +159,11 @@ pnpm workspace with two members:
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
+- **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
+  to `usePanZoom`. In `"modifier"` mode a wheel without Ctrl/Meta is left un-`preventDefault`ed
+  so the page scrolls, and `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each
+  interactive renderer applies to its viewport — for trees stacked in a scrolling page.
+  `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
 
 ## Public surface
 
@@ -170,7 +175,8 @@ pnpm workspace with two members:
   `groupNodesByRoot`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
-  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`.
+  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
+  `WheelZoomMode`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

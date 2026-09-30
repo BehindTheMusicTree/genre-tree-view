@@ -17,6 +17,7 @@ export type {
   GenreTreeViewMode,
   TreeOrientation,
   GenreTreeAction,
+  WheelZoomMode,
 } from "./types";
 export type { GenreTreeViewSkeletonProps } from "./GenreTreeViewSkeleton";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";

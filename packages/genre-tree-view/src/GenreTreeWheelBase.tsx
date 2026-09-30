@@ -84,6 +84,7 @@ export function WheelCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  wheelZoom,
   selectedNodeId,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation =
@@ -148,7 +149,7 @@ export function WheelCore({
   const viewportRef = useRef<HTMLDivElement>(null);
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
-  const panZoom = usePanZoom(viewportRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
@@ -305,6 +306,7 @@ export function WheelCore({
           "--gtv-wheel-viewport-height": `${wheelViewportHeight}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
+          touchAction: panZoom.touchAction,
         } as React.CSSProperties
       }
       onPointerDown={panZoom.handlePointerDown}
