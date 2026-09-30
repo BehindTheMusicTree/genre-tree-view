@@ -3326,12 +3326,6 @@
     "itemCount": 0
   },
   {
-    "id": "ht-pop",
-    "parentId": null,
-    "name": "HT-Pop",
-    "itemCount": 0
-  },
-  {
     "id": "reggae-dub-grouping",
     "parentId": null,
     "name": "Reggae/Dub (grouping)",
@@ -9498,6 +9492,12 @@
     "itemCount": 0
   },
   {
+    "id": "caribbean-urban-jazz",
+    "parentId": "jazz",
+    "name": "Caribbean Urban Jazz",
+    "itemCount": 0
+  },
+  {
     "id": "mainstream-pop",
     "parentId": null,
     "name": "Mainstream Pop",
@@ -9759,6 +9759,12 @@
     "id": "y2k-pop",
     "parentId": "mainstream-pop",
     "name": "Y2K pop",
+    "itemCount": 0
+  },
+  {
+    "id": "ht-pop",
+    "parentId": "mainstream-pop",
+    "name": "HT-Pop",
     "itemCount": 0
   },
   {
