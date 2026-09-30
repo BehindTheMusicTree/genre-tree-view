@@ -175,7 +175,8 @@ pnpm workspace with two members:
   `groupNodesByRoot`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
-  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`.
+  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
+  `WheelZoomMode`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

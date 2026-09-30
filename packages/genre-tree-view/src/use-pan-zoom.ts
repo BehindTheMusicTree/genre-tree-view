@@ -550,7 +550,9 @@ export function usePanZoom(
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
   // never reaches JS at all (the browser treats it as native page zoom) — that's handled by the
   // viewport's touch-action (see `touchAction`; neither "none" nor "pan-y" allows pinch-zoom),
-  // which routes both touch points here as ordinary pointer events instead.
+  // which routes both touch points here as ordinary pointer events instead. Under "pan-y" the
+  // browser may still claim a pinch whose fingers drift vertically as a page scroll, firing
+  // pointercancel and ending the pinch early.
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   // Pointers whose pointerdown landed on a node/toolbar/control: excluded from single-pointer pan
   // (so they don't fight that element's own click/hover handling) but still tracked so a pinch that

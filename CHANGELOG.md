@@ -8,9 +8,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `wheelZoom?: "always" | "modifier"` on `GenreTreeProps` (type exported as `WheelZoomMode`,
-  default `"always"`). In `"modifier"` mode the wheel pans/zooms only with Ctrl/Meta held, so a
-  plain wheel scrolls the page, and the viewport uses `touch-action: pan-y` so one-finger vertical
-  touch scrolls it too. Accepted by `GenreTree`, `GenreTreeWheel`/`GenreTreeWheelRight`,
+  default `"always"`). In `"modifier"` mode a plain wheel and a one-finger vertical swipe scroll
+  the page instead of the tree, Ctrl/Meta + wheel zooms the tree, and a horizontal drag still pans
+  it. Accepted by `GenreTree`, `GenreTreeWheel`/`GenreTreeWheelRight`,
   `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`.
 
 ## [1.9.1] - 2026-09-30
