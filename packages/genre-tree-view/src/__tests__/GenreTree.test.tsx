@@ -337,6 +337,15 @@ describe("GenreTree", () => {
       expect(getScale(transformDiv)).toBeLessThan(baseScale);
     });
 
+    it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+
+      for (const name of ["Zoom in", "Zoom out", "Fit to frame"]) {
+        const button = within(container).getByRole("button", { name });
+        expect(button.closest(".gtv-wheel-floating-controls")).not.toBeNull();
+      }
+    });
+
     it("disables the zoom-in button once the max scale is reached", () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const zoomIn = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;

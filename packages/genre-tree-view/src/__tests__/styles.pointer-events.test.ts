@@ -18,3 +18,17 @@ describe("styles.css pointer-events", () => {
     expect(rule![0]).toMatch(/pointer-events:\s*none/);
   });
 });
+
+// Same reason as above: jsdom can't compute layout, so a regression that drops this wrapper back
+// into document flow (rendering the zoom controls top-left, under the host app's actions bar) is
+// only catchable by asserting the stylesheet source.
+describe("styles.css floating controls", () => {
+  it("keeps .gtv-wheel-floating-controls absolutely pinned bottom-right above the tree", () => {
+    const rule = stylesCss.match(/\.gtv-wheel-floating-controls\s*{[^}]*}/);
+    expect(rule).toBeTruthy();
+    expect(rule![0]).toMatch(/position:\s*absolute/);
+    expect(rule![0]).toMatch(/bottom:\s*\d/);
+    expect(rule![0]).toMatch(/right:\s*\d/);
+    expect(rule![0]).toMatch(/z-index:\s*\d/);
+  });
+});
