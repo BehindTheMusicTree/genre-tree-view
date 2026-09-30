@@ -116,6 +116,7 @@ export function WheelRadialCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  wheelZoom,
   selectedNodeId,
 }: WheelRadialCoreProps) {
   const index = useTreeIndex(nodes);
@@ -127,7 +128,7 @@ export function WheelRadialCore({
     groups[0]?.root.id ?? null,
   );
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
@@ -521,6 +522,7 @@ export function WheelRadialCore({
           "--gtv-wheel-radius": `${wheelRadius}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
+          touchAction: panZoom.touchAction,
         } as React.CSSProperties
       }
       onPointerDown={panZoom.handlePointerDown}
