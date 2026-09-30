@@ -17,6 +17,7 @@ import {
   computeZoomScaleForButton,
   createWheelClassifierState,
 } from "./zoom-pan";
+import type { WheelZoomMode } from "./types";
 
 export interface UsePanZoomResult {
   panX: number;
@@ -47,6 +48,8 @@ export interface UsePanZoomResult {
     obscured?: { width: number; side: "left" | "right" } | null,
   ) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
+  /** CSS `touch-action` for the viewport element — see the `wheelZoom` param. */
+  touchAction: "none" | "pan-y";
 }
 
 /**
@@ -55,8 +58,16 @@ export interface UsePanZoomResult {
  * cursor; plain wheel pans; click-and-drag over empty background pans. All of it adjusts `panX`/
  * `panY`/`zoomScale` state directly rather than any ancestor's scroll position, so a consumer
  * applying `transform` to one stage element never needs to keep multiple DOM subtrees in sync.
+ *
+ * `wheelZoom: "modifier"` is for viewports embedded in a scrolling page (e.g. a stacked list of
+ * trees): only Ctrl/Meta+wheel (and trackpad pinch, which arrives as ctrlKey wheel) zooms, a
+ * plain wheel is left alone so the page scrolls, and one-finger touch scrolls vertically
+ * (`touchAction: "pan-y"`) instead of panning the tree.
  */
-export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): UsePanZoomResult {
+export function usePanZoom(
+  viewportRef: React.RefObject<HTMLElement | null>,
+  wheelZoom: WheelZoomMode = "always",
+): UsePanZoomResult {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [zoomScale, setZoomScale] = useState(1);
@@ -279,8 +290,12 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
       if ((event.target as Element).closest(".gtv-info-panel") !== null) {
         return;
       }
+      const isZoom = event.ctrlKey || (wheelZoom === "modifier" && event.metaKey);
+      if (wheelZoom === "modifier" && !isZoom) {
+        return;
+      }
       event.preventDefault();
-      if (event.ctrlKey) {
+      if (isZoom) {
         const now = performance.now();
         const wheelType = classifyWheelEvent(event.deltaY, now, wheelClassifierRef.current);
         if (wheelType === "trackpad") {
@@ -308,7 +323,7 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis]);
+  }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis, wheelZoom]);
 
   // Fallback for input that never reaches the wheel handler above — e.g. a trackpad/OS/browser
   // combination that doesn't translate a pinch gesture into a ctrlKey wheel event at all.
@@ -533,9 +548,9 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
 
   // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
-  // never reaches JS at all (the browser treats it as native page zoom) — that's handled by
-  // touch-action: none on the viewport element (see GenreTree.tsx/styles.css), which routes both
-  // touch points here as ordinary pointer events instead.
+  // never reaches JS at all (the browser treats it as native page zoom) — that's handled by the
+  // viewport's touch-action (see `touchAction`; neither "none" nor "pan-y" allows pinch-zoom),
+  // which routes both touch points here as ordinary pointer events instead.
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   // Pointers whose pointerdown landed on a node/toolbar/control: excluded from single-pointer pan
   // (so they don't fight that element's own click/hover handling) but still tracked so a pinch that
@@ -687,5 +702,6 @@ export function usePanZoom(viewportRef: React.RefObject<HTMLElement | null>): Us
     fitToFrame,
     centerOnElement,
     handlePointerDown,
+    touchAction: wheelZoom === "modifier" ? "pan-y" : "none",
   };
 }

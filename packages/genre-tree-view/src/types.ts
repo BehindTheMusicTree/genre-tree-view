@@ -66,6 +66,10 @@ export interface GenreTreeAction {
   placement?: "primary" | "overflow";
 }
 
+/** How the mouse wheel drives an interactive renderer's pan/zoom viewport — see
+ * `GenreTreeProps.wheelZoom`. */
+export type WheelZoomMode = "always" | "modifier";
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   className?: string;
@@ -105,6 +109,11 @@ export interface GenreTreeProps {
    * of that — used by GenreTreeWheel, which applies one shared pan/zoom transform to the tree and
    * its wheel together instead of giving the tree its own independent one. */
   interactive?: boolean;
+  /** "always" (the default): the viewport captures every wheel event — plain wheel pans,
+   * Ctrl+wheel/pinch zooms — and all touch input. "modifier": only Ctrl/Meta+wheel (or a
+   * trackpad pinch) zooms; a plain wheel and one-finger vertical touch scroll the page instead,
+   * for trees embedded in a scrolling list. Ignored when `interactive` is false. */
+  wheelZoom?: WheelZoomMode;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;

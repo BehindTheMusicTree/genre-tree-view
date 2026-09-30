@@ -59,7 +59,7 @@ pnpm workspace with two members:
     throws — and that root (plus its own descendants, if any) is excluded from the ring's own
     chips. The center "Mainstream Pop" node may have its own subtree: hidden by default, it
     toggles open/closed either by clicking the center chip itself or via a dedicated floating
-    button stacked above the zoom controls in the bottom-left corner (both rendered only when the
+    button stacked above the zoom controls in the bottom-right corner (both rendered only when the
     center node has a subtree; local component state, not exposed via props) — clicking anywhere
     in the expanded subtree's own empty background also collapses it back. When expanded, its direct
     children spread around a full-circle invisible **mainstream pop root circle** proportional to

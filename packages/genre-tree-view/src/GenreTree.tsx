@@ -54,11 +54,12 @@ export function GenreTree({
   showToolbar = true,
   selectedNodeId: selectedNodeIdProp,
   renderExtraDetails,
+  wheelZoom,
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
@@ -261,19 +262,19 @@ export function GenreTree({
           overflow: "hidden",
           width: "100%",
           height: "100%",
-          // The tree content below is position: absolute, so it contributes nothing to this div's
-          // own layout size — an explicit-sized ancestor still resolves width/height: 100% normally,
-          // but without one this div can collapse to whatever static-position content remains (the
-          // zoom controls), shrinking below ZOOM_FIT_PADDING. usePanZoom's fitToFrame already no-ops
+          // Everything inside this div (the tree stage, the info panel, the floating zoom controls)
+          // is absolutely positioned, so nothing in-flow gives it a size of its own — it requires an
+          // explicit-sized ancestor for width/height: 100% to resolve, and without one collapses to
+          // 0 height, below ZOOM_FIT_PADDING. usePanZoom's fitToFrame already no-ops
           // rather than fit into a viewport that small (see ZOOM_FIT_PADDING guard in use-pan-zoom.ts),
           // so no minWidth/minHeight floor is applied here — flooring at the tree's own size used to
           // force this div larger than a smaller explicit-sized ancestor for any tree bigger than it,
           // which broke fitToFrame's viewport measurement and left content clipped against that
           // ancestor's actual (smaller) visible bounds.
           cursor: "grab",
-          // Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes
-          // it as native page zoom before usePanZoom's pointer handlers see either touch point.
-          touchAction: "none",
+          // Never "auto": a touchscreen two-finger pinch would otherwise never reach JS at all — the
+          // browser consumes it as native page zoom before usePanZoom's pointer handlers see it.
+          touchAction: panZoom.touchAction,
         } as React.CSSProperties
       }
       onPointerDown={panZoom.handlePointerDown}

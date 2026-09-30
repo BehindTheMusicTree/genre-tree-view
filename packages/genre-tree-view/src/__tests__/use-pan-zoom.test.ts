@@ -197,6 +197,55 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
+  it("defaults to wheelZoom \"always\": plain wheel pans and is preventDefault'ed, touchAction is none", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const event = new WheelEvent("wheel", { deltaY: 40, bubbles: true, cancelable: true });
+
+    act(() => {
+      viewport.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(result.current.panY).toBe(-40);
+    expect(result.current.touchAction).toBe("none");
+    document.body.removeChild(viewport);
+  });
+
+  it("wheelZoom \"modifier\" leaves a plain wheel to the page: no pan/zoom, no preventDefault, touchAction pan-y", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const event = new WheelEvent("wheel", { deltaY: 40, bubbles: true, cancelable: true });
+
+    act(() => {
+      viewport.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(result.current.panY).toBe(0);
+    expect(result.current.zoomScale).toBe(1);
+    expect(result.current.touchAction).toBe("pan-y");
+    document.body.removeChild(viewport);
+  });
+
+  it.each([{ ctrlKey: true }, { metaKey: true }])("wheelZoom \"modifier\" zooms on %o + wheel", (modifier) => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const event = new WheelEvent("wheel", { ...modifier, deltaY: -2, clientX: 50, clientY: 50, bubbles: true, cancelable: true });
+
+    act(() => {
+      viewport.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(result.current.zoomScale).toBeGreaterThan(1);
+    document.body.removeChild(viewport);
+  });
+
   it("clamps plain wheel-panning so content can never be dragged fully out of view", () => {
     const viewport = document.createElement("div");
     const content = document.createElement("div");

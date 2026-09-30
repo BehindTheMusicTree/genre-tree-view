@@ -128,6 +128,7 @@ export function WheelRadialPopCoreCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  wheelZoom,
   allowWheelRotation = true,
   selectedNodeId,
 }: WheelRadialPopCoreProps) {
@@ -252,7 +253,7 @@ export function WheelRadialPopCoreCore({
   // default, toggled by clicking the center chip itself (see the button below).
   const [isPopExpanded, setIsPopExpanded] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom);
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -965,6 +966,7 @@ export function WheelRadialPopCoreCore({
           "--gtv-wheel-svg-radius": `${svgCanvasRadius}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
+          touchAction: panZoom.touchAction,
         } as React.CSSProperties
       }
       onPointerDown={panZoom.handlePointerDown}
