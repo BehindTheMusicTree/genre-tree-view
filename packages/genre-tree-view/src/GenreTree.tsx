@@ -353,45 +353,47 @@ export function GenreTree({
           renderExtraDetails={renderExtraDetails}
         />
       )}
-      <div className="gtv-zoom-controls">
-        <button
-          type="button"
-          className={[
-            "gtv-zoom-btn",
-            !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          disabled={!panZoom.canZoomIn}
-          onClick={panZoom.zoomIn}
-          aria-label="Zoom in"
-        >
-          <MdZoomIn className="gtv-icon" size={18} />
-        </button>
-        <button
-          type="button"
-          className={[
-            "gtv-zoom-btn",
-            !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          disabled={!panZoom.canZoomOut}
-          onClick={panZoom.zoomOut}
-          aria-label="Zoom out"
-        >
-          <MdZoomOut className="gtv-icon" size={18} />
-        </button>
-        <button
-          type="button"
-          className="gtv-zoom-btn"
-          onClick={() =>
-            panZoom.fitToFrame(queryTreeContentElements(svgRef.current))
-          }
-          aria-label="Fit to frame"
-        >
-          <MdFitScreen className="gtv-icon" size={18} />
-        </button>
+      <div className="gtv-wheel-floating-controls">
+        <div className="gtv-zoom-controls">
+          <button
+            type="button"
+            className={[
+              "gtv-zoom-btn",
+              !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            disabled={!panZoom.canZoomIn}
+            onClick={panZoom.zoomIn}
+            aria-label="Zoom in"
+          >
+            <MdZoomIn className="gtv-icon" size={18} />
+          </button>
+          <button
+            type="button"
+            className={[
+              "gtv-zoom-btn",
+              !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            disabled={!panZoom.canZoomOut}
+            onClick={panZoom.zoomOut}
+            aria-label="Zoom out"
+          >
+            <MdZoomOut className="gtv-icon" size={18} />
+          </button>
+          <button
+            type="button"
+            className="gtv-zoom-btn"
+            onClick={() =>
+              panZoom.fitToFrame(queryTreeContentElements(svgRef.current))
+            }
+            aria-label="Fit to frame"
+          >
+            <MdFitScreen className="gtv-icon" size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
