@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-09-30
+
+### Fixed
+
+- Zoom controls in `GenreTree`, `GenreTreeWheel`/`GenreTreeWheelRight` and `GenreTreeWheelRadial`
+  now float bottom-right like `GenreTreeWheelRadialPopCore`, instead of flowing into the top-left
+  corner where a host's overlaid actions bar could cover them.
+
 ## [1.9.0] - 2026-09-27
 
 ### Added

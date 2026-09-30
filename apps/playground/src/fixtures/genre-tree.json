@@ -4540,6 +4540,12 @@
     "itemCount": 0
   },
   {
+    "id": "frenchtek",
+    "parentId": "jumpstyle",
+    "name": "Frenchtek",
+    "itemCount": 0
+  },
+  {
     "id": "tanzhammer-pop",
     "parentId": "electronic-dance-music",
     "name": "Tanzhammer-pop",
@@ -6310,12 +6316,6 @@
     "itemCount": 0
   },
   {
-    "id": "freeform-hardcore",
-    "parentId": "hardcore",
-    "name": "Freeform hardcore",
-    "itemCount": 0
-  },
-  {
     "id": "happy-hardcore",
     "parentId": "hardcore",
     "name": "Happy hardcore",
@@ -6388,6 +6388,12 @@
     "itemCount": 0
   },
   {
+    "id": "dutch-trancecore",
+    "parentId": "gabber",
+    "name": "Dutch trancecore",
+    "itemCount": 0
+  },
+  {
     "id": "mainstream-hardcore",
     "parentId": "gabber",
     "name": "Mainstream hardcore",
@@ -6457,6 +6463,12 @@
     "id": "trancecore",
     "parentId": "hardcore",
     "name": "Trancecore",
+    "itemCount": 0
+  },
+  {
+    "id": "freeform-hardcore",
+    "parentId": "trancecore",
+    "name": "Freeform hardcore",
     "itemCount": 0
   },
   {
@@ -9480,6 +9492,12 @@
     "itemCount": 0
   },
   {
+    "id": "caribbean-urban-jazz",
+    "parentId": "jazz",
+    "name": "Caribbean Urban Jazz",
+    "itemCount": 0
+  },
+  {
     "id": "mainstream-pop",
     "parentId": null,
     "name": "Mainstream Pop",
@@ -9735,6 +9753,18 @@
     "id": "toytown-pop",
     "parentId": "mainstream-pop",
     "name": "Toytown pop",
+    "itemCount": 0
+  },
+  {
+    "id": "y2k-pop",
+    "parentId": "mainstream-pop",
+    "name": "Y2K pop",
+    "itemCount": 0
+  },
+  {
+    "id": "ht-pop",
+    "parentId": "mainstream-pop",
+    "name": "HT-Pop",
     "itemCount": 0
   },
   {
