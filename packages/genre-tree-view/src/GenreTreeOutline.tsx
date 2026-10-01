@@ -320,11 +320,6 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
   useLayoutEffect(() => {
     latestProps.current = props;
   });
-  // Skipped for the consumer's own selectedNodeId, so it never echoes back (see useNodeInfoPanel).
-  const notifySelected = (node: GenreTreeNode) => {
-    const { selectedNodeId: controlledId, onSelectedNodeChange } = latestProps.current;
-    if (node.id !== controlledId) onSelectedNodeChange?.(node);
-  };
 
   const callbacks = useMemo<OutlineCallbacks>(
     () => ({
@@ -336,8 +331,9 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           void onReparent?.(reparenting, node.id);
           return;
         }
+        const changed = store.get().selectedId !== node.id;
         store.set({ selectedId: node.id });
-        notifySelected(node);
+        if (changed) latestProps.current.onSelectedNodeChange?.(node);
         onNodeClick?.(node, event.nativeEvent);
       },
       onHover: (node) => latestProps.current.onNodeHover?.(node),
@@ -361,8 +357,9 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
 
   // Expands every collapsed ancestor section of `nodeId`'s row, opens its info panel, and scrolls
   // it into view once rendered — shared by panel chip navigation and the externally-controlled
-  // `selectedNodeId`. No-op for an id that isn't in the tree.
-  const selectNode = (nodeId: string) => {
+  // `selectedNodeId` (which passes `notify: false`, so it never echoes back). No-op for an id
+  // that isn't in the tree.
+  const selectNode = (nodeId: string, { notify = true }: { notify?: boolean } = {}) => {
     const ancestors = index.ancestorsOf(nodeId);
     if (!index.rootIdById.get(nodeId)) return;
     const openIds = new Set(store.get().openIds);
@@ -371,9 +368,10 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     if (root && root.id !== model.centerRoot.id) {
       openIds.add(sectionKey(branchChild.side === "pop" ? "pop" : "core", root.id));
     }
-    if (store.get().selectedId !== nodeId) pendingScrollIdRef.current = nodeId;
+    const changed = store.get().selectedId !== nodeId;
+    if (changed) pendingScrollIdRef.current = nodeId;
     store.set({ openIds, selectedId: nodeId });
-    notifySelected(index.byId.get(nodeId)!);
+    if (changed && notify) latestProps.current.onSelectedNodeChange?.(index.byId.get(nodeId)!);
   };
   const selectNodeRef = useRef(selectNode);
   useLayoutEffect(() => {
@@ -390,12 +388,12 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
 
   useEffect(() => {
     if (!selectedNodeId || selectedId === selectedNodeId) return;
-    selectNodeRef.current(selectedNodeId);
+    selectNodeRef.current(selectedNodeId, { notify: false });
   }, [selectedNodeId, selectedId]);
 
   const prevSelectedNodeIdRef = useRef(selectedNodeId);
   useEffect(() => {
-    if (prevSelectedNodeIdRef.current && selectedNodeId === null) store.set({ selectedId: null });
+    if (prevSelectedNodeIdRef.current != null && selectedNodeId == null) store.set({ selectedId: null });
     prevSelectedNodeIdRef.current = selectedNodeId;
   }, [selectedNodeId, store]);
 

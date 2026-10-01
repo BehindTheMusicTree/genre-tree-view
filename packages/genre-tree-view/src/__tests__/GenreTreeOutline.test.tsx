@@ -212,6 +212,8 @@ describe("GenreTreeOutline", () => {
 
     fireEvent.click(nameButton(container, "root-a"));
     expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "root-a" }));
+    fireEvent.click(nameButton(container, "root-a"));
+    expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
     fireEvent.click(within(panel()).getByText("Punk"));
     expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "a-core" }));
     fireEvent.click(within(panel()).getByLabelText("Close"));
@@ -224,14 +226,14 @@ describe("GenreTreeOutline", () => {
     expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
   });
 
-  it("closes the panel without notifying when selectedNodeId becomes null", () => {
+  it.each([null, undefined])("closes the panel without notifying when selectedNodeId becomes %s", (cleared) => {
     const onSelectedNodeChange = vi.fn();
     const { container, rerender } = render(
       <GenreTreeOutline nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} />,
     );
     expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
 
-    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} />);
+    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId={cleared} onSelectedNodeChange={onSelectedNodeChange} />);
 
     expect(container.querySelector(".gtv-info-panel")).toBeNull();
     expect(onSelectedNodeChange).not.toHaveBeenCalled();

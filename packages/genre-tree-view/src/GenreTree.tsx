@@ -215,7 +215,7 @@ export function GenreTree({
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
     );
-    showNodeInfoRef.current(targetNode, element, viewportRef.current);
+    showNodeInfoRef.current(targetNode, element, viewportRef.current, { notify: false });
   }, [interactive, selectedNodeIdProp, index, panel]);
 
   useEffect(() => {

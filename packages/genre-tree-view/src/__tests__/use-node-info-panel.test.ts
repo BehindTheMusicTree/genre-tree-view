@@ -97,30 +97,61 @@ describe("useNodeInfoPanel", () => {
       expect(onSelectedNodeChange).toHaveBeenCalledTimes(2);
     });
 
-    it("does not echo back when opening for the consumer's own selectedNodeId", () => {
+    it("does not notify when syncing to the consumer's selectedNodeId (notify: false)", () => {
       const onSelectedNodeChange = vi.fn();
       const { result } = renderHook(() => useNodeInfoPanel({ selectedNodeId: "a", onSelectedNodeChange }));
 
       act(() => {
-        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0));
+        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0), { notify: false });
       });
 
       expect(result.current.panel?.node).toBe(nodeA);
       expect(onSelectedNodeChange).not.toHaveBeenCalled();
     });
 
-    it("closes without notifying when selectedNodeId goes from an id to null", () => {
+    it("notifies a user selection of the controlled id once the panel has moved away from it", () => {
       const onSelectedNodeChange = vi.fn();
-      const { result, rerender } = renderHook(
-        ({ selectedNodeId }: { selectedNodeId: string | null }) =>
-          useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange }),
-        { initialProps: { selectedNodeId: "a" as string | null } },
-      );
+      const { result } = renderHook(() => useNodeInfoPanel({ selectedNodeId: "a", onSelectedNodeChange }));
+
+      act(() => {
+        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0), { notify: false });
+      });
+      act(() => {
+        result.current.showNodeInfo(nodeB, elementAt(400), elementAt(0));
+      });
       act(() => {
         result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0));
       });
 
-      rerender({ selectedNodeId: null });
+      expect(onSelectedNodeChange.mock.calls.map(([node]) => node?.id)).toEqual(["b", "a"]);
+    });
+
+    it("does not notify when re-selecting the node already shown", () => {
+      const onSelectedNodeChange = vi.fn();
+      const { result } = renderHook(() => useNodeInfoPanel({ onSelectedNodeChange }));
+
+      act(() => {
+        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0));
+      });
+      act(() => {
+        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0));
+      });
+
+      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([null, undefined])("closes without notifying when selectedNodeId goes from an id to %s", (cleared) => {
+      const onSelectedNodeChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ selectedNodeId }: { selectedNodeId?: string | null }) =>
+          useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange }),
+        { initialProps: { selectedNodeId: "a" as string | null | undefined } },
+      );
+      act(() => {
+        result.current.showNodeInfo(nodeA, elementAt(400), elementAt(0), { notify: false });
+      });
+
+      rerender({ selectedNodeId: cleared });
 
       expect(result.current.panel).toBeNull();
       expect(onSelectedNodeChange).not.toHaveBeenCalled();

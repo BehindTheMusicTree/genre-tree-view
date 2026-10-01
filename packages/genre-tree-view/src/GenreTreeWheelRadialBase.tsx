@@ -472,7 +472,7 @@ export function WheelRadialCore({
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
     );
-    showNodeInfo(targetNode, element, viewportRef.current);
+    showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
   }, [selectedNodeId, index, panel, showNodeInfo]);
 

@@ -10,8 +10,8 @@ export interface NodeInfoPanelState {
 
 export interface UseNodeInfoPanelOptions {
   /** The consumer-controlled selection (see GenreTreeProps.selectedNodeId). A transition from an
-   * id to `null` closes the panel without firing `onSelectedNodeChange`, since the consumer
-   * initiated it. */
+   * id to `null`/`undefined` closes the panel without firing `onSelectedNodeChange`, since the
+   * consumer initiated it. */
   selectedNodeId?: string | null;
   /** See GenreTreeProps.onSelectedNodeChange. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
@@ -20,8 +20,14 @@ export interface UseNodeInfoPanelOptions {
 export interface UseNodeInfoPanelResult {
   panel: NodeInfoPanelState | null;
   /** Opens (or updates, if already open) the panel for `node`. No-ops if `element` or `viewport`
-   * is missing (e.g. not yet mounted in jsdom). */
-  showNodeInfo: (node: GenreTreeNode, element: Element | null | undefined, viewport: Element | null | undefined) => void;
+   * is missing (e.g. not yet mounted in jsdom). Notifies `onSelectedNodeChange` when the shown node
+   * changes, unless `notify` is false — pass that when syncing to the consumer's `selectedNodeId`. */
+  showNodeInfo: (
+    node: GenreTreeNode,
+    element: Element | null | undefined,
+    viewport: Element | null | undefined,
+    options?: { notify?: boolean },
+  ) => void;
   closeNodeInfo: () => void;
 }
 
@@ -37,28 +43,36 @@ export function useNodeInfoPanel({
   const [prevSelectedNodeId, setPrevSelectedNodeId] = useState(selectedNodeId);
   if (selectedNodeId !== prevSelectedNodeId) {
     setPrevSelectedNodeId(selectedNodeId);
-    if (prevSelectedNodeId && selectedNodeId === null) setPanel(null);
+    if (prevSelectedNodeId != null && selectedNodeId == null) setPanel(null);
   }
 
-  const selectedNodeIdRef = useRef(selectedNodeId);
+  // Also written synchronously in show/close so two calls in one tick compare against each other.
+  const shownNodeIdRef = useRef<string | null>(null);
   const onSelectedNodeChangeRef = useRef(onSelectedNodeChange);
   useEffect(() => {
-    selectedNodeIdRef.current = selectedNodeId;
+    shownNodeIdRef.current = panel?.node.id ?? null;
     onSelectedNodeChangeRef.current = onSelectedNodeChange;
   });
 
   const showNodeInfo = useCallback(
-    (node: GenreTreeNode, element: Element | null | undefined, viewport: Element | null | undefined) => {
+    (
+      node: GenreTreeNode,
+      element: Element | null | undefined,
+      viewport: Element | null | undefined,
+      { notify = true }: { notify?: boolean } = {},
+    ) => {
       if (!element || !viewport) return;
       setPanel({ node, side: resolveInfoPanelSide() });
-      // Skipped when opening for the consumer's own selectedNodeId, so it never echoes back.
-      if (node.id !== selectedNodeIdRef.current) onSelectedNodeChangeRef.current?.(node);
+      const changed = node.id !== shownNodeIdRef.current;
+      shownNodeIdRef.current = node.id;
+      if (changed && notify) onSelectedNodeChangeRef.current?.(node);
     },
     [],
   );
 
   const closeNodeInfo = useCallback(() => {
     setPanel(null);
+    shownNodeIdRef.current = null;
     onSelectedNodeChangeRef.current?.(null);
   }, []);
 
