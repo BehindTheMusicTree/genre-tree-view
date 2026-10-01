@@ -246,6 +246,130 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
+  it("wheelZoom \"modifier\" pans X on a horizontal-dominant plain wheel and preventDefaults it", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const event = new WheelEvent("wheel", { deltaX: 30, deltaY: 10, bubbles: true, cancelable: true });
+
+    act(() => {
+      viewport.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(result.current.panX).toBe(-30);
+    expect(result.current.panY).toBe(0);
+    expect(result.current.zoomScale).toBe(1);
+    document.body.removeChild(viewport);
+  });
+
+  it("wheelZoom \"always\" pans both axes on a horizontal-dominant plain wheel", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: 30, deltaY: 10, bubbles: true, cancelable: true }));
+    });
+
+    expect(result.current.panX).toBe(-30);
+    expect(result.current.panY).toBe(-10);
+    document.body.removeChild(viewport);
+  });
+
+  it.each([
+    { mode: "modifier" as const, pointerType: "touch", pans: false, prevented: false },
+    { mode: "modifier" as const, pointerType: "mouse", pans: true, prevented: true },
+    { mode: "modifier" as const, pointerType: "pen", pans: true, prevented: true },
+    { mode: "always" as const, pointerType: "touch", pans: true, prevented: true },
+  ])("wheelZoom $mode: a lone $pointerType drag pans=$pans", ({ mode, pointerType, pans, prevented }) => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, mode));
+    const preventDefault = vi.fn();
+
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        pointerType,
+        button: 0,
+        clientX: 100,
+        clientY: 100,
+        target: viewport,
+        preventDefault,
+      } as unknown as React.PointerEvent);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 110, clientY: 130 }));
+    });
+
+    expect(preventDefault).toHaveBeenCalledTimes(prevented ? 1 : 0);
+    expect(result.current.panX).toBe(pans ? 10 : 0);
+    expect(result.current.panY).toBe(pans ? 30 : 0);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    document.body.removeChild(viewport);
+  });
+
+  it("wheelZoom \"modifier\": two lone touch pointers still pinch-zoom", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const down = (pointerId: number, clientX: number) =>
+      result.current.handlePointerDown({
+        pointerId,
+        pointerType: "touch",
+        button: 0,
+        clientX,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+
+    act(() => {
+      down(1, 400);
+      down(2, 600);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 400, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 600, clientY: 500 }));
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
+    });
+
+    expect(result.current.zoomScale).toBeGreaterThan(1);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+    });
+    document.body.removeChild(viewport);
+  });
+
+  it.each([
+    { mode: "modifier" as const, touches: 2, prevented: true },
+    { mode: "modifier" as const, touches: 1, prevented: false },
+    { mode: "always" as const, touches: 2, prevented: false },
+  ])("wheelZoom $mode: a $touches-finger touchmove defaultPrevented=$prevented", ({ mode, touches, prevented }) => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    renderHook(() => usePanZoom({ current: viewport }, mode));
+    const event = new Event("touchmove", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "touches", { value: { length: touches } });
+
+    act(() => {
+      viewport.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(prevented);
+    document.body.removeChild(viewport);
+  });
+
   it("clamps plain wheel-panning so content can never be dragged fully out of view", () => {
     const viewport = document.createElement("div");
     const content = document.createElement("div");
