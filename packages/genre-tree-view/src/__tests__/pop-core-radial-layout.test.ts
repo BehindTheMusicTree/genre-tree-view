@@ -389,7 +389,7 @@ describe("renderPopSubtree link rendering", () => {
     });
   });
 
-  it("keeps stroke-width at the baseline RADIAL_LINK_WIDTH when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
+  it("applies no radialReferenceRadius zoom factor (×1) to stroke-width when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
