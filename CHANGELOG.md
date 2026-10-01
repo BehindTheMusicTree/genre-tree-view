@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-10-01
+
 ### Added
 
 - `onSelectedNodeChange?: (node: GenreTreeNode | null) => void` on `GenreTreeProps`: fired when a
