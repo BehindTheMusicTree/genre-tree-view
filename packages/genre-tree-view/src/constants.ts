@@ -219,6 +219,16 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
   };
 }
 
+// The widest link (to the highest-itemCount node) renders at this multiple of its renderer's base
+// link width; the lowest-itemCount node's link stays at the base width.
+export const MAX_LINK_WIDTH_RATIO = 4;
+
+/** Stroke-width multiplier for a link, from its target node's itemCount — same log scale as
+ * calculateNodeDimensions, so a branch reads as thick as the node it leads to. */
+export function calculateLinkWidthScale(itemCount: number, range: ItemCountRange): number {
+  return 1 + logarithmicPosition(itemCount, range) * (MAX_LINK_WIDTH_RATIO - 1);
+}
+
 // The node-height fraction its font size renders at, interpolated by the same log-scaled t as
 // calculateNodeDimensions — small nodes get a smaller fraction of their (already small) height so
 // their label doesn't dominate the card, while the largest nodes reach a full half.

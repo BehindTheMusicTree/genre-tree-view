@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-10-01
+
+### Changed
+
+- Tree branches are now thicker the more items their target node has (same log scale as node
+  card sizes), in both the tree and radial wheel renderers.
+
 ## [1.11.0] - 2026-10-01
 
 ### Added

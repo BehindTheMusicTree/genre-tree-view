@@ -27,6 +27,7 @@ import {
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
   WHEEL_RADIUS,
+  calculateLinkWidthScale,
   calculateNodeDimensions,
   calculateNodeFontSize,
   tintSurface,
@@ -361,6 +362,7 @@ export function renderPopSubtree(
           target: { x: d.x!, y: d.y! },
           sourceId: null,
           targetId: d.data.id,
+          targetItemCount: d.data.itemCount,
         }))
     : [];
   const links: {
@@ -368,12 +370,14 @@ export function renderPopSubtree(
     target: { x?: number; y?: number };
     sourceId: string | null;
     targetId: string | null;
+    targetItemCount: number;
   }[] = [
     ...hierarchy.links().map((d) => ({
       source: d.source,
       target: d.target,
       sourceId: d.source.data.id,
       targetId: d.target.data.id,
+      targetItemCount: d.target.data.itemCount,
     })),
     ...rootLinks,
   ];
@@ -418,7 +422,12 @@ export function renderPopSubtree(
     )
     .style("fill", "none")
     .style("stroke", RADIAL_LINK_COLOR)
-    .style("stroke-width", linkStrokeWidth)
+    .style(
+      "stroke-width",
+      (d) =>
+        linkStrokeWidth *
+        calculateLinkWidthScale(d.targetItemCount, itemCountRange),
+    )
     .style("stroke-linecap", "round");
 
   const nodes = svg

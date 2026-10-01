@@ -16,6 +16,7 @@ import {
   POP_TREE_DEPTH_RADIAL_SPACING,
   MAX_NODE_WIDTH,
   RADIAL_LINK_WIDTH,
+  MAX_LINK_WIDTH_RATIO,
   WHEEL_RADIUS,
   getItemCountRange,
 } from "../constants";
@@ -410,7 +411,8 @@ describe("renderPopSubtree link rendering", () => {
     const strokeWidth = parseFloat(
       svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
     );
-    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH, 5);
+    // arena-rock is the range's max itemCount, so its link is the widest.
+    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * MAX_LINK_WIDTH_RATIO, 5);
   });
 
   it("scales stroke-width up proportionally once radialReferenceRadius grows past WHEEL_RADIUS, so links stay visible after the wheel's pan/zoom fit-to-frame shrinks a large wheel down to fit the viewport", () => {
@@ -437,7 +439,7 @@ describe("renderPopSubtree link rendering", () => {
       svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
     );
     expect(strokeWidth).toBeCloseTo(
-      RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS),
+      RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS) * MAX_LINK_WIDTH_RATIO,
       5,
     );
   });
