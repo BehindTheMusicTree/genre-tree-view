@@ -5,7 +5,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "noEmit": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@behindthemusictree/genre-tree-view": ["../../packages/genre-tree-view/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

@@ -61,8 +61,9 @@ export interface UsePanZoomResult {
  *
  * `wheelZoom: "modifier"` is for viewports embedded in a scrolling page (e.g. a stacked list of
  * trees): only Ctrl/Meta+wheel (and trackpad pinch, which arrives as ctrlKey wheel) zooms, a
- * plain wheel is left alone so the page scrolls, and one-finger touch scrolls vertically
- * (`touchAction: "pan-y"`) instead of panning the tree.
+ * vertical-dominant plain wheel is left alone so the page scrolls (a horizontal-dominant one still
+ * pans X), one-finger touch scrolls the page vertically (`touchAction: "pan-y"`) instead of
+ * panning the tree, and a two-finger touch pinch zooms the tree.
  */
 export function usePanZoom(
   viewportRef: React.RefObject<HTMLElement | null>,
@@ -292,6 +293,12 @@ export function usePanZoom(
       }
       const isZoom = event.ctrlKey || (wheelZoom === "modifier" && event.metaKey);
       if (wheelZoom === "modifier" && !isZoom) {
+        // A horizontal-dominant swipe has no page scroll to yield to — passing it through would
+        // leave the tree un-pannable sideways and let macOS turn it into back/forward navigation.
+        if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+        event.preventDefault();
+        const scale = zoomScaleRef.current;
+        setPanX((x) => clampPanAxis(x - event.deltaX, scale, "x"));
         return;
       }
       event.preventDefault();
@@ -324,6 +331,21 @@ export function usePanZoom(
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
   }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis, wheelZoom]);
+
+  // Under "pan-y" the browser may claim a two-finger pinch whose fingers drift vertically as a page
+  // scroll (firing pointercancel and killing the pinch). Cancelling touchmove once a second finger
+  // is down keeps the gesture ours, while a lone finger still scrolls the page — the same
+  // cooperative-gesture split Google Maps uses for embedded maps. Non-passive for the same reason
+  // as the wheel listener above.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || wheelZoom !== "modifier") return;
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length >= 2) event.preventDefault();
+    };
+    viewport.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => viewport.removeEventListener("touchmove", handleTouchMove);
+  }, [viewportRef, wheelZoom]);
 
   // Fallback for input that never reaches the wheel handler above — e.g. a trackpad/OS/browser
   // combination that doesn't translate a pinch gesture into a ctrlKey wheel event at all.
@@ -551,12 +573,13 @@ export function usePanZoom(
   // never reaches JS at all (the browser treats it as native page zoom) — that's handled by the
   // viewport's touch-action (see `touchAction`; neither "none" nor "pan-y" allows pinch-zoom),
   // which routes both touch points here as ordinary pointer events instead. Under "pan-y" the
-  // browser may still claim a pinch whose fingers drift vertically as a page scroll, firing
-  // pointercancel and ending the pinch early.
+  // touchmove listener above additionally stops the browser from claiming a vertically-drifting
+  // pinch as a page scroll.
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  // Pointers whose pointerdown landed on a node/toolbar/control: excluded from single-pointer pan
-  // (so they don't fight that element's own click/hover handling) but still tracked so a pinch that
-  // starts on top of content — the common case, since the tree fills most of the screen — still works.
+  // Pointers whose pointerdown landed on a node/toolbar/control, or (in "modifier" mode) any touch
+  // pointer: excluded from single-pointer pan (so they don't fight that element's own click/hover
+  // handling, or the page's own vertical scroll) but still tracked so a pinch that starts on top of
+  // content — the common case, since the tree fills most of the screen — still works.
   const suppressedPointersRef = useRef<Set<number>>(new Set());
   // Also remembers which pointer ids the current baseline was computed from, so a third finger
   // landing (or the active pair otherwise changing) recomputes it instead of reusing a stale
@@ -651,13 +674,16 @@ export function usePanZoom(
     // pinch that starts on top of content, the common case since the tree fills most of the screen,
     // would never be recognized as a pinch at all.
     const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip") !== null;
+    // In "modifier" mode one finger scrolls the page, so a touch pointer must neither pan (which
+    // nudges the tree until the browser fires pointercancel) nor preventDefault the scroll.
+    const isPageScrollTouch = wheelZoom === "modifier" && event.pointerType === "touch";
 
     const pointers = activePointersRef.current;
     const wasEmpty = pointers.size === 0;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     lastPointRef.current = { x: event.clientX, y: event.clientY };
 
-    if (isInteractive) {
+    if (isInteractive || isPageScrollTouch) {
       suppressedPointersRef.current.add(event.pointerId);
     } else {
       event.preventDefault();
@@ -672,7 +698,7 @@ export function usePanZoom(
       window.addEventListener("pointerup", stablePointerUp);
       window.addEventListener("pointercancel", stablePointerUp);
     }
-  }, [stablePointerMove, stablePointerUp]);
+  }, [stablePointerMove, stablePointerUp, wheelZoom]);
 
   // Covers the case handlePointerUp's own cleanup can't: the component unmounting mid-gesture
   // (route change, conditional render) before every pointer has lifted, which would otherwise

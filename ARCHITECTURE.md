@@ -160,9 +160,14 @@ pnpm workspace with two members:
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
 - **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
-  to `usePanZoom`. In `"modifier"` mode a wheel without Ctrl/Meta is left un-`preventDefault`ed
-  so the page scrolls, and `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each
-  interactive renderer applies to its viewport — for trees stacked in a scrolling page.
+  to `usePanZoom`. In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant
+  wheel without Ctrl/Meta is left un-`preventDefault`ed so the page scrolls, while a
+  horizontal-dominant one pans X (and is `preventDefault`ed, blocking macOS swipe-back);
+  `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each interactive renderer
+  applies to its viewport; a lone touch pointer never pans the tree (mouse/pen drag still does)
+  but stays tracked as a potential pinch half; and a non-passive `touchmove` listener
+  `preventDefault`s whenever two or more fingers are down, so the browser can't claim a
+  vertically-drifting pinch as page scroll (cooperative gestures, like Google Maps).
   `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
 
 ## Public surface
