@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-10-01
+
 ### Fixed
 
 - `wheelZoom="modifier"` gestures: a horizontal trackpad swipe now pans the tree sideways instead
