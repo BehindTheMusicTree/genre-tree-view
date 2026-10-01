@@ -6,249 +6,27 @@
     "itemCount": 98
   },
   {
-    "id": "blues",
-    "parentId": "blues-rock-grouping",
-    "name": "Blues",
-    "itemCount": 0
-  },
-  {
-    "id": "blues-standard",
-    "parentId": "blues",
-    "name": "Blues standard",
-    "itemCount": 0
-  },
-  {
-    "id": "acoustic-chicago-blues",
-    "parentId": "blues",
-    "name": "Acoustic Chicago blues",
-    "itemCount": 0
-  },
-  {
-    "id": "harmonica-blues",
-    "parentId": "blues",
-    "name": "Harmonica blues",
-    "itemCount": 0
-  },
-  {
-    "id": "acoustic-memphis-blues",
-    "parentId": "blues",
-    "name": "Acoustic Memphis blues",
-    "itemCount": 0
-  },
-  {
-    "id": "chicago-blues",
-    "parentId": "blues",
-    "name": "Chicago blues",
-    "itemCount": 0
-  },
-  {
-    "id": "traditional-blues",
-    "parentId": "blues",
-    "name": "Traditional blues",
-    "itemCount": 0
-  },
-  {
-    "id": "pre-war-blues",
-    "parentId": "blues",
-    "name": "Pre-war blues",
-    "itemCount": 0
-  },
-  {
-    "id": "contemporary-blues",
-    "parentId": "blues",
-    "name": "Contemporary blues",
-    "itemCount": 0
-  },
-  {
-    "id": "songsters-music",
-    "parentId": "blues",
-    "name": "Songsters music",
-    "itemCount": 0
-  },
-  {
-    "id": "regional-blues",
-    "parentId": "blues",
-    "name": "Regional blues",
-    "itemCount": 0
-  },
-  {
-    "id": "jump-blues",
-    "parentId": "blues",
-    "name": "Jump blues",
-    "itemCount": 0
-  },
-  {
-    "id": "urban-blues",
-    "parentId": "blues",
-    "name": "Urban blues",
-    "itemCount": 0
-  },
-  {
-    "id": "west-coast-blues",
-    "parentId": "blues",
-    "name": "West Coast blues",
-    "itemCount": 0
-  },
-  {
-    "id": "blues-rock",
-    "parentId": "blues",
-    "name": "Blues rock",
-    "itemCount": 0
-  },
-  {
-    "id": "boogie-rock",
-    "parentId": "blues-rock",
-    "name": "Boogie rock",
-    "itemCount": 0
-  },
-  {
-    "id": "new-york-blues",
-    "parentId": "blues",
-    "name": "New York blues",
-    "itemCount": 0
-  },
-  {
-    "id": "twelve-bar-blues",
-    "parentId": "blues",
-    "name": "Twelve-bar blues",
-    "itemCount": 0
-  },
-  {
-    "id": "kansas-city-blues",
-    "parentId": "blues",
-    "name": "Kansas City blues",
-    "itemCount": 0
-  },
-  {
-    "id": "soul-blues",
-    "parentId": "blues",
-    "name": "Soul blues",
-    "itemCount": 0
-  },
-  {
-    "id": "piano-blues",
-    "parentId": "blues",
-    "name": "Piano blues",
-    "itemCount": 0
-  },
-  {
-    "id": "east-coast-blues",
-    "parentId": "blues",
-    "name": "East Coast blues",
-    "itemCount": 0
-  },
-  {
-    "id": "acid-blues",
-    "parentId": "blues",
-    "name": "Acid blues",
-    "itemCount": 0
-  },
-  {
-    "id": "french-blues",
-    "parentId": "blues",
-    "name": "French blues",
-    "itemCount": 0
-  },
-  {
-    "id": "dirty-blues",
-    "parentId": "blues",
-    "name": "Dirty blues",
-    "itemCount": 0
-  },
-  {
-    "id": "juke-joint-blues",
-    "parentId": "blues",
-    "name": "Juke joint blues",
-    "itemCount": 0
-  },
-  {
-    "id": "electric-blues",
-    "parentId": "blues",
-    "name": "Electric blues",
-    "itemCount": 0
-  },
-  {
-    "id": "modern-electric-blues",
-    "parentId": "electric-blues",
-    "name": "Modern electric blues",
-    "itemCount": 0
-  },
-  {
-    "id": "modern-blues",
-    "parentId": "modern-electric-blues",
-    "name": "Modern blues",
-    "itemCount": 0
-  },
-  {
-    "id": "electric-chicago-blues",
-    "parentId": "electric-blues",
-    "name": "Electric Chicago blues",
-    "itemCount": 0
-  },
-  {
-    "id": "british-blues",
-    "parentId": "electric-blues",
-    "name": "British blues",
-    "itemCount": 0
-  },
-  {
-    "id": "acoustic-blues",
-    "parentId": "blues",
-    "name": "Acoustic blues",
-    "itemCount": 0
-  },
-  {
-    "id": "early-acoustic-blues",
-    "parentId": "acoustic-blues",
-    "name": "Early acoustic blues",
-    "itemCount": 0
-  },
-  {
-    "id": "early-american-blues",
-    "parentId": "early-acoustic-blues",
-    "name": "Early American blues",
-    "itemCount": 0
-  },
-  {
-    "id": "new-blues",
-    "parentId": "blues",
-    "name": "New blues",
-    "itemCount": 0
-  },
-  {
-    "id": "atlanta-blues",
-    "parentId": "blues",
-    "name": "Atlanta blues",
-    "itemCount": 0
-  },
-  {
-    "id": "anatolian-blues",
-    "parentId": "blues",
-    "name": "Anatolian blues",
-    "itemCount": 0
-  },
-  {
     "id": "rock-music",
     "parentId": "blues-rock-grouping",
     "name": "Rock music",
     "itemCount": 97
   },
   {
-    "id": "foxcore",
+    "id": "rock-poetry",
     "parentId": "rock-music",
-    "name": "Foxcore",
+    "name": "Rock poetry",
     "itemCount": 0
   },
   {
-    "id": "posi-music",
+    "id": "gothic-music",
     "parentId": "rock-music",
-    "name": "Posi music",
+    "name": "Gothic music",
     "itemCount": 0
   },
   {
-    "id": "glam-music",
-    "parentId": "rock-music",
-    "name": "Glam music",
+    "id": "cybergoth-music",
+    "parentId": "gothic-music",
+    "name": "Cybergoth music",
     "itemCount": 0
   },
   {
@@ -294,15 +72,15 @@
     "itemCount": 0
   },
   {
-    "id": "moshcore",
-    "parentId": "hardcore-punk",
-    "name": "Moshcore",
-    "itemCount": 0
-  },
-  {
     "id": "youth-crew",
     "parentId": "hardcore-punk",
     "name": "Youth crew",
+    "itemCount": 0
+  },
+  {
+    "id": "moshcore",
+    "parentId": "hardcore-punk",
+    "name": "Moshcore",
     "itemCount": 0
   },
   {
@@ -936,27 +714,27 @@
     "itemCount": 0
   },
   {
-    "id": "rock-poetry",
-    "parentId": "rock-music",
-    "name": "Rock poetry",
-    "itemCount": 0
-  },
-  {
     "id": "wizard-rock",
     "parentId": "rock-music",
     "name": "Wizard rock",
     "itemCount": 0
   },
   {
-    "id": "gothic-music",
+    "id": "foxcore",
     "parentId": "rock-music",
-    "name": "Gothic music",
+    "name": "Foxcore",
     "itemCount": 0
   },
   {
-    "id": "cybergoth-music",
-    "parentId": "gothic-music",
-    "name": "Cybergoth music",
+    "id": "glam-music",
+    "parentId": "rock-music",
+    "name": "Glam music",
+    "itemCount": 0
+  },
+  {
+    "id": "posi-music",
+    "parentId": "rock-music",
+    "name": "Posi music",
     "itemCount": 0
   },
   {
@@ -1404,6 +1182,18 @@
     "itemCount": 0
   },
   {
+    "id": "underground-metal",
+    "parentId": "metal-music",
+    "name": "Underground metal",
+    "itemCount": 0
+  },
+  {
+    "id": "psychedelic-metal",
+    "parentId": "metal-music",
+    "name": "Psychedelic metal",
+    "itemCount": 0
+  },
+  {
     "id": "progressive-metal",
     "parentId": "metal-music",
     "name": "Progressive metal",
@@ -1419,18 +1209,6 @@
     "id": "djent",
     "parentId": "math-metal",
     "name": "Djent",
-    "itemCount": 0
-  },
-  {
-    "id": "psychedelic-metal",
-    "parentId": "metal-music",
-    "name": "Psychedelic metal",
-    "itemCount": 0
-  },
-  {
-    "id": "underground-metal",
-    "parentId": "metal-music",
-    "name": "Underground metal",
     "itemCount": 0
   },
   {
@@ -2917,9 +2695,9 @@
     "side": "pop"
   },
   {
-    "id": "acoustic-rock",
+    "id": "garage-pop",
     "parentId": "pop-rock",
-    "name": "Acoustic rock",
+    "name": "Garage pop",
     "itemCount": 0
   },
   {
@@ -2932,12 +2710,6 @@
     "id": "comedy-rock",
     "parentId": "pop-rock",
     "name": "Comedy rock",
-    "itemCount": 0
-  },
-  {
-    "id": "dance-rock",
-    "parentId": "pop-rock",
-    "name": "Dance-rock",
     "itemCount": 0
   },
   {
@@ -2974,18 +2746,6 @@
     "id": "medieval-folk-rock",
     "parentId": "folk-rock",
     "name": "Medieval folk rock",
-    "itemCount": 0
-  },
-  {
-    "id": "garage-pop",
-    "parentId": "pop-rock",
-    "name": "Garage pop",
-    "itemCount": 0
-  },
-  {
-    "id": "mainstream-rock",
-    "parentId": "pop-rock",
-    "name": "Mainstream rock",
     "itemCount": 0
   },
   {
@@ -3028,6 +2788,24 @@
     "id": "piano-rock",
     "parentId": "pop-rock",
     "name": "Piano rock",
+    "itemCount": 0
+  },
+  {
+    "id": "dance-rock",
+    "parentId": "pop-rock",
+    "name": "Dance-rock",
+    "itemCount": 0
+  },
+  {
+    "id": "mainstream-rock",
+    "parentId": "pop-rock",
+    "name": "Mainstream rock",
+    "itemCount": 0
+  },
+  {
+    "id": "acoustic-rock",
+    "parentId": "pop-rock",
+    "name": "Acoustic rock",
     "itemCount": 0
   },
   {
@@ -3121,10 +2899,352 @@
     "itemCount": 0
   },
   {
+    "id": "blues",
+    "parentId": "blues-rock-grouping",
+    "name": "Blues",
+    "itemCount": 0
+  },
+  {
+    "id": "blues-standard",
+    "parentId": "blues",
+    "name": "Blues standard",
+    "itemCount": 0
+  },
+  {
+    "id": "acoustic-chicago-blues",
+    "parentId": "blues",
+    "name": "Acoustic Chicago blues",
+    "itemCount": 0
+  },
+  {
+    "id": "harmonica-blues",
+    "parentId": "blues",
+    "name": "Harmonica blues",
+    "itemCount": 0
+  },
+  {
+    "id": "acoustic-memphis-blues",
+    "parentId": "blues",
+    "name": "Acoustic Memphis blues",
+    "itemCount": 0
+  },
+  {
+    "id": "chicago-blues",
+    "parentId": "blues",
+    "name": "Chicago blues",
+    "itemCount": 0
+  },
+  {
+    "id": "traditional-blues",
+    "parentId": "blues",
+    "name": "Traditional blues",
+    "itemCount": 0
+  },
+  {
+    "id": "pre-war-blues",
+    "parentId": "blues",
+    "name": "Pre-war blues",
+    "itemCount": 0
+  },
+  {
+    "id": "contemporary-blues",
+    "parentId": "blues",
+    "name": "Contemporary blues",
+    "itemCount": 0
+  },
+  {
+    "id": "songsters-music",
+    "parentId": "blues",
+    "name": "Songsters music",
+    "itemCount": 0
+  },
+  {
+    "id": "regional-blues",
+    "parentId": "blues",
+    "name": "Regional blues",
+    "itemCount": 0
+  },
+  {
+    "id": "jump-blues",
+    "parentId": "blues",
+    "name": "Jump blues",
+    "itemCount": 0
+  },
+  {
+    "id": "urban-blues",
+    "parentId": "blues",
+    "name": "Urban blues",
+    "itemCount": 0
+  },
+  {
+    "id": "west-coast-blues",
+    "parentId": "blues",
+    "name": "West Coast blues",
+    "itemCount": 0
+  },
+  {
+    "id": "blues-rock",
+    "parentId": "blues",
+    "name": "Blues rock",
+    "itemCount": 0
+  },
+  {
+    "id": "boogie-rock",
+    "parentId": "blues-rock",
+    "name": "Boogie rock",
+    "itemCount": 0
+  },
+  {
+    "id": "new-york-blues",
+    "parentId": "blues",
+    "name": "New York blues",
+    "itemCount": 0
+  },
+  {
+    "id": "twelve-bar-blues",
+    "parentId": "blues",
+    "name": "Twelve-bar blues",
+    "itemCount": 0
+  },
+  {
+    "id": "kansas-city-blues",
+    "parentId": "blues",
+    "name": "Kansas City blues",
+    "itemCount": 0
+  },
+  {
+    "id": "soul-blues",
+    "parentId": "blues",
+    "name": "Soul blues",
+    "itemCount": 0
+  },
+  {
+    "id": "piano-blues",
+    "parentId": "blues",
+    "name": "Piano blues",
+    "itemCount": 0
+  },
+  {
+    "id": "east-coast-blues",
+    "parentId": "blues",
+    "name": "East Coast blues",
+    "itemCount": 0
+  },
+  {
+    "id": "acid-blues",
+    "parentId": "blues",
+    "name": "Acid blues",
+    "itemCount": 0
+  },
+  {
+    "id": "french-blues",
+    "parentId": "blues",
+    "name": "French blues",
+    "itemCount": 0
+  },
+  {
+    "id": "dirty-blues",
+    "parentId": "blues",
+    "name": "Dirty blues",
+    "itemCount": 0
+  },
+  {
+    "id": "juke-joint-blues",
+    "parentId": "blues",
+    "name": "Juke joint blues",
+    "itemCount": 0
+  },
+  {
+    "id": "electric-blues",
+    "parentId": "blues",
+    "name": "Electric blues",
+    "itemCount": 0
+  },
+  {
+    "id": "modern-electric-blues",
+    "parentId": "electric-blues",
+    "name": "Modern electric blues",
+    "itemCount": 0
+  },
+  {
+    "id": "modern-blues",
+    "parentId": "modern-electric-blues",
+    "name": "Modern blues",
+    "itemCount": 0
+  },
+  {
+    "id": "electric-chicago-blues",
+    "parentId": "electric-blues",
+    "name": "Electric Chicago blues",
+    "itemCount": 0
+  },
+  {
+    "id": "british-blues",
+    "parentId": "electric-blues",
+    "name": "British blues",
+    "itemCount": 0
+  },
+  {
+    "id": "acoustic-blues",
+    "parentId": "blues",
+    "name": "Acoustic blues",
+    "itemCount": 0
+  },
+  {
+    "id": "early-acoustic-blues",
+    "parentId": "acoustic-blues",
+    "name": "Early acoustic blues",
+    "itemCount": 0
+  },
+  {
+    "id": "early-american-blues",
+    "parentId": "early-acoustic-blues",
+    "name": "Early American blues",
+    "itemCount": 0
+  },
+  {
+    "id": "new-blues",
+    "parentId": "blues",
+    "name": "New blues",
+    "itemCount": 0
+  },
+  {
+    "id": "atlanta-blues",
+    "parentId": "blues",
+    "name": "Atlanta blues",
+    "itemCount": 0
+  },
+  {
+    "id": "anatolian-blues",
+    "parentId": "blues",
+    "name": "Anatolian blues",
+    "itemCount": 0
+  },
+  {
     "id": "disco-funk-grouping",
     "parentId": null,
     "name": "Disco/Funk (grouping)",
     "itemCount": 1
+  },
+  {
+    "id": "core-funk",
+    "parentId": "disco-funk-grouping",
+    "name": "Core funk",
+    "itemCount": 1
+  },
+  {
+    "id": "funk",
+    "parentId": "core-funk",
+    "name": "Funk",
+    "itemCount": 1
+  },
+  {
+    "id": "g-funk",
+    "parentId": "funk",
+    "name": "G-funk",
+    "itemCount": 1
+  },
+  {
+    "id": "bayou-funk",
+    "parentId": "funk",
+    "name": "Bayou funk",
+    "itemCount": 0
+  },
+  {
+    "id": "latin-funk",
+    "parentId": "funk",
+    "name": "Latin funk",
+    "itemCount": 0
+  },
+  {
+    "id": "deep-funk",
+    "parentId": "funk",
+    "name": "Deep funk",
+    "itemCount": 0
+  },
+  {
+    "id": "blaxploitation",
+    "parentId": "funk",
+    "name": "Blaxploitation",
+    "itemCount": 0
+  },
+  {
+    "id": "porn-groove",
+    "parentId": "funk",
+    "name": "Porn groove",
+    "itemCount": 0
+  },
+  {
+    "id": "psychedelic-funk",
+    "parentId": "funk",
+    "name": "Psychedelic funk",
+    "itemCount": 0
+  },
+  {
+    "id": "p-funk",
+    "parentId": "psychedelic-funk",
+    "name": "P-Funk",
+    "itemCount": 0
+  },
+  {
+    "id": "avant-funk",
+    "parentId": "funk",
+    "name": "Avant-funk",
+    "itemCount": 0
+  },
+  {
+    "id": "brit-funk",
+    "parentId": "funk",
+    "name": "Brit funk",
+    "itemCount": 0
+  },
+  {
+    "id": "israeli-funk",
+    "parentId": "funk",
+    "name": "Israeli funk",
+    "itemCount": 0
+  },
+  {
+    "id": "pop-funk",
+    "parentId": "disco-funk-grouping",
+    "name": "Pop funk",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-funk",
+    "parentId": "pop-funk",
+    "name": "Electro funk",
+    "itemCount": 0
+  },
+  {
+    "id": "go-go",
+    "parentId": "pop-funk",
+    "name": "Go-go",
+    "itemCount": 0
+  },
+  {
+    "id": "bounce-beat",
+    "parentId": "go-go",
+    "name": "Bounce beat",
+    "itemCount": 0
+  },
+  {
+    "id": "synth-funk",
+    "parentId": "pop-funk",
+    "name": "Synth funk",
+    "itemCount": 0
+  },
+  {
+    "id": "punk-funk",
+    "parentId": "pop-funk",
+    "name": "Punk funk",
+    "itemCount": 0
+  },
+  {
+    "id": "nu-funk",
+    "parentId": "pop-funk",
+    "name": "Nu-funk",
+    "itemCount": 0
   },
   {
     "id": "disco",
@@ -3206,129 +3326,27 @@
     "itemCount": 0
   },
   {
-    "id": "pop-funk",
-    "parentId": "disco-funk-grouping",
-    "name": "Pop funk",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-funk",
-    "parentId": "pop-funk",
-    "name": "Electro funk",
-    "itemCount": 0
-  },
-  {
-    "id": "go-go",
-    "parentId": "pop-funk",
-    "name": "Go-go",
-    "itemCount": 0
-  },
-  {
-    "id": "bounce-beat",
-    "parentId": "go-go",
-    "name": "Bounce beat",
-    "itemCount": 0
-  },
-  {
-    "id": "nu-funk",
-    "parentId": "pop-funk",
-    "name": "Nu-funk",
-    "itemCount": 0
-  },
-  {
-    "id": "punk-funk",
-    "parentId": "pop-funk",
-    "name": "Punk funk",
-    "itemCount": 0
-  },
-  {
-    "id": "synth-funk",
-    "parentId": "pop-funk",
-    "name": "Synth funk",
-    "itemCount": 0
-  },
-  {
-    "id": "core-funk",
-    "parentId": "disco-funk-grouping",
-    "name": "Core funk",
-    "itemCount": 1
-  },
-  {
-    "id": "funk",
-    "parentId": "core-funk",
-    "name": "Funk",
-    "itemCount": 1
-  },
-  {
-    "id": "g-funk",
-    "parentId": "funk",
-    "name": "G-funk",
-    "itemCount": 1
-  },
-  {
-    "id": "bayou-funk",
-    "parentId": "funk",
-    "name": "Bayou funk",
-    "itemCount": 0
-  },
-  {
-    "id": "latin-funk",
-    "parentId": "funk",
-    "name": "Latin funk",
-    "itemCount": 0
-  },
-  {
-    "id": "deep-funk",
-    "parentId": "funk",
-    "name": "Deep funk",
-    "itemCount": 0
-  },
-  {
-    "id": "blaxploitation",
-    "parentId": "funk",
-    "name": "Blaxploitation",
-    "itemCount": 0
-  },
-  {
-    "id": "porn-groove",
-    "parentId": "funk",
-    "name": "Porn groove",
-    "itemCount": 0
-  },
-  {
-    "id": "psychedelic-funk",
-    "parentId": "funk",
-    "name": "Psychedelic funk",
-    "itemCount": 0
-  },
-  {
-    "id": "p-funk",
-    "parentId": "psychedelic-funk",
-    "name": "P-Funk",
-    "itemCount": 0
-  },
-  {
-    "id": "avant-funk",
-    "parentId": "funk",
-    "name": "Avant-funk",
-    "itemCount": 0
-  },
-  {
-    "id": "brit-funk",
-    "parentId": "funk",
-    "name": "Brit funk",
-    "itemCount": 0
-  },
-  {
-    "id": "israeli-funk",
-    "parentId": "funk",
-    "name": "Israeli funk",
-    "itemCount": 0
-  },
-  {
     "id": "reggae-dub-grouping",
     "parentId": null,
     "name": "Reggae/Dub (grouping)",
+    "itemCount": 0
+  },
+  {
+    "id": "dub-music",
+    "parentId": "reggae-dub-grouping",
+    "name": "Dub music",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-dub",
+    "parentId": "dub-music",
+    "name": "Minimal dub",
+    "itemCount": 0
+  },
+  {
+    "id": "experimental-dub",
+    "parentId": "dub-music",
+    "name": "Experimental dub",
     "itemCount": 0
   },
   {
@@ -3452,24 +3470,6 @@
     "itemCount": 0
   },
   {
-    "id": "dub-music",
-    "parentId": "reggae-dub-grouping",
-    "name": "Dub music",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-dub",
-    "parentId": "dub-music",
-    "name": "Minimal dub",
-    "itemCount": 0
-  },
-  {
-    "id": "experimental-dub",
-    "parentId": "dub-music",
-    "name": "Experimental dub",
-    "itemCount": 0
-  },
-  {
     "id": "pop-reggae",
     "parentId": "reggae-dub-grouping",
     "name": "Pop reggae",
@@ -3487,18 +3487,6 @@
     "parentId": null,
     "name": "Art music",
     "itemCount": 1
-  },
-  {
-    "id": "period-composition",
-    "parentId": "art-music",
-    "name": "Period composition",
-    "itemCount": 0
-  },
-  {
-    "id": "pre-classical-music",
-    "parentId": "art-music",
-    "name": "Pre-classical music",
-    "itemCount": 0
   },
   {
     "id": "minimal-music",
@@ -3537,9 +3525,27 @@
     "itemCount": 0
   },
   {
+    "id": "period-composition",
+    "parentId": "art-music",
+    "name": "Period composition",
+    "itemCount": 0
+  },
+  {
+    "id": "pre-classical-music",
+    "parentId": "art-music",
+    "name": "Pre-classical music",
+    "itemCount": 0
+  },
+  {
     "id": "avant-garde-music",
     "parentId": "art-music",
     "name": "Avant-garde music",
+    "itemCount": 0
+  },
+  {
+    "id": "primitivism",
+    "parentId": "avant-garde-music",
+    "name": "Primitivism",
     "itemCount": 0
   },
   {
@@ -3552,12 +3558,6 @@
     "id": "surrealist-music",
     "parentId": "avant-garde-music",
     "name": "Surrealist music",
-    "itemCount": 0
-  },
-  {
-    "id": "primitivism",
-    "parentId": "avant-garde-music",
-    "name": "Primitivism",
     "itemCount": 0
   },
   {
@@ -4419,11 +4419,929 @@
     "itemCount": 48
   },
   {
+    "id": "core-electronic",
+    "parentId": "electronic-music",
+    "name": "Core electronic",
+    "itemCount": 0
+  },
+  {
+    "id": "experimental-electronic-music",
+    "parentId": "core-electronic",
+    "name": "Experimental electronic music",
+    "itemCount": 0
+  },
+  {
+    "id": "flashcore",
+    "parentId": "experimental-electronic-music",
+    "name": "Flashcore",
+    "itemCount": 0
+  },
+  {
+    "id": "clicks-cuts",
+    "parentId": "experimental-electronic-music",
+    "name": "Clicks & cuts",
+    "itemCount": 0
+  },
+  {
+    "id": "microsound",
+    "parentId": "experimental-electronic-music",
+    "name": "Microsound",
+    "itemCount": 0
+  },
+  {
+    "id": "wave-electronic",
+    "parentId": "core-electronic",
+    "name": "Wave (Electronic)",
+    "itemCount": 0
+  },
+  {
+    "id": "hardwave",
+    "parentId": "wave-electronic",
+    "name": "Hardwave",
+    "itemCount": 0
+  },
+  {
+    "id": "bit-music",
+    "parentId": "core-electronic",
+    "name": "Bit music",
+    "itemCount": 0
+  },
+  {
+    "id": "bytebeat",
+    "parentId": "bit-music",
+    "name": "Bytebeat",
+    "itemCount": 0
+  },
+  {
+    "id": "midi-music",
+    "parentId": "bit-music",
+    "name": "MIDI music",
+    "itemCount": 0
+  },
+  {
+    "id": "doom-wad-music",
+    "parentId": "midi-music",
+    "name": "Doom WAD music",
+    "itemCount": 0
+  },
+  {
+    "id": "black-midi",
+    "parentId": "midi-music",
+    "name": "Black MIDI",
+    "itemCount": 0
+  },
+  {
+    "id": "1-bit-music",
+    "parentId": "bit-music",
+    "name": "1-bit music",
+    "itemCount": 0
+  },
+  {
+    "id": "8-bit-music",
+    "parentId": "bit-music",
+    "name": "8-bit music",
+    "itemCount": 0
+  },
+  {
+    "id": "sampler-based-music",
+    "parentId": "bit-music",
+    "name": "Sampler-based music",
+    "itemCount": 0
+  },
+  {
+    "id": "tracker-music",
+    "parentId": "sampler-based-music",
+    "name": "Tracker music",
+    "itemCount": 0
+  },
+  {
+    "id": "demostyle",
+    "parentId": "tracker-music",
+    "name": "Demostyle",
+    "itemCount": 0
+  },
+  {
+    "id": "bitpop",
+    "parentId": "bit-music",
+    "name": "Bitpop",
+    "itemCount": 0
+  },
+  {
+    "id": "acid",
+    "parentId": "core-electronic",
+    "name": "Acid",
+    "itemCount": 0
+  },
+  {
+    "id": "beatdown",
+    "parentId": "core-electronic",
+    "name": "Beatdown",
+    "itemCount": 0
+  },
+  {
+    "id": "tribal-music",
+    "parentId": "core-electronic",
+    "name": "Tribal music",
+    "itemCount": 0
+  },
+  {
+    "id": "cyberpunk-music",
+    "parentId": "core-electronic",
+    "name": "Cyberpunk music",
+    "itemCount": 0
+  },
+  {
+    "id": "hexd",
+    "parentId": "core-electronic",
+    "name": "HexD",
+    "itemCount": 0
+  },
+  {
+    "id": "epic-collage",
+    "parentId": "core-electronic",
+    "name": "Epic collage",
+    "itemCount": 0
+  },
+  {
+    "id": "glitch",
+    "parentId": "core-electronic",
+    "name": "Glitch",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-glitch",
+    "parentId": "glitch",
+    "name": "Minimal glitch",
+    "itemCount": 0
+  },
+  {
+    "id": "oceanic-glitch",
+    "parentId": "glitch",
+    "name": "Oceanic glitch",
+    "itemCount": 0
+  },
+  {
+    "id": "moogsploitation",
+    "parentId": "core-electronic",
+    "name": "Moogsploitation",
+    "itemCount": 0
+  },
+  {
+    "id": "drift-phonk",
+    "parentId": "core-electronic",
+    "name": "Drift phonk",
+    "itemCount": 0
+  },
+  {
+    "id": "synth-music",
+    "parentId": "core-electronic",
+    "name": "Synth music",
+    "itemCount": 0
+  },
+  {
+    "id": "horror-synth",
+    "parentId": "synth-music",
+    "name": "Horror synth",
+    "itemCount": 0
+  },
+  {
+    "id": "digital-fusion",
+    "parentId": "core-electronic",
+    "name": "Digital fusion",
+    "itemCount": 0
+  },
+  {
+    "id": "sigma-music",
+    "parentId": "core-electronic",
+    "name": "Sigma music",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-dub",
+    "parentId": "core-electronic",
+    "name": "Electro dub",
+    "itemCount": 0
+  },
+  {
+    "id": "fixed-media",
+    "parentId": "core-electronic",
+    "name": "Fixed media",
+    "itemCount": 0
+  },
+  {
+    "id": "electroacoustic-music",
+    "parentId": "core-electronic",
+    "name": "Electroacoustic music",
+    "itemCount": 0
+  },
+  {
+    "id": "live-electronic-music",
+    "parentId": "electroacoustic-music",
+    "name": "Live electronic music",
+    "itemCount": 0
+  },
+  {
+    "id": "acousmatic-music",
+    "parentId": "electroacoustic-music",
+    "name": "Acousmatic music",
+    "itemCount": 0
+  },
+  {
+    "id": "musique-concr-te",
+    "parentId": "electroacoustic-music",
+    "name": "Musique concrète",
+    "itemCount": 0
+  },
+  {
+    "id": "aliencore",
+    "parentId": "core-electronic",
+    "name": "Aliencore",
+    "itemCount": 0
+  },
+  {
+    "id": "chiptune",
+    "parentId": "core-electronic",
+    "name": "Chiptune",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-industrial",
+    "parentId": "core-electronic",
+    "name": "Electro-industrial",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-electronic-music",
+    "parentId": "core-electronic",
+    "name": "Minimal electronic music",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-electro",
+    "parentId": "minimal-electronic-music",
+    "name": "Minimal electro",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-wave",
+    "parentId": "minimal-electronic-music",
+    "name": "Minimal wave",
+    "itemCount": 0
+  },
+  {
+    "id": "minimal-synth",
+    "parentId": "minimal-wave",
+    "name": "Minimal synth",
+    "itemCount": 0
+  },
+  {
+    "id": "lo-fi-music",
+    "parentId": "core-electronic",
+    "name": "Lo-fi music",
+    "itemCount": 0
+  },
+  {
+    "id": "no-fi",
+    "parentId": "lo-fi-music",
+    "name": "No-Fi",
+    "itemCount": 0
+  },
+  {
+    "id": "vaporwave",
+    "parentId": "core-electronic",
+    "name": "Vaporwave",
+    "itemCount": 0
+  },
+  {
+    "id": "spamwave",
+    "parentId": "vaporwave",
+    "name": "Spamwave",
+    "itemCount": 0
+  },
+  {
+    "id": "dreampunk",
+    "parentId": "vaporwave",
+    "name": "Dreampunk",
+    "itemCount": 0
+  },
+  {
+    "id": "utopian-virtual",
+    "parentId": "vaporwave",
+    "name": "Utopian virtual",
+    "itemCount": 0
+  },
+  {
+    "id": "daycore",
+    "parentId": "vaporwave",
+    "name": "Daycore",
+    "itemCount": 0
+  },
+  {
+    "id": "sludgefest",
+    "parentId": "daycore",
+    "name": "Sludgefest",
+    "itemCount": 0
+  },
+  {
+    "id": "broken-transmission",
+    "parentId": "vaporwave",
+    "name": "Broken transmission",
+    "itemCount": 0
+  },
+  {
+    "id": "signaltrap",
+    "parentId": "broken-transmission",
+    "name": "Signaltrap",
+    "itemCount": 0
+  },
+  {
+    "id": "late-night-lo-fi",
+    "parentId": "vaporwave",
+    "name": "Late night lo-fi",
+    "itemCount": 0
+  },
+  {
+    "id": "vapornoise",
+    "parentId": "vaporwave",
+    "name": "Vapornoise",
+    "itemCount": 0
+  },
+  {
+    "id": "slushwave",
+    "parentId": "vaporwave",
+    "name": "Slushwave",
+    "itemCount": 0
+  },
+  {
+    "id": "eccojams",
+    "parentId": "vaporwave",
+    "name": "Eccojams",
+    "itemCount": 0
+  },
+  {
+    "id": "simpsonwave",
+    "parentId": "vaporwave",
+    "name": "Simpsonwave",
+    "itemCount": 0
+  },
+  {
+    "id": "vaportrap",
+    "parentId": "vaporwave",
+    "name": "Vaportrap",
+    "itemCount": 0
+  },
+  {
+    "id": "algorave",
+    "parentId": "core-electronic",
+    "name": "Algorave",
+    "itemCount": 0
+  },
+  {
+    "id": "illbient",
+    "parentId": "core-electronic",
+    "name": "Illbient",
+    "itemCount": 0
+  },
+  {
+    "id": "a-d",
+    "parentId": "core-electronic",
+    "name": "A&D",
+    "itemCount": 0
+  },
+  {
+    "id": "witch-house",
+    "parentId": "core-electronic",
+    "name": "Witch house",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-music",
+    "parentId": "core-electronic",
+    "name": "Ambient music",
+    "itemCount": 0
+  },
+  {
+    "id": "contemporary-instrumental-music",
+    "parentId": "ambient-music",
+    "name": "Contemporary instrumental music",
+    "itemCount": 0
+  },
+  {
+    "id": "dungeon-synth",
+    "parentId": "ambient-music",
+    "name": "Dungeon synth",
+    "itemCount": 0
+  },
+  {
+    "id": "comfy-synth",
+    "parentId": "dungeon-synth",
+    "name": "Comfy synth",
+    "itemCount": 0
+  },
+  {
+    "id": "winter-synth",
+    "parentId": "dungeon-synth",
+    "name": "Winter synth",
+    "itemCount": 0
+  },
+  {
+    "id": "keller-synth",
+    "parentId": "dungeon-synth",
+    "name": "Keller synth",
+    "itemCount": 0
+  },
+  {
+    "id": "dungeon-chip",
+    "parentId": "dungeon-synth",
+    "name": "Dungeon chip",
+    "itemCount": 0
+  },
+  {
+    "id": "experimental-ambient",
+    "parentId": "ambient-music",
+    "name": "Experimental ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "environmental-music",
+    "parentId": "ambient-music",
+    "name": "Environmental music",
+    "itemCount": 0
+  },
+  {
+    "id": "kanky-ongaku",
+    "parentId": "environmental-music",
+    "name": "Kankyō ongaku",
+    "itemCount": 0
+  },
+  {
+    "id": "space-ambient",
+    "parentId": "ambient-music",
+    "name": "Space ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "dark-ambient",
+    "parentId": "ambient-music",
+    "name": "Dark ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "black-ambient",
+    "parentId": "dark-ambient",
+    "name": "Black ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "ritual-ambient",
+    "parentId": "dark-ambient",
+    "name": "Ritual ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "isolationism",
+    "parentId": "dark-ambient",
+    "name": "Isolationism",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-industrial",
+    "parentId": "dark-ambient",
+    "name": "Ambient industrial",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-noise-wall",
+    "parentId": "ambient-music",
+    "name": "Ambient noise wall",
+    "itemCount": 0
+  },
+  {
+    "id": "tribal-ambient",
+    "parentId": "ambient-music",
+    "name": "Tribal ambient",
+    "itemCount": 0
+  },
+  {
+    "id": "synthwave",
+    "parentId": "core-electronic",
+    "name": "Synthwave",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-wave",
+    "parentId": "synthwave",
+    "name": "Electro wave",
+    "itemCount": 0
+  },
+  {
+    "id": "dreamwave",
+    "parentId": "synthwave",
+    "name": "Dreamwave",
+    "itemCount": 0
+  },
+  {
+    "id": "sovietwave",
+    "parentId": "synthwave",
+    "name": "Sovietwave",
+    "itemCount": 0
+  },
+  {
+    "id": "darksynth",
+    "parentId": "synthwave",
+    "name": "Darksynth",
+    "itemCount": 0
+  },
+  {
+    "id": "retrosound",
+    "parentId": "core-electronic",
+    "name": "Retrosound",
+    "itemCount": 0
+  },
+  {
+    "id": "space-music",
+    "parentId": "core-electronic",
+    "name": "Space music",
+    "itemCount": 0
+  },
+  {
+    "id": "chillwave",
+    "parentId": "core-electronic",
+    "name": "Chillwave",
+    "itemCount": 0
+  },
+  {
+    "id": "chillsynth",
+    "parentId": "chillwave",
+    "name": "Chillsynth",
+    "itemCount": 0
+  },
+  {
+    "id": "lowercase",
+    "parentId": "core-electronic",
+    "name": "Lowercase",
+    "itemCount": 0
+  },
+  {
+    "id": "lowercase-noise-wall",
+    "parentId": "lowercase",
+    "name": "Lowercase noise wall",
+    "itemCount": 0
+  },
+  {
+    "id": "seapunk",
+    "parentId": "core-electronic",
+    "name": "Seapunk",
+    "itemCount": 0
+  },
+  {
+    "id": "nightcore",
+    "parentId": "core-electronic",
+    "name": "Nightcore",
+    "itemCount": 0
+  },
+  {
+    "id": "alternative-electronic",
+    "parentId": "core-electronic",
+    "name": "Alternative electronic",
+    "itemCount": 0
+  },
+  {
+    "id": "electrogaze",
+    "parentId": "core-electronic",
+    "name": "Electrogaze",
+    "itemCount": 0
+  },
+  {
+    "id": "leftfield-electronic",
+    "parentId": "core-electronic",
+    "name": "Leftfield electronic",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-orchestral-music",
+    "parentId": "core-electronic",
+    "name": "Electro-orchestral music",
+    "itemCount": 0
+  },
+  {
+    "id": "sampledelia",
+    "parentId": "core-electronic",
+    "name": "Sampledelia",
+    "itemCount": 0
+  },
+  {
+    "id": "chill-out-music",
+    "parentId": "core-electronic",
+    "name": "Chill-out music",
+    "itemCount": 0
+  },
+  {
+    "id": "barber-beats",
+    "parentId": "chill-out-music",
+    "name": "Barber beats",
+    "itemCount": 0
+  },
+  {
+    "id": "psydub",
+    "parentId": "chill-out-music",
+    "name": "Psydub",
+    "itemCount": 0
+  },
+  {
+    "id": "downtempo",
+    "parentId": "chill-out-music",
+    "name": "Downtempo",
+    "itemCount": 0
+  },
+  {
+    "id": "trip-hop",
+    "parentId": "downtempo",
+    "name": "Trip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "balearic-beat",
+    "parentId": "chill-out-music",
+    "name": "Balearic beat",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-dub",
+    "parentId": "chill-out-music",
+    "name": "Ambient dub",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-trance",
+    "parentId": "chill-out-music",
+    "name": "Ambient trance",
+    "itemCount": 0
+  },
+  {
+    "id": "psybient",
+    "parentId": "chill-out-music",
+    "name": "Psybient",
+    "itemCount": 0
+  },
+  {
+    "id": "progressive-electronic-music",
+    "parentId": "core-electronic",
+    "name": "Progressive electronic music",
+    "itemCount": 0
+  },
+  {
+    "id": "berlin-school-of-electronic-music",
+    "parentId": "progressive-electronic-music",
+    "name": "Berlin School of electronic music",
+    "itemCount": 0
+  },
+  {
+    "id": "hauntology",
+    "parentId": "core-electronic",
+    "name": "Hauntology",
+    "itemCount": 0
+  },
+  {
+    "id": "phonk",
+    "parentId": "core-electronic",
+    "name": "Phonk",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-goth",
+    "parentId": "core-electronic",
+    "name": "Electro-goth",
+    "itemCount": 0
+  },
+  {
+    "id": "bass-music",
+    "parentId": "core-electronic",
+    "name": "Bass music",
+    "itemCount": 0
+  },
+  {
+    "id": "us-bass-music",
+    "parentId": "bass-music",
+    "name": "US bass music",
+    "itemCount": 0
+  },
+  {
+    "id": "disk-drive-music",
+    "parentId": "core-electronic",
+    "name": "Disk drive music",
+    "itemCount": 0
+  },
+  {
     "id": "pop-electronic",
     "parentId": "electronic-music",
     "name": "Pop electronic",
     "itemCount": 48,
     "side": "pop"
+  },
+  {
+    "id": "electro-folk",
+    "parentId": "pop-electronic",
+    "name": "Electro-folk",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-r-b",
+    "parentId": "pop-electronic",
+    "name": "Electro-R&B",
+    "itemCount": 0
+  },
+  {
+    "id": "electronic-pop",
+    "parentId": "pop-electronic",
+    "name": "Electronic pop",
+    "itemCount": 0
+  },
+  {
+    "id": "synth-pop",
+    "parentId": "electronic-pop",
+    "name": "Synth-pop",
+    "itemCount": 0
+  },
+  {
+    "id": "techno-pop",
+    "parentId": "synth-pop",
+    "name": "Techno-pop",
+    "itemCount": 0
+  },
+  {
+    "id": "spandau-synthpop",
+    "parentId": "synth-pop",
+    "name": "Spandau synthpop",
+    "itemCount": 0
+  },
+  {
+    "id": "electropop",
+    "parentId": "electronic-pop",
+    "name": "Electropop",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-hop",
+    "parentId": "electronic-pop",
+    "name": "Electro hop",
+    "itemCount": 0
+  },
+  {
+    "id": "dance-music",
+    "parentId": "pop-electronic",
+    "name": "Dance music",
+    "itemCount": 0
+  },
+  {
+    "id": "dance",
+    "parentId": "dance-music",
+    "name": "Dance",
+    "itemCount": 0
+  },
+  {
+    "id": "quadrille",
+    "parentId": "dance-music",
+    "name": "Quadrille",
+    "itemCount": 0
+  },
+  {
+    "id": "club-dance-music",
+    "parentId": "dance-music",
+    "name": "Club/dance music",
+    "itemCount": 0
+  },
+  {
+    "id": "underground-dance-music",
+    "parentId": "club-dance-music",
+    "name": "Underground dance music",
+    "itemCount": 0
+  },
+  {
+    "id": "post-disco",
+    "parentId": "club-dance-music",
+    "name": "Post-disco",
+    "itemCount": 0
+  },
+  {
+    "id": "acid-jazz",
+    "parentId": "club-dance-music",
+    "name": "Acid jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "dance-band-music",
+    "parentId": "dance-music",
+    "name": "Dance band music",
+    "itemCount": 0
+  },
+  {
+    "id": "ballroom-dance-music",
+    "parentId": "dance-music",
+    "name": "Ballroom dance music",
+    "itemCount": 0
+  },
+  {
+    "id": "pastoral",
+    "parentId": "dance-music",
+    "name": "Pastoral",
+    "itemCount": 0
+  },
+  {
+    "id": "retro-swing",
+    "parentId": "dance-music",
+    "name": "Retro-swing",
+    "itemCount": 0
+  },
+  {
+    "id": "vocadance",
+    "parentId": "dance-music",
+    "name": "Vocadance",
+    "itemCount": 0
+  },
+  {
+    "id": "indietronica",
+    "parentId": "pop-electronic",
+    "name": "Indietronica",
+    "itemCount": 0
+  },
+  {
+    "id": "electronic-rock",
+    "parentId": "pop-electronic",
+    "name": "Electronic rock",
+    "itemCount": 0
+  },
+  {
+    "id": "kosmische-musik",
+    "parentId": "electronic-rock",
+    "name": "Kosmische Musik",
+    "itemCount": 0
+  },
+  {
+    "id": "neon-pop-punk",
+    "parentId": "electronic-rock",
+    "name": "Neon pop-punk",
+    "itemCount": 0
+  },
+  {
+    "id": "synth-punk",
+    "parentId": "electronic-rock",
+    "name": "Synth-punk",
+    "itemCount": 0
+  },
+  {
+    "id": "electronica",
+    "parentId": "pop-electronic",
+    "name": "Electronica",
+    "itemCount": 0
+  },
+  {
+    "id": "funktronica",
+    "parentId": "electronica",
+    "name": "Funktronica",
+    "itemCount": 0
+  },
+  {
+    "id": "folktronica",
+    "parentId": "electronica",
+    "name": "Folktronica",
+    "itemCount": 0
+  },
+  {
+    "id": "broken-beat",
+    "parentId": "electronica",
+    "name": "Broken beat",
+    "itemCount": 0
+  },
+  {
+    "id": "dubtronica",
+    "parentId": "electronica",
+    "name": "Dubtronica",
+    "itemCount": 0
+  },
+  {
+    "id": "dub-techno",
+    "parentId": "dubtronica",
+    "name": "Dub techno",
+    "itemCount": 0
+  },
+  {
+    "id": "ethnic-electronica",
+    "parentId": "electronica",
+    "name": "Ethnic electronica",
+    "itemCount": 0
+  },
+  {
+    "id": "asian-underground",
+    "parentId": "ethnic-electronica",
+    "name": "Asian Underground",
+    "itemCount": 0
+  },
+  {
+    "id": "livetronica",
+    "parentId": "electronica",
+    "name": "Livetronica",
+    "itemCount": 0
   },
   {
     "id": "electronic-dance-music",
@@ -6664,933 +7582,9 @@
     "itemCount": 0
   },
   {
-    "id": "electronic-pop",
-    "parentId": "pop-electronic",
-    "name": "Electronic pop",
-    "itemCount": 0
-  },
-  {
-    "id": "synth-pop",
-    "parentId": "electronic-pop",
-    "name": "Synth-pop",
-    "itemCount": 0
-  },
-  {
-    "id": "techno-pop",
-    "parentId": "synth-pop",
-    "name": "Techno-pop",
-    "itemCount": 0
-  },
-  {
-    "id": "spandau-synthpop",
-    "parentId": "synth-pop",
-    "name": "Spandau synthpop",
-    "itemCount": 0
-  },
-  {
-    "id": "electropop",
-    "parentId": "electronic-pop",
-    "name": "Electropop",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-hop",
-    "parentId": "electronic-pop",
-    "name": "Electro hop",
-    "itemCount": 0
-  },
-  {
-    "id": "dance-music",
-    "parentId": "pop-electronic",
-    "name": "Dance music",
-    "itemCount": 0
-  },
-  {
-    "id": "dance",
-    "parentId": "dance-music",
-    "name": "Dance",
-    "itemCount": 0
-  },
-  {
-    "id": "quadrille",
-    "parentId": "dance-music",
-    "name": "Quadrille",
-    "itemCount": 0
-  },
-  {
-    "id": "club-dance-music",
-    "parentId": "dance-music",
-    "name": "Club/dance music",
-    "itemCount": 0
-  },
-  {
-    "id": "underground-dance-music",
-    "parentId": "club-dance-music",
-    "name": "Underground dance music",
-    "itemCount": 0
-  },
-  {
-    "id": "post-disco",
-    "parentId": "club-dance-music",
-    "name": "Post-disco",
-    "itemCount": 0
-  },
-  {
-    "id": "acid-jazz",
-    "parentId": "club-dance-music",
-    "name": "Acid jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "dance-band-music",
-    "parentId": "dance-music",
-    "name": "Dance band music",
-    "itemCount": 0
-  },
-  {
-    "id": "ballroom-dance-music",
-    "parentId": "dance-music",
-    "name": "Ballroom dance music",
-    "itemCount": 0
-  },
-  {
-    "id": "pastoral",
-    "parentId": "dance-music",
-    "name": "Pastoral",
-    "itemCount": 0
-  },
-  {
-    "id": "retro-swing",
-    "parentId": "dance-music",
-    "name": "Retro-swing",
-    "itemCount": 0
-  },
-  {
-    "id": "vocadance",
-    "parentId": "dance-music",
-    "name": "Vocadance",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-r-b",
-    "parentId": "pop-electronic",
-    "name": "Electro-R&B",
-    "itemCount": 0
-  },
-  {
-    "id": "electronica",
-    "parentId": "pop-electronic",
-    "name": "Electronica",
-    "itemCount": 0
-  },
-  {
-    "id": "funktronica",
-    "parentId": "electronica",
-    "name": "Funktronica",
-    "itemCount": 0
-  },
-  {
-    "id": "folktronica",
-    "parentId": "electronica",
-    "name": "Folktronica",
-    "itemCount": 0
-  },
-  {
-    "id": "broken-beat",
-    "parentId": "electronica",
-    "name": "Broken beat",
-    "itemCount": 0
-  },
-  {
-    "id": "dubtronica",
-    "parentId": "electronica",
-    "name": "Dubtronica",
-    "itemCount": 0
-  },
-  {
-    "id": "dub-techno",
-    "parentId": "dubtronica",
-    "name": "Dub techno",
-    "itemCount": 0
-  },
-  {
-    "id": "ethnic-electronica",
-    "parentId": "electronica",
-    "name": "Ethnic electronica",
-    "itemCount": 0
-  },
-  {
-    "id": "asian-underground",
-    "parentId": "ethnic-electronica",
-    "name": "Asian Underground",
-    "itemCount": 0
-  },
-  {
-    "id": "livetronica",
-    "parentId": "electronica",
-    "name": "Livetronica",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-folk",
-    "parentId": "pop-electronic",
-    "name": "Electro-folk",
-    "itemCount": 0
-  },
-  {
-    "id": "electronic-rock",
-    "parentId": "pop-electronic",
-    "name": "Electronic rock",
-    "itemCount": 0
-  },
-  {
-    "id": "kosmische-musik",
-    "parentId": "electronic-rock",
-    "name": "Kosmische Musik",
-    "itemCount": 0
-  },
-  {
-    "id": "neon-pop-punk",
-    "parentId": "electronic-rock",
-    "name": "Neon pop-punk",
-    "itemCount": 0
-  },
-  {
-    "id": "synth-punk",
-    "parentId": "electronic-rock",
-    "name": "Synth-punk",
-    "itemCount": 0
-  },
-  {
-    "id": "indietronica",
-    "parentId": "pop-electronic",
-    "name": "Indietronica",
-    "itemCount": 0
-  },
-  {
-    "id": "core-electronic",
-    "parentId": "electronic-music",
-    "name": "Core electronic",
-    "itemCount": 0
-  },
-  {
-    "id": "a-d",
-    "parentId": "core-electronic",
-    "name": "A&D",
-    "itemCount": 0
-  },
-  {
-    "id": "hexd",
-    "parentId": "core-electronic",
-    "name": "HexD",
-    "itemCount": 0
-  },
-  {
-    "id": "retrosound",
-    "parentId": "core-electronic",
-    "name": "Retrosound",
-    "itemCount": 0
-  },
-  {
-    "id": "acid",
-    "parentId": "core-electronic",
-    "name": "Acid",
-    "itemCount": 0
-  },
-  {
-    "id": "algorave",
-    "parentId": "core-electronic",
-    "name": "Algorave",
-    "itemCount": 0
-  },
-  {
-    "id": "aliencore",
-    "parentId": "core-electronic",
-    "name": "Aliencore",
-    "itemCount": 0
-  },
-  {
-    "id": "alternative-electronic",
-    "parentId": "core-electronic",
-    "name": "Alternative electronic",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-music",
-    "parentId": "core-electronic",
-    "name": "Ambient music",
-    "itemCount": 0
-  },
-  {
-    "id": "contemporary-instrumental-music",
-    "parentId": "ambient-music",
-    "name": "Contemporary instrumental music",
-    "itemCount": 0
-  },
-  {
-    "id": "dungeon-synth",
-    "parentId": "ambient-music",
-    "name": "Dungeon synth",
-    "itemCount": 0
-  },
-  {
-    "id": "comfy-synth",
-    "parentId": "dungeon-synth",
-    "name": "Comfy synth",
-    "itemCount": 0
-  },
-  {
-    "id": "winter-synth",
-    "parentId": "dungeon-synth",
-    "name": "Winter synth",
-    "itemCount": 0
-  },
-  {
-    "id": "keller-synth",
-    "parentId": "dungeon-synth",
-    "name": "Keller synth",
-    "itemCount": 0
-  },
-  {
-    "id": "dungeon-chip",
-    "parentId": "dungeon-synth",
-    "name": "Dungeon chip",
-    "itemCount": 0
-  },
-  {
-    "id": "experimental-ambient",
-    "parentId": "ambient-music",
-    "name": "Experimental ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "environmental-music",
-    "parentId": "ambient-music",
-    "name": "Environmental music",
-    "itemCount": 0
-  },
-  {
-    "id": "kanky-ongaku",
-    "parentId": "environmental-music",
-    "name": "Kankyō ongaku",
-    "itemCount": 0
-  },
-  {
-    "id": "space-ambient",
-    "parentId": "ambient-music",
-    "name": "Space ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "dark-ambient",
-    "parentId": "ambient-music",
-    "name": "Dark ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "black-ambient",
-    "parentId": "dark-ambient",
-    "name": "Black ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "ritual-ambient",
-    "parentId": "dark-ambient",
-    "name": "Ritual ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "isolationism",
-    "parentId": "dark-ambient",
-    "name": "Isolationism",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-industrial",
-    "parentId": "dark-ambient",
-    "name": "Ambient industrial",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-noise-wall",
-    "parentId": "ambient-music",
-    "name": "Ambient noise wall",
-    "itemCount": 0
-  },
-  {
-    "id": "tribal-ambient",
-    "parentId": "ambient-music",
-    "name": "Tribal ambient",
-    "itemCount": 0
-  },
-  {
-    "id": "bass-music",
-    "parentId": "core-electronic",
-    "name": "Bass music",
-    "itemCount": 0
-  },
-  {
-    "id": "us-bass-music",
-    "parentId": "bass-music",
-    "name": "US bass music",
-    "itemCount": 0
-  },
-  {
-    "id": "beatdown",
-    "parentId": "core-electronic",
-    "name": "Beatdown",
-    "itemCount": 0
-  },
-  {
-    "id": "bit-music",
-    "parentId": "core-electronic",
-    "name": "Bit music",
-    "itemCount": 0
-  },
-  {
-    "id": "bytebeat",
-    "parentId": "bit-music",
-    "name": "Bytebeat",
-    "itemCount": 0
-  },
-  {
-    "id": "midi-music",
-    "parentId": "bit-music",
-    "name": "MIDI music",
-    "itemCount": 0
-  },
-  {
-    "id": "doom-wad-music",
-    "parentId": "midi-music",
-    "name": "Doom WAD music",
-    "itemCount": 0
-  },
-  {
-    "id": "black-midi",
-    "parentId": "midi-music",
-    "name": "Black MIDI",
-    "itemCount": 0
-  },
-  {
-    "id": "1-bit-music",
-    "parentId": "bit-music",
-    "name": "1-bit music",
-    "itemCount": 0
-  },
-  {
-    "id": "8-bit-music",
-    "parentId": "bit-music",
-    "name": "8-bit music",
-    "itemCount": 0
-  },
-  {
-    "id": "sampler-based-music",
-    "parentId": "bit-music",
-    "name": "Sampler-based music",
-    "itemCount": 0
-  },
-  {
-    "id": "tracker-music",
-    "parentId": "sampler-based-music",
-    "name": "Tracker music",
-    "itemCount": 0
-  },
-  {
-    "id": "demostyle",
-    "parentId": "tracker-music",
-    "name": "Demostyle",
-    "itemCount": 0
-  },
-  {
-    "id": "bitpop",
-    "parentId": "bit-music",
-    "name": "Bitpop",
-    "itemCount": 0
-  },
-  {
-    "id": "chill-out-music",
-    "parentId": "core-electronic",
-    "name": "Chill-out music",
-    "itemCount": 0
-  },
-  {
-    "id": "barber-beats",
-    "parentId": "chill-out-music",
-    "name": "Barber beats",
-    "itemCount": 0
-  },
-  {
-    "id": "psydub",
-    "parentId": "chill-out-music",
-    "name": "Psydub",
-    "itemCount": 0
-  },
-  {
-    "id": "downtempo",
-    "parentId": "chill-out-music",
-    "name": "Downtempo",
-    "itemCount": 0
-  },
-  {
-    "id": "trip-hop",
-    "parentId": "downtempo",
-    "name": "Trip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "balearic-beat",
-    "parentId": "chill-out-music",
-    "name": "Balearic beat",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-dub",
-    "parentId": "chill-out-music",
-    "name": "Ambient dub",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-trance",
-    "parentId": "chill-out-music",
-    "name": "Ambient trance",
-    "itemCount": 0
-  },
-  {
-    "id": "psybient",
-    "parentId": "chill-out-music",
-    "name": "Psybient",
-    "itemCount": 0
-  },
-  {
-    "id": "chillwave",
-    "parentId": "core-electronic",
-    "name": "Chillwave",
-    "itemCount": 0
-  },
-  {
-    "id": "chillsynth",
-    "parentId": "chillwave",
-    "name": "Chillsynth",
-    "itemCount": 0
-  },
-  {
-    "id": "chiptune",
-    "parentId": "core-electronic",
-    "name": "Chiptune",
-    "itemCount": 0
-  },
-  {
-    "id": "cyberpunk-music",
-    "parentId": "core-electronic",
-    "name": "Cyberpunk music",
-    "itemCount": 0
-  },
-  {
-    "id": "digital-fusion",
-    "parentId": "core-electronic",
-    "name": "Digital fusion",
-    "itemCount": 0
-  },
-  {
-    "id": "disk-drive-music",
-    "parentId": "core-electronic",
-    "name": "Disk drive music",
-    "itemCount": 0
-  },
-  {
-    "id": "drift-phonk",
-    "parentId": "core-electronic",
-    "name": "Drift phonk",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-dub",
-    "parentId": "core-electronic",
-    "name": "Electro dub",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-goth",
-    "parentId": "core-electronic",
-    "name": "Electro-goth",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-industrial",
-    "parentId": "core-electronic",
-    "name": "Electro-industrial",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-orchestral-music",
-    "parentId": "core-electronic",
-    "name": "Electro-orchestral music",
-    "itemCount": 0
-  },
-  {
-    "id": "electroacoustic-music",
-    "parentId": "core-electronic",
-    "name": "Electroacoustic music",
-    "itemCount": 0
-  },
-  {
-    "id": "live-electronic-music",
-    "parentId": "electroacoustic-music",
-    "name": "Live electronic music",
-    "itemCount": 0
-  },
-  {
-    "id": "acousmatic-music",
-    "parentId": "electroacoustic-music",
-    "name": "Acousmatic music",
-    "itemCount": 0
-  },
-  {
-    "id": "musique-concr-te",
-    "parentId": "electroacoustic-music",
-    "name": "Musique concrète",
-    "itemCount": 0
-  },
-  {
-    "id": "electrogaze",
-    "parentId": "core-electronic",
-    "name": "Electrogaze",
-    "itemCount": 0
-  },
-  {
-    "id": "epic-collage",
-    "parentId": "core-electronic",
-    "name": "Epic collage",
-    "itemCount": 0
-  },
-  {
-    "id": "experimental-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Experimental electronic music",
-    "itemCount": 0
-  },
-  {
-    "id": "flashcore",
-    "parentId": "experimental-electronic-music",
-    "name": "Flashcore",
-    "itemCount": 0
-  },
-  {
-    "id": "clicks-cuts",
-    "parentId": "experimental-electronic-music",
-    "name": "Clicks & cuts",
-    "itemCount": 0
-  },
-  {
-    "id": "microsound",
-    "parentId": "experimental-electronic-music",
-    "name": "Microsound",
-    "itemCount": 0
-  },
-  {
-    "id": "fixed-media",
-    "parentId": "core-electronic",
-    "name": "Fixed media",
-    "itemCount": 0
-  },
-  {
-    "id": "glitch",
-    "parentId": "core-electronic",
-    "name": "Glitch",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-glitch",
-    "parentId": "glitch",
-    "name": "Minimal glitch",
-    "itemCount": 0
-  },
-  {
-    "id": "oceanic-glitch",
-    "parentId": "glitch",
-    "name": "Oceanic glitch",
-    "itemCount": 0
-  },
-  {
-    "id": "hauntology",
-    "parentId": "core-electronic",
-    "name": "Hauntology",
-    "itemCount": 0
-  },
-  {
-    "id": "illbient",
-    "parentId": "core-electronic",
-    "name": "Illbient",
-    "itemCount": 0
-  },
-  {
-    "id": "leftfield-electronic",
-    "parentId": "core-electronic",
-    "name": "Leftfield electronic",
-    "itemCount": 0
-  },
-  {
-    "id": "lo-fi-music",
-    "parentId": "core-electronic",
-    "name": "Lo-fi music",
-    "itemCount": 0
-  },
-  {
-    "id": "no-fi",
-    "parentId": "lo-fi-music",
-    "name": "No-Fi",
-    "itemCount": 0
-  },
-  {
-    "id": "lowercase",
-    "parentId": "core-electronic",
-    "name": "Lowercase",
-    "itemCount": 0
-  },
-  {
-    "id": "lowercase-noise-wall",
-    "parentId": "lowercase",
-    "name": "Lowercase noise wall",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Minimal electronic music",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-electro",
-    "parentId": "minimal-electronic-music",
-    "name": "Minimal electro",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-wave",
-    "parentId": "minimal-electronic-music",
-    "name": "Minimal wave",
-    "itemCount": 0
-  },
-  {
-    "id": "minimal-synth",
-    "parentId": "minimal-wave",
-    "name": "Minimal synth",
-    "itemCount": 0
-  },
-  {
-    "id": "moogsploitation",
-    "parentId": "core-electronic",
-    "name": "Moogsploitation",
-    "itemCount": 0
-  },
-  {
-    "id": "nightcore",
-    "parentId": "core-electronic",
-    "name": "Nightcore",
-    "itemCount": 0
-  },
-  {
-    "id": "phonk",
-    "parentId": "core-electronic",
-    "name": "Phonk",
-    "itemCount": 0
-  },
-  {
-    "id": "progressive-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Progressive electronic music",
-    "itemCount": 0
-  },
-  {
-    "id": "berlin-school-of-electronic-music",
-    "parentId": "progressive-electronic-music",
-    "name": "Berlin School of electronic music",
-    "itemCount": 0
-  },
-  {
-    "id": "sampledelia",
-    "parentId": "core-electronic",
-    "name": "Sampledelia",
-    "itemCount": 0
-  },
-  {
-    "id": "seapunk",
-    "parentId": "core-electronic",
-    "name": "Seapunk",
-    "itemCount": 0
-  },
-  {
-    "id": "sigma-music",
-    "parentId": "core-electronic",
-    "name": "Sigma music",
-    "itemCount": 0
-  },
-  {
-    "id": "space-music",
-    "parentId": "core-electronic",
-    "name": "Space music",
-    "itemCount": 0
-  },
-  {
-    "id": "synth-music",
-    "parentId": "core-electronic",
-    "name": "Synth music",
-    "itemCount": 0
-  },
-  {
-    "id": "horror-synth",
-    "parentId": "synth-music",
-    "name": "Horror synth",
-    "itemCount": 0
-  },
-  {
-    "id": "synthwave",
-    "parentId": "core-electronic",
-    "name": "Synthwave",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-wave",
-    "parentId": "synthwave",
-    "name": "Electro wave",
-    "itemCount": 0
-  },
-  {
-    "id": "dreamwave",
-    "parentId": "synthwave",
-    "name": "Dreamwave",
-    "itemCount": 0
-  },
-  {
-    "id": "sovietwave",
-    "parentId": "synthwave",
-    "name": "Sovietwave",
-    "itemCount": 0
-  },
-  {
-    "id": "darksynth",
-    "parentId": "synthwave",
-    "name": "Darksynth",
-    "itemCount": 0
-  },
-  {
-    "id": "tribal-music",
-    "parentId": "core-electronic",
-    "name": "Tribal music",
-    "itemCount": 0
-  },
-  {
-    "id": "vaporwave",
-    "parentId": "core-electronic",
-    "name": "Vaporwave",
-    "itemCount": 0
-  },
-  {
-    "id": "spamwave",
-    "parentId": "vaporwave",
-    "name": "Spamwave",
-    "itemCount": 0
-  },
-  {
-    "id": "dreampunk",
-    "parentId": "vaporwave",
-    "name": "Dreampunk",
-    "itemCount": 0
-  },
-  {
-    "id": "utopian-virtual",
-    "parentId": "vaporwave",
-    "name": "Utopian virtual",
-    "itemCount": 0
-  },
-  {
-    "id": "daycore",
-    "parentId": "vaporwave",
-    "name": "Daycore",
-    "itemCount": 0
-  },
-  {
-    "id": "sludgefest",
-    "parentId": "daycore",
-    "name": "Sludgefest",
-    "itemCount": 0
-  },
-  {
-    "id": "broken-transmission",
-    "parentId": "vaporwave",
-    "name": "Broken transmission",
-    "itemCount": 0
-  },
-  {
-    "id": "signaltrap",
-    "parentId": "broken-transmission",
-    "name": "Signaltrap",
-    "itemCount": 0
-  },
-  {
-    "id": "late-night-lo-fi",
-    "parentId": "vaporwave",
-    "name": "Late night lo-fi",
-    "itemCount": 0
-  },
-  {
-    "id": "vapornoise",
-    "parentId": "vaporwave",
-    "name": "Vapornoise",
-    "itemCount": 0
-  },
-  {
-    "id": "slushwave",
-    "parentId": "vaporwave",
-    "name": "Slushwave",
-    "itemCount": 0
-  },
-  {
-    "id": "eccojams",
-    "parentId": "vaporwave",
-    "name": "Eccojams",
-    "itemCount": 0
-  },
-  {
-    "id": "simpsonwave",
-    "parentId": "vaporwave",
-    "name": "Simpsonwave",
-    "itemCount": 0
-  },
-  {
-    "id": "vaportrap",
-    "parentId": "vaporwave",
-    "name": "Vaportrap",
-    "itemCount": 0
-  },
-  {
-    "id": "wave-electronic",
-    "parentId": "core-electronic",
-    "name": "Wave (Electronic)",
-    "itemCount": 0
-  },
-  {
-    "id": "hardwave",
-    "parentId": "wave-electronic",
-    "name": "Hardwave",
-    "itemCount": 0
-  },
-  {
-    "id": "witch-house",
-    "parentId": "core-electronic",
-    "name": "Witch house",
-    "itemCount": 0
-  },
-  {
     "id": "experimental-music",
     "parentId": null,
     "name": "Experimental music",
-    "itemCount": 0
-  },
-  {
-    "id": "biomusic",
-    "parentId": "experimental-music",
-    "name": "Biomusic",
     "itemCount": 0
   },
   {
@@ -7600,15 +7594,21 @@
     "itemCount": 0
   },
   {
-    "id": "acousmatic-art",
+    "id": "music-and-mathematics",
     "parentId": "experimental-music",
-    "name": "Acousmatic art",
+    "name": "Music and mathematics",
     "itemCount": 0
   },
   {
     "id": "spatial-music",
     "parentId": "experimental-music",
     "name": "Spatial music",
+    "itemCount": 0
+  },
+  {
+    "id": "acousmatic-art",
+    "parentId": "experimental-music",
+    "name": "Acousmatic art",
     "itemCount": 0
   },
   {
@@ -7636,9 +7636,9 @@
     "itemCount": 0
   },
   {
-    "id": "music-and-mathematics",
+    "id": "biomusic",
     "parentId": "experimental-music",
-    "name": "Music and mathematics",
+    "name": "Biomusic",
     "itemCount": 0
   },
   {
@@ -7816,18 +7816,6 @@
     "itemCount": 0
   },
   {
-    "id": "progressive-folk",
-    "parentId": "folk-music",
-    "name": "Progressive folk",
-    "itemCount": 0
-  },
-  {
-    "id": "intuitive-folk",
-    "parentId": "folk-music",
-    "name": "Intuitive folk",
-    "itemCount": 0
-  },
-  {
     "id": "indie-folk",
     "parentId": "folk-music",
     "name": "Indie folk",
@@ -7843,6 +7831,18 @@
     "id": "stomp-and-holler",
     "parentId": "indie-folk",
     "name": "Stomp and holler",
+    "itemCount": 0
+  },
+  {
+    "id": "intuitive-folk",
+    "parentId": "folk-music",
+    "name": "Intuitive folk",
+    "itemCount": 0
+  },
+  {
+    "id": "progressive-folk",
+    "parentId": "folk-music",
+    "name": "Progressive folk",
     "itemCount": 0
   },
   {
@@ -8158,310 +8158,33 @@
     "itemCount": 8
   },
   {
-    "id": "pop-hip-hop",
-    "parentId": "hip-hop",
-    "name": "Pop hip-hop",
-    "itemCount": 4,
-    "side": "pop"
-  },
-  {
-    "id": "afroswing",
-    "parentId": "pop-hip-hop",
-    "name": "Afroswing",
-    "itemCount": 4
-  },
-  {
-    "id": "burban",
-    "parentId": "pop-hip-hop",
-    "name": "Burban",
-    "itemCount": 0
-  },
-  {
-    "id": "miami-bass",
-    "parentId": "pop-hip-hop",
-    "name": "Miami bass",
-    "itemCount": 0
-  },
-  {
-    "id": "atlanta-bass",
-    "parentId": "miami-bass",
-    "name": "Atlanta bass",
-    "itemCount": 0
-  },
-  {
-    "id": "toronto-sound",
-    "parentId": "pop-hip-hop",
-    "name": "Toronto sound",
-    "itemCount": 0
-  },
-  {
-    "id": "comedy-hip-hop",
-    "parentId": "pop-hip-hop",
-    "name": "Comedy hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "chap-hop",
-    "parentId": "comedy-hip-hop",
-    "name": "Chap hop",
-    "itemCount": 0
-  },
-  {
-    "id": "satirical-hip-hop",
-    "parentId": "comedy-hip-hop",
-    "name": "Satirical hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "crunk",
-    "parentId": "pop-hip-hop",
-    "name": "Crunk",
-    "itemCount": 0
-  },
-  {
-    "id": "hyphy",
-    "parentId": "pop-hip-hop",
-    "name": "Hyphy",
-    "itemCount": 0
-  },
-  {
-    "id": "jerk-rap",
-    "parentId": "hyphy",
-    "name": "Jerk rap",
-    "itemCount": 0
-  },
-  {
-    "id": "jerk",
-    "parentId": "pop-hip-hop",
-    "name": "Jerk",
-    "itemCount": 0
-  },
-  {
-    "id": "mumble-rap",
-    "parentId": "pop-hip-hop",
-    "name": "Mumble rap",
-    "itemCount": 0
-  },
-  {
-    "id": "pop-rap",
-    "parentId": "pop-hip-hop",
-    "name": "Pop rap",
-    "itemCount": 0
-  },
-  {
-    "id": "futuristic-swag",
-    "parentId": "pop-rap",
-    "name": "Futuristic swag",
-    "itemCount": 0
-  },
-  {
-    "id": "frat-rap",
-    "parentId": "pop-rap",
-    "name": "Frat rap",
-    "itemCount": 0
-  },
-  {
-    "id": "ratchet-music",
-    "parentId": "pop-hip-hop",
-    "name": "Ratchet music",
-    "itemCount": 0
-  },
-  {
-    "id": "snap-music",
-    "parentId": "pop-hip-hop",
-    "name": "Snap music",
-    "itemCount": 0
-  },
-  {
-    "id": "street-pop",
-    "parentId": "pop-hip-hop",
-    "name": "Street pop",
-    "itemCount": 0
-  },
-  {
-    "id": "trap-music",
-    "parentId": "pop-hip-hop",
-    "name": "Trap music",
-    "itemCount": 0
-  },
-  {
-    "id": "tread-rap",
-    "parentId": "trap-music",
-    "name": "Tread rap",
-    "itemCount": 0
-  },
-  {
-    "id": "emo-trap",
-    "parentId": "trap-music",
-    "name": "Emo trap",
-    "itemCount": 0
-  },
-  {
-    "id": "plugg-music",
-    "parentId": "trap-music",
-    "name": "Plugg music",
-    "itemCount": 0
-  },
-  {
-    "id": "pluggnb",
-    "parentId": "plugg-music",
-    "name": "Pluggnb",
-    "itemCount": 0
-  },
-  {
-    "id": "asian-rock",
-    "parentId": "pluggnb",
-    "name": "Asian rock",
-    "itemCount": 0
-  },
-  {
-    "id": "dark-plugg",
-    "parentId": "plugg-music",
-    "name": "Dark plugg",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-plugg",
-    "parentId": "plugg-music",
-    "name": "Ambient plugg",
-    "itemCount": 0
-  },
-  {
-    "id": "terror-plugg",
-    "parentId": "plugg-music",
-    "name": "Terror plugg",
-    "itemCount": 0
-  },
-  {
-    "id": "rage",
-    "parentId": "trap-music",
-    "name": "Rage",
-    "itemCount": 0
-  },
-  {
-    "id": "hype-trap",
-    "parentId": "trap-music",
-    "name": "Hype trap",
-    "itemCount": 0
-  },
-  {
-    "id": "sigilkore",
-    "parentId": "trap-music",
-    "name": "Sigilkore",
-    "itemCount": 0
-  },
-  {
-    "id": "rare-phonk",
-    "parentId": "trap-music",
-    "name": "Rare phonk",
-    "itemCount": 0
-  },
-  {
-    "id": "no-melody-trap",
-    "parentId": "trap-music",
-    "name": "No melody trap",
-    "itemCount": 0
-  },
-  {
-    "id": "regalia",
-    "parentId": "trap-music",
-    "name": "Regalia",
-    "itemCount": 0
-  },
-  {
-    "id": "new-jazz",
-    "parentId": "trap-music",
-    "name": "New jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "african-trap-music",
-    "parentId": "trap-music",
-    "name": "African trap music",
-    "itemCount": 0
-  },
-  {
-    "id": "afro-trap",
-    "parentId": "trap-music",
-    "name": "Afro trap",
-    "itemCount": 0
-  },
-  {
     "id": "core-hip-hop",
     "parentId": "hip-hop",
     "name": "Core hip-hop",
     "itemCount": 4
   },
   {
-    "id": "internet-rap",
+    "id": "turntablism",
     "parentId": "core-hip-hop",
-    "name": "Internet rap",
+    "name": "Turntablism",
     "itemCount": 0
   },
   {
-    "id": "jersey-club-rap",
+    "id": "shadow-rap",
     "parentId": "core-hip-hop",
-    "name": "Jersey club rap",
+    "name": "Shadow rap",
     "itemCount": 0
   },
   {
-    "id": "lgbt-hip-hop",
+    "id": "thug-rap",
     "parentId": "core-hip-hop",
-    "name": "LGBT hip hop",
+    "name": "Thug rap",
     "itemCount": 0
   },
   {
-    "id": "ns-rap",
+    "id": "spaza",
     "parentId": "core-hip-hop",
-    "name": "NS-rap",
-    "itemCount": 0
-  },
-  {
-    "id": "nuyorican-rap",
-    "parentId": "core-hip-hop",
-    "name": "Nuyorican rap",
-    "itemCount": 0
-  },
-  {
-    "id": "philly-club-rap",
-    "parentId": "core-hip-hop",
-    "name": "Philly club rap",
-    "itemCount": 1
-  },
-  {
-    "id": "rapfrobeat",
-    "parentId": "core-hip-hop",
-    "name": "Rapfrobeat",
-    "itemCount": 0
-  },
-  {
-    "id": "soundcloud-rap",
-    "parentId": "core-hip-hop",
-    "name": "SoundCloud rap",
-    "itemCount": 0
-  },
-  {
-    "id": "st-louis-bounce",
-    "parentId": "core-hip-hop",
-    "name": "St. Louis Bounce",
-    "itemCount": 0
-  },
-  {
-    "id": "abstract-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Abstract hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "baby-voice",
-    "parentId": "core-hip-hop",
-    "name": "Baby voice",
-    "itemCount": 0
-  },
-  {
-    "id": "boom-bap",
-    "parentId": "core-hip-hop",
-    "name": "Boom bap",
+    "name": "Spaza",
     "itemCount": 0
   },
   {
@@ -8471,51 +8194,129 @@
     "itemCount": 0
   },
   {
-    "id": "chopped-and-screwed",
-    "parentId": "core-hip-hop",
-    "name": "Chopped and screwed",
-    "itemCount": 0
-  },
-  {
-    "id": "classic-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Classic hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "cloud-rap",
-    "parentId": "core-hip-hop",
-    "name": "Cloud rap",
-    "itemCount": 0
-  },
-  {
-    "id": "country-rap",
-    "parentId": "core-hip-hop",
-    "name": "Country rap",
-    "itemCount": 0
-  },
-  {
-    "id": "deepkho",
-    "parentId": "core-hip-hop",
-    "name": "Deepkho",
-    "itemCount": 0
-  },
-  {
     "id": "digicore",
     "parentId": "core-hip-hop",
     "name": "Digicore",
     "itemCount": 0
   },
   {
-    "id": "dirty-rap",
+    "id": "progressive-rap",
     "parentId": "core-hip-hop",
-    "name": "Dirty rap",
+    "name": "Progressive rap",
     "itemCount": 0
   },
   {
-    "id": "dirty-south",
+    "id": "instrumental-hip-hop",
     "parentId": "core-hip-hop",
-    "name": "Dirty South",
+    "name": "Instrumental hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "jook",
+    "parentId": "core-hip-hop",
+    "name": "Jook",
+    "itemCount": 0
+  },
+  {
+    "id": "drumless-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Drumless hip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "jigg",
+    "parentId": "core-hip-hop",
+    "name": "Jigg",
+    "itemCount": 0
+  },
+  {
+    "id": "nervous-music",
+    "parentId": "core-hip-hop",
+    "name": "Nervous music",
+    "itemCount": 0
+  },
+  {
+    "id": "baby-voice",
+    "parentId": "core-hip-hop",
+    "name": "Baby voice",
+    "itemCount": 0
+  },
+  {
+    "id": "horrorcore",
+    "parentId": "core-hip-hop",
+    "name": "Horrorcore",
+    "itemCount": 0
+  },
+  {
+    "id": "psychedelic-rap",
+    "parentId": "core-hip-hop",
+    "name": "Psychedelic rap",
+    "itemCount": 0
+  },
+  {
+    "id": "lowend",
+    "parentId": "core-hip-hop",
+    "name": "Lowend",
+    "itemCount": 0
+  },
+  {
+    "id": "emo-rap",
+    "parentId": "core-hip-hop",
+    "name": "Emo rap",
+    "itemCount": 0
+  },
+  {
+    "id": "rapfrobeat",
+    "parentId": "core-hip-hop",
+    "name": "Rapfrobeat",
+    "itemCount": 0
+  },
+  {
+    "id": "jersey-club-rap",
+    "parentId": "core-hip-hop",
+    "name": "Jersey club rap",
+    "itemCount": 0
+  },
+  {
+    "id": "philly-club-rap",
+    "parentId": "core-hip-hop",
+    "name": "Philly club rap",
+    "itemCount": 1
+  },
+  {
+    "id": "electro-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Electro hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "hardcore-psycho-rap",
+    "parentId": "core-hip-hop",
+    "name": "Hardcore psycho rap",
+    "itemCount": 0
+  },
+  {
+    "id": "internet-rap",
+    "parentId": "core-hip-hop",
+    "name": "Internet rap",
+    "itemCount": 0
+  },
+  {
+    "id": "stoner-rap",
+    "parentId": "core-hip-hop",
+    "name": "Stoner rap",
+    "itemCount": 0
+  },
+  {
+    "id": "pimp-rap",
+    "parentId": "core-hip-hop",
+    "name": "Pimp rap",
+    "itemCount": 0
+  },
+  {
+    "id": "golden-age-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Golden age hip-hop",
     "itemCount": 0
   },
   {
@@ -8555,171 +8356,15 @@
     "itemCount": 3
   },
   {
-    "id": "drumless-hip-hop",
+    "id": "cloud-rap",
     "parentId": "core-hip-hop",
-    "name": "Drumless hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "electro-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Electro hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "emo-rap",
-    "parentId": "core-hip-hop",
-    "name": "Emo rap",
-    "itemCount": 0
-  },
-  {
-    "id": "experimental-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Experimental hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "avant-garde-hip-hop",
-    "parentId": "experimental-hip-hop",
-    "name": "Avant-garde hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "glitch-hop",
-    "parentId": "core-hip-hop",
-    "name": "Glitch hop",
-    "itemCount": 0
-  },
-  {
-    "id": "golden-age-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Golden age hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "hardcore-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Hardcore hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "mid-school-hip-hop",
-    "parentId": "hardcore-hip-hop",
-    "name": "Mid-school hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "chopper",
-    "parentId": "hardcore-hip-hop",
-    "name": "Chopper",
-    "itemCount": 0
-  },
-  {
-    "id": "trap-metal",
-    "parentId": "hardcore-hip-hop",
-    "name": "Trap metal",
-    "itemCount": 0
-  },
-  {
-    "id": "necrotrap",
-    "parentId": "trap-metal",
-    "name": "Necrotrap",
-    "itemCount": 0
-  },
-  {
-    "id": "gangsta-rap",
-    "parentId": "hardcore-hip-hop",
-    "name": "Gangsta rap",
-    "itemCount": 0
-  },
-  {
-    "id": "scam-rap",
-    "parentId": "gangsta-rap",
-    "name": "Scam rap",
-    "itemCount": 0
-  },
-  {
-    "id": "kjekkas-rap",
-    "parentId": "gangsta-rap",
-    "name": "Kjekkas-rap",
-    "itemCount": 0
-  },
-  {
-    "id": "coke-rap",
-    "parentId": "gangsta-rap",
-    "name": "Coke rap",
-    "itemCount": 0
-  },
-  {
-    "id": "mafioso-rap",
-    "parentId": "gangsta-rap",
-    "name": "Mafioso rap",
-    "itemCount": 0
-  },
-  {
-    "id": "britcore",
-    "parentId": "hardcore-hip-hop",
-    "name": "Britcore",
-    "itemCount": 0
-  },
-  {
-    "id": "hardcore-psycho-rap",
-    "parentId": "core-hip-hop",
-    "name": "Hardcore psycho rap",
-    "itemCount": 0
-  },
-  {
-    "id": "horrorcore",
-    "parentId": "core-hip-hop",
-    "name": "Horrorcore",
+    "name": "Cloud rap",
     "itemCount": 0
   },
   {
     "id": "indie-hip-hop",
     "parentId": "core-hip-hop",
     "name": "Indie hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "instrumental-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Instrumental hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "jazz-rap",
-    "parentId": "core-hip-hop",
-    "name": "Jazz rap",
-    "itemCount": 0
-  },
-  {
-    "id": "jigg",
-    "parentId": "core-hip-hop",
-    "name": "Jigg",
-    "itemCount": 0
-  },
-  {
-    "id": "jook",
-    "parentId": "core-hip-hop",
-    "name": "Jook",
-    "itemCount": 0
-  },
-  {
-    "id": "lofi-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Lofi hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "lowend",
-    "parentId": "core-hip-hop",
-    "name": "Lowend",
-    "itemCount": 0
-  },
-  {
-    "id": "mobb-music",
-    "parentId": "core-hip-hop",
-    "name": "Mobb music",
     "itemCount": 0
   },
   {
@@ -8735,57 +8380,15 @@
     "itemCount": 0
   },
   {
-    "id": "nervous-music",
+    "id": "mobb-music",
     "parentId": "core-hip-hop",
-    "name": "Nervous music",
+    "name": "Mobb music",
     "itemCount": 0
   },
   {
-    "id": "new-school-hip-hop",
+    "id": "classic-hip-hop",
     "parentId": "core-hip-hop",
-    "name": "New-school hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "noise-hop",
-    "parentId": "core-hip-hop",
-    "name": "Noise hop",
-    "itemCount": 0
-  },
-  {
-    "id": "old-school-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Old-school hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "disco-rap",
-    "parentId": "old-school-hip-hop",
-    "name": "Disco rap",
-    "itemCount": 0
-  },
-  {
-    "id": "orchestral-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Orchestral hip hop",
-    "itemCount": 0
-  },
-  {
-    "id": "pimp-rap",
-    "parentId": "core-hip-hop",
-    "name": "Pimp rap",
-    "itemCount": 0
-  },
-  {
-    "id": "political-hip-hop",
-    "parentId": "core-hip-hop",
-    "name": "Political hip-hop",
-    "itemCount": 0
-  },
-  {
-    "id": "progressive-rap",
-    "parentId": "core-hip-hop",
-    "name": "Progressive rap",
+    "name": "Classic hip hop",
     "itemCount": 0
   },
   {
@@ -8795,15 +8398,105 @@
     "itemCount": 0
   },
   {
-    "id": "psychedelic-rap",
+    "id": "nuyorican-rap",
     "parentId": "core-hip-hop",
-    "name": "Psychedelic rap",
+    "name": "Nuyorican rap",
     "itemCount": 0
   },
   {
-    "id": "rap-opera",
+    "id": "chopped-and-screwed",
     "parentId": "core-hip-hop",
-    "name": "Rap opera",
+    "name": "Chopped and screwed",
+    "itemCount": 0
+  },
+  {
+    "id": "st-louis-bounce",
+    "parentId": "core-hip-hop",
+    "name": "St. Louis Bounce",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-rap",
+    "parentId": "core-hip-hop",
+    "name": "Jazz rap",
+    "itemCount": 0
+  },
+  {
+    "id": "country-rap",
+    "parentId": "core-hip-hop",
+    "name": "Country rap",
+    "itemCount": 0
+  },
+  {
+    "id": "deepkho",
+    "parentId": "core-hip-hop",
+    "name": "Deepkho",
+    "itemCount": 0
+  },
+  {
+    "id": "glitch-hop",
+    "parentId": "core-hip-hop",
+    "name": "Glitch hop",
+    "itemCount": 0
+  },
+  {
+    "id": "orchestral-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Orchestral hip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "ns-rap",
+    "parentId": "core-hip-hop",
+    "name": "NS-rap",
+    "itemCount": 0
+  },
+  {
+    "id": "noise-hop",
+    "parentId": "core-hip-hop",
+    "name": "Noise hop",
+    "itemCount": 0
+  },
+  {
+    "id": "dirty-rap",
+    "parentId": "core-hip-hop",
+    "name": "Dirty rap",
+    "itemCount": 0
+  },
+  {
+    "id": "new-school-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "New-school hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "lgbt-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "LGBT hip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "soundcloud-rap",
+    "parentId": "core-hip-hop",
+    "name": "SoundCloud rap",
+    "itemCount": 0
+  },
+  {
+    "id": "boom-bap",
+    "parentId": "core-hip-hop",
+    "name": "Boom bap",
+    "itemCount": 0
+  },
+  {
+    "id": "experimental-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Experimental hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "avant-garde-hip-hop",
+    "parentId": "experimental-hip-hop",
+    "name": "Avant-garde hip hop",
     "itemCount": 0
   },
   {
@@ -8945,33 +8638,340 @@
     "itemCount": 0
   },
   {
-    "id": "shadow-rap",
+    "id": "rap-opera",
     "parentId": "core-hip-hop",
-    "name": "Shadow rap",
+    "name": "Rap opera",
     "itemCount": 0
   },
   {
-    "id": "spaza",
+    "id": "dirty-south",
     "parentId": "core-hip-hop",
-    "name": "Spaza",
+    "name": "Dirty South",
     "itemCount": 0
   },
   {
-    "id": "stoner-rap",
+    "id": "old-school-hip-hop",
     "parentId": "core-hip-hop",
-    "name": "Stoner rap",
+    "name": "Old-school hip-hop",
     "itemCount": 0
   },
   {
-    "id": "thug-rap",
-    "parentId": "core-hip-hop",
-    "name": "Thug rap",
+    "id": "disco-rap",
+    "parentId": "old-school-hip-hop",
+    "name": "Disco rap",
     "itemCount": 0
   },
   {
-    "id": "turntablism",
+    "id": "hardcore-hip-hop",
     "parentId": "core-hip-hop",
-    "name": "Turntablism",
+    "name": "Hardcore hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "mid-school-hip-hop",
+    "parentId": "hardcore-hip-hop",
+    "name": "Mid-school hip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "chopper",
+    "parentId": "hardcore-hip-hop",
+    "name": "Chopper",
+    "itemCount": 0
+  },
+  {
+    "id": "trap-metal",
+    "parentId": "hardcore-hip-hop",
+    "name": "Trap metal",
+    "itemCount": 0
+  },
+  {
+    "id": "necrotrap",
+    "parentId": "trap-metal",
+    "name": "Necrotrap",
+    "itemCount": 0
+  },
+  {
+    "id": "gangsta-rap",
+    "parentId": "hardcore-hip-hop",
+    "name": "Gangsta rap",
+    "itemCount": 0
+  },
+  {
+    "id": "scam-rap",
+    "parentId": "gangsta-rap",
+    "name": "Scam rap",
+    "itemCount": 0
+  },
+  {
+    "id": "kjekkas-rap",
+    "parentId": "gangsta-rap",
+    "name": "Kjekkas-rap",
+    "itemCount": 0
+  },
+  {
+    "id": "coke-rap",
+    "parentId": "gangsta-rap",
+    "name": "Coke rap",
+    "itemCount": 0
+  },
+  {
+    "id": "mafioso-rap",
+    "parentId": "gangsta-rap",
+    "name": "Mafioso rap",
+    "itemCount": 0
+  },
+  {
+    "id": "britcore",
+    "parentId": "hardcore-hip-hop",
+    "name": "Britcore",
+    "itemCount": 0
+  },
+  {
+    "id": "political-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Political hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "lofi-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Lofi hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "abstract-hip-hop",
+    "parentId": "core-hip-hop",
+    "name": "Abstract hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "pop-hip-hop",
+    "parentId": "hip-hop",
+    "name": "Pop hip-hop",
+    "itemCount": 4,
+    "side": "pop"
+  },
+  {
+    "id": "ratchet-music",
+    "parentId": "pop-hip-hop",
+    "name": "Ratchet music",
+    "itemCount": 0
+  },
+  {
+    "id": "jerk",
+    "parentId": "pop-hip-hop",
+    "name": "Jerk",
+    "itemCount": 0
+  },
+  {
+    "id": "street-pop",
+    "parentId": "pop-hip-hop",
+    "name": "Street pop",
+    "itemCount": 0
+  },
+  {
+    "id": "toronto-sound",
+    "parentId": "pop-hip-hop",
+    "name": "Toronto sound",
+    "itemCount": 0
+  },
+  {
+    "id": "hyphy",
+    "parentId": "pop-hip-hop",
+    "name": "Hyphy",
+    "itemCount": 0
+  },
+  {
+    "id": "jerk-rap",
+    "parentId": "hyphy",
+    "name": "Jerk rap",
+    "itemCount": 0
+  },
+  {
+    "id": "pop-rap",
+    "parentId": "pop-hip-hop",
+    "name": "Pop rap",
+    "itemCount": 0
+  },
+  {
+    "id": "futuristic-swag",
+    "parentId": "pop-rap",
+    "name": "Futuristic swag",
+    "itemCount": 0
+  },
+  {
+    "id": "frat-rap",
+    "parentId": "pop-rap",
+    "name": "Frat rap",
+    "itemCount": 0
+  },
+  {
+    "id": "trap-music",
+    "parentId": "pop-hip-hop",
+    "name": "Trap music",
+    "itemCount": 0
+  },
+  {
+    "id": "tread-rap",
+    "parentId": "trap-music",
+    "name": "Tread rap",
+    "itemCount": 0
+  },
+  {
+    "id": "emo-trap",
+    "parentId": "trap-music",
+    "name": "Emo trap",
+    "itemCount": 0
+  },
+  {
+    "id": "plugg-music",
+    "parentId": "trap-music",
+    "name": "Plugg music",
+    "itemCount": 0
+  },
+  {
+    "id": "pluggnb",
+    "parentId": "plugg-music",
+    "name": "Pluggnb",
+    "itemCount": 0
+  },
+  {
+    "id": "asian-rock",
+    "parentId": "pluggnb",
+    "name": "Asian rock",
+    "itemCount": 0
+  },
+  {
+    "id": "dark-plugg",
+    "parentId": "plugg-music",
+    "name": "Dark plugg",
+    "itemCount": 0
+  },
+  {
+    "id": "ambient-plugg",
+    "parentId": "plugg-music",
+    "name": "Ambient plugg",
+    "itemCount": 0
+  },
+  {
+    "id": "terror-plugg",
+    "parentId": "plugg-music",
+    "name": "Terror plugg",
+    "itemCount": 0
+  },
+  {
+    "id": "rage",
+    "parentId": "trap-music",
+    "name": "Rage",
+    "itemCount": 0
+  },
+  {
+    "id": "hype-trap",
+    "parentId": "trap-music",
+    "name": "Hype trap",
+    "itemCount": 0
+  },
+  {
+    "id": "sigilkore",
+    "parentId": "trap-music",
+    "name": "Sigilkore",
+    "itemCount": 0
+  },
+  {
+    "id": "rare-phonk",
+    "parentId": "trap-music",
+    "name": "Rare phonk",
+    "itemCount": 0
+  },
+  {
+    "id": "no-melody-trap",
+    "parentId": "trap-music",
+    "name": "No melody trap",
+    "itemCount": 0
+  },
+  {
+    "id": "regalia",
+    "parentId": "trap-music",
+    "name": "Regalia",
+    "itemCount": 0
+  },
+  {
+    "id": "new-jazz",
+    "parentId": "trap-music",
+    "name": "New jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "african-trap-music",
+    "parentId": "trap-music",
+    "name": "African trap music",
+    "itemCount": 0
+  },
+  {
+    "id": "afro-trap",
+    "parentId": "trap-music",
+    "name": "Afro trap",
+    "itemCount": 0
+  },
+  {
+    "id": "snap-music",
+    "parentId": "pop-hip-hop",
+    "name": "Snap music",
+    "itemCount": 0
+  },
+  {
+    "id": "mumble-rap",
+    "parentId": "pop-hip-hop",
+    "name": "Mumble rap",
+    "itemCount": 0
+  },
+  {
+    "id": "burban",
+    "parentId": "pop-hip-hop",
+    "name": "Burban",
+    "itemCount": 0
+  },
+  {
+    "id": "miami-bass",
+    "parentId": "pop-hip-hop",
+    "name": "Miami bass",
+    "itemCount": 0
+  },
+  {
+    "id": "atlanta-bass",
+    "parentId": "miami-bass",
+    "name": "Atlanta bass",
+    "itemCount": 0
+  },
+  {
+    "id": "comedy-hip-hop",
+    "parentId": "pop-hip-hop",
+    "name": "Comedy hip-hop",
+    "itemCount": 0
+  },
+  {
+    "id": "chap-hop",
+    "parentId": "comedy-hip-hop",
+    "name": "Chap hop",
+    "itemCount": 0
+  },
+  {
+    "id": "satirical-hip-hop",
+    "parentId": "comedy-hip-hop",
+    "name": "Satirical hip hop",
+    "itemCount": 0
+  },
+  {
+    "id": "afroswing",
+    "parentId": "pop-hip-hop",
+    "name": "Afroswing",
+    "itemCount": 4
+  },
+  {
+    "id": "crunk",
+    "parentId": "pop-hip-hop",
+    "name": "Crunk",
     "itemCount": 0
   },
   {
@@ -8981,166 +8981,9 @@
     "itemCount": 0
   },
   {
-    "id": "pop-jazz",
-    "parentId": "jazz",
-    "name": "Pop jazz",
-    "itemCount": 0,
-    "side": "pop"
-  },
-  {
-    "id": "smooth-jazz",
-    "parentId": "pop-jazz",
-    "name": "Smooth jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "vocal-jazz",
-    "parentId": "pop-jazz",
-    "name": "Vocal jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "vocalese",
-    "parentId": "vocal-jazz",
-    "name": "Vocalese",
-    "itemCount": 0
-  },
-  {
-    "id": "jazz-pop",
-    "parentId": "pop-jazz",
-    "name": "Jazz pop",
-    "itemCount": 0
-  },
-  {
     "id": "core-jazz",
     "parentId": "jazz",
     "name": "Core jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "continental-jazz",
-    "parentId": "core-jazz",
-    "name": "Continental jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "dixieland-jazz",
-    "parentId": "core-jazz",
-    "name": "Dixieland jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "bigi-poku",
-    "parentId": "dixieland-jazz",
-    "name": "Bigi poku",
-    "itemCount": 0
-  },
-  {
-    "id": "ecm-style-jazz",
-    "parentId": "core-jazz",
-    "name": "ECM style jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "fjord-jazz",
-    "parentId": "core-jazz",
-    "name": "Fjord jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "gas-pipe-clarinet",
-    "parentId": "core-jazz",
-    "name": "Gas pipe clarinet",
-    "itemCount": 0
-  },
-  {
-    "id": "imaginary-folk-music",
-    "parentId": "core-jazz",
-    "name": "Imaginary folk music",
-    "itemCount": 0
-  },
-  {
-    "id": "jungle-style",
-    "parentId": "core-jazz",
-    "name": "Jungle-style",
-    "itemCount": 0
-  },
-  {
-    "id": "kansas-city-jazz",
-    "parentId": "core-jazz",
-    "name": "Kansas City jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "latin-jazz",
-    "parentId": "core-jazz",
-    "name": "Latin jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "new-orleans-jazz",
-    "parentId": "core-jazz",
-    "name": "New Orleans jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "chicago-jazz",
-    "parentId": "new-orleans-jazz",
-    "name": "Chicago jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "tailgate",
-    "parentId": "core-jazz",
-    "name": "Tailgate",
-    "itemCount": 0
-  },
-  {
-    "id": "west-coast-jazz",
-    "parentId": "core-jazz",
-    "name": "West Coast jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "ambient-jazz",
-    "parentId": "core-jazz",
-    "name": "Ambient jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "ameriachi",
-    "parentId": "core-jazz",
-    "name": "Ameriachi",
-    "itemCount": 0
-  },
-  {
-    "id": "archaic-jazz",
-    "parentId": "core-jazz",
-    "name": "Archaic jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "avant-garde-jazz",
-    "parentId": "core-jazz",
-    "name": "Avant-garde jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "free-jazz",
-    "parentId": "avant-garde-jazz",
-    "name": "Free jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "m-base",
-    "parentId": "free-jazz",
-    "name": "M-Base",
-    "itemCount": 0
-  },
-  {
-    "id": "european-free-jazz",
-    "parentId": "free-jazz",
-    "name": "European free jazz",
     "itemCount": 0
   },
   {
@@ -9168,6 +9011,30 @@
     "itemCount": 0
   },
   {
+    "id": "jazz-fusion",
+    "parentId": "core-jazz",
+    "name": "Jazz fusion",
+    "itemCount": 0
+  },
+  {
+    "id": "clubjazz",
+    "parentId": "jazz-fusion",
+    "name": "Clubjazz",
+    "itemCount": 0
+  },
+  {
+    "id": "electro-jazz",
+    "parentId": "jazz-fusion",
+    "name": "Electro-jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "straight-ahead-jazz",
+    "parentId": "jazz-fusion",
+    "name": "Straight-ahead jazz",
+    "itemCount": 0
+  },
+  {
     "id": "big-band-music",
     "parentId": "core-jazz",
     "name": "Big band music",
@@ -9186,21 +9053,21 @@
     "itemCount": 0
   },
   {
-    "id": "chamber-jazz",
+    "id": "post-bop",
     "parentId": "core-jazz",
-    "name": "Chamber jazz",
+    "name": "Post-bop",
     "itemCount": 0
   },
   {
-    "id": "contemporary-jazz",
+    "id": "ambient-jazz",
     "parentId": "core-jazz",
-    "name": "Contemporary jazz",
+    "name": "Ambient jazz",
     "itemCount": 0
   },
   {
-    "id": "cool-jazz",
+    "id": "modal-jazz",
     "parentId": "core-jazz",
-    "name": "Cool jazz",
+    "name": "Modal jazz",
     "itemCount": 0
   },
   {
@@ -9210,15 +9077,15 @@
     "itemCount": 0
   },
   {
-    "id": "crossover-jazz",
+    "id": "nu-jazz",
     "parentId": "core-jazz",
-    "name": "Crossover jazz",
+    "name": "Nu jazz",
     "itemCount": 0
   },
   {
-    "id": "dark-jazz",
-    "parentId": "core-jazz",
-    "name": "Dark jazz",
+    "id": "jazzdance",
+    "parentId": "nu-jazz",
+    "name": "Jazzdance",
     "itemCount": 0
   },
   {
@@ -9228,21 +9095,63 @@
     "itemCount": 0
   },
   {
+    "id": "jive",
+    "parentId": "core-jazz",
+    "name": "Jive",
+    "itemCount": 0
+  },
+  {
+    "id": "off-jazz",
+    "parentId": "core-jazz",
+    "name": "Off jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "fjord-jazz",
+    "parentId": "core-jazz",
+    "name": "Fjord jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "progressive-jazz",
+    "parentId": "core-jazz",
+    "name": "Progressive jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "ameriachi",
+    "parentId": "core-jazz",
+    "name": "Ameriachi",
+    "itemCount": 0
+  },
+  {
+    "id": "hot-jazz",
+    "parentId": "core-jazz",
+    "name": "Hot jazz",
+    "itemCount": 0
+  },
+  {
     "id": "ethno-jazz",
     "parentId": "core-jazz",
     "name": "Ethno jazz",
     "itemCount": 0
   },
   {
-    "id": "experimental-big-band",
+    "id": "sweet-jazz",
     "parentId": "core-jazz",
-    "name": "Experimental big band",
+    "name": "Sweet jazz",
     "itemCount": 0
   },
   {
-    "id": "folk-jazz",
+    "id": "west-coast-jazz",
     "parentId": "core-jazz",
-    "name": "Folk jazz",
+    "name": "West Coast jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "soul-jazz",
+    "parentId": "core-jazz",
+    "name": "Soul jazz",
     "itemCount": 0
   },
   {
@@ -9252,9 +9161,207 @@
     "itemCount": 0
   },
   {
-    "id": "hot-jazz",
+    "id": "imaginary-folk-music",
     "parentId": "core-jazz",
-    "name": "Hot jazz",
+    "name": "Imaginary folk music",
+    "itemCount": 0
+  },
+  {
+    "id": "straight-jazz",
+    "parentId": "core-jazz",
+    "name": "Straight jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "kansas-city-jazz",
+    "parentId": "core-jazz",
+    "name": "Kansas City jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-blues",
+    "parentId": "core-jazz",
+    "name": "Jazz blues",
+    "itemCount": 0
+  },
+  {
+    "id": "jungle-style",
+    "parentId": "core-jazz",
+    "name": "Jungle-style",
+    "itemCount": 0
+  },
+  {
+    "id": "mainstream-jazz",
+    "parentId": "core-jazz",
+    "name": "Mainstream jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "modern-jazz",
+    "parentId": "core-jazz",
+    "name": "Modern jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "modern-big-band-music",
+    "parentId": "modern-jazz",
+    "name": "Modern big band music",
+    "itemCount": 0
+  },
+  {
+    "id": "ska-jazz",
+    "parentId": "core-jazz",
+    "name": "Ska jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "new-orleans-jazz",
+    "parentId": "core-jazz",
+    "name": "New Orleans jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "chicago-jazz",
+    "parentId": "new-orleans-jazz",
+    "name": "Chicago jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "swing",
+    "parentId": "core-jazz",
+    "name": "Swing",
+    "itemCount": 0
+  },
+  {
+    "id": "swing-revival",
+    "parentId": "swing",
+    "name": "Swing revival",
+    "itemCount": 0
+  },
+  {
+    "id": "sock",
+    "parentId": "swing",
+    "name": "Sock",
+    "itemCount": 0
+  },
+  {
+    "id": "tailgate",
+    "parentId": "core-jazz",
+    "name": "Tailgate",
+    "itemCount": 0
+  },
+  {
+    "id": "dark-jazz",
+    "parentId": "core-jazz",
+    "name": "Dark jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "cool-jazz",
+    "parentId": "core-jazz",
+    "name": "Cool jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "orchestral-jazz",
+    "parentId": "core-jazz",
+    "name": "Orchestral jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-funk",
+    "parentId": "core-jazz",
+    "name": "Jazz-funk",
+    "itemCount": 0
+  },
+  {
+    "id": "free-funk",
+    "parentId": "jazz-funk",
+    "name": "Free funk",
+    "itemCount": 0
+  },
+  {
+    "id": "spy-music",
+    "parentId": "core-jazz",
+    "name": "Spy music",
+    "itemCount": 0
+  },
+  {
+    "id": "world-fusion",
+    "parentId": "core-jazz",
+    "name": "World fusion",
+    "itemCount": 0
+  },
+  {
+    "id": "latin-american-fusion",
+    "parentId": "world-fusion",
+    "name": "Latin American fusion",
+    "itemCount": 0
+  },
+  {
+    "id": "trad-jazz",
+    "parentId": "core-jazz",
+    "name": "Trad jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "chamber-jazz",
+    "parentId": "core-jazz",
+    "name": "Chamber jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "continental-jazz",
+    "parentId": "core-jazz",
+    "name": "Continental jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "third-stream",
+    "parentId": "core-jazz",
+    "name": "Third stream",
+    "itemCount": 0
+  },
+  {
+    "id": "folk-jazz",
+    "parentId": "core-jazz",
+    "name": "Folk jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "gas-pipe-clarinet",
+    "parentId": "core-jazz",
+    "name": "Gas pipe clarinet",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-standard",
+    "parentId": "core-jazz",
+    "name": "Jazz standard",
+    "itemCount": 0
+  },
+  {
+    "id": "contemporary-jazz",
+    "parentId": "core-jazz",
+    "name": "Contemporary jazz",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-poetry",
+    "parentId": "core-jazz",
+    "name": "Jazz poetry",
+    "itemCount": 0
+  },
+  {
+    "id": "jazz-waltz",
+    "parentId": "core-jazz",
+    "name": "Jazz waltz",
+    "itemCount": 0
+  },
+  {
+    "id": "archaic-jazz",
+    "parentId": "core-jazz",
+    "name": "Archaic jazz",
     "itemCount": 0
   },
   {
@@ -9282,141 +9389,63 @@
     "itemCount": 0
   },
   {
-    "id": "jazz-blues",
+    "id": "yass",
     "parentId": "core-jazz",
-    "name": "Jazz blues",
+    "name": "Yass",
     "itemCount": 0
   },
   {
-    "id": "jazz-fusion",
+    "id": "avant-garde-jazz",
     "parentId": "core-jazz",
-    "name": "Jazz fusion",
+    "name": "Avant-garde jazz",
     "itemCount": 0
   },
   {
-    "id": "clubjazz",
-    "parentId": "jazz-fusion",
-    "name": "Clubjazz",
+    "id": "free-jazz",
+    "parentId": "avant-garde-jazz",
+    "name": "Free jazz",
     "itemCount": 0
   },
   {
-    "id": "electro-jazz",
-    "parentId": "jazz-fusion",
-    "name": "Electro-jazz",
+    "id": "m-base",
+    "parentId": "free-jazz",
+    "name": "M-Base",
     "itemCount": 0
   },
   {
-    "id": "straight-ahead-jazz",
-    "parentId": "jazz-fusion",
-    "name": "Straight-ahead jazz",
+    "id": "european-free-jazz",
+    "parentId": "free-jazz",
+    "name": "European free jazz",
     "itemCount": 0
   },
   {
-    "id": "jazz-poetry",
+    "id": "latin-jazz",
     "parentId": "core-jazz",
-    "name": "Jazz poetry",
+    "name": "Latin jazz",
     "itemCount": 0
   },
   {
-    "id": "jazz-standard",
+    "id": "crossover-jazz",
     "parentId": "core-jazz",
-    "name": "Jazz standard",
+    "name": "Crossover jazz",
     "itemCount": 0
   },
   {
-    "id": "jazz-waltz",
+    "id": "dixieland-jazz",
     "parentId": "core-jazz",
-    "name": "Jazz waltz",
+    "name": "Dixieland jazz",
     "itemCount": 0
   },
   {
-    "id": "jazz-funk",
+    "id": "bigi-poku",
+    "parentId": "dixieland-jazz",
+    "name": "Bigi poku",
+    "itemCount": 0
+  },
+  {
+    "id": "experimental-big-band",
     "parentId": "core-jazz",
-    "name": "Jazz-funk",
-    "itemCount": 0
-  },
-  {
-    "id": "free-funk",
-    "parentId": "jazz-funk",
-    "name": "Free funk",
-    "itemCount": 0
-  },
-  {
-    "id": "jive",
-    "parentId": "core-jazz",
-    "name": "Jive",
-    "itemCount": 0
-  },
-  {
-    "id": "mainstream-jazz",
-    "parentId": "core-jazz",
-    "name": "Mainstream jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "modal-jazz",
-    "parentId": "core-jazz",
-    "name": "Modal jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "modern-jazz",
-    "parentId": "core-jazz",
-    "name": "Modern jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "modern-big-band-music",
-    "parentId": "modern-jazz",
-    "name": "Modern big band music",
-    "itemCount": 0
-  },
-  {
-    "id": "nu-jazz",
-    "parentId": "core-jazz",
-    "name": "Nu jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "jazzdance",
-    "parentId": "nu-jazz",
-    "name": "Jazzdance",
-    "itemCount": 0
-  },
-  {
-    "id": "off-jazz",
-    "parentId": "core-jazz",
-    "name": "Off jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "orchestral-jazz",
-    "parentId": "core-jazz",
-    "name": "Orchestral jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "post-bop",
-    "parentId": "core-jazz",
-    "name": "Post-bop",
-    "itemCount": 0
-  },
-  {
-    "id": "progressive-jazz",
-    "parentId": "core-jazz",
-    "name": "Progressive jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "ska-jazz",
-    "parentId": "core-jazz",
-    "name": "Ska jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "soul-jazz",
-    "parentId": "core-jazz",
-    "name": "Soul jazz",
+    "name": "Experimental big band",
     "itemCount": 0
   },
   {
@@ -9426,69 +9455,40 @@
     "itemCount": 0
   },
   {
-    "id": "spy-music",
+    "id": "ecm-style-jazz",
     "parentId": "core-jazz",
-    "name": "Spy music",
+    "name": "ECM style jazz",
     "itemCount": 0
   },
   {
-    "id": "straight-jazz",
-    "parentId": "core-jazz",
-    "name": "Straight jazz",
+    "id": "pop-jazz",
+    "parentId": "jazz",
+    "name": "Pop jazz",
+    "itemCount": 0,
+    "side": "pop"
+  },
+  {
+    "id": "vocal-jazz",
+    "parentId": "pop-jazz",
+    "name": "Vocal jazz",
     "itemCount": 0
   },
   {
-    "id": "sweet-jazz",
-    "parentId": "core-jazz",
-    "name": "Sweet jazz",
+    "id": "vocalese",
+    "parentId": "vocal-jazz",
+    "name": "Vocalese",
     "itemCount": 0
   },
   {
-    "id": "swing",
-    "parentId": "core-jazz",
-    "name": "Swing",
+    "id": "jazz-pop",
+    "parentId": "pop-jazz",
+    "name": "Jazz pop",
     "itemCount": 0
   },
   {
-    "id": "swing-revival",
-    "parentId": "swing",
-    "name": "Swing revival",
-    "itemCount": 0
-  },
-  {
-    "id": "sock",
-    "parentId": "swing",
-    "name": "Sock",
-    "itemCount": 0
-  },
-  {
-    "id": "third-stream",
-    "parentId": "core-jazz",
-    "name": "Third stream",
-    "itemCount": 0
-  },
-  {
-    "id": "trad-jazz",
-    "parentId": "core-jazz",
-    "name": "Trad jazz",
-    "itemCount": 0
-  },
-  {
-    "id": "world-fusion",
-    "parentId": "core-jazz",
-    "name": "World fusion",
-    "itemCount": 0
-  },
-  {
-    "id": "latin-american-fusion",
-    "parentId": "world-fusion",
-    "name": "Latin American fusion",
-    "itemCount": 0
-  },
-  {
-    "id": "yass",
-    "parentId": "core-jazz",
-    "name": "Yass",
+    "id": "smooth-jazz",
+    "parentId": "pop-jazz",
+    "name": "Smooth jazz",
     "itemCount": 0
   },
   {
@@ -9504,15 +9504,39 @@
     "itemCount": 56
   },
   {
+    "id": "sapphic-pop",
+    "parentId": "mainstream-pop",
+    "name": "Sapphic pop",
+    "itemCount": 0
+  },
+  {
     "id": "antipop",
     "parentId": "mainstream-pop",
     "name": "Antipop",
     "itemCount": 0
   },
   {
-    "id": "sapphic-pop",
+    "id": "classical-crossover",
     "parentId": "mainstream-pop",
-    "name": "Sapphic pop",
+    "name": "Classical crossover",
+    "itemCount": 0
+  },
+  {
+    "id": "popular-classical",
+    "parentId": "classical-crossover",
+    "name": "Popular classical",
+    "itemCount": 0
+  },
+  {
+    "id": "urban-classical-music",
+    "parentId": "classical-crossover",
+    "name": "Urban classical music",
+    "itemCount": 0
+  },
+  {
+    "id": "operatic-pop",
+    "parentId": "classical-crossover",
+    "name": "Operatic pop",
     "itemCount": 0
   },
   {
@@ -9561,30 +9585,6 @@
     "id": "sitarsploitation",
     "parentId": "exotica",
     "name": "Sitarsploitation",
-    "itemCount": 0
-  },
-  {
-    "id": "classical-crossover",
-    "parentId": "mainstream-pop",
-    "name": "Classical crossover",
-    "itemCount": 0
-  },
-  {
-    "id": "popular-classical",
-    "parentId": "classical-crossover",
-    "name": "Popular classical",
-    "itemCount": 0
-  },
-  {
-    "id": "urban-classical-music",
-    "parentId": "classical-crossover",
-    "name": "Urban classical music",
-    "itemCount": 0
-  },
-  {
-    "id": "operatic-pop",
-    "parentId": "classical-crossover",
-    "name": "Operatic pop",
     "itemCount": 0
   },
   {
