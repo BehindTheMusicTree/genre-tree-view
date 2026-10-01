@@ -31,6 +31,8 @@ export interface InfoPanelProps {
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
    * navigates the panel (and the tree's own selection/centering) to it. */
   onSelectNode: (nodeId: string) => void;
+  /** See GenreTreeProps.hideInfoPanelClose. */
+  hideClose?: boolean;
   /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
 }
@@ -50,6 +52,7 @@ export function InfoPanel({
   onClose,
   onSelectNode,
   renderExtraDetails,
+  hideClose = false,
 }: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
@@ -60,15 +63,17 @@ export function InfoPanel({
         <span className="gtv-info-panel-title" style={{ color: textColor }}>
           {node.name}
         </span>
-        <button
-          type="button"
-          className="gtv-info-panel-close"
-          style={{ color: textColor }}
-          onClick={onClose}
-          aria-label="Close"
-        >
-          <MdClose className="gtv-icon" size={16} />
-        </button>
+        {!hideClose && (
+          <button
+            type="button"
+            className="gtv-info-panel-close"
+            style={{ color: textColor }}
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <MdClose className="gtv-icon" size={16} />
+          </button>
+        )}
       </div>
       <dl className="gtv-info-panel-fields">
         <dt>Song count</dt>

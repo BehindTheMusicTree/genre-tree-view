@@ -205,6 +205,38 @@ describe("GenreTreeOutline", () => {
     expect(header.style.color).toBe("rgb(24, 24, 27)");
   });
 
+  it("notifies onSelectedNodeChange on name click, chip navigation and close, without echoing a controlled selection", () => {
+    const onSelectedNodeChange = vi.fn();
+    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} onSelectedNodeChange={onSelectedNodeChange} />);
+    const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
+
+    fireEvent.click(nameButton(container, "root-a"));
+    expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "root-a" }));
+    fireEvent.click(within(panel()).getByText("Punk"));
+    expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "a-core" }));
+    fireEvent.click(within(panel()).getByLabelText("Close"));
+    expect(onSelectedNodeChange).toHaveBeenLastCalledWith(null);
+    expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
+
+    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+    expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Bebop");
+    expect(within(panel()).queryByLabelText("Close")).toBeNull();
+    expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
+  });
+
+  it("closes the panel without notifying when selectedNodeId becomes null", () => {
+    const onSelectedNodeChange = vi.fn();
+    const { container, rerender } = render(
+      <GenreTreeOutline nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} />,
+    );
+    expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+
+    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} />);
+
+    expect(container.querySelector(".gtv-info-panel")).toBeNull();
+    expect(onSelectedNodeChange).not.toHaveBeenCalled();
+  });
+
   it("opens the panel for an externally-selected node and ignores unknown ids", () => {
     const { container, rerender } = render(<GenreTreeOutline nodes={NODES} selectedNodeId="missing" />);
     expect(container.querySelector(".gtv-info-panel")).toBeNull();

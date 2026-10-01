@@ -284,6 +284,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     showToolbar = true,
     selectedNodeId,
     renderExtraDetails,
+    hideInfoPanelClose = false,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const index = useTreeIndex(nodes);
@@ -319,6 +320,11 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
   useLayoutEffect(() => {
     latestProps.current = props;
   });
+  // Skipped for the consumer's own selectedNodeId, so it never echoes back (see useNodeInfoPanel).
+  const notifySelected = (node: GenreTreeNode) => {
+    const { selectedNodeId: controlledId, onSelectedNodeChange } = latestProps.current;
+    if (node.id !== controlledId) onSelectedNodeChange?.(node);
+  };
 
   const callbacks = useMemo<OutlineCallbacks>(
     () => ({
@@ -331,6 +337,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           return;
         }
         store.set({ selectedId: node.id });
+        notifySelected(node);
         onNodeClick?.(node, event.nativeEvent);
       },
       onHover: (node) => latestProps.current.onNodeHover?.(node),
@@ -366,6 +373,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     }
     if (store.get().selectedId !== nodeId) pendingScrollIdRef.current = nodeId;
     store.set({ openIds, selectedId: nodeId });
+    notifySelected(index.byId.get(nodeId)!);
   };
   const selectNodeRef = useRef(selectNode);
   useLayoutEffect(() => {
@@ -384,6 +392,12 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     if (!selectedNodeId || selectedId === selectedNodeId) return;
     selectNodeRef.current(selectedNodeId);
   }, [selectedNodeId, selectedId]);
+
+  const prevSelectedNodeIdRef = useRef(selectedNodeId);
+  useEffect(() => {
+    if (prevSelectedNodeIdRef.current && selectedNodeId === null) store.set({ selectedId: null });
+    prevSelectedNodeIdRef.current = selectedNodeId;
+  }, [selectedNodeId, store]);
 
   const selectedNode = selectedId === null ? undefined : index.byId.get(selectedId);
   const itemProps = { model, store, callbacks };
@@ -412,8 +426,12 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
             .slice(0, -1)
             .map((n): InfoPanelChild => ({ node: n, ...model.styleOf(n) }))}
           side="right"
-          onClose={() => store.set({ selectedId: null })}
+          onClose={() => {
+            store.set({ selectedId: null });
+            latestProps.current.onSelectedNodeChange?.(null);
+          }}
           onSelectNode={(id) => selectNodeRef.current(id)}
+          hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
         />
       )}

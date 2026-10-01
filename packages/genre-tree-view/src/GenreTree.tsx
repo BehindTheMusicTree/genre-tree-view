@@ -54,13 +54,15 @@ export function GenreTree({
   showToolbar = true,
   selectedNodeId: selectedNodeIdProp,
   renderExtraDetails,
+  onSelectedNodeChange,
+  hideInfoPanelClose = false,
   wheelZoom,
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef, wheelZoom);
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
     showNodeInfoRef.current = showNodeInfo;
@@ -351,6 +353,7 @@ export function GenreTree({
               viewportRef.current,
             );
           }}
+          hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
         />
       )}

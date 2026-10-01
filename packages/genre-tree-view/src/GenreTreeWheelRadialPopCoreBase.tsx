@@ -128,6 +128,8 @@ export function WheelRadialPopCoreCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  onSelectedNodeChange,
+  hideInfoPanelClose = false,
   wheelZoom,
   allowWheelRotation = true,
   selectedNodeId,
@@ -257,7 +259,7 @@ export function WheelRadialPopCoreCore({
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -1293,6 +1295,7 @@ export function WheelRadialPopCoreCore({
               viewportRef.current,
             );
           }}
+          hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
         />
       )}

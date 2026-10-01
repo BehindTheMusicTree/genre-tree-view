@@ -116,6 +116,8 @@ export function WheelRadialCore({
   additionalActions,
   showToolbar = true,
   renderExtraDetails,
+  onSelectedNodeChange,
+  hideInfoPanelClose = false,
   wheelZoom,
   selectedNodeId,
 }: WheelRadialCoreProps) {
@@ -129,7 +131,7 @@ export function WheelRadialCore({
   );
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef, wheelZoom);
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel();
+  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -756,6 +758,7 @@ export function WheelRadialCore({
               viewportRef.current,
             );
           }}
+          hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
         />
       )}
