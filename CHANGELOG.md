@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `wheelZoom="modifier"` gestures: a horizontal trackpad swipe now pans the tree sideways instead
+  of passing through to the page (and triggering macOS back-navigation); a one-finger vertical
+  scroll starting on a tree no longer nudges it; a two-finger pinch whose fingers drift vertically
+  is no longer taken over by the browser as page scroll.
+
 ## [1.10.0] - 2026-09-30
 
 ### Added
