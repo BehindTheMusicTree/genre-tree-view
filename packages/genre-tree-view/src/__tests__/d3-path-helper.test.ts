@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { appendPaths, openBottomBorderPath, roundedRectPath } from "../d3-helper/d3-path-helper";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { createTreeLayout } from "../tree-renderer";
-import { CONNECTOR_COLOR, CONNECTOR_WIDTH, getItemCountRange } from "../constants";
+import { CONNECTOR_COLOR, CONNECTOR_WIDTH, MAX_LINK_WIDTH_RATIO, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -32,10 +32,17 @@ describe("appendPaths", () => {
     const paths = svg.selectAll<SVGPathElement, unknown>("path.gtv-link");
     expect(paths.size()).toBe(2);
     const expectedStroke = d3.rgb(CONNECTOR_COLOR).toString();
+    const strokeWidthOf = (targetId: string) =>
+      parseFloat(
+        paths
+          .filter((d) => (d as d3.HierarchyPointLink<GenreTreeNode>).target.data.id === targetId)
+          .style("stroke-width"),
+      );
+    expect(strokeWidthOf("child-a")).toBeLessThan(strokeWidthOf("child-b"));
+    expect(strokeWidthOf("child-b")).toBeCloseTo(CONNECTOR_WIDTH * MAX_LINK_WIDTH_RATIO, 5);
     paths.each(function () {
       const path = d3.select(this);
       expect(path.style("stroke")).toBe(expectedStroke);
-      expect(path.style("stroke-width")).toBe(String(CONNECTOR_WIDTH));
       expect(path.attr("d")).toBeTruthy();
     });
   });

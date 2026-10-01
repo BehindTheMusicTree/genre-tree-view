@@ -9,6 +9,7 @@ import {
   CONNECTOR_COLOR,
   CONNECTOR_OPACITY,
   CONNECTOR_WIDTH,
+  calculateLinkWidthScale,
   calculateNodeDimensions,
   ItemCountRange,
 } from "../constants";
@@ -112,7 +113,12 @@ export function appendPaths(
     .attr("d", linkGenerator)
     .style("fill", "none")
     .style("stroke", CONNECTOR_COLOR)
-    .style("stroke-width", CONNECTOR_WIDTH)
+    .style(
+      "stroke-width",
+      (d) =>
+        CONNECTOR_WIDTH *
+        calculateLinkWidthScale(d.target.data.itemCount, itemCountRange),
+    )
     .style("stroke-opacity", CONNECTOR_OPACITY)
     .style("stroke-linecap", "round");
 }
