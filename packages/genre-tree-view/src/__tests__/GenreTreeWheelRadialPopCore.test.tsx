@@ -999,7 +999,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bebop");
 
       rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} />);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bebop");
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
       rectSpy.mockRestore();
     });

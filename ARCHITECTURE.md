@@ -146,10 +146,17 @@ pnpm workspace with two members:
   a panel chip centers that node within the space that remains visible beside the panel rather
   than the viewport's full width, via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s
   `obscured` argument in `use-pan-zoom.ts`. Each top-level renderer owns exactly one
-  `useNodeInfoPanel()` hook instance (`use-node-info-panel.ts`) — except `GenreTreeOutline`, which
+  `useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange })` hook instance (`use-node-info-panel.ts`) — except `GenreTreeOutline`, which
   keeps the selected id in its own store — so only one panel is ever open per component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
   three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
-  subtree) plus its ring chip buttons. The panel only closes via its own close button. Rendered by
+  subtree) plus its ring chip buttons. The panel closes via its own close button (hidden by
+  `hideInfoPanelClose`) or when a controlled `selectedNodeId` is cleared to `null`/`undefined`.
+  The hook fires `onSelectedNodeChange` when a user action changes the shown node (or with `null`
+  on the close button); each renderer's effect that follows `selectedNodeId` calls
+  `showNodeInfo(…, { notify: false })` so a controlled selection never echoes back, and
+  re-selecting the node already shown never fires. `GenreTreeOutline` applies the same rules to
+  its store's `selectedId`. The panel's top offset is the `--gtv-info-panel-top` CSS variable
+  (default `12px`). Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
   pan/zoom-transformed content so it never scales or pans with the tree. `GenreTreeProps.renderExtraDetails`
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders

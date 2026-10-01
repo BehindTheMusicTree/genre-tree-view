@@ -136,4 +136,13 @@ export interface GenreTreeProps {
    * of what this renders (loading state, data fetching, etc. are entirely the consumer's
    * responsibility, mirroring `additionalActions`); omit for no extra section. */
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** Fired when a user action changes the node shown in the info panel (a click on the tree, or on
+   * a parent/child/ancestor chip in the panel), or with `null` when the user closes it (its header
+   * ✕) — so a consumer driving `selectedNodeId` stays in sync. Not fired when re-selecting the node
+   * already shown, when the panel follows the consumer's own `selectedNodeId`, nor when the
+   * consumer clears `selectedNodeId` to `null`/`undefined` (which closes the panel). */
+  onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
+  /** Hides the info panel header's close button — for a consumer that closes the panel itself
+   * (by clearing `selectedNodeId`), e.g. from its own search bar. Defaults to false. */
+  hideInfoPanelClose?: boolean;
 }

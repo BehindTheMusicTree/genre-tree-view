@@ -5,6 +5,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `onSelectedNodeChange?: (node: GenreTreeNode | null) => void` on `GenreTreeProps`: fired when a
+  user action changes the node shown in the info panel (tree click or parent/child chip
+  navigation), and with `null` when it is closed from its close button. Not fired when re-selecting
+  the node already shown, or when the panel follows the consumer's own `selectedNodeId`, so a
+  controlled `selectedNodeId` does not echo back.
+- `hideInfoPanelClose?: boolean` on `GenreTreeProps`: hides the info panel's close button, for
+  consumers that close it themselves.
+- `--gtv-info-panel-top` CSS variable (default `12px`) to offset the info panel from the top.
+
+### Changed
+
+- Clearing a controlled `selectedNodeId` from an id to `null`/`undefined` now closes the info panel (without
+  firing `onSelectedNodeChange`) in every renderer, instead of leaving it open.
+
 ## [1.10.1] - 2026-10-01
 
 ### Fixed

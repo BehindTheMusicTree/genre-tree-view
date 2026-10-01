@@ -556,6 +556,35 @@ describe("GenreTree", () => {
         rectSpy.mockRestore();
       });
 
+      it("notifies onSelectedNodeChange on click, chip navigation and close, and closes on a null selection", () => {
+        const onSelectedNodeChange = vi.fn();
+        const { container, rerender } = render(
+          <GenreTree nodes={TREE} onSelectedNodeChange={onSelectedNodeChange} />,
+        );
+        const wrapper = container.firstChild as HTMLElement;
+        const rectSpy = mockRects(container, wrapper, 400);
+
+        fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
+        expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "child-a" }));
+
+        fireEvent.click(within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText("Root"));
+        expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "root" }));
+
+        fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
+        expect(onSelectedNodeChange).toHaveBeenLastCalledWith(null);
+        expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
+
+        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+        expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
+        expect(container.querySelector(".gtv-info-panel-close")).toBeNull();
+
+        rerender(<GenreTree nodes={TREE} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+        expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+        expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
+
+        rectSpy.mockRestore();
+      });
+
       it("leaves the panel to its ancestor when selectedNodeId is set on a non-interactive tree", () => {
         const { container, rerender } = render(
           <GenreTree nodes={TREE} interactive={false} selectedNodeId={null} />,

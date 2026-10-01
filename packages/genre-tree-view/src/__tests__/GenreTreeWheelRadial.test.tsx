@@ -639,7 +639,7 @@ describe("GenreTreeWheelRadial", () => {
       expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bluegrass");
 
       rerender(<GenreTreeWheelRadial nodes={NODES_FIVE} selectedNodeId={null} />);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bluegrass");
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
       rectSpy.mockRestore();
     });

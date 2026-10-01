@@ -135,6 +135,25 @@ describe("InfoPanel", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("omits the close button when hideClose is set", () => {
+    const { queryByLabelText } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+        hideClose
+      />,
+    );
+
+    expect(queryByLabelText("Close")).toBeNull();
+  });
+
   it("applies the left modifier class when side is left", () => {
     const { container } = render(
       <InfoPanel
