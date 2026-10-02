@@ -423,7 +423,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
             .ancestorsOf(selectedNode.id)
             .slice(0, -1)
             .map((n): InfoPanelChild => ({ node: n, ...model.styleOf(n) }))}
-          side="right"
+          side="left"
           onClose={() => {
             store.set({ selectedId: null });
             latestProps.current.onSelectedNodeChange?.(null);
