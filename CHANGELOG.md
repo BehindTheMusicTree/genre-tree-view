@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-02
+
 ### Changed
 
 - Outline view (`GenreTreeOutline`) now opens the info panel on the left, like the graphical views,
