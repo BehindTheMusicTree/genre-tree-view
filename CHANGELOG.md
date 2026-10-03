@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `controlsOrientation` prop (`"horizontal" | "vertical"`, default `"vertical"`) on every graphical view
+  to lay the floating zoom/pop/fit controls out in a row instead of a column; exported
+  `ControlsOrientation` type.
+
 ## [1.13.0] - 2026-10-02
 
 ### Changed

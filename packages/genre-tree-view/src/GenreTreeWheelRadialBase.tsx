@@ -119,6 +119,7 @@ export function WheelRadialCore({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   wheelZoom,
+  controlsOrientation = "vertical",
   selectedNodeId,
 }: WheelRadialCoreProps) {
   const index = useTreeIndex(nodes);
@@ -763,7 +764,14 @@ export function WheelRadialCore({
         />
       )}
 
-      <div className="gtv-wheel-floating-controls">
+      <div
+        className={[
+          "gtv-wheel-floating-controls",
+          controlsOrientation === "horizontal" && "gtv-wheel-floating-controls--horizontal",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="gtv-zoom-controls">
           <button
             type="button"

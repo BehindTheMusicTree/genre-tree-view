@@ -29,7 +29,13 @@ import {
 
 export type GenreTreeOutlineProps = Omit<
   GenreTreeProps,
-  "rootColor" | "orientation" | "hideRoot" | "interactive" | "depthSpacingScale" | "wheelZoom"
+  | "rootColor"
+  | "orientation"
+  | "hideRoot"
+  | "interactive"
+  | "depthSpacingScale"
+  | "wheelZoom"
+  | "controlsOrientation"
 >;
 
 interface OutlineState {

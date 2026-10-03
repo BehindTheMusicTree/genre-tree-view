@@ -21,6 +21,15 @@ describe("GenreTree", () => {
     expect(container.querySelectorAll("path.gtv-link").length).toBe(2);
   });
 
+  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
+    const selector = ".gtv-wheel-floating-controls--horizontal";
+    expect(render(<GenreTree nodes={TREE} />).container.querySelector(selector)).toBeNull();
+    cleanup();
+    expect(
+      render(<GenreTree nodes={TREE} controlsOrientation="horizontal" />).container.querySelector(selector),
+    ).not.toBeNull();
+  });
+
   it("uses the deterministic root-seeded color when rootColor is not provided", () => {
     const { container } = render(<GenreTree nodes={TREE} />);
     const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;

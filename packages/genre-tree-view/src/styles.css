@@ -266,6 +266,11 @@
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
 }
 
+.gtv-wheel-floating-controls--horizontal,
+.gtv-wheel-floating-controls--horizontal .gtv-zoom-controls {
+  flex-direction: row;
+}
+
 .gtv-zoom-btn {
   display: flex;
   align-items: center;
