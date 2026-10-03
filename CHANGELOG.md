@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.14.1] - 2026-10-03
+
+### Fixed
+
+- Pressing or dragging inside the genre info panel (e.g. to select text) no longer pans the tree
+  underneath it.
+
 ## [1.14.0] - 2026-10-03
 
 ### Added
