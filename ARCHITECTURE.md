@@ -176,6 +176,9 @@ pnpm workspace with two members:
   `preventDefault`s whenever two or more fingers are down, so the browser can't claim a
   vertically-drifting pinch as page scroll (cooperative gestures, like Google Maps).
   `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
+- **Floating controls layout**: `GenreTreeProps.controlsOrientation` (`"vertical"` default |
+  `"horizontal"`) adds `gtv-wheel-floating-controls--horizontal` to each interactive renderer's
+  zoom/pop/fit controls, laying them out in a row. `GenreTreeOutline` omits the prop.
 
 ## Public surface
 
@@ -188,7 +191,7 @@ pnpm workspace with two members:
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`.
+  `WheelZoomMode`, `ControlsOrientation`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

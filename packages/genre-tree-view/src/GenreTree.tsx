@@ -57,6 +57,7 @@ export function GenreTree({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   wheelZoom,
+  controlsOrientation = "vertical",
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -357,7 +358,14 @@ export function GenreTree({
           renderExtraDetails={renderExtraDetails}
         />
       )}
-      <div className="gtv-wheel-floating-controls">
+      <div
+        className={[
+          "gtv-wheel-floating-controls",
+          controlsOrientation === "horizontal" && "gtv-wheel-floating-controls--horizontal",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="gtv-zoom-controls">
           <button
             type="button"
