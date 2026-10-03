@@ -669,11 +669,11 @@ export function usePanZoom(
 
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.button !== 0) return;
-    // A pointer landing on a node/toolbar/control is excluded from single-pointer pan (so it
-    // doesn't fight that element's own click/hover handling) but still tracked below — otherwise a
+    // A pointer landing on a node/toolbar/control/info panel is excluded from single-pointer pan (so
+    // it doesn't fight that element's own click/hover/text-selection handling) but still tracked below — otherwise a
     // pinch that starts on top of content, the common case since the tree fills most of the screen,
     // would never be recognized as a pinch at all.
-    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip") !== null;
+    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip, .gtv-info-panel") !== null;
     // In "modifier" mode one finger scrolls the page, so a touch pointer must neither pan (which
     // nudges the tree until the browser fires pointercancel) nor preventDefault the scroll.
     const isPageScrollTouch = wheelZoom === "modifier" && event.pointerType === "touch";

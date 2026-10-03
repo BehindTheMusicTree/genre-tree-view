@@ -393,6 +393,20 @@ describe("GenreTree", () => {
       scrollBySpy.mockRestore();
     });
 
+    it("does not start a pan drag from a pointerdown on the info panel", () => {
+      const { container } = render(<GenreTree nodes={TREE} />);
+      fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
+      const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      const transformDiv = getTransformDiv(container);
+      const transformBefore = transformDiv.style.transform;
+
+      fireEvent.pointerDown(panel, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
+      fireEvent.pointerUp(window);
+
+      expect(transformDiv.style.transform).toBe(transformBefore);
+    });
+
     it("fit-to-frame button rescales the shared transform to fit content larger than the viewport", () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
