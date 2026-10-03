@@ -118,7 +118,7 @@ export interface GenreTreeProps {
    * for trees embedded in a scrolling list. Ignored when `interactive` is false. */
   wheelZoom?: WheelZoomMode;
   /** Stacks the floating zoom/pop/fit controls vertically ("vertical", the default) or lays them
-   * out in a row ("horizontal"). Ignored when `interactive` is false. */
+   * out in a row ("horizontal"). */
   controlsOrientation?: ControlsOrientation;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
