@@ -70,6 +70,9 @@ export interface GenreTreeAction {
  * `GenreTreeProps.wheelZoom`. */
 export type WheelZoomMode = "always" | "modifier";
 
+/** Layout of the floating zoom/pop/fit controls — see `GenreTreeProps.controlsOrientation`. */
+export type ControlsOrientation = "horizontal" | "vertical";
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   className?: string;
@@ -114,6 +117,9 @@ export interface GenreTreeProps {
    * trackpad pinch) zooms; a plain wheel and one-finger vertical touch scroll the page instead,
    * for trees embedded in a scrolling list. Ignored when `interactive` is false. */
   wheelZoom?: WheelZoomMode;
+  /** Stacks the floating zoom/pop/fit controls vertically ("vertical", the default) or lays them
+   * out in a row ("horizontal"). Ignored when `interactive` is false. */
+  controlsOrientation?: ControlsOrientation;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;
