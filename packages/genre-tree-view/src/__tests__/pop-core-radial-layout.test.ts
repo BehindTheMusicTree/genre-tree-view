@@ -15,9 +15,8 @@ import { buildTreeHierarchyStructure } from "../NodeHelper";
 import {
   POP_TREE_DEPTH_RADIAL_SPACING,
   MAX_NODE_WIDTH,
-  RADIAL_LINK_WIDTH,
-  MAX_LINK_WIDTH_RATIO,
-  WHEEL_RADIUS,
+  LINK_TO_NODE_HEIGHT_RATIO,
+  MAX_NODE_HEIGHT,
   getItemCountRange,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
@@ -389,7 +388,7 @@ describe("renderPopSubtree link rendering", () => {
     });
   });
 
-  it("applies no radialReferenceRadius zoom factor (×1) to stroke-width when radialReferenceRadius is at (or below) the wheel's baseline WHEEL_RADIUS", () => {
+  it("renders the link to the max-itemCount node at MAX_NODE_HEIGHT × LINK_TO_NODE_HEIGHT_RATIO", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
@@ -403,45 +402,13 @@ describe("renderPopSubtree link rendering", () => {
       [],
       noopCallbacks,
       getItemCountRange(nodes),
-      {
-        radialReferenceRadius: WHEEL_RADIUS,
-      },
     );
 
     const strokeWidth = parseFloat(
       svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
     );
     // arena-rock is the range's max itemCount, so its link is the widest.
-    expect(strokeWidth).toBeCloseTo(RADIAL_LINK_WIDTH * MAX_LINK_WIDTH_RATIO, 5);
-  });
-
-  it("scales stroke-width up proportionally once radialReferenceRadius grows past WHEEL_RADIUS, so links stay visible after the wheel's pan/zoom fit-to-frame shrinks a large wheel down to fit the viewport", () => {
-    const hierarchy = buildPopHierarchy(d3, nodes);
-    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
-    const svg = createSvg();
-    const grownRadius = WHEEL_RADIUS * 10;
-
-    renderPopSubtree(
-      d3,
-      svg,
-      laidOut,
-      "#123456",
-      null,
-      [],
-      noopCallbacks,
-      getItemCountRange(nodes),
-      {
-        radialReferenceRadius: grownRadius,
-      },
-    );
-
-    const strokeWidth = parseFloat(
-      svg.select<SVGPathElement>("path.gtv-link").style("stroke-width"),
-    );
-    expect(strokeWidth).toBeCloseTo(
-      RADIAL_LINK_WIDTH * (grownRadius / WHEEL_RADIUS) * MAX_LINK_WIDTH_RATIO,
-      5,
-    );
+    expect(strokeWidth).toBeCloseTo(MAX_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
   });
 
   it("draws an extra root->depth1 link from rootLinkOrigin to the hierarchy's own depth-0 node, since the ring root itself isn't part of the hierarchy", () => {
@@ -467,7 +434,6 @@ describe("renderPopSubtree link rendering", () => {
       noopCallbacks,
       getItemCountRange(nodes),
       {
-        radialReferenceRadius: WHEEL_RADIUS,
         rootLinkOrigin,
       },
     );
@@ -602,7 +568,6 @@ describe("renderPopSubtree label text color", () => {
       noopCallbacks,
       getItemCountRange(nodes),
       {
-        radialReferenceRadius: WHEEL_RADIUS,
         isMainstreamSector: true,
       },
     );
@@ -830,7 +795,6 @@ describe("renderPopSubtree selection highlight", () => {
       noopCallbacks,
       getItemCountRange(popRock),
       {
-        radialReferenceRadius: WHEEL_RADIUS,
         rootLinkOrigin,
         selectedNodeId: "rock-pop",
       },

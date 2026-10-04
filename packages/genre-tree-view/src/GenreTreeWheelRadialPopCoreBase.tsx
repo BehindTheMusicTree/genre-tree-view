@@ -682,7 +682,6 @@ export function WheelRadialPopCoreCore({
           },
           wheelItemCountRange,
           {
-            radialReferenceRadius: coreRootCircleRadius,
             rootLinkOrigin,
             showToolbar,
             selectedNodeId: panel?.node.id ?? null,
@@ -763,7 +762,6 @@ export function WheelRadialPopCoreCore({
           wheelItemCountRange,
           {
             isCoreSector: true,
-            radialReferenceRadius: coreRootCircleRadius,
             rootLinkOrigin,
             showToolbar,
             selectedNodeId: panel?.node.id ?? null,
@@ -830,7 +828,6 @@ export function WheelRadialPopCoreCore({
         wheelItemCountRange,
         {
           skipRootNode: true,
-          radialReferenceRadius: coreRootCircleRadius,
           isMainstreamSector: true,
           showToolbar,
           selectedNodeId: panel?.node.id ?? null,

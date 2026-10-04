@@ -9,13 +9,11 @@ export const CORNER_RADIUS = 8;
 export const ELEVATION = false;
 
 export const CONNECTOR_COLOR = "#D4D4D8";
-export const CONNECTOR_WIDTH = 0.375;
 export const CONNECTOR_OPACITY = 1;
 
-// Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR/
-// WIDTH since those also style node chip borders and shouldn't move together with the links.
+// Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR
+// since that also styles node chip borders and shouldn't move together with the links.
 export const RADIAL_LINK_COLOR = "#A1A1AA";
-export const RADIAL_LINK_WIDTH = 0.1875;
 
 export const TEXT_COLOR = "#18181B";
 export const TEXT_MUTED_COLOR = "#A1A1AA";
@@ -219,14 +217,12 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
   };
 }
 
-// The widest link (to the highest-itemCount node) renders at this multiple of its renderer's base
-// link width; the lowest-itemCount node's link stays at the base width.
-export const MAX_LINK_WIDTH_RATIO = 4;
+export const LINK_TO_NODE_HEIGHT_RATIO = 1 / 6;
 
-/** Stroke-width multiplier for a link, from its target node's itemCount — same log scale as
- * calculateNodeDimensions, so a branch reads as thick as the node it leads to. */
-export function calculateLinkWidthScale(itemCount: number, range: ItemCountRange): number {
-  return 1 + logarithmicPosition(itemCount, range) * (MAX_LINK_WIDTH_RATIO - 1);
+/** Stroke width of the link leading to a node: a fixed fraction of that node's rendered height,
+ * so a branch stays the same order of magnitude as the chip it leads to. */
+export function calculateLinkWidth(itemCount: number, range: ItemCountRange): number {
+  return calculateNodeDimensions(itemCount, range).HEIGHT * LINK_TO_NODE_HEIGHT_RATIO;
 }
 
 // The node-height fraction its font size renders at, interpolated by the same log-scaled t as

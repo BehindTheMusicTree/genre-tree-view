@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { appendPaths, openBottomBorderPath, roundedRectPath } from "../d3-helper/d3-path-helper";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { createTreeLayout } from "../tree-renderer";
-import { CONNECTOR_COLOR, CONNECTOR_WIDTH, MAX_LINK_WIDTH_RATIO, getItemCountRange } from "../constants";
+import { CONNECTOR_COLOR, LINK_TO_NODE_HEIGHT_RATIO, MAX_NODE_HEIGHT, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -39,7 +39,7 @@ describe("appendPaths", () => {
           .style("stroke-width"),
       );
     expect(strokeWidthOf("child-a")).toBeLessThan(strokeWidthOf("child-b"));
-    expect(strokeWidthOf("child-b")).toBeCloseTo(CONNECTOR_WIDTH * MAX_LINK_WIDTH_RATIO, 5);
+    expect(strokeWidthOf("child-b")).toBeCloseTo(MAX_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
     paths.each(function () {
       const path = d3.select(this);
       expect(path.style("stroke")).toBe(expectedStroke);
