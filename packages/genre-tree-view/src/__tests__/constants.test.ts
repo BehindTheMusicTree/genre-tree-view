@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   getGenreTreeColor,
   calculateNodeDimensions,
-  calculateLinkWidthScale,
-  MAX_LINK_WIDTH_RATIO,
+  calculateLinkWidth,
+  LINK_TO_NODE_HEIGHT_RATIO,
   getItemCountRange,
   TREE_COLORS,
   MIN_NODE_WIDTH,
@@ -42,13 +42,12 @@ describe("getItemCountRange", () => {
   });
 });
 
-describe("calculateLinkWidthScale", () => {
-  it("is 1 at the range's min, MAX_LINK_WIDTH_RATIO at its max, and 1 for a degenerate range", () => {
+describe("calculateLinkWidth", () => {
+  it("is the target node's height × LINK_TO_NODE_HEIGHT_RATIO at the range's min, max, and for a degenerate range", () => {
     const range = { min: 10, max: 10000 };
-    expect(calculateLinkWidthScale(10, range)).toBe(1);
-    expect(calculateLinkWidthScale(10000, range)).toBeCloseTo(MAX_LINK_WIDTH_RATIO, 5);
-    expect(calculateLinkWidthScale(500, range)).toBeGreaterThan(1);
-    expect(calculateLinkWidthScale(5, { min: 5, max: 5 })).toBe(1);
+    expect(calculateLinkWidth(10, range)).toBeCloseTo(MIN_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
+    expect(calculateLinkWidth(10000, range)).toBeCloseTo(MAX_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
+    expect(calculateLinkWidth(5, { min: 5, max: 5 })).toBeCloseTo(MIN_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
   });
 });
 

@@ -20,14 +20,12 @@ import {
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   RADIAL_LINK_COLOR,
-  RADIAL_LINK_WIDTH,
   ROOT_BORDER_WIDTH,
   SELECTED_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
-  WHEEL_RADIUS,
-  calculateLinkWidthScale,
+  calculateLinkWidth,
   calculateNodeDimensions,
   calculateNodeFontSize,
   tintSurface,
@@ -292,13 +290,6 @@ export function renderPopSubtree(
     // Core nodes continue the root chip's own solid-color style (matches every other renderer's
     // treatment of a root); pop nodes keep the lighter tint that sets the pop wedge apart from core.
     isCoreSector?: boolean;
-    // The wheel's own radius at baseline WHEEL_RADIUS (260px). Once a wheel grows well past that
-    // (many developed subtrees), the pan/zoom fit-to-frame shrinks the whole svg via a CSS transform
-    // on an ancestor element to keep it inside the viewport — that transform scales down a fixed
-    // stroke-width in SVG user-space to sub-pixel and invisible, while node chips stay visible
-    // because their fill area is still large enough post-shrink. Scaling stroke-width up in the same
-    // proportion the wheel has grown keeps links visible at roughly a constant on-screen width.
-    radialReferenceRadius?: number;
     // Where the hierarchy's own root (depth 0) connects to, when that root ISN'T part of the
     // hierarchy but instead rendered separately as its own JSX wheel chip (every per-root core/pop
     // subtree — buildCoreHierarchy/buildPopHierarchy both exclude the ring root itself, unlike the
@@ -321,7 +312,6 @@ export function renderPopSubtree(
   const {
     skipRootNode = false,
     isCoreSector = false,
-    radialReferenceRadius = WHEEL_RADIUS,
     rootLinkOrigin,
     isMainstreamSector = false,
     showToolbar = true,
@@ -351,8 +341,6 @@ export function renderPopSubtree(
   const drawnNodes = skipRootNode
     ? hierarchy.descendants().filter((d) => d.depth > 0)
     : hierarchy.descendants();
-  const linkStrokeWidth =
-    RADIAL_LINK_WIDTH * Math.max(1, radialReferenceRadius / WHEEL_RADIUS);
   const rootLinks = rootLinkOrigin
     ? hierarchy
         .descendants()
@@ -422,11 +410,8 @@ export function renderPopSubtree(
     )
     .style("fill", "none")
     .style("stroke", RADIAL_LINK_COLOR)
-    .style(
-      "stroke-width",
-      (d) =>
-        linkStrokeWidth *
-        calculateLinkWidthScale(d.targetItemCount, itemCountRange),
+    .style("stroke-width", (d) =>
+      calculateLinkWidth(d.targetItemCount, itemCountRange),
     )
     .style("stroke-linecap", "round");
 

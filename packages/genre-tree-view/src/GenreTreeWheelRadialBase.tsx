@@ -414,7 +414,6 @@ export function WheelRadialCore({
           wheelItemCountRange,
           {
             isCoreSector: true,
-            radialReferenceRadius: wheelRadius,
             rootLinkOrigin,
             showToolbar,
             selectedNodeId: panel?.node.id ?? null,

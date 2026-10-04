@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-10-04
+
+### Changed
+
+- Tree branches now render at 1/6 of the height of the child node they lead to (≈6–20px) in
+  every view, instead of sub-pixel hairlines, so a branch reads at the same scale as its node.
+
 ## [1.14.1] - 2026-10-03
 
 ### Fixed
