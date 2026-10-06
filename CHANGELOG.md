@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `detached` flag on `GenreTreeNode`: `GenreTreeOutline` lists detached roots (e.g. an
+  uncategorized bucket) in their own section after the tree, with a neutral color. Other views
+  ignore it.
+
 ### Changed
 
 - Tree branches now render at 1/6 of the height of the child node they lead to (≈6–20px) in
