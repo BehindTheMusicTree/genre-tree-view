@@ -11,6 +11,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   uncategorized bucket) in their own section after the tree, with a neutral color. Other views
   ignore it.
 
+## [1.15.0] - 2026-10-04
+
 ### Changed
 
 - Tree branches now render at 1/6 of the height of the child node they lead to (≈6–20px) in
