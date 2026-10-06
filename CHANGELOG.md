@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-10-06
+
+### Added
+
+- `detached` flag on `GenreTreeNode`: `GenreTreeOutline` lists detached roots (e.g. an
+  uncategorized bucket) in their own section after the tree, with a neutral color. Other views
+  ignore it.
+
 ## [1.15.0] - 2026-10-04
 
 ### Changed

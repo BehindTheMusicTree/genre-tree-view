@@ -1266,6 +1266,12 @@
   padding-left: 0;
 }
 
+.gtv-outline-list--detached {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e4e4e7;
+}
+
 .gtv-outline-item summary {
   display: flex;
   align-items: center;

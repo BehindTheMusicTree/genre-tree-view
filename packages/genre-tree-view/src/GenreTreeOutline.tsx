@@ -24,6 +24,7 @@ import {
   getGenreTreeColor,
   POP_SECTOR_TINT_RATIO,
   TEXT_COLOR,
+  TEXT_MUTED_COLOR,
   tintSurface,
 } from "./constants";
 
@@ -84,6 +85,7 @@ interface OutlineModel {
   index: TreeIndex;
   centerRoot: GenreTreeNode;
   ringRoots: GenreTreeNode[];
+  detachedRoots: GenreTreeNode[];
   ringSplitById: ReadonlyMap<string, PopCoreSplit>;
   aggregatedRootItemCountById: ReadonlyMap<string, number>;
   styleOf: (node: GenreTreeNode) => { fill: string; textColor: string };
@@ -95,7 +97,9 @@ function buildOutlineModel(nodes: readonly GenreTreeNode[], index: TreeIndex): O
   if (!centerGroup) {
     throw new Error(`GenreTreeOutline requires a root node named "${CENTER_NODE_NAME}"`);
   }
-  const ringGroups = groups.filter((group) => group !== centerGroup);
+  const detachedGroups = groups.filter((group) => group.root.detached);
+  const detachedRootIds = new Set(detachedGroups.map((group) => group.root.id));
+  const ringGroups = groups.filter((group) => group !== centerGroup && !group.root.detached);
   const ringSplitById = new Map(ringGroups.map((group) => [group.root.id, splitRootGroupBySide(group)]));
   const popNodeIds = new Set([...ringSplitById.values()].flatMap((split) => split.popNodes.map((node) => node.id)));
 
@@ -106,6 +110,7 @@ function buildOutlineModel(nodes: readonly GenreTreeNode[], index: TreeIndex): O
     if (rootId === centerGroup.root.id) {
       return { fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO), textColor: TEXT_COLOR };
     }
+    if (detachedRootIds.has(rootId)) return { fill: TEXT_MUTED_COLOR, textColor: TEXT_COLOR };
     const rootColor = getGenreTreeColor(rootId);
     return {
       fill: popNodeIds.has(node.id) ? tintSurface(rootColor, POP_SECTOR_TINT_RATIO) : rootColor,
@@ -117,6 +122,7 @@ function buildOutlineModel(nodes: readonly GenreTreeNode[], index: TreeIndex): O
     index,
     centerRoot: centerGroup.root,
     ringRoots: ringGroups.map((group) => group.root),
+    detachedRoots: detachedGroups.map((group) => group.root),
     ringSplitById,
     aggregatedRootItemCountById: new Map(
       groups.map((group) => [group.root.id, group.nodes.reduce((sum, node) => sum + node.itemCount, 0)]),
@@ -371,7 +377,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     const openIds = new Set(store.get().openIds);
     for (const ancestor of ancestors) openIds.add(ancestor.id);
     const [root, branchChild = index.byId.get(nodeId)!] = ancestors;
-    if (root && root.id !== model.centerRoot.id) {
+    if (root && root.id !== model.centerRoot.id && !root.detached) {
       openIds.add(sectionKey(branchChild.side === "pop" ? "pop" : "core", root.id));
     }
     const changed = store.get().selectedId !== nodeId;
@@ -414,6 +420,13 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
             <OutlineNode key={root.id} nodeId={root.id} isRoot {...itemProps} />
           ))}
         </ul>
+        {model.detachedRoots.length > 0 && (
+          <ul className="gtv-outline-list gtv-outline-list--roots gtv-outline-list--detached">
+            {model.detachedRoots.map((root) => (
+              <OutlineNode key={root.id} nodeId={root.id} isRoot {...itemProps} />
+            ))}
+          </ul>
+        )}
       </div>
 
       {selectedNode && (

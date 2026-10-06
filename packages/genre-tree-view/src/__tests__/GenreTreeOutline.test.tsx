@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeOutline } from "../GenreTreeOutline";
 import type { GenreTreeNode } from "../types";
-import { getGenreTreeColor, POP_SECTOR_TINT_RATIO, tintSurface } from "../constants";
+import { getGenreTreeColor, POP_SECTOR_TINT_RATIO, TEXT_MUTED_COLOR, tintSurface } from "../constants";
 
 beforeAll(() => {
   // jsdom doesn't implement scrollIntoView.
@@ -79,6 +79,36 @@ describe("GenreTreeOutline", () => {
     const rootList = container.querySelector(".gtv-outline-list--roots")!;
     const rootIds = Array.from(rootList.children).map((li) => li.getAttribute("data-gtv-node-id"));
     expect(rootIds).toEqual(["pop", "root-a", "root-b", "root-c"]);
+  });
+
+  it("lists detached roots in their own neutral section after the tree, without Core/Pop sections", () => {
+    const nodes: GenreTreeNode[] = [
+      ...NODES,
+      { id: "genreless", parentId: null, name: "Genreless", itemCount: 3, detached: true },
+      { id: "genreless-child", parentId: "genreless", name: "Untagged", itemCount: 2 },
+    ];
+    const { container } = render(<GenreTreeOutline nodes={nodes} selectedNodeId="genreless-child" />);
+    const [rootList, detachedList] = Array.from(container.querySelectorAll(".gtv-outline-list--roots"));
+    const ids = (list: Element) => Array.from(list.children).map((li) => li.getAttribute("data-gtv-node-id"));
+    expect(ids(rootList)).toEqual(["pop", "root-a", "root-b", "root-c"]);
+    expect(detachedList.classList.contains("gtv-outline-list--detached")).toBe(true);
+    expect(ids(detachedList)).toEqual(["genreless"]);
+    expect(rootList.compareDocumentPosition(detachedList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const probe = document.createElement("span");
+    probe.style.background = TEXT_MUTED_COLOR;
+    const dot = (id: string) => (itemOf(container, id).querySelector(".gtv-outline-dot") as HTMLElement).style.background;
+    expect(dot("genreless")).toBe(probe.style.background);
+    expect(dot("genreless-child")).toBe(probe.style.background);
+
+    expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Untagged");
+    expect(itemOf(container, "genreless").querySelector(".gtv-outline-section-label")).toBeNull();
+    expect(container.querySelectorAll("details[open]")).toHaveLength(1);
+  });
+
+  it("renders no detached section when no root is detached", () => {
+    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    expect(container.querySelector(".gtv-outline-list--detached")).toBeNull();
   });
 
   it("splits a root's children into Core and Pop sections, omitting an empty one", () => {

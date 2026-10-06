@@ -11,6 +11,9 @@ export interface GenreTreeNode {
    * required non-pop branch, "pop" marks the optional pop/crossover branch. Ignored everywhere
    * else. Only interpreted by GenreTreeWheelRadialPopCore. */
   side?: "core" | "pop";
+  /** A root kept apart from the tree (e.g. an uncategorized bucket). Only interpreted by
+   * GenreTreeOutline, which lists it in its own section after the tree. */
+  detached?: boolean;
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";
