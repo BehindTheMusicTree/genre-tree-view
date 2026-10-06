@@ -80,7 +80,9 @@ pnpm workspace with two members:
 - **`GenreTreeOutline.tsx`** is the non-graphical counterpart of `GenreTreeWheelRadialPopCore`:
   the same forest as nested `<details>` lists (all collapsed initially), "Mainstream Pop"
   first, then each other root with its direct children split into "Core" and "Pop" sections via
-  `splitRootGroupBySide`. It reuses the React `NodeToolbar` and `InfoPanel`. Selection, open
+  `splitRootGroupBySide`. Roots flagged `detached` (`GenreTreeNode.detached`) are left out of
+  that list and rendered in a separate `.gtv-outline-list--detached` list after it, neutral gray
+  and without Core/Pop sections. It reuses the React `NodeToolbar` and `InfoPanel`. Selection, open
   sections, play state and reparent mode live in a small external store created once per
   instance; each row is a memoized recursive `OutlineNode` that subscribes to its own slice via
   `useSyncExternalStore`, and receives only stable props (node id, a model memoized on `nodes`,
