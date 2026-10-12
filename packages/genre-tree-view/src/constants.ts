@@ -11,9 +11,10 @@ export const ELEVATION = false;
 export const CONNECTOR_COLOR = "#D4D4D8";
 export const CONNECTOR_OPACITY = 1;
 
-// Radial wheel subtree links only (renderPopSubtree) — kept separate from SURFACE_BORDER_COLOR
-// since that also styles node chip borders and shouldn't move together with the links.
-export const RADIAL_LINK_COLOR = "#A1A1AA";
+// Radial wheel subtree links (renderPopSubtree) take a muted tintSurface of their root's color;
+// pop links are lighter than core ones, matching the pop/core node fill contrast.
+export const RADIAL_CORE_LINK_TINT_RATIO = 0.5;
+export const RADIAL_POP_LINK_TINT_RATIO = 0.3;
 
 export const TEXT_COLOR = "#18181B";
 export const TEXT_MUTED_COLOR = "#A1A1AA";
