@@ -1,10 +1,9 @@
 import * as d3 from "d3";
 
 import { GenreTreeNode } from "./types";
-import { MAX_NODE_WIDTH, NODE_DOT_MAX_RADIUS } from "./constants";
+import { ItemCountRange, MAX_NODE_WIDTH } from "./constants";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
-import { getRadialDepthRadius } from "./pop-core-radial-layout";
-import { fitSpanToDots } from "./radial-wheel-geometry";
+import { coreRadiusOfDepth, getRadialDepthRadius, layoutWedge } from "./pop-core-radial-layout";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
@@ -46,30 +45,16 @@ export function computeCoreRadialLayout(
   wedgeSpanDegrees: number,
   coreRootCircleRadius: number,
   depthSpacing: number,
+  itemCountRange?: ItemCountRange,
 ): D3Node {
-  const fittedSpanDegrees = fitSpanToDots(
+  return layoutWedge(
+    d3Lib,
+    hierarchy,
+    wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
-    hierarchy.leaves().length,
-    getRadialDepthRadius(1, coreRootCircleRadius, depthSpacing),
-    NODE_DOT_MAX_RADIUS,
+    coreRadiusOfDepth(coreRootCircleRadius, depthSpacing),
+    itemCountRange,
   );
-  const wedgeSpanRad = (fittedSpanDegrees * Math.PI) / 180;
-  const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
-
-  const treeLayout = d3Lib
-    .tree<GenreTreeNode>()
-    .size([wedgeSpanRad, 1])
-    .separation(() => 1);
-  treeLayout(hierarchy);
-
-  hierarchy.each((d) => {
-    const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    const radius = getRadialDepthRadius(d.depth + 1, coreRootCircleRadius, depthSpacing);
-    d.x = radius * Math.sin(angleRad);
-    d.y = -radius * Math.cos(angleRad);
-  });
-
-  return hierarchy;
 }
 
 /** The outer radius (px, past `coreRootCircleRadius`) a core subtree needs to render without

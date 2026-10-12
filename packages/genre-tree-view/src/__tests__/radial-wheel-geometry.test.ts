@@ -8,7 +8,7 @@ import {
   computeSectorSymmetricSpan,
   computeSectorWidths,
   cullOverlappingLabels,
-  fitSpanToDots,
+  solveRingRadius,
   subdivideWedge,
 } from "../radial-wheel-geometry";
 
@@ -354,23 +354,16 @@ describe("calculateWheelRadiusForAngles", () => {
   });
 });
 
-describe("fitSpanToDots", () => {
-  it("returns the slice unchanged when the half-step already covers the dot", () => {
-    expect(fitSpanToDots(60, 3, 1000, 10)).toBe(60);
+describe("solveRingRadius", () => {
+  it("returns the floor when the ring already fits there", () => {
+    expect(solveRingRadius(() => 1, 500)).toBe(500);
   });
 
-  it("returns the slice unchanged for a single leaf", () => {
-    expect(fitSpanToDots(2, 1, 1000, 10)).toBe(2);
-  });
-
-  it("shrinks the span so the edge dot just touches the slice bound", () => {
-    const slice = 6;
-    const n = 17;
-    const span = fitSpanToDots(slice, n, 1000, 20);
-    const insetDeg = (Math.asin(20 / 1000) * 180) / Math.PI;
-    const edgeLeafDeg = -span / 2 + span / (2 * n);
-    expect(span).toBeLessThan(slice);
-    expect(edgeLeafDeg - insetDeg).toBeCloseTo(-slice / 2, 9);
+  it("finds the smallest radius whose chord-sized needs fit the circle", () => {
+    // 60 chips 100px wide need 60·100/R rad → fits from R = 6000/2π ≈ 955
+    const radius = solveRingRadius((r) => (60 * 100) / r, 300);
+    expect(radius).toBeGreaterThanOrEqual(6000 / (2 * Math.PI));
+    expect(radius).toBeLessThan(6000 / (2 * Math.PI) + 1.01);
   });
 });
 

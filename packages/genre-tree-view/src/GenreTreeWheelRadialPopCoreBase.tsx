@@ -20,18 +20,21 @@ import {
   calculatePopSubtreeRadialExtent,
   computeCenterRadialLayout,
   computePopRadialLayout,
+  coreRadiusOfDepth,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  measureWedge,
+  popRadiusOfDepth,
   POP_SUBTREE_OUTER_MARGIN,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
 } from "./pop-core-radial-layout";
 import {
   buildSectorClipPathPolygon,
-  calculateWheelRadiusForAngles,
   computeRadialLayout,
   computeSectorWidths,
   RadialSlot,
+  solveRingRadius,
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
@@ -76,6 +79,11 @@ export interface WheelRadialPopCoreProps
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
 const LANDING_ANGLE = 90;
+
+// Clearance (px) between neighbouring ring root chips along the ring.
+const CHIP_GAP = 16;
+
+const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
 // Unwraps computeRadialLayout's [0, 360)-wrapped angles into each root's own continuous
 // (possibly >360 or negative) angle, nearest to its `previous` value — see WheelRadialCore's own
@@ -291,33 +299,6 @@ export function WheelRadialPopCoreCore({
     0,
   );
 
-  const rootWeights = useMemo(
-    () => groups.map((group) => group.nodes.length),
-    [groups],
-  );
-
-  const layout = useMemo(
-    () => computeRadialLayout(rootWeights, topIndex, LANDING_ANGLE),
-    [rootWeights, topIndex],
-  );
-
-  // computeRadialLayout always returns angles wrapped to [0, 360) — re-rendering with a fresh
-  // wrapped value on every selection change means a chip landing back near 0deg (top) has to
-  // transition from e.g. 270deg down through 90/0, i.e. always counterclockwise, regardless of
-  // which way the ring conceptually just turned. Track each chip's own last displayed (unwrapped)
-  // angle and add/subtract full turns so its CSS transition always takes its own shortest path.
-  const [angleMemo, setAngleMemo] = useState(() => ({
-    layout,
-    angles: computeContinuousAngles(groups, layout, new Map()),
-  }));
-  if (angleMemo.layout !== layout) {
-    setAngleMemo({
-      layout,
-      angles: computeContinuousAngles(groups, layout, angleMemo.angles),
-    });
-  }
-  const continuousAngleByRootId = angleMemo.angles;
-
   // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
   // against) reflects the full subtree total instead, mirroring the tree's own rollup.
   const aggregatedRootItemCountById = useMemo(
@@ -373,112 +354,21 @@ export function WheelRadialPopCoreCore({
     centerNodeDimensions.HEIGHT,
   );
 
-  // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
-  // the total — same widths computeRadialLayout placed chips with, so a root's pop/core wedge below
-  // is guaranteed to fit within its actual sector without spilling into a neighbor's, regardless of
-  // how uneven neighboring roots' weights are (see computeSectorWidths's doc comment).
-  const sectorSpanByRootId = useMemo(() => {
-    const map = new Map<string, number>();
-    if (groups.length <= 1) return map;
-    const widths = computeSectorWidths(rootWeights);
-    groups.forEach((group, index) => {
-      map.set(group.root.id, widths[index]);
-    });
-    return map;
-  }, [groups, rootWeights]);
-
-  const wedgeSpanForRoot = useCallback(
-    (rootId: string) => {
-      const sectorSpan = sectorSpanByRootId.get(rootId);
-      if (sectorSpan === undefined) return POP_WEDGE_SPAN_DEGREES;
-      return sectorSpan;
-    },
-    [sectorSpanByRootId],
-  );
-
-  // Each root's own single angle on the ring — unlike a branch's sub-wedge angle (which fans that
-  // branch's subtree out at its own position within the root's wedge), a link from the root down
-  // to any of its branches must originate from the root's own unique chip position.
-  const rootAngleByRootId = useMemo(() => {
-    const map = new Map<string, number>();
-    groups.forEach((group, index) => {
-      map.set(group.root.id, layout[index]?.angle ?? 0);
-    });
-    return map;
-  }, [groups, layout]);
-
-  // Only roots that actually have a pop branch get a hierarchy built — the common case (e.g.
-  // classical) has none, so this stays empty most of the time. A root's pop wedge (capped at
-  // POP_WEDGE_SPAN_DEGREES) is subdivided across its own pop branches, weighted by each branch's
-  // node count — mirrors how ring roots themselves share the full circle.
-  const popHierarchyByRootId = useMemo(() => {
-    const map = new Map<
-      string,
-      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
-    >();
-    groups.forEach((group) => {
-      const branches = splitByRootId.get(group.root.id)?.popBranches ?? [];
-      if (branches.length === 0) return;
-      const rootAngle = rootAngleByRootId.get(group.root.id)!;
-      const wedgeSpan = wedgeSpanForRoot(group.root.id);
-      const slices = subdivideWedge(
-        rootAngle,
-        wedgeSpan,
-        branches.map((branch) => branch.nodes.length),
-      );
-      map.set(
-        group.root.id,
-        branches.map((branch, branchIndex) => ({
-          hierarchy: buildPopHierarchy(d3, branch.nodes),
-          angle: slices[branchIndex]!.centerDeg,
-          span: slices[branchIndex]!.spanDeg,
-        })),
-      );
-    });
-    return map;
-  }, [groups, rootAngleByRootId, splitByRootId, wedgeSpanForRoot]);
-
-  // Only roots that actually have a core (non-pop) child get a hierarchy built — a root with zero
-  // children (splitRootGroupBySide's coreBranches = []) has nothing to fan outward. Same
-  // per-branch wedge subdivision as popHierarchyByRootId, fanning outward instead of inward.
-  const coreHierarchyByRootId = useMemo(() => {
-    const map = new Map<
-      string,
-      { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
-    >();
-    groups.forEach((group) => {
-      const branches = splitByRootId.get(group.root.id)?.coreBranches ?? [];
-      if (branches.length === 0) return;
-      const rootAngle = rootAngleByRootId.get(group.root.id)!;
-      const wedgeSpan = wedgeSpanForRoot(group.root.id);
-      const slices = subdivideWedge(
-        rootAngle,
-        wedgeSpan,
-        branches.map((branch) => branch.nodes.length),
-      );
-      map.set(
-        group.root.id,
-        branches.map((branch, branchIndex) => ({
-          hierarchy: buildCoreHierarchy(d3, branch.nodes),
-          angle: slices[branchIndex]!.centerDeg,
-          span: slices[branchIndex]!.spanDeg,
-        })),
-      );
-    });
-    return map;
-  }, [groups, rootAngleByRootId, splitByRootId, wedgeSpanForRoot]);
-
-  // Floor every ring root sits on, driven purely by chip clearance — the base every radial depth
-  // (ring roots, their pop branches, and the center subtree) measures outward from, before pop/
-  // center subtree extents are folded in below.
-  const chipClearanceFloor = useMemo(
+  const branchHierarchiesByRootId = useMemo(
     () =>
-      calculateWheelRadiusForAngles(
-        layout.map((slot) => slot.angle),
-        MAX_NODE_WIDTH,
-        WHEEL_POP_CORE_RADIUS,
+      new Map(
+        groups.map((group) => {
+          const split = splitByRootId.get(group.root.id);
+          return [
+            group.root.id,
+            {
+              pop: (split?.popBranches ?? []).map((branch) => buildPopHierarchy(d3, branch.nodes)),
+              core: (split?.coreBranches ?? []).map((branch) => buildCoreHierarchy(d3, branch.nodes)),
+            },
+          ];
+        }),
       ),
-    [layout],
+    [groups, splitByRootId],
   );
 
   // How far past the ring roots' own circle the tallest developed root's pop wedge reaches —
@@ -486,13 +376,13 @@ export function WheelRadialPopCoreCore({
   // yet; folded into coreRootCircleRadius below, then re-applied at the real base for rendering.
   const maxPopExtentDelta = useMemo(() => {
     let extent = 0;
-    popHierarchyByRootId.forEach((branches) => {
-      branches.forEach(({ hierarchy }) => {
+    branchHierarchiesByRootId.forEach(({ pop }) => {
+      pop.forEach((hierarchy) => {
         extent = Math.max(extent, calculatePopSubtreeRadialExtent(hierarchy, 0));
       });
     });
     return extent;
-  }, [popHierarchyByRootId]);
+  }, [branchHierarchiesByRootId]);
 
   // The mainstream circle's radius from the wheel's true center — how far the center node's own
   // subtree reaches, or the center chip's own disc when it has none. The deepest pop node must
@@ -517,8 +407,8 @@ export function WheelRadialPopCoreCore({
   // without being clipped.
   const maxCoreExtentDelta = useMemo(() => {
     let extent = 0;
-    coreHierarchyByRootId.forEach((branches) => {
-      branches.forEach(({ hierarchy }) => {
+    branchHierarchiesByRootId.forEach(({ core }) => {
+      core.forEach((hierarchy) => {
         extent = Math.max(
           extent,
           calculateCoreSubtreeRadialExtent(
@@ -530,7 +420,7 @@ export function WheelRadialPopCoreCore({
       });
     });
     return extent;
-  }, [coreHierarchyByRootId]);
+  }, [branchHierarchiesByRootId]);
 
   // Pins coreRootCircleRadius so the deepest node of the deepest developed pop branch (which
   // climbs inward from coreRootCircleRadius by a fixed depthSpacing per depth step — see
@@ -543,26 +433,168 @@ export function WheelRadialPopCoreCore({
     [mainstreamCircleRadius, maxPopExtentDelta],
   );
 
+  // Angles (rad) each root's pop branches, core branches and chip need at ring radius `radius`.
+  const measureBranchNeedsAt = useCallback(
+    (radius: number) =>
+      new Map(
+        groups.map((group) => {
+          const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
+          const chipWidth = calculateNodeDimensions(
+            aggregatedRootItemCountById.get(group.root.id)!,
+            rootItemCountRange,
+          ).WIDTH;
+          return [
+            group.root.id,
+            {
+              pop: pop.map((hierarchy) =>
+                measureWedge(
+                  d3,
+                  hierarchy,
+                  popRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
+                  wheelItemCountRange,
+                ),
+              ),
+              core: core.map((hierarchy) =>
+                measureWedge(
+                  d3,
+                  hierarchy,
+                  coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
+                  wheelItemCountRange,
+                ),
+              ),
+              chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
+            },
+          ];
+        }),
+      ),
+    [groups, branchHierarchiesByRootId, aggregatedRootItemCountById, rootItemCountRange, wheelItemCountRange],
+  );
+
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
-  // own chip sits — NOT the SVG canvas size (see svgCanvasRadius below). Deliberately excludes
-  // maxCoreExtentDelta: a deep core branch needs canvas room to render into, but it shouldn't
-  // drag ring root chips (and the pop branches anchored to them) outward with it. The middle term
-  // grows it only by however much the mainstream circle actually overlaps the chip-clearance floor:
-  // the smallest radius at which ring root chips clear the mainstream circle by half a card width
-  // plus the usual outer margin.
+  // own chip sits — NOT the SVG canvas size (see svgCanvasRadius below). The smallest radius at
+  // which every root's measured need fits the full circle, floored so ring root chips clear the
+  // mainstream circle and the deepest pop branch clears it too. Deliberately excludes
+  // maxCoreExtentDelta: a deep core branch needs canvas room, not a bigger ring.
   const coreRootCircleRadius = useMemo(
     () =>
-      Math.max(
-        chipClearanceFloor,
-        mainstreamCircleRadius + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
-        popReachRequiredRadius,
+      solveRingRadius(
+        (radius) =>
+          [...measureBranchNeedsAt(radius).values()].reduce(
+            (total, needs) => total + Math.max(sum(needs.pop), sum(needs.core), needs.chip),
+            0,
+          ),
+        Math.max(
+          WHEEL_POP_CORE_RADIUS,
+          mainstreamCircleRadius + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
+          popReachRequiredRadius,
+        ),
       ),
-    [chipClearanceFloor, mainstreamCircleRadius, popReachRequiredRadius],
+    [measureBranchNeedsAt, mainstreamCircleRadius, popReachRequiredRadius],
   );
+
+  const branchNeedsByRootId = useMemo(
+    () => measureBranchNeedsAt(coreRootCircleRadius),
+    [measureBranchNeedsAt, coreRootCircleRadius],
+  );
+
+  // Each root's sector is the angle it measurably needs at the solved ring radius — the widest of
+  // its pop wedge, its core wedge (disjoint radius bands) and its own chip — so slack is shared in
+  // proportion to real need rather than node count.
+  const rootWeights = useMemo(
+    () =>
+      groups.map((group) => {
+        const needs = branchNeedsByRootId.get(group.root.id)!;
+        return Math.max(sum(needs.pop), sum(needs.core), needs.chip);
+      }),
+    [groups, branchNeedsByRootId],
+  );
+
+  const layout = useMemo(
+    () => computeRadialLayout(rootWeights, topIndex, LANDING_ANGLE),
+    [rootWeights, topIndex],
+  );
+
+  // computeRadialLayout always returns angles wrapped to [0, 360) — re-rendering with a fresh
+  // wrapped value on every selection change means a chip landing back near 0deg (top) has to
+  // transition from e.g. 270deg down through 90/0, i.e. always counterclockwise, regardless of
+  // which way the ring conceptually just turned. Track each chip's own last displayed (unwrapped)
+  // angle and add/subtract full turns so its CSS transition always takes its own shortest path.
+  const [angleMemo, setAngleMemo] = useState(() => ({
+    layout,
+    angles: computeContinuousAngles(groups, layout, new Map()),
+  }));
+  if (angleMemo.layout !== layout) {
+    setAngleMemo({
+      layout,
+      angles: computeContinuousAngles(groups, layout, angleMemo.angles),
+    });
+  }
+  const continuousAngleByRootId = angleMemo.angles;
+
+  // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
+  // the total — same widths computeRadialLayout placed chips with, so a root's pop/core wedge below
+  // is guaranteed to fit within its actual sector without spilling into a neighbor's.
+  const sectorSpanByRootId = useMemo(() => {
+    const map = new Map<string, number>();
+    if (groups.length <= 1) return map;
+    const widths = computeSectorWidths(rootWeights);
+    groups.forEach((group, index) => {
+      map.set(group.root.id, widths[index]);
+    });
+    return map;
+  }, [groups, rootWeights]);
+
+  const wedgeSpanForRoot = useCallback(
+    (rootId: string) => sectorSpanByRootId.get(rootId) ?? POP_WEDGE_SPAN_DEGREES,
+    [sectorSpanByRootId],
+  );
+
+  // Each root's own single angle on the ring — unlike a branch's sub-wedge angle (which fans that
+  // branch's subtree out at its own position within the root's wedge), a link from the root down
+  // to any of its branches must originate from the root's own unique chip position.
+  const rootAngleByRootId = useMemo(() => {
+    const map = new Map<string, number>();
+    groups.forEach((group, index) => {
+      map.set(group.root.id, layout[index]?.angle ?? 0);
+    });
+    return map;
+  }, [groups, layout]);
+
+  // A root's wedge is subdivided across its own pop (resp. core) branches by each branch's
+  // measured need — mirrors how ring roots themselves share the full circle.
+  const placeBranches = useCallback(
+    (side: "pop" | "core") => {
+      const map = new Map<
+        string,
+        { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
+      >();
+      groups.forEach((group) => {
+        const hierarchies = branchHierarchiesByRootId.get(group.root.id)![side];
+        if (hierarchies.length === 0) return;
+        const slices = subdivideWedge(
+          rootAngleByRootId.get(group.root.id)!,
+          wedgeSpanForRoot(group.root.id),
+          branchNeedsByRootId.get(group.root.id)![side],
+        );
+        map.set(
+          group.root.id,
+          hierarchies.map((hierarchy, branchIndex) => ({
+            hierarchy,
+            angle: slices[branchIndex]!.centerDeg,
+            span: slices[branchIndex]!.spanDeg,
+          })),
+        );
+      });
+      return map;
+    },
+    [groups, branchHierarchiesByRootId, branchNeedsByRootId, rootAngleByRootId, wedgeSpanForRoot],
+  );
+  const popHierarchyByRootId = useMemo(() => placeBranches("pop"), [placeBranches]);
+  const coreHierarchyByRootId = useMemo(() => placeBranches("core"), [placeBranches]);
 
   // The SVG canvas's actual radius. Core branches render outward from the real coreRootCircleRadius
   // (see computeCoreRadialLayout's call below), so the canvas must extend maxCoreExtentDelta past
-  // that actual base — not past chipClearanceFloor, which can be smaller than coreRootCircleRadius
+  // that actual base — not past the ring-radius floor, which can be smaller than coreRootCircleRadius
   // whenever pop reach or the center subtree is what's sizing it — or the deepest core
   // node gets clipped. Purely a rendering-surface concern: never feeds back into coreRootCircleRadius,
   // so it doesn't affect the visual outer circle or ring root chip placement.
@@ -614,6 +646,8 @@ export function WheelRadialPopCoreCore({
           angle,
           coreRootCircleRadius,
           span,
+          POP_TREE_DEPTH_RADIAL_SPACING,
+          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -693,6 +727,7 @@ export function WheelRadialPopCoreCore({
           span,
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
+          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut

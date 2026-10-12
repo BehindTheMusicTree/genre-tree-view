@@ -174,16 +174,23 @@ export function calculateWheelRadiusForAngles(angles: number[], maxChipWidth: nu
   return Math.max(baseRadius, requiredRadius);
 }
 
-/** Span (degrees) to hand d3.tree so no dot of radius `maxDotRadius`, at radius `minRadius` or
- * beyond, spills past its `sliceSpanDeg` slice. With `.separation(() => 1)` leaves sit evenly,
- * the edge leaf half a step inside the slice; that half step is already the minimal margin unless
- * it's smaller than the dot's own angular half-width, in which case the span shrinks just enough
- * for the edge dot to touch the slice bound. */
-export function fitSpanToDots(sliceSpanDeg: number, leafCount: number, minRadius: number, maxDotRadius: number): number {
-  if (leafCount <= 1 || minRadius <= maxDotRadius) return sliceSpanDeg;
-  const insetDeg = (Math.asin(maxDotRadius / minRadius) * 180) / Math.PI;
-  if (sliceSpanDeg / (2 * leafCount) >= insetDeg) return sliceSpanDeg;
-  return Math.max(0, ((sliceSpanDeg - 2 * insetDeg) * leafCount) / (leafCount - 1));
+/** Smallest radius ≥ `floorRadius` at which `angleNeededAt(radius)` (rad, non-increasing in
+ * radius) fits the full circle — binary-searched since what a ring needs depends on its radius. */
+export function solveRingRadius(angleNeededAt: (radius: number) => number, floorRadius: number): number {
+  const fits = (radius: number) => angleNeededAt(radius) <= 2 * Math.PI;
+  if (fits(floorRadius)) return floorRadius;
+  let lo = floorRadius;
+  let hi = floorRadius * 2;
+  while (!fits(hi)) {
+    lo = hi;
+    hi *= 2;
+  }
+  while (hi - lo > 1) {
+    const mid = (lo + hi) / 2;
+    if (fits(mid)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
 }
 
 export interface Box {

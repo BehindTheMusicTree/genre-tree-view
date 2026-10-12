@@ -8,8 +8,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Radial pop/core wheel: subgenres in narrow sectors (e.g. Reggae) no longer overlap. Each branch
-  now uses its full sector, shrunk only by the computed minimum (`fitSpanToDots`) that keeps edge
-  dots inside it, replacing the fixed 4° `WEDGE_SECTOR_GUTTER_DEGREES` gutter (removed).
+  now uses its full sector, replacing the fixed 4° `WEDGE_SECTOR_GUTTER_DEGREES` gutter (removed).
+- Radial wheels size root sectors and branch slices by measured angular need (each dot's real arc
+  on its ring, deeper rings needing more angle) instead of node counts, and grow the ring radius
+  just enough for every sector to fit (`solveRingRadius`).
 
 ### Changed
 
