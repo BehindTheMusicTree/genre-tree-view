@@ -25,6 +25,7 @@ import {
   NODE_DOT_MAX_RADIUS,
   RADIAL_CORE_LINK_TINT_RATIO,
   RADIAL_POP_LINK_TINT_RATIO,
+  TEXT_COLOR,
   tintSurface,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
@@ -417,6 +418,28 @@ describe("renderPopSubtree link rendering", () => {
 
     expect(d3.color(svg.select("path.gtv-link").style("stroke"))?.formatHex()).toBe(
       tintSurface("#123456", ratio),
+    );
+  });
+
+  it("strokes the Mainstream Pop center's links in TEXT_COLOR, not its white root color", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#ffffff",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      { isMainstreamSector: true },
+    );
+
+    expect(d3.color(svg.select("path.gtv-link").style("stroke"))?.formatHex()).toBe(
+      d3.color(TEXT_COLOR)?.formatHex(),
     );
   });
 
