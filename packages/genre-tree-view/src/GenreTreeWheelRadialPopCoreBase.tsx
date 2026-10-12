@@ -21,10 +21,10 @@ import {
   computeCenterRadialLayout,
   computePopRadialLayout,
   getRadialPointOnCircle,
+  hideCollidingLabels,
   POP_SUBTREE_OUTER_MARGIN,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
-  WEDGE_SECTOR_GUTTER_DEGREES,
 } from "./pop-core-radial-layout";
 import {
   buildSectorClipPathPolygon,
@@ -391,8 +391,7 @@ export function WheelRadialPopCoreCore({
     (rootId: string) => {
       const sectorSpan = sectorSpanByRootId.get(rootId);
       if (sectorSpan === undefined) return POP_WEDGE_SPAN_DEGREES;
-      // Tiny sectors (< 2x gutter) keep half their width rather than going to zero or negative.
-      return Math.max(sectorSpan / 2, sectorSpan - WEDGE_SECTOR_GUTTER_DEGREES);
+      return sectorSpan;
     },
     [sectorSpanByRootId],
   );
@@ -819,6 +818,8 @@ export function WheelRadialPopCoreCore({
         },
       );
     }
+
+    hideCollidingLabels(d3, originGroup, wheelItemCountRange);
   }, [
     index.byId,
     popHierarchyByRootId,

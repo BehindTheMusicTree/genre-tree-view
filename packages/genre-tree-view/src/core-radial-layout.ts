@@ -1,9 +1,10 @@
 import * as d3 from "d3";
 
 import { GenreTreeNode } from "./types";
-import { MAX_NODE_WIDTH } from "./constants";
+import { MAX_NODE_WIDTH, NODE_DOT_MAX_RADIUS } from "./constants";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { getRadialDepthRadius } from "./pop-core-radial-layout";
+import { fitSpanToDots } from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
@@ -46,7 +47,13 @@ export function computeCoreRadialLayout(
   coreRootCircleRadius: number,
   depthSpacing: number,
 ): D3Node {
-  const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
+  const fittedSpanDegrees = fitSpanToDots(
+    wedgeSpanDegrees,
+    hierarchy.leaves().length,
+    getRadialDepthRadius(1, coreRootCircleRadius, depthSpacing),
+    NODE_DOT_MAX_RADIUS,
+  );
+  const wedgeSpanRad = (fittedSpanDegrees * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
 
   const treeLayout = d3Lib

@@ -479,7 +479,7 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onPlayPause={onPlayPause} />);
 
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(nodeGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     const playButton = container.querySelector('#toolbar-a-child [data-menu-key="play"]') as HTMLButtonElement;
     fireEvent.click(playButton);
 
@@ -553,7 +553,7 @@ describe("GenreTreeWheelRadial", () => {
     ) {
       if (this === wheelContainer) return makeRect(0, 0, 800, 600);
       if ((this as HTMLElement).classList?.contains("gtv-wheel-circle")) return makeRect(0, 200, 1200, 1200);
-      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(200, 0, 400, 200);
+      if (this.matches(".gtv-node-dot, .gtv-link")) return makeRect(200, 0, 400, 200);
       return makeRect(0, 0, 0, 0);
     });
 
@@ -583,7 +583,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
 
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(nodeGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
   });
 

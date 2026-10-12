@@ -550,7 +550,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onPlayPause).toHaveBeenCalledWith("pop");
 
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     const corePlayButton = container.querySelector(
       '#toolbar-a-core-child [data-menu-key="play"]',
     ) as HTMLButtonElement;
@@ -563,7 +563,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     const popPlayButton = container.querySelector('#toolbar-a-pop [data-menu-key="play"]') as HTMLButtonElement;
     fireEvent.click(popPlayButton);
 
@@ -736,7 +736,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ) {
       if (this === wheelContainer) return makeRect(0, 0, 800, 600);
       if (this === circle) return makeRect(300, 200, 200, 200);
-      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(0, 0, 2000, 2000);
+      if (this.matches(".gtv-node-dot, .gtv-link")) return makeRect(0, 0, 2000, 2000);
       return makeRect(0, 0, 0, 0);
     });
 
@@ -788,7 +788,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
     fireEvent.mouseLeave(popGroup);
@@ -803,7 +803,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
     fireEvent.mouseLeave(popGroup);
@@ -915,7 +915,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
 
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-core-child")).toBeFalsy();
   });
 

@@ -17,6 +17,14 @@
     sans-serif;
 }
 
+.gtv-node-label--hidden {
+  opacity: 0;
+}
+
+.node:hover .gtv-node-label--hidden {
+  opacity: 1;
+}
+
 .gtv-node-label--root {
   font-size: 14px;
   font-weight: 700;

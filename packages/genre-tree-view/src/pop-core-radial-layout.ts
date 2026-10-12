@@ -8,15 +8,12 @@ import {
   buildTreeHierarchyStructure,
 } from "./NodeHelper";
 import {
-  openBottomBorderPath,
-  roundedRectPath,
-} from "./d3-helper/d3-path-helper";
-import {
   ACCENT_COLOR,
   ACCENT_TEXT_COLOR,
-  CORNER_RADIUS,
   ItemCountRange,
   MAX_NODE_WIDTH,
+  NODE_DOT_LABEL_GAP,
+  NODE_DOT_MAX_RADIUS,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   RADIAL_LINK_COLOR,
@@ -26,10 +23,15 @@ import {
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
   calculateLinkWidth,
-  calculateNodeDimensions,
+  calculateNodeDotRadius,
   calculateNodeFontSize,
   tintSurface,
 } from "./constants";
+import {
+  Box,
+  cullOverlappingLabels,
+  fitSpanToDots,
+} from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -38,10 +40,6 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 // narrower than the root's own full sector so it never touches a neighboring root's wedge,
 // matching the gutter every other radial-wheel element keeps from its neighbors.
 export const POP_WEDGE_SPAN_DEGREES = 80;
-
-// Angle (deg) trimmed off a root's own sector width to get its pop/core wedge span, so wedges of
-// neighboring roots never touch while still filling nearly all of their own sector.
-export const WEDGE_SECTOR_GUTTER_DEGREES = 4;
 
 // Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
 // never sits flush against the wheel's own circle edge.
@@ -153,7 +151,18 @@ export function computePopRadialLayout(
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
   depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
 ): D3Node {
-  const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
+  const innermostRadius = getRadialDepthRadius(
+    -(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + hierarchy.height),
+    coreRootCircleRadius,
+    depthSpacing,
+  );
+  const fittedSpanDegrees = fitSpanToDots(
+    wedgeSpanDegrees,
+    hierarchy.leaves().length,
+    innermostRadius,
+    NODE_DOT_MAX_RADIUS,
+  );
+  const wedgeSpanRad = (fittedSpanDegrees * Math.PI) / 180;
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
 
   const treeLayout = d3Lib
@@ -250,6 +259,56 @@ export function getRadialPointOnCircle(
 ): { x: number; y: number } {
   const angleRad = (angleDegrees * Math.PI) / 180;
   return { x: radius * Math.sin(angleRad), y: -radius * Math.cos(angleRad) };
+}
+
+// Average glyph advance as a fraction of font size — a DOM-free label width estimate, so layout
+// and collision culling stay deterministic (happy-dom has no getBBox).
+const LABEL_CHAR_WIDTH_RATIO = 0.6;
+
+/** A radial dot node's label placement and boxes, local to the node's own center: the label sits
+ * beside the dot, on the side facing away from the wheel's vertical axis (right of the dot when
+ * `x >= 0`, left otherwise), so it never reads across the wheel's center. */
+export function getDotLabelGeometry(
+  x: number,
+  name: string,
+  itemCount: number,
+  itemCountRange: ItemCountRange,
+): {
+  dotRadius: number;
+  fontSize: number;
+  labelX: number;
+  anchor: "start" | "end";
+  label: Box;
+  dot: Box;
+  hitArea: Box;
+} {
+  const dotRadius = calculateNodeDotRadius(itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(itemCount, itemCountRange);
+  const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
+  const right = x >= 0;
+  const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
+  const label = {
+    x0: right ? labelX : labelX - width,
+    x1: right ? labelX + width : labelX,
+    y0: -fontSize / 2,
+    y1: fontSize / 2,
+  };
+  const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
+  const halfHeight = Math.max(dotRadius, fontSize / 2);
+  return {
+    dotRadius,
+    fontSize,
+    labelX,
+    anchor: right ? "start" : "end",
+    label,
+    dot,
+    hitArea: {
+      x0: Math.min(dot.x0, label.x0),
+      x1: Math.max(dot.x1, label.x1),
+      y0: -halfHeight,
+      y1: halfHeight,
+    },
+  };
 }
 
 export interface RenderPopSubtreeCallbacks {
@@ -438,148 +497,28 @@ export function renderPopSubtree(
   nodes
     .append("rect")
     .attr("class", "gtv-hover-hit-area")
-    .attr(
-      "width",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
-    )
-    .attr(
-      "height",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
-    )
-    .attr(
-      "x",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
-    )
-    .attr(
-      "y",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
-    )
+    .each(function (d) {
+      const { hitArea } = getDotLabelGeometry(
+        d.x!,
+        d.data.name,
+        d.data.itemCount,
+        itemCountRange,
+      );
+      d3Lib
+        .select(this)
+        .attr("x", hitArea.x0)
+        .attr("y", hitArea.y0)
+        .attr("width", hitArea.x1 - hitArea.x0)
+        .attr("height", hitArea.y1 - hitArea.y0);
+    })
     .attr("fill", "transparent")
-    .attr("pointer-events", "all");
-
-  nodes
-    .append("path")
-    .attr("class", "gtv-node-rect")
-    .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(
-        d.data.itemCount,
-        itemCountRange,
-      );
-      return roundedRectPath(
-        -dimensions.WIDTH / 2,
-        -dimensions.HEIGHT / 2,
-        dimensions.WIDTH,
-        dimensions.HEIGHT,
-        {
-          tl: CORNER_RADIUS,
-          tr: CORNER_RADIUS,
-          br: CORNER_RADIUS,
-          bl: CORNER_RADIUS,
-        },
-      );
-    })
-    .attr("fill", nodeFill);
-
-  nodes
-    .append("path")
-    .attr("class", "gtv-node-border")
-    .attr("d", (d) => {
-      const dimensions = calculateNodeDimensions(
-        d.data.itemCount,
-        itemCountRange,
-      );
-      return roundedRectPath(
-        -dimensions.WIDTH / 2,
-        -dimensions.HEIGHT / 2,
-        dimensions.WIDTH,
-        dimensions.HEIGHT,
-        {
-          tl: CORNER_RADIUS,
-          tr: CORNER_RADIUS,
-          br: CORNER_RADIUS,
-          bl: CORNER_RADIUS,
-        },
-      );
-    })
-    .attr("fill", "none")
-    .attr("stroke", (d) =>
-      isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
-    )
-    .attr("stroke-width", (d) =>
-      isSelected(d)
-        ? SELECTED_BORDER_WIDTH
-        : d.depth === 0 || isCoreSector
-          ? ROOT_BORDER_WIDTH
-          : SURFACE_BORDER_WIDTH,
-    );
-
-  nodes
-    .append("foreignObject")
-    .attr(
-      "width",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH,
-    )
-    .attr(
-      "height",
-      (d) => calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT,
-    )
-    .attr(
-      "x",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).WIDTH / 2,
-    )
-    .attr(
-      "y",
-      (d) =>
-        -calculateNodeDimensions(d.data.itemCount, itemCountRange).HEIGHT / 2,
-    )
-    .html((d) => {
-      const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
-      const rootClass = isCoreSector ? " gtv-node-label--root" : "";
-      const color = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
-      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
-    })
+    .attr("pointer-events", "all")
     .on("mouseover", function (_event, d) {
       if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
 
       const group = d3Lib.select<SVGGElement, unknown>(
         this.parentNode as SVGGElement,
       ) as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
-
-      const dimensions = calculateNodeDimensions(
-        d.data.itemCount,
-        itemCountRange,
-      );
-      group.select<SVGPathElement>(".gtv-node-rect").attr(
-        "d",
-        roundedRectPath(
-          -dimensions.WIDTH / 2,
-          -dimensions.HEIGHT / 2,
-          dimensions.WIDTH,
-          dimensions.HEIGHT,
-          {
-            tl: 0,
-            tr: 0,
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          },
-        ),
-      );
-      group.select<SVGPathElement>(".gtv-node-border").attr(
-        "d",
-        openBottomBorderPath(
-          -dimensions.WIDTH / 2,
-          -dimensions.HEIGHT / 2,
-          dimensions.WIDTH,
-          dimensions.HEIGHT,
-          {
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          },
-        ),
-      );
 
       const labelColor = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
       addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
@@ -603,6 +542,47 @@ export function renderPopSubtree(
         "horizontal",
       );
     });
+
+  nodes
+    .append("circle")
+    .attr("class", "gtv-node-dot")
+    .attr("r", (d) => calculateNodeDotRadius(d.data.itemCount, itemCountRange))
+    .attr("fill", nodeFill)
+    .attr("stroke", (d) =>
+      isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
+    )
+    .attr("stroke-width", (d) =>
+      isSelected(d)
+        ? SELECTED_BORDER_WIDTH
+        : isCoreSector
+          ? ROOT_BORDER_WIDTH
+          : SURFACE_BORDER_WIDTH,
+    )
+    .style("pointer-events", "none");
+
+  nodes
+    .append("text")
+    .attr(
+      "class",
+      "gtv-node-label" + (isCoreSector ? " gtv-node-label--root" : ""),
+    )
+    .each(function (d) {
+      const { labelX, anchor, fontSize } = getDotLabelGeometry(
+        d.x!,
+        d.data.name,
+        d.data.itemCount,
+        itemCountRange,
+      );
+      d3Lib
+        .select(this)
+        .attr("x", labelX)
+        .attr("text-anchor", anchor)
+        .style("font-size", `${fontSize}px`);
+    })
+    .attr("dominant-baseline", "middle")
+    .attr("fill", TEXT_COLOR)
+    .style("pointer-events", "none")
+    .text((d) => d.data.name);
 
   nodes.each(function (d: D3Node) {
     const group = d3Lib.select<SVGGElement, unknown>(this);
@@ -643,29 +623,6 @@ export function renderPopSubtree(
           d3Lib
             .select<SVGGElement, unknown>("#hover-label-" + d.data.id)
             .remove();
-
-          const dimensions = calculateNodeDimensions(
-            d.data.itemCount,
-            itemCountRange,
-          );
-          const fullyRounded = roundedRectPath(
-            -dimensions.WIDTH / 2,
-            -dimensions.HEIGHT / 2,
-            dimensions.WIDTH,
-            dimensions.HEIGHT,
-            {
-              tl: CORNER_RADIUS,
-              tr: CORNER_RADIUS,
-              br: CORNER_RADIUS,
-              bl: CORNER_RADIUS,
-            },
-          );
-          group
-            .select<SVGPathElement>(".gtv-node-rect")
-            .attr("d", fullyRounded);
-          group
-            .select<SVGPathElement>(".gtv-node-border")
-            .attr("d", fullyRounded);
         }
         d3Lib
           .select<
@@ -684,5 +641,44 @@ export function renderPopSubtree(
       if (reparentingNodeId) return;
       onNodeClick?.(d.data, event);
     });
+  });
+}
+
+/** Marks `gtv-node-label--hidden` on every dot label under `container` (across all rendered
+ * subtrees, so labels of neighboring branches/sectors are checked against each other) that would
+ * overlap a bigger node's label or any dot; CSS reveals it again on hover. */
+export function hideCollidingLabels(
+  d3Lib: typeof import("d3"),
+  container: D3Selection,
+  itemCountRange: ItemCountRange,
+): void {
+  const nodes = container.selectAll<SVGGElement, D3Node>("g.node");
+  const offset = (box: Box, x: number, y: number): Box => ({
+    x0: box.x0 + x,
+    x1: box.x1 + x,
+    y0: box.y0 + y,
+    y1: box.y1 + y,
+  });
+  const hidden = cullOverlappingLabels(
+    nodes.data().map((d) => {
+      const { label, dot } = getDotLabelGeometry(
+        d.x!,
+        d.data.name,
+        d.data.itemCount,
+        itemCountRange,
+      );
+      return {
+        id: d.data.id,
+        label: offset(label, d.x!, d.y!),
+        dot: offset(dot, d.x!, d.y!),
+        priority: d.data.itemCount,
+      };
+    }),
+  );
+  nodes.each(function (d) {
+    d3Lib
+      .select(this)
+      .select(".gtv-node-label")
+      .classed("gtv-node-label--hidden", hidden.has(d.data.id));
   });
 }

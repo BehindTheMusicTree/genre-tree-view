@@ -8,6 +8,7 @@ import {
   computePopRadialLayout,
   getRadialDepthRadius,
   getRadialPointOnCircle,
+  hideCollidingLabels,
   renderPopSubtree,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
@@ -18,6 +19,7 @@ import {
   LINK_TO_NODE_HEIGHT_RATIO,
   MAX_NODE_HEIGHT,
   getItemCountRange,
+  NODE_DOT_MAX_RADIUS,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
@@ -484,7 +486,7 @@ describe("renderPopSubtree label text color", () => {
     { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
   ];
 
-  it("uses white ACCENT_TEXT_COLOR for pop-tint sectors (isMainstreamSector false/omitted)", () => {
+  it("draws the label in dark TEXT_COLOR on the wash, keeping white ACCENT_TEXT_COLOR on hover for pop-tint sectors", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
@@ -500,13 +502,10 @@ describe("renderPopSubtree label text color", () => {
       getItemCountRange(nodes),
     );
 
-    const label = svg.select<HTMLDivElement>(".gtv-node-label");
-    expect(label.style("color")).toBe("rgb(255, 255, 255)");
+    expect(svg.select(".gtv-node-label").attr("fill")).toBe("#18181B");
 
-    const foreignObject = svg
-      .select<SVGForeignObjectElement>("foreignObject")
-      .node()!;
-    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    const hitArea = svg.select<SVGRectElement>(".gtv-hover-hit-area").node()!;
+    hitArea.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
@@ -517,7 +516,7 @@ describe("renderPopSubtree label text color", () => {
     );
   });
 
-  it("uses white ACCENT_TEXT_COLOR for solid-colored core sectors (isCoreSector true)", () => {
+  it("draws the label in dark TEXT_COLOR on the wash, keeping white ACCENT_TEXT_COLOR on hover for core sectors", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
     const svg = createSvg();
@@ -536,13 +535,10 @@ describe("renderPopSubtree label text color", () => {
       },
     );
 
-    const label = svg.select<HTMLDivElement>(".gtv-node-label");
-    expect(label.style("color")).toBe("rgb(255, 255, 255)");
+    expect(svg.select(".gtv-node-label").attr("fill")).toBe("#18181B");
 
-    const foreignObject = svg
-      .select<SVGForeignObjectElement>("foreignObject")
-      .node()!;
-    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    const hitArea = svg.select<SVGRectElement>(".gtv-hover-hit-area").node()!;
+    hitArea.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(255, 255, 255)");
@@ -572,13 +568,10 @@ describe("renderPopSubtree label text color", () => {
       },
     );
 
-    const label = svg.select<HTMLDivElement>(".gtv-node-label");
-    expect(label.style("color")).toBe("rgb(24, 24, 27)");
+    expect(svg.select(".gtv-node-label").attr("fill")).toBe("#18181B");
 
-    const foreignObject = svg
-      .select<SVGForeignObjectElement>("foreignObject")
-      .node()!;
-    foreignObject.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    const hitArea = svg.select<SVGRectElement>(".gtv-hover-hit-area").node()!;
+    hitArea.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
 
     const hoverLabel = svg.select<HTMLDivElement>(".gtv-hover-label");
     expect(hoverLabel.style("color")).toBe("rgb(24, 24, 27)");
@@ -680,11 +673,9 @@ describe("renderPopSubtree selection highlight", () => {
     expect(rootGroup.getAttribute("class")).toContain("gtv-node--dimmed");
     expect(childGroup.getAttribute("class")).not.toContain("gtv-node--dimmed");
 
-    const childBorder = childGroup.querySelector(
-      ".gtv-node-border",
-    ) as SVGPathElement;
-    expect(childBorder.getAttribute("stroke")).toBe("#4F46E5");
-    expect(childBorder.getAttribute("stroke-width")).toBe("2.5");
+    const childDot = childGroup.querySelector(".gtv-node-dot") as SVGCircleElement;
+    expect(childDot.getAttribute("stroke")).toBe("#4F46E5");
+    expect(childDot.getAttribute("stroke-width")).toBe("2.5");
   });
 
   it("leaves every node undimmed and unaccented when no node is selected", () => {
@@ -831,5 +822,72 @@ describe("getRadialPointOnCircle", () => {
     const point = getRadialPointOnCircle(90, 100);
     expect(point.x).toBeCloseTo(100, 5);
     expect(point.y).toBeCloseTo(0, 5);
+  });
+});
+
+describe("renderPopSubtree dot + label nodes", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 2 },
+  ];
+
+  it("renders a dot and a label per node", () => {
+    const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    expect(svg.selectAll("circle.gtv-node-dot").size()).toBe(2);
+    expect(svg.selectAll("text.gtv-node-label").size()).toBe(2);
+    expect(svg.select("text.gtv-node-label").text()).toBe("Pop Rock");
+  });
+
+  it("anchors labels right of the dot on the right half and left of it on the left half", () => {
+    const range = getItemCountRange(nodes);
+    const right = createSvg();
+    renderPopSubtree(d3, right, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000), "#123456", null, [], noopCallbacks, range);
+    const left = createSvg();
+    renderPopSubtree(d3, left, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 270, 1000), "#123456", null, [], noopCallbacks, range);
+
+    expect(right.select("text.gtv-node-label").attr("text-anchor")).toBe("start");
+    expect(Number(right.select("text.gtv-node-label").attr("x"))).toBeGreaterThan(0);
+    expect(left.select("text.gtv-node-label").attr("text-anchor")).toBe("end");
+    expect(Number(left.select("text.gtv-node-label").attr("x"))).toBeLessThan(0);
+  });
+
+  it("hides labels that collide, keeping the higher itemCount one", () => {
+    const siblings: GenreTreeNode[] = [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
+      ...Array.from({ length: 17 }, (_, i) => ({
+        id: `sub-${i}`,
+        parentId: "reggae",
+        name: `Reggae Subgenre Number ${i}`,
+        itemCount: i + 1,
+      })),
+    ];
+    const range = getItemCountRange(siblings);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
+    hideCollidingLabels(d3, svg, range);
+
+    expect(svg.selectAll(".gtv-node-label--hidden").size()).toBeGreaterThan(0);
+    expect(svg.select("#group-sub-16 .gtv-node-label").classed("gtv-node-label--hidden")).toBe(false);
+  });
+
+  it("keeps every dot of a 17-child branch inside its narrow sector", () => {
+    const siblings: GenreTreeNode[] = [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
+      ...Array.from({ length: 17 }, (_, i) => ({ id: `sub-${i}`, parentId: "reggae", name: `Sub ${i}`, itemCount: 1 })),
+    ];
+    const center = 40;
+    const span = 6;
+    const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), center, 3000, span);
+
+    laidOut.each((d) => {
+      const r = Math.hypot(d.x!, d.y!);
+      const angle = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+      const halfWidth = (Math.asin(NODE_DOT_MAX_RADIUS / r) * 180) / Math.PI;
+      expect(angle - halfWidth).toBeGreaterThanOrEqual(center - span / 2 - 1e-9);
+      expect(angle + halfWidth).toBeLessThanOrEqual(center + span / 2 + 1e-9);
+    });
   });
 });

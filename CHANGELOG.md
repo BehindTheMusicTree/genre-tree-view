@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Radial pop/core wheel: subgenres in narrow sectors (e.g. Reggae) no longer overlap. Each branch
+  now uses its full sector, shrunk only by the computed minimum (`fitSpanToDots`) that keeps edge
+  dots inside it, replacing the fixed 4° `WEDGE_SECTOR_GUTTER_DEGREES` gutter (removed).
+
+### Changed
+
+- Radial pop/core subgenre nodes are a colored dot (sized by `itemCount`) with a horizontal label
+  beside it instead of a rectangle card. Labels that would collide are hidden and shown on hover.
+  Ring root chips are unchanged.
+
 ## [1.17.0] - 2026-10-12
 
 ### Added
