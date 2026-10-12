@@ -4070,13 +4070,6 @@
     "wikidataId": "Q7282874"
   },
   {
-    "id": "wandelweiser",
-    "parentId": null,
-    "name": "Wandelweiser",
-    "itemCount": 0,
-    "wikidataId": "Q536894"
-  },
-  {
     "id": "art-music",
     "parentId": null,
     "name": "Art music",
@@ -11080,20 +11073,6 @@
     "wikidataId": "Q141599438"
   },
   {
-    "id": "math-music",
-    "parentId": null,
-    "name": "Math music",
-    "itemCount": 0,
-    "wikidataId": "Q141432481"
-  },
-  {
-    "id": "national-team-song",
-    "parentId": null,
-    "name": "National team song",
-    "itemCount": 0,
-    "wikidataId": "Q107615193"
-  },
-  {
     "id": "mainstream-pop",
     "parentId": null,
     "name": "Mainstream Pop",
@@ -12030,12 +12009,5 @@
     "name": "2 tone",
     "itemCount": 0,
     "wikidataId": "Q209498"
-  },
-  {
-    "id": "xiliang",
-    "parentId": null,
-    "name": "Xiliang",
-    "itemCount": 0,
-    "wikidataId": "Q109348931"
   }
 ]
