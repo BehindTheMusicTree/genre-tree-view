@@ -12,7 +12,8 @@ export const CONNECTOR_COLOR = "#D4D4D8";
 export const CONNECTOR_OPACITY = 1;
 
 // Radial wheel subtree links (renderPopSubtree) take a muted tintSurface of their root's color;
-// pop links are lighter than core ones, matching the pop/core node fill contrast.
+// pop links are lighter than core ones, matching the pop/core node fill contrast. The white
+// Mainstream Pop center uses TEXT_MUTED_COLOR instead.
 export const RADIAL_CORE_LINK_TINT_RATIO = 0.5;
 export const RADIAL_POP_LINK_TINT_RATIO = 0.3;
 

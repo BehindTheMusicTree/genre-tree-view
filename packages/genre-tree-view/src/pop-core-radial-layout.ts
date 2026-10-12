@@ -23,6 +23,7 @@ import {
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
+  TEXT_MUTED_COLOR,
   calculateLinkWidth,
   calculateNodeDotRadius,
   calculateNodeFontSize,
@@ -391,9 +392,9 @@ export function renderPopSubtree(
     // given, one extra gtv-link is drawn per depth-0 node from this point to that node, since
     // hierarchy.links() has no edge for it (a hierarchy root has no incoming link).
     rootLinkOrigin?: { x: number; y: number };
-    // The center "Mainstream Pop" subtree keeps the dark label/toolbar text every pop sector used to
-    // have; every other pop sector now reads light against its tinted fill instead, matching core
-    // sectors' solid-color treatment.
+    // The center "Mainstream Pop" subtree is white: it keeps dark label/toolbar text, grey links and
+    // black dot borders; every other pop sector reads light against its tinted fill instead,
+    // matching core sectors' solid-color treatment.
     isMainstreamSector?: boolean;
     // When false, suppresses the hover toolbar and hover name-label on every node in this
     // subtree. Defaults to true.
@@ -430,9 +431,10 @@ export function renderPopSubtree(
   const nodeFill = isCoreSector
     ? rootColor
     : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
-  // The center's white rootColor would tint its links to white, invisible on the white wheel.
+  // The center's white rootColor would tint its links and dot borders to white, invisible on the
+  // white wheel.
   const linkColor = isMainstreamSector
-    ? TEXT_COLOR
+    ? TEXT_MUTED_COLOR
     : tintSurface(
         rootColor,
         isCoreSector ? RADIAL_CORE_LINK_TINT_RATIO : RADIAL_POP_LINK_TINT_RATIO,
@@ -591,7 +593,11 @@ export function renderPopSubtree(
     .attr("r", (d) => calculateNodeDotRadius(d.data.itemCount, itemCountRange))
     .attr("fill", nodeFill)
     .attr("stroke", (d) =>
-      isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
+      isSelected(d)
+        ? ACCENT_COLOR
+        : isMainstreamSector
+          ? TEXT_COLOR
+          : SURFACE_BORDER_COLOR,
     )
     .attr("stroke-width", (d) =>
       isSelected(d)

@@ -772,9 +772,10 @@
 }
 
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
-   text and thin border used for colored chips would be invisible / too subtle here. */
+   text and light border used for colored chips would be invisible / too subtle here. */
 .gtv-wheel-chip--center {
   border-width: 2px;
+  border-color: #18181b;
   color: #27272a;
 }
 
