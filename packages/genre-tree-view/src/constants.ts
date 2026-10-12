@@ -253,6 +253,16 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
   return Math.round(HEIGHT * ratio);
 }
 
+export const NODE_DOT_MIN_RADIUS = 6;
+export const NODE_DOT_MAX_RADIUS = 20;
+export const NODE_DOT_LABEL_GAP = 6;
+
+/** Radius of a radial-wheel subgenre dot, on the same log scale as calculateNodeDimensions. */
+export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
+  const t = logarithmicPosition(itemCount, range);
+  return Math.round(NODE_DOT_MIN_RADIUS + t * (NODE_DOT_MAX_RADIUS - NODE_DOT_MIN_RADIUS));
+}
+
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
 // wheel-geometry.ts). The wheel's reserved bottom strip needs to fit more than just the bare
 // circle (2 * WHEEL_RADIUS): a chip is centered *on* its point on that circle, so at the circle's

@@ -7,6 +7,8 @@ import {
   computeSectorBounds,
   computeSectorSymmetricSpan,
   computeSectorWidths,
+  cullOverlappingLabels,
+  fitSpanToDots,
   subdivideWedge,
 } from "../radial-wheel-geometry";
 
@@ -349,5 +351,54 @@ describe("calculateWheelRadiusForAngles", () => {
     const wraparoundGapDeg = 360 - 200;
     const chordAcrossWraparound = 2 * radius * Math.sin((wraparoundGapDeg * Math.PI) / 360);
     expect(chordAcrossWraparound).toBeGreaterThanOrEqual(350);
+  });
+});
+
+describe("fitSpanToDots", () => {
+  it("returns the slice unchanged when the half-step already covers the dot", () => {
+    expect(fitSpanToDots(60, 3, 1000, 10)).toBe(60);
+  });
+
+  it("returns the slice unchanged for a single leaf", () => {
+    expect(fitSpanToDots(2, 1, 1000, 10)).toBe(2);
+  });
+
+  it("shrinks the span so the edge dot just touches the slice bound", () => {
+    const slice = 6;
+    const n = 17;
+    const span = fitSpanToDots(slice, n, 1000, 20);
+    const insetDeg = (Math.asin(20 / 1000) * 180) / Math.PI;
+    const edgeLeafDeg = -span / 2 + span / (2 * n);
+    expect(span).toBeLessThan(slice);
+    expect(edgeLeafDeg - insetDeg).toBeCloseTo(-slice / 2, 9);
+  });
+});
+
+describe("cullOverlappingLabels", () => {
+  const box = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });
+  const farDot = (i: number) => box(1000 + i * 10, 1000, 1005 + i * 10, 1005);
+
+  it("keeps the higher-priority label of a colliding pair", () => {
+    const hidden = cullOverlappingLabels([
+      { id: "low", label: box(0, 0, 50, 10), dot: farDot(0), priority: 1 },
+      { id: "high", label: box(20, 0, 70, 10), dot: farDot(1), priority: 5 },
+    ]);
+    expect([...hidden]).toEqual(["low"]);
+  });
+
+  it("keeps both labels when they are disjoint", () => {
+    const hidden = cullOverlappingLabels([
+      { id: "a", label: box(0, 0, 50, 10), dot: farDot(0), priority: 1 },
+      { id: "b", label: box(0, 20, 50, 30), dot: farDot(1), priority: 1 },
+    ]);
+    expect(hidden.size).toBe(0);
+  });
+
+  it("hides a label covering another node's dot", () => {
+    const hidden = cullOverlappingLabels([
+      { id: "a", label: box(0, 0, 50, 10), dot: farDot(0), priority: 9 },
+      { id: "b", label: box(0, 100, 50, 110), dot: box(10, 2, 16, 8), priority: 1 },
+    ]);
+    expect([...hidden]).toEqual(["a"]);
   });
 });

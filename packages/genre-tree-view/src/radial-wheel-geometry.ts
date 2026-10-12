@@ -173,3 +173,47 @@ export function calculateWheelRadiusForAngles(angles: number[], maxChipWidth: nu
   const requiredRadius = (maxChipWidth + CHIP_GAP) / (2 * Math.sin((minGapDeg * Math.PI) / 360));
   return Math.max(baseRadius, requiredRadius);
 }
+
+/** Span (degrees) to hand d3.tree so no dot of radius `maxDotRadius`, at radius `minRadius` or
+ * beyond, spills past its `sliceSpanDeg` slice. With `.separation(() => 1)` leaves sit evenly,
+ * the edge leaf half a step inside the slice; that half step is already the minimal margin unless
+ * it's smaller than the dot's own angular half-width, in which case the span shrinks just enough
+ * for the edge dot to touch the slice bound. */
+export function fitSpanToDots(sliceSpanDeg: number, leafCount: number, minRadius: number, maxDotRadius: number): number {
+  if (leafCount <= 1 || minRadius <= maxDotRadius) return sliceSpanDeg;
+  const insetDeg = (Math.asin(maxDotRadius / minRadius) * 180) / Math.PI;
+  if (sliceSpanDeg / (2 * leafCount) >= insetDeg) return sliceSpanDeg;
+  return Math.max(0, ((sliceSpanDeg - 2 * insetDeg) * leafCount) / (leafCount - 1));
+}
+
+export interface Box {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface LabelCullItem {
+  id: string;
+  label: Box;
+  dot: Box;
+  priority: number;
+}
+
+const boxesOverlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/** Ids whose label must be hidden: greedily keeps labels by descending priority, hiding any that
+ * overlaps an already-kept label or any other node's dot. */
+// ponytail: O(n²) pairwise scan, add a grid index if a wheel ever gets big enough to show in profiles.
+export function cullOverlappingLabels(items: LabelCullItem[]): Set<string> {
+  const hidden = new Set<string>();
+  const kept: Box[] = [];
+  for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
+    const collides =
+      kept.some((box) => boxesOverlap(item.label, box)) ||
+      items.some((other) => other.id !== item.id && boxesOverlap(item.label, other.dot));
+    if (collides) hidden.add(item.id);
+    else kept.push(item.label);
+  }
+  return hidden;
+}
