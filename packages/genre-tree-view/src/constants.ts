@@ -253,14 +253,16 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
   return Math.round(HEIGHT * ratio);
 }
 
-export const NODE_DOT_MIN_RADIUS = 6;
+export const NODE_DOT_MIN_RADIUS = 3;
 export const NODE_DOT_MAX_RADIUS = 20;
 export const NODE_DOT_LABEL_GAP = 6;
 
-/** Radius of a radial-wheel subgenre dot, on the same log scale as calculateNodeDimensions. */
+/** Radius of a radial-wheel subgenre dot: area proportional to its track count (radius ∝ √count),
+ * the range's max getting NODE_DOT_MAX_RADIUS. Floored at NODE_DOT_MIN_RADIUS so near-empty
+ * genres stay visible and hoverable. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
-  const t = logarithmicPosition(itemCount, range);
-  return Math.round(NODE_DOT_MIN_RADIUS + t * (NODE_DOT_MAX_RADIUS - NODE_DOT_MIN_RADIUS));
+  if (range.max <= 0) return NODE_DOT_MIN_RADIUS;
+  return Math.max(NODE_DOT_MIN_RADIUS, NODE_DOT_MAX_RADIUS * Math.sqrt(itemCount / range.max));
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in

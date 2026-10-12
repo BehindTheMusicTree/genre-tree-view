@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   getGenreTreeColor,
   calculateNodeDimensions,
+  calculateNodeDotRadius,
+  NODE_DOT_MIN_RADIUS,
+  NODE_DOT_MAX_RADIUS,
   calculateLinkWidth,
   LINK_TO_NODE_HEIGHT_RATIO,
   getItemCountRange,
@@ -86,5 +89,21 @@ describe("calculateNodeDimensions", () => {
     const range = { min: 50, max: 10000 };
     const dims = calculateNodeDimensions(500, range);
     expect(dims.WIDTH).toBeGreaterThan(MIN_NODE_WIDTH + (MAX_NODE_WIDTH - MIN_NODE_WIDTH) * 0.3);
+  });
+});
+
+describe("calculateNodeDotRadius", () => {
+  const range = { min: 0, max: 400 };
+
+  it("makes dot area proportional to track count", () => {
+    const r100 = calculateNodeDotRadius(100, range);
+    const r400 = calculateNodeDotRadius(400, range);
+    expect(r400).toBe(NODE_DOT_MAX_RADIUS);
+    expect((r400 / r100) ** 2).toBeCloseTo(4, 9);
+  });
+
+  it("floors near-empty genres at the minimum radius", () => {
+    expect(calculateNodeDotRadius(0, range)).toBe(NODE_DOT_MIN_RADIUS);
+    expect(calculateNodeDotRadius(0, { min: 0, max: 0 })).toBe(NODE_DOT_MIN_RADIUS);
   });
 });
