@@ -430,10 +430,13 @@ export function renderPopSubtree(
   const nodeFill = isCoreSector
     ? rootColor
     : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
-  const linkColor = tintSurface(
-    rootColor,
-    isCoreSector ? RADIAL_CORE_LINK_TINT_RATIO : RADIAL_POP_LINK_TINT_RATIO,
-  );
+  // The center's white rootColor would tint its links to white, invisible on the white wheel.
+  const linkColor = isMainstreamSector
+    ? TEXT_COLOR
+    : tintSurface(
+        rootColor,
+        isCoreSector ? RADIAL_CORE_LINK_TINT_RATIO : RADIAL_POP_LINK_TINT_RATIO,
+      );
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
   const drawnNodes = skipRootNode

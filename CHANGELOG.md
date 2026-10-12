@@ -7,6 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Radial pop/core wheel: the center Mainstream Pop subtree's links are now black instead of
+  white-on-white (they tinted its white root color, so the branches were invisible).
 - Radial pop/core wheel: subgenres in narrow sectors (e.g. Reggae) no longer overlap. Each branch
   now uses its full sector, replacing the fixed 4° `WEDGE_SECTOR_GUTTER_DEGREES` gutter (removed).
 - Radial wheels size root sectors and branch slices by measured angular need (each dot's real arc
