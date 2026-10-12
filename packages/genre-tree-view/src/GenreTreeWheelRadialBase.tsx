@@ -125,7 +125,7 @@ export function WheelRadialCore({
   const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (node: GenreTreeNode) =>
-    getGenreTreeColor(index.rootIdById.get(node.id) ?? node.id);
+    getGenreTreeColor(index.byId.get(index.rootIdById.get(node.id) ?? node.id)?.wikidataId);
 
   const [topRootId, setTopRootId] = useState<string | null>(
     groups[0]?.root.id ?? null,
@@ -380,7 +380,7 @@ export function WheelRadialCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(rootId),
+          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -422,6 +422,7 @@ export function WheelRadialCore({
       });
     });
   }, [
+    index.byId,
     coreHierarchyByRootId,
     wheelRadius,
     rootAngleByRootId,
@@ -502,7 +503,7 @@ export function WheelRadialCore({
         start: angle - width / 2,
         clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(
-          getGenreTreeColor(group.root.id),
+          getGenreTreeColor(group.root.wikidataId),
           ROOT_SECTOR_FILL_OPACITY,
         ),
       };
@@ -592,7 +593,7 @@ export function WheelRadialCore({
               const slot = layout[index];
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
-              const chipColor = getGenreTreeColor(group.root.id);
+              const chipColor = getGenreTreeColor(group.root.wikidataId);
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;

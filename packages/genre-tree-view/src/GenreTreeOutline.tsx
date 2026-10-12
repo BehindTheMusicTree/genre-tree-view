@@ -111,7 +111,7 @@ function buildOutlineModel(nodes: readonly GenreTreeNode[], index: TreeIndex): O
       return { fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO), textColor: TEXT_COLOR };
     }
     if (detachedRootIds.has(rootId)) return { fill: TEXT_MUTED_COLOR, textColor: TEXT_COLOR };
-    const rootColor = getGenreTreeColor(rootId);
+    const rootColor = getGenreTreeColor(index.byId.get(rootId)?.wikidataId);
     return {
       fill: popNodeIds.has(node.id) ? tintSurface(rootColor, POP_SECTOR_TINT_RATIO) : rootColor,
       textColor: ACCENT_TEXT_COLOR,

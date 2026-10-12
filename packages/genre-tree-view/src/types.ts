@@ -14,6 +14,9 @@ export interface GenreTreeNode {
   /** A root kept apart from the tree (e.g. an uncategorized bucket). Only interpreted by
    * GenreTreeOutline, which lists it in its own section after the tree. */
   detached?: boolean;
+  /** Stable genre key (a wikidata QID or a synthetic "LOCAL:" key). Read on root nodes only, to
+   * pick the root's fixed color (see getGenreTreeColor). */
+  wikidataId?: string | null;
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";

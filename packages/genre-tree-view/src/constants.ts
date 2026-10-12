@@ -62,8 +62,8 @@ export const DEFAULT_NODE_COLOR = "#4F46E5";
 // entry) single out this specific root by name and throw if it's missing.
 export const CENTER_NODE_NAME = "Mainstream Pop";
 
-// Per-tree accent-dot palette (only rendered when PER_TREE_ACCENT_DOT is true) used to
-// derive a consistent per-tree color from a seed string (see getGenreTreeColor).
+// Placeholder palette cycled where no real root exists (GenreTreeWheelSkeleton); real roots use
+// ROOT_GENRE_COLORS.
 export const TREE_COLORS = [
   "#4F46E5", // Indigo
   "#0D9488", // Teal
@@ -90,7 +90,7 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
 // rather than competing with them for attention.
 export const ROOT_SECTOR_FILL_OPACITY = 0.15;
 
-/** Converts an opaque "#RRGGBB" color (e.g. a TREE_COLORS entry) to an "rgba()" string at
+/** Converts an opaque "#RRGGBB" color (e.g. a ROOT_GENRE_COLORS entry) to an "rgba()" string at
  * `opacity` (0-1) — unlike tintSurface, which stays opaque by blending toward a fixed background,
  * this produces a true transparent fill for layering over arbitrary content (e.g. a wheel's
  * sector-fill wash, which sits behind chips/dividers/subtrees of varying color). */
@@ -99,16 +99,28 @@ export function hexToRgba(hex: string, opacity: number): string {
   return `rgba(${channel(1)}, ${channel(3)}, ${channel(5)}, ${opacity})`;
 }
 
-/** Deterministically maps a seed string (e.g. a root node id) to a color in the default palette. */
-export function getGenreTreeColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  const index = Math.abs(hash) % TREE_COLORS.length;
-  return TREE_COLORS[index];
+// Fixed per-root colors keyed by the root's wikidata id (a QID or a synthetic "LOCAL:" key), so a
+// genre keeps its color across environments and renames. Mainstream Pop (Q37073) is deliberately
+// absent: the pop-core layouts render it white at the center.
+export const ROOT_GENRE_COLORS: Readonly<Record<string, string>> = {
+  "LOCAL:blues-rock": "#DC2626", // Red
+  "LOCAL:reggae-dub": "#16A34A", // Green
+  "LOCAL:disco-funk": "#7C3AED", // Violet
+  Q11401: "#B8860B", // Hip-hop, deep gold
+  Q9778: "#2563EB", // Electronic, blue
+  Q1583807: "#92400E", // Art music (classical), brown
+  Q8341: "#CA8A04", // Jazz, mustard
+  Q45981: "#4F46E5", // Rhythm and blues, indigo
+  Q43343: "#0D9488", // Folk, teal
+  Q54365: "#0891B2", // Ska, cyan
+  Q1640319: "#475569", // Experimental, slate
+};
+
+export const FALLBACK_ROOT_COLOR = "#6B7280";
+
+/** Maps a root node's wikidata id to its fixed color, or FALLBACK_ROOT_COLOR when unmapped/absent. */
+export function getGenreTreeColor(wikidataId: string | null | undefined): string {
+  return (wikidataId && ROOT_GENRE_COLORS[wikidataId]) || FALLBACK_ROOT_COLOR;
 }
 
 export interface Dimensions {

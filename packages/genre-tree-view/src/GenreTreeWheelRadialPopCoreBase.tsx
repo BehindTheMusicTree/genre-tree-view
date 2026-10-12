@@ -230,7 +230,7 @@ export function WheelRadialPopCoreCore({
         };
       }
       const rootId = index.rootIdById.get(node.id) ?? node.id;
-      const rootColor = getGenreTreeColor(rootId);
+      const rootColor = getGenreTreeColor(index.byId.get(rootId)?.wikidataId);
       return {
         fill: coreNodeIds.has(node.id)
           ? rootColor
@@ -633,7 +633,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(rootId),
+          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -712,7 +712,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(rootId),
+          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -820,6 +820,7 @@ export function WheelRadialPopCoreCore({
       );
     }
   }, [
+    index.byId,
     popHierarchyByRootId,
     coreHierarchyByRootId,
     coreRootCircleRadius,
@@ -907,7 +908,7 @@ export function WheelRadialPopCoreCore({
         start: angle - width / 2,
         clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(
-          getGenreTreeColor(group.root.id),
+          getGenreTreeColor(group.root.wikidataId),
           ROOT_SECTOR_FILL_OPACITY,
         ),
       };
@@ -1115,7 +1116,7 @@ export function WheelRadialPopCoreCore({
               const slot = layout[index];
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
-              const chipColor = getGenreTreeColor(group.root.id);
+              const chipColor = getGenreTreeColor(group.root.wikidataId);
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;

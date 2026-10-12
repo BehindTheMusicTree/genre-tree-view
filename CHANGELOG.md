@@ -5,8 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `wikidataId` on `GenreTreeNode` (a QID or synthetic `LOCAL:` key), read on root nodes.
+
 ### Changed
 
+- Root colors are now fixed per genre: `getGenreTreeColor` takes the root's `wikidataId` and looks
+  it up in `ROOT_GENRE_COLORS` (e.g. Blues/Rock red, Disco/Funk violet, hip-hop gold), falling back
+  to gray `FALLBACK_ROOT_COLOR`. Replaces the UUID hash into 8 colors, which collided at random
+  and differed between environments. Mainstream Pop stays white in the pop-core layouts.
 - `wheelZoom: "always"` (the default): a plain mouse wheel / trackpad scroll over the viewport now
   zooms at the cursor instead of panning, like Google Maps. Drag still pans; `"modifier"` mode is
   unchanged.
