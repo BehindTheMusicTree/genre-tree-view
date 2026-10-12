@@ -16,7 +16,8 @@ import {
   NODE_DOT_MAX_RADIUS,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
-  RADIAL_LINK_COLOR,
+  RADIAL_CORE_LINK_TINT_RATIO,
+  RADIAL_POP_LINK_TINT_RATIO,
   ROOT_BORDER_WIDTH,
   SELECTED_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
@@ -395,6 +396,10 @@ export function renderPopSubtree(
   const nodeFill = isCoreSector
     ? rootColor
     : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
+  const linkColor = tintSurface(
+    rootColor,
+    isCoreSector ? RADIAL_CORE_LINK_TINT_RATIO : RADIAL_POP_LINK_TINT_RATIO,
+  );
   // skipRootNode omits the hierarchy's own depth-0 node from the drawn cards — used for the center
   // "Pop" node's subtree, whose depth-0 node already renders as its own dedicated wheel chip.
   const drawnNodes = skipRootNode
@@ -468,7 +473,7 @@ export function renderPopSubtree(
       }),
     )
     .style("fill", "none")
-    .style("stroke", RADIAL_LINK_COLOR)
+    .style("stroke", linkColor)
     .style("stroke-width", (d) =>
       calculateLinkWidth(d.targetItemCount, itemCountRange),
     )

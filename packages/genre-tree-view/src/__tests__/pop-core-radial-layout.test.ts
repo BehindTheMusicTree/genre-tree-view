@@ -20,6 +20,9 @@ import {
   MAX_NODE_HEIGHT,
   getItemCountRange,
   NODE_DOT_MAX_RADIUS,
+  RADIAL_CORE_LINK_TINT_RATIO,
+  RADIAL_POP_LINK_TINT_RATIO,
+  tintSurface,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
@@ -388,6 +391,31 @@ describe("renderPopSubtree link rendering", () => {
       expect(strokeWidth).toBeGreaterThan(0);
       expect(d3.select(this).style("stroke")).not.toBe("none");
     });
+  });
+
+  it.each([
+    [false, RADIAL_POP_LINK_TINT_RATIO],
+    [true, RADIAL_CORE_LINK_TINT_RATIO],
+  ])("strokes links in a muted tint of the root color (isCoreSector %s)", (isCoreSector, ratio) => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      noopCallbacks,
+      getItemCountRange(nodes),
+      { isCoreSector },
+    );
+
+    expect(d3.color(svg.select("path.gtv-link").style("stroke"))?.formatHex()).toBe(
+      tintSurface("#123456", ratio),
+    );
   });
 
   it("renders the link to the max-itemCount node at MAX_NODE_HEIGHT × LINK_TO_NODE_HEIGHT_RATIO", () => {

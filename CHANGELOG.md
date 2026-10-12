@@ -16,6 +16,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Radial pop/core subgenre nodes are a colored dot (area proportional to its track count, `itemCount`) with a horizontal label
   beside it instead of a rectangle card. Labels that would collide are hidden and shown on hover.
   Ring root chips are unchanged.
+- Radial pop/core subtree links take a muted tint of their genre's color instead of neutral grey,
+  lighter on the pop side than the core side.
 
 ## [1.17.0] - 2026-10-12
 
