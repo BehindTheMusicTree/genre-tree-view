@@ -107,6 +107,10 @@ export function WheelCore({
       : "--gtv-wheel-chip-half-height";
 
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
+  const rootColorOf = (nodeId: string) => {
+    const rootId = findRootId(nodeId, nodes) ?? nodeId;
+    return getGenreTreeColor(nodes.find((n) => n.id === rootId)?.wikidataId);
+  };
 
   // The largest a chip can ever render is MAX_NODE_WIDTH (the root with the highest itemCount in
   // range always sits at the top of the scale — see calculateNodeDimensions), so that's the
@@ -234,7 +238,7 @@ export function WheelCore({
     () =>
       buildWheelSectorGradient(
         groups.map((group) =>
-          hexToRgba(getGenreTreeColor(group.root.id), ROOT_SECTOR_FILL_OPACITY),
+          hexToRgba(getGenreTreeColor(group.root.wikidataId), ROOT_SECTOR_FILL_OPACITY),
         ),
       ),
     [groups],
@@ -346,7 +350,7 @@ export function WheelCore({
                 orientation={treeOrientation}
                 hideRoot
                 interactive={false}
-                rootColor={getGenreTreeColor(selectedGroup.root.id)}
+                rootColor={getGenreTreeColor(selectedGroup.root.wikidataId)}
                 playingNodeId={playingNodeId}
                 playState={playState}
                 reparentingNodeId={reparentingNodeId}
@@ -418,7 +422,7 @@ export function WheelCore({
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
-              const chipColor = getGenreTreeColor(group.root.id);
+              const chipColor = getGenreTreeColor(group.root.wikidataId);
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;
@@ -547,18 +551,14 @@ export function WheelCore({
       {panel && (
         <InfoPanel
           node={panel.node}
-          fill={getGenreTreeColor(
-            findRootId(panel.node.id, nodes) ?? panel.node.id,
-          )}
+          fill={rootColorOf(panel.node.id)}
           textColor={ACCENT_TEXT_COLOR}
           parentNode={(() => {
             const parent = nodes.find((n) => n.id === panel.node.parentId);
             return parent
               ? {
                   node: parent,
-                  fill: getGenreTreeColor(
-                    findRootId(parent.id, nodes) ?? parent.id,
-                  ),
+                  fill: rootColorOf(parent.id),
                   textColor: ACCENT_TEXT_COLOR,
                 }
               : null;
@@ -566,9 +566,7 @@ export function WheelCore({
           childNodes={nodes
             .filter((n) => n.parentId === panel.node.id)
             .map((n) => {
-              const rootColor = getGenreTreeColor(
-                findRootId(n.id, nodes) ?? n.id,
-              );
+              const rootColor = rootColorOf(n.id);
               // This wheel's inner subtree always renders via <GenreTree hideRoot ... />, so every
               // visible node — including every child listed here — gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
@@ -576,7 +574,7 @@ export function WheelCore({
           ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
             (n): InfoPanelChild => ({
               node: n,
-              fill: getGenreTreeColor(findRootId(n.id, nodes) ?? n.id),
+              fill: rootColorOf(n.id),
               textColor: ACCENT_TEXT_COLOR,
             }),
           )}

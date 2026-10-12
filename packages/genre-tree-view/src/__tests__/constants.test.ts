@@ -5,7 +5,8 @@ import {
   calculateLinkWidth,
   LINK_TO_NODE_HEIGHT_RATIO,
   getItemCountRange,
-  TREE_COLORS,
+  ROOT_GENRE_COLORS,
+  FALLBACK_ROOT_COLOR,
   MIN_NODE_WIDTH,
   MAX_NODE_WIDTH,
   MIN_NODE_HEIGHT,
@@ -13,21 +14,19 @@ import {
 } from "../constants";
 
 describe("getGenreTreeColor", () => {
-  it("returns the same color for the same seed", () => {
-    expect(getGenreTreeColor("rock")).toBe(getGenreTreeColor("rock"));
+  it("returns the fixed color mapped to a root's wikidata id", () => {
+    expect(getGenreTreeColor("LOCAL:disco-funk")).toBe(ROOT_GENRE_COLORS["LOCAL:disco-funk"]);
   });
 
-  it("returns a color from the palette", () => {
-    expect(TREE_COLORS).toContain(getGenreTreeColor("jazz"));
+  it("falls back for an unmapped or missing wikidata id", () => {
+    expect(getGenreTreeColor("Q37073")).toBe(FALLBACK_ROOT_COLOR);
+    expect(getGenreTreeColor(null)).toBe(FALLBACK_ROOT_COLOR);
+    expect(getGenreTreeColor(undefined)).toBe(FALLBACK_ROOT_COLOR);
   });
 
-  it("handles an empty seed", () => {
-    expect(TREE_COLORS).toContain(getGenreTreeColor(""));
-  });
-
-  it("can pick different colors for different seeds", () => {
-    const colors = new Set(["a", "b", "c", "d", "e", "f", "g", "h", "i"].map((s) => getGenreTreeColor(s)));
-    expect(colors.size).toBeGreaterThan(1);
+  it("gives every mapped root a distinct color", () => {
+    const colors = Object.values(ROOT_GENRE_COLORS);
+    expect(new Set(colors).size).toBe(colors.length);
   });
 });
 
