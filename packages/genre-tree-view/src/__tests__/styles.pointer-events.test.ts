@@ -6,8 +6,7 @@ import { join } from "node:path";
 // layout/paint, so it can't reproduce the browser hit-testing bug this guards: unlike its inner
 // shapes, a root <svg> element hit-tests as an ordinary rectangle over its full box regardless of
 // paint, so an empty .gtv-wheel-pop-layer background silently swallowed clicks meant for
-// .gtv-wheel-middle-circle--collapsible underneath it (see GenreTreeWheelRadialPopCore's
-// click-to-collapse background). Asserting the stylesheet source directly is the only way this
+// the chips and layers underneath it. Asserting the stylesheet source directly is the only way this
 // suite can catch a regression where that pointer-events: none rule is edited away.
 const stylesCss = readFileSync(join(__dirname, "../styles.css"), "utf-8");
 
