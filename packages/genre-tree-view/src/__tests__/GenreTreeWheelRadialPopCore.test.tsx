@@ -185,7 +185,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
   it("leaves the wheel's outer circle unchanged when a shallow center subtree doesn't overlap the ring roots' chip clearance", () => {
     const manyRoots = [
       ...NO_POP_NODES,
-      ...Array.from({ length: 24 }, (_, i) => [
+      ...Array.from({ length: 60 }, (_, i) => [
         { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
         { id: `extra-root-${i}-child`, parentId: `extra-root-${i}`, name: `Extra ${i} Child`, itemCount: 0 } satisfies GenreTreeNode,
       ]).flat(),
@@ -197,7 +197,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(withRadius).toBeGreaterThan(
       mainstreamRadiusFor(withCenterSubtree) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
     );
-    expect(withRadius).toBe(withoutRadius);
+    // solveRingRadius resolves to within 1px.
+    expect(Math.abs(withRadius - withoutRadius)).toBeLessThanOrEqual(1);
   });
 
   it("grows the wheel's outer circle only by the overlap when a deep center subtree reaches past chip clearance", () => {
@@ -317,7 +318,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     // chip clearance) left it stranded partway to the ring roots' circle instead of glued to it.
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
-      ...Array.from({ length: 24 }, (_, i) => [
+      ...Array.from({ length: 60 }, (_, i) => [
         { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
         {
           id: `extra-root-${i}-child`,

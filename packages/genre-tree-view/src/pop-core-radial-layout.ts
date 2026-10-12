@@ -31,7 +31,6 @@ import {
 import {
   Box,
   cullOverlappingLabels,
-  fitSpanToDots,
 } from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -122,9 +121,8 @@ export function calculatePopSubtreeRadialExtent(
  * the wheel's own center — writes the result directly onto each node's `.x`/`.y`, mirroring how
  * tree-renderer.ts's setupTreeLayout overwrites a d3 hierarchy's laid-out coordinates in place.
  *
- * Angle spread across siblings/cousins uses d3's own tidy-tree balancing (`d3.tree()`), the same
- * technique the cartesian renderers rely on, just fed a 1-D angular size instead of a 2-D pixel
- * one. Radius is NOT taken from that layout's own y — every node's radius climbs INWARD from
+ * Angle spread across siblings/cousins uses d3's tidy-tree balancing (`d3.tree()`), with each
+ * neighbour gap measured from the two dots' real arc length on their ring (see `measureWedge`). Radius is NOT taken from that layout's own y — every node's radius climbs INWARD from
  * `coreRootCircleRadius` (the ring roots' own circle, where this branch's ring root chip sits) by
  * `POP_TREE_DEPTH_RADIAL_SPACING` per depth step, so the branch's own root (absolute depth
  * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH`) always lands exactly one depth step inside that circle
@@ -134,10 +132,8 @@ export function calculatePopSubtreeRadialExtent(
  * deepest node and the mainstream circle is absorbed there, not by moving the branch's own root
  * off the ring roots' circle.
  *
- * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES` but should be capped by the caller at the
- * root's own weight-proportional angular sector (see `computeSectorWidths`) when more ring roots
- * are present than that constant assumes — otherwise descendants near the wedge's edges can render
- * past the root's real sector, into a neighboring root's.
+ * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES`; the wheel passes each branch's slice of
+ * its root's sector, sized from `measureWedge` so the measured layout fills it edge to edge.
  *
  * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` — kept constant per depth step
  * regardless of how far out the wheel's own outer circle ends up sitting; it's the outer circle's
@@ -151,43 +147,81 @@ export function computePopRadialLayout(
   coreRootCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
   depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
+  itemCountRange?: ItemCountRange,
 ): D3Node {
-  const innermostRadius = getRadialDepthRadius(
-    -(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + hierarchy.height),
-    coreRootCircleRadius,
-    depthSpacing,
-  );
-  const fittedSpanDegrees = fitSpanToDots(
+  return layoutWedge(
+    d3Lib,
+    hierarchy,
+    wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
-    hierarchy.leaves().length,
-    innermostRadius,
-    NODE_DOT_MAX_RADIUS,
+    popRadiusOfDepth(coreRootCircleRadius, depthSpacing),
+    itemCountRange,
   );
-  const wedgeSpanRad = (fittedSpanDegrees * Math.PI) / 180;
-  const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
+}
 
-  const treeLayout = d3Lib
+const MIN_DOT_GAP = 8;
+
+/** Radius of a pop hierarchy's node at `depth`, climbing inward from the ring roots' circle. */
+export function popRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: number) {
+  return (depth: number) =>
+    getRadialDepthRadius(-(POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + depth), coreRootCircleRadius, depthSpacing);
+}
+
+/** Radius of a core hierarchy's node at `depth`, fanning outward from the ring roots' circle. */
+export function coreRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: number) {
+  return (depth: number) => getRadialDepthRadius(depth + 1, coreRootCircleRadius, depthSpacing);
+}
+
+/** Lays `hierarchy` out angularly with each pair of same-depth neighbours just far enough apart for
+ * their dots not to overlap on their own ring — a deeper (pop) ring is smaller, so its nodes need
+ * more angle each. Leaves each node's `.x` as its angle (rad) from the wedge's leading edge and
+ * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size. */
+export function measureWedge(
+  d3Lib: typeof import("d3"),
+  hierarchy: D3Node,
+  radiusOfDepth: (depth: number) => number,
+  itemCountRange?: ItemCountRange,
+): number {
+  const dotRadius = (d: D3Node) =>
+    itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
+  d3Lib
     .tree<GenreTreeNode>()
-    .size([wedgeSpanRad, 1])
-    .separation(() => 1);
-  treeLayout(hierarchy);
-
+    .nodeSize([1, 1])
+    .separation((a, b) => (dotRadius(a) + dotRadius(b) + MIN_DOT_GAP) / radiusOfDepth(a.depth))(hierarchy);
+  let min = Infinity;
+  let max = -Infinity;
   hierarchy.each((d) => {
-    const angleRad = wedgeCenterRad - wedgeSpanRad / 2 + d.x!;
-    // Negative depth walks getRadialDepthRadius inward from coreRootCircleRadius rather than
-    // outward from it — deliberate, not a sign error.
-    const depthStepsInwardFromCore = -(
-      POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + d.depth
-    );
-    const radius = getRadialDepthRadius(
-      depthStepsInwardFromCore,
-      coreRootCircleRadius,
-      depthSpacing,
-    );
+    const inset = (dotRadius(d) + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
+    min = Math.min(min, d.x! - inset);
+    max = Math.max(max, d.x! + inset);
+  });
+  hierarchy.each((d) => {
+    d.x = d.x! - min;
+  });
+  return max - min;
+}
+
+/** Measures `hierarchy` (see measureWedge), stretches or squeezes it to fill `wedgeSpanDegrees`
+ * centered on `wedgeCenterAngleDegrees`, and projects each node to cartesian x/y around the wheel's
+ * center at its depth's radius. */
+export function layoutWedge(
+  d3Lib: typeof import("d3"),
+  hierarchy: D3Node,
+  wedgeCenterAngleDegrees: number,
+  wedgeSpanDegrees: number,
+  radiusOfDepth: (depth: number) => number,
+  itemCountRange?: ItemCountRange,
+): D3Node {
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
+  const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
+  const scale = wedgeSpanRad / neededRad;
+  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - wedgeSpanRad / 2;
+  hierarchy.each((d) => {
+    const angleRad = wedgeStartRad + d.x! * scale;
+    const radius = radiusOfDepth(d.depth);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
-
   return hierarchy;
 }
 
@@ -200,7 +234,7 @@ export function computePopRadialLayout(
  * circle every ring root's pop hierarchy's absolute-depth-1 node lands on too, so the center
  * subtree's rings coincide with the ring roots' own absolute depth circles — spread around the
  * full circle proportional to each child's own subtree size (d3.tree's default separation, unlike
- * the wedge layout's forced-equal `.separation(() => 1)`); each deeper generation steps outward by
+ * the wedge layout's measured one); each deeper generation steps outward by
  * `depthSpacing`.
  */
 export function computeCenterRadialLayout(

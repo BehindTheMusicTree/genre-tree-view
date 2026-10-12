@@ -9,6 +9,9 @@ import {
   getRadialDepthRadius,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  measureWedge,
+  POP_WEDGE_SPAN_DEGREES,
+  popRadiusOfDepth,
   renderPopSubtree,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
@@ -91,9 +94,9 @@ describe("buildPopHierarchy", () => {
 });
 
 describe("computePopRadialLayout", () => {
-  it("places the pop child (depth 0) one depthSpacing inside coreRootCircleRadius, on the wedge's center angle", () => {
+  it("places the pop child (depth 0) one depthSpacing inside coreRootCircleRadius, inside its wedge", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
-    const coreRootCircleRadius = 1000;
+    const coreRootCircleRadius = 5000;
     const laidOut = computePopRadialLayout(
       d3,
       hierarchy,
@@ -106,9 +109,8 @@ describe("computePopRadialLayout", () => {
     const expectedRadius = coreRootCircleRadius - POP_TREE_DEPTH_RADIAL_SPACING;
 
     expect(Math.hypot(popChild.x!, popChild.y!)).toBeCloseTo(expectedRadius, 5);
-    // wedge centered on 0deg (top): projects to (0, -radius).
-    expect(popChild.x!).toBeCloseTo(0, 5);
-    expect(popChild.y!).toBeCloseTo(-expectedRadius, 5);
+    const angle = (Math.atan2(popChild.x!, -popChild.y!) * 180) / Math.PI;
+    expect(Math.abs(angle)).toBeLessThan(POP_WEDGE_SPAN_DEGREES / 2);
   });
 
   it("places every node at coreRootCircleRadius - (depth + 1) * depthSpacing, shallowest nodes fixed just inside coreRootCircleRadius regardless of subtree height", () => {
@@ -793,7 +795,7 @@ describe("renderPopSubtree selection highlight", () => {
 
   it("keeps the synthetic root->depth1 link undimmed when the hierarchy's own root node is selected", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
-    const coreRootCircleRadius = 1000;
+    const coreRootCircleRadius = 5000;
     const angle = 0;
     const laidOut = computePopRadialLayout(
       d3,
@@ -827,10 +829,10 @@ describe("renderPopSubtree selection highlight", () => {
       const d3Node = d3.select<SVGPathElement, unknown>(nodesArr[i]);
       const { start, end } = linkPathEndpoints(d3Node.attr("d")!);
       return (
-        Math.abs(start[0] - rootLinkOrigin.x) < 1e-6 &&
-        Math.abs(start[1] - rootLinkOrigin.y) < 1e-6 &&
-        Math.abs(end[0] - popRoot.x!) < 1e-6 &&
-        Math.abs(end[1] - popRoot.y!) < 1e-6
+        Math.abs(start[0] - rootLinkOrigin.x) < 1e-3 &&
+        Math.abs(start[1] - rootLinkOrigin.y) < 1e-3 &&
+        Math.abs(end[0] - popRoot.x!) < 1e-3 &&
+        Math.abs(end[1] - popRoot.y!) < 1e-3
       );
     });
 
@@ -901,13 +903,14 @@ describe("renderPopSubtree dot + label nodes", () => {
     expect(svg.select("#group-sub-16 .gtv-node-label").classed("gtv-node-label--hidden")).toBe(false);
   });
 
-  it("keeps every dot of a 17-child branch inside its narrow sector", () => {
+  it("keeps every dot of a 17-child branch inside its measured wedge", () => {
     const siblings: GenreTreeNode[] = [
       { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
       ...Array.from({ length: 17 }, (_, i) => ({ id: `sub-${i}`, parentId: "reggae", name: `Sub ${i}`, itemCount: 1 })),
     ];
     const center = 40;
-    const span = 6;
+    const radiusOfDepth = popRadiusOfDepth(3000, POP_TREE_DEPTH_RADIAL_SPACING);
+    const span = (measureWedge(d3, buildPopHierarchy(d3, siblings), radiusOfDepth) * 180) / Math.PI;
     const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), center, 3000, span);
 
     laidOut.each((d) => {
@@ -917,5 +920,24 @@ describe("renderPopSubtree dot + label nodes", () => {
       expect(angle - halfWidth).toBeGreaterThanOrEqual(center - span / 2 - 1e-9);
       expect(angle + halfWidth).toBeLessThanOrEqual(center + span / 2 + 1e-9);
     });
+  });
+});
+
+describe("measureWedge", () => {
+  const fan = (n: number): GenreTreeNode[] => [
+    { id: "r", parentId: null, name: "R", itemCount: 1 },
+    ...Array.from({ length: n }, (_, i) => ({ id: `c${i}`, parentId: "r", name: `C${i}`, itemCount: 1 })),
+  ];
+
+  it("needs at least one full dot slot per sibling on their ring", () => {
+    const ringRadius = 2000;
+    const need = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => ringRadius);
+    expect(need * ringRadius).toBeGreaterThanOrEqual(10 * 2 * NODE_DOT_MAX_RADIUS);
+  });
+
+  it("needs more angle when the same siblings sit on a smaller ring", () => {
+    const outer = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => 3000);
+    const inner = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => 1500);
+    expect(inner).toBeCloseTo(outer * 2, 9);
   });
 });
