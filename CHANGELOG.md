@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `wheelZoom: "always"` (the default): a plain mouse wheel / trackpad scroll over the viewport now
+  zooms at the cursor instead of panning, like Google Maps. Drag still pans; `"modifier"` mode is
+  unchanged.
+
 ## [1.16.0] - 2026-10-06
 
 ### Added

@@ -54,8 +54,8 @@ export interface UsePanZoomResult {
 
 /**
  * One pan/zoom stage, anchored to `viewportRef` (the element whose bounding rect defines screen
- * space for cursor-anchored zoom and the zoom buttons' own center). Ctrl+wheel/pinch zooms at the
- * cursor; plain wheel pans; click-and-drag over empty background pans. All of it adjusts `panX`/
+ * space for cursor-anchored zoom and the zoom buttons' own center). Wheel/pinch zooms at the
+ * cursor (Google Maps style); click-and-drag over empty background pans. All of it adjusts `panX`/
  * `panY`/`zoomScale` state directly rather than any ancestor's scroll position, so a consumer
  * applying `transform` to one stage element never needs to keep multiple DOM subtrees in sync.
  *
@@ -291,8 +291,7 @@ export function usePanZoom(
       if ((event.target as Element).closest(".gtv-info-panel") !== null) {
         return;
       }
-      const isZoom = event.ctrlKey || (wheelZoom === "modifier" && event.metaKey);
-      if (wheelZoom === "modifier" && !isZoom) {
+      if (wheelZoom === "modifier" && !event.ctrlKey && !event.metaKey) {
         // A horizontal-dominant swipe has no page scroll to yield to — passing it through would
         // leave the tree un-pannable sideways and let macOS turn it into back/forward navigation.
         if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
@@ -302,29 +301,23 @@ export function usePanZoom(
         return;
       }
       event.preventDefault();
-      if (isZoom) {
-        const now = performance.now();
-        const wheelType = classifyWheelEvent(event.deltaY, now, wheelClassifierRef.current);
-        if (wheelType === "trackpad") {
-          // Trackpad ctrl+wheel/pinch already arrives as a continuous, high-frequency stream of
-          // small deltas — applying it instantly (like Google Maps/MapLibre do) tracks the
-          // gesture 1:1 with zero added latency. Easing *each* of these events (as the "wheel"
-          // branch below does) stacked a ~200ms lag behind every single one, which read as the
-          // trackpad path lagging noticeably behind Google Maps' own feel.
-          zoomAtPoint((current) => computeZoomScale(current, event.deltaY, minScaleRef.current), event.clientX, event.clientY);
-        } else {
-          // A physical wheel's notches are few and chunky (one big jump per click), so easing the
-          // glide between them reads as smooth rather than laggy.
-          animateZoomTo(
-            (current) => computeZoomScaleForButton(current, event.deltaY < 0 ? 1 : -1, minScaleRef.current),
-            event.clientX,
-            event.clientY,
-          );
-        }
+      const now = performance.now();
+      const wheelType = classifyWheelEvent(event.deltaY, now, wheelClassifierRef.current);
+      if (wheelType === "trackpad") {
+        // Trackpad scroll/pinch already arrives as a continuous, high-frequency stream of
+        // small deltas — applying it instantly (like Google Maps/MapLibre do) tracks the
+        // gesture 1:1 with zero added latency. Easing *each* of these events (as the "wheel"
+        // branch below does) stacked a ~200ms lag behind every single one, which read as the
+        // trackpad path lagging noticeably behind Google Maps' own feel.
+        zoomAtPoint((current) => computeZoomScale(current, event.deltaY, minScaleRef.current), event.clientX, event.clientY);
       } else {
-        const scale = zoomScaleRef.current;
-        setPanX((x) => clampPanAxis(x - event.deltaX, scale, "x"));
-        setPanY((y) => clampPanAxis(y - event.deltaY, scale, "y"));
+        // A physical wheel's notches are few and chunky (one big jump per click), so easing the
+        // glide between them reads as smooth rather than laggy.
+        animateZoomTo(
+          (current) => computeZoomScaleForButton(current, event.deltaY < 0 ? 1 : -1, minScaleRef.current),
+          event.clientX,
+          event.clientY,
+        );
       }
     };
 

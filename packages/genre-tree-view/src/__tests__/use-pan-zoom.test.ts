@@ -197,18 +197,19 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("defaults to wheelZoom \"always\": plain wheel pans and is preventDefault'ed, touchAction is none", () => {
+  it("defaults to wheelZoom \"always\": plain wheel zooms and is preventDefault'ed, touchAction is none", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     const { result } = renderHook(() => usePanZoom({ current: viewport }));
-    const event = new WheelEvent("wheel", { deltaY: 40, bubbles: true, cancelable: true });
+    const event = new WheelEvent("wheel", { deltaY: -2, clientX: 50, clientY: 50, bubbles: true, cancelable: true });
 
     act(() => {
       viewport.dispatchEvent(event);
     });
 
     expect(event.defaultPrevented).toBe(true);
-    expect(result.current.panY).toBe(-40);
+    expect(result.current.zoomScale).toBeGreaterThan(1);
     expect(result.current.touchAction).toBe("none");
     document.body.removeChild(viewport);
   });
@@ -260,20 +261,6 @@ describe("usePanZoom", () => {
     expect(result.current.panX).toBe(-30);
     expect(result.current.panY).toBe(0);
     expect(result.current.zoomScale).toBe(1);
-    document.body.removeChild(viewport);
-  });
-
-  it("wheelZoom \"always\" pans both axes on a horizontal-dominant plain wheel", () => {
-    const viewport = document.createElement("div");
-    document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
-
-    act(() => {
-      viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: 30, deltaY: 10, bubbles: true, cancelable: true }));
-    });
-
-    expect(result.current.panX).toBe(-30);
-    expect(result.current.panY).toBe(-10);
     document.body.removeChild(viewport);
   });
 
