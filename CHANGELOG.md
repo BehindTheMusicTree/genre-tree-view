@@ -5,6 +5,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-10-12
+
+### Added
+
+- `wikidataId` on `GenreTreeNode` (a QID or synthetic `LOCAL:` key), read on root nodes.
+
+### Changed
+
+- Root colors are now fixed per genre: `getGenreTreeColor` takes the root's `wikidataId` and looks
+  it up in `ROOT_GENRE_COLORS` (e.g. Blues/Rock red, Disco/Funk violet, hip-hop gold), falling back
+  to gray `FALLBACK_ROOT_COLOR`. Replaces the UUID hash into 8 colors, which collided at random
+  and differed between environments. Mainstream Pop stays white in the pop-core layouts.
+- `wheelZoom: "always"` (the default): a plain mouse wheel / trackpad scroll over the viewport now
+  zooms at the cursor instead of panning, like Google Maps. Drag still pans; `"modifier"` mode is
+  unchanged.
+- `GenreTreeWheelRadialPopCore`: the center "Mainstream Pop" subtree is always expanded. The
+  floating sub-genres toggle, center-chip toggle and click-to-collapse background are gone; the
+  center chip now centers on itself and opens the info panel like a ring root chip.
+- `GenreTreeWheelRadialPopCore`: the core root circle grows only when the center subtree would
+  actually overlap the ring roots' chip clearance, instead of always adding its full extent.
+
 ## [1.16.0] - 2026-10-06
 
 ### Added

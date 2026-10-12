@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { getGenreTreeColor } from "./constants";
+import { TREE_COLORS } from "./constants";
 
 // Card fill/border match the connector color (rather than GenreTreeSkeleton's lighter tokens) so
 // wheel nodes stay visible against this skeleton's own light background — see that file's comment
@@ -149,8 +149,8 @@ const ALL_RECTS: Rect[] = [
 ];
 
 // One color sector per chip, filling the background between the midpoints to its neighbors —
-// mirrors the real wheel's per-root color (getGenreTreeColor(rootId)), seeded by ring position
-// since the skeleton renders before any real genre id is known.
+// mirrors the real wheel's per-root color, cycled by ring position since the skeleton renders
+// before any real root is known.
 type Sector = { startAngle: number; endAngle: number; color: string };
 
 const WHEEL_CONTENT_RADIUS = (() => {
@@ -193,7 +193,7 @@ const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
   return {
     startAngle: (prevAngle + angle) / 2,
     endAngle: (angle + nextAngle) / 2,
-    color: getGenreTreeColor(`wheel-skeleton-sector-${i}`),
+    color: TREE_COLORS[i % TREE_COLORS.length],
   };
 });
 

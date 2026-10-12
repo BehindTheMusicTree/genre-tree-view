@@ -57,20 +57,16 @@ pnpm workspace with two members:
     `.gtv-wheel-chip-anchor`/`.gtv-wheel-chip` markup and styling as a ring root chip — for the
     root named exactly `"Mainstream Pop"` — required to exist among `nodes`, or the component
     throws — and that root (plus its own descendants, if any) is excluded from the ring's own
-    chips. The center "Mainstream Pop" node may have its own subtree: hidden by default, it
-    toggles open/closed either by clicking the center chip itself or via a dedicated floating
-    button stacked above the zoom controls in the bottom-right corner (both rendered only when the
-    center node has a subtree; local component state, not exposed via props) — clicking anywhere
-    in the expanded subtree's own empty background also collapses it back. When expanded, its direct
+    chips. The center "Mainstream Pop" node's own subtree, if any, is always expanded (no toggle); the
+    center chip clicks like a ring root chip (centers on it, opens the info panel). Its direct
     children spread around a full-circle invisible **mainstream pop root circle** proportional to
     each child's own subtree size, with deeper descendants radiating further out and staying
     within the **mainstream pop outer circle**, via `computeCenterRadialLayout` in
     `pop-core-radial-layout.ts` — the same node/link rendering (`renderPopSubtree`) as each ring
     root's pop wedge, just laid out over the full circle instead of one root's own sector. The
     wheel's own edge —
-    the **core root circle**, where ring root chips sit — grows to keep a gap past that subtree's
-    outer radius (`MAINSTREAM_POP_ROOT_CIRCLE_GAP` / `MAINSTREAM_POP_OUTER_CIRCLE_GAP` in
-    `constants.ts`).
+    the **core root circle**, where ring root chips sit — grows only when that subtree's outer radius plus half a max node width
+    (`MAX_NODE_WIDTH`) and `POP_SUBTREE_OUTER_MARGIN` would overlap the ring roots' chip clearance.
   - `GenreTreeWheel` and `GenreTreeWheelRight` share their rotation/mounting logic via
     `GenreTreeWheelBase.tsx`'s `WheelCore`, parameterized by a `direction` prop. `GenreTreeWheelRadial`
     and `GenreTreeWheelRadialPopCore` are separate, near-identical components (`WheelRadialCore` /
@@ -169,7 +165,8 @@ pnpm workspace with two members:
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
 - **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
-  to `usePanZoom`. In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant
+  to `usePanZoom`. In `"always"` mode any wheel over the viewport zooms at the cursor (drag pans).
+  In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant
   wheel without Ctrl/Meta is left un-`preventDefault`ed so the page scrolls, while a
   horizontal-dominant one pans X (and is `preventDefault`ed, blocking macOS swipe-back);
   `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each interactive renderer

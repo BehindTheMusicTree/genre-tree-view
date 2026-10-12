@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 const NODES: GenreTreeNode[] = [
-  { id: "root-a", parentId: null, name: "Rock", itemCount: 1 },
+  { id: "root-a", parentId: null, name: "Rock", itemCount: 1, wikidataId: "LOCAL:blues-rock" },
   { id: "a-core", parentId: "root-a", name: "Punk", itemCount: 3 },
   { id: "a-core-child", parentId: "a-core", name: "Hardcore", itemCount: 1 },
   { id: "a-pop", parentId: "root-a", name: "Pop Rock", itemCount: 2, side: "pop" },
@@ -66,8 +66,8 @@ describe("GenreTreeOutline", () => {
       probe.style.background = hex;
       return probe.style.background;
     };
-    expect(dot("a-core")).toBe(style(getGenreTreeColor("root-a")));
-    expect(dot("a-pop")).toBe(style(tintSurface(getGenreTreeColor("root-a"), POP_SECTOR_TINT_RATIO)));
+    expect(dot("a-core")).toBe(style(getGenreTreeColor("LOCAL:blues-rock")));
+    expect(dot("a-pop")).toBe(style(tintSurface(getGenreTreeColor("LOCAL:blues-rock"), POP_SECTOR_TINT_RATIO)));
     expect(dot("pop-child")).toBe(style(tintSurface("#ffffff", POP_SECTOR_TINT_RATIO)));
 
     fireEvent.click(nameButton(container, "a-pop"));

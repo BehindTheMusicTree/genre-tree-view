@@ -37,10 +37,13 @@ const WHEEL_TICK_DELTA = 4.000244140625;
 export interface WheelClassifierState {
   lastTime: number;
   lastType: "wheel" | "trackpad" | null;
+  /** True after a gesture's first ambiguous event, whose timeDelta is the gap since the previous
+   * gesture rather than a real event rate — the gesture's second event re-decides from its rate. */
+  provisional: boolean;
 }
 
 export function createWheelClassifierState(): WheelClassifierState {
-  return { lastTime: 0, lastType: null };
+  return { lastTime: 0, lastType: null, provisional: false };
 }
 
 /** Classifies a ctrl+wheel event as a physical mouse wheel (few large, quantized deltaY steps) or
@@ -59,10 +62,12 @@ export function classifyWheelEvent(deltaY: number, now: number, state: WheelClas
   } else if (Math.abs(deltaY) < 4) {
     // Definitely a trackpad: too small to be a real wheel notch.
     type = "trackpad";
-  } else if (timeDelta > 400 || !state.lastType) {
-    // New or unknown gesture: infer from delta-per-time — a fast trackpad still moves less per ms
-    // than a wheel notch does.
+  } else if (timeDelta > 400 || !state.lastType || state.provisional) {
+    // Infer from delta-per-time — a fast trackpad still moves less per ms than a wheel notch does.
+    // A new gesture's first event only gets a provisional guess (see `provisional`), as in
+    // MapLibre, which otherwise labels nearly every trackpad scroll "wheel" from its first event.
     type = Math.abs(timeDelta * deltaY) < 200 ? "trackpad" : "wheel";
+    state.provisional = timeDelta > 400 || !state.lastType;
   } else {
     // Ambiguous repeat within the same gesture: stay with whatever this gesture already is.
     type = state.lastType;
