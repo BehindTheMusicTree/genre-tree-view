@@ -115,6 +115,13 @@ describe("classifyWheelEvent", () => {
     expect(classifyWheelEvent(5, 10, state)).toBe("trackpad");
   });
 
+  it("re-decides a new gesture's provisional first event from the second event's rate", () => {
+    const state = createWheelClassifierState();
+    expect(classifyWheelEvent(10, 1000, state)).toBe("wheel");
+    expect(classifyWheelEvent(10, 1010, state)).toBe("trackpad");
+    expect(classifyWheelEvent(10, 1100, state)).toBe("trackpad");
+  });
+
   it("resets classification after a 400ms+ gap (new gesture) instead of sticking with the old type", () => {
     const state = createWheelClassifierState();
     expect(classifyWheelEvent(5, 0, state)).toBe("trackpad");

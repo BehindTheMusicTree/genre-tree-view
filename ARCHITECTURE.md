@@ -169,7 +169,8 @@ pnpm workspace with two members:
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
 - **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
-  to `usePanZoom`. In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant
+  to `usePanZoom`. In `"always"` mode any wheel over the viewport zooms at the cursor (drag pans).
+  In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant
   wheel without Ctrl/Meta is left un-`preventDefault`ed so the page scrolls, while a
   horizontal-dominant one pans X (and is `preventDefault`ed, blocking macOS swipe-back);
   `usePanZoom` returns `touchAction: "pan-y"` (else `"none"`), which each interactive renderer

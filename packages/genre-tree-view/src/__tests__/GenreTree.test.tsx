@@ -264,15 +264,15 @@ describe("GenreTree", () => {
       await waitFor(() => expect(getScale(transformDiv)).toBeGreaterThan(baseScale));
     });
 
-    it("ignores plain wheel scroll (no ctrlKey) and leaves the svg size unchanged", () => {
+    it("plain wheel (no ctrlKey) also scales the shared transform, like Google Maps", async () => {
       const { container } = render(<GenreTree nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
-      const svg = container.querySelector("svg") as SVGSVGElement;
-      const baseWidth = svg.getAttribute("width");
+      const transformDiv = getTransformDiv(container);
+      const baseScale = getScale(transformDiv);
 
-      fireEvent.wheel(wrapper, { ctrlKey: false, deltaY: -100 });
+      fireEvent.wheel(wrapper, { deltaY: -100, clientX: 50, clientY: 50 });
 
-      expect(svg.getAttribute("width")).toBe(baseWidth);
+      await waitFor(() => expect(getScale(transformDiv)).toBeGreaterThan(baseScale));
     });
 
     it("does not rescale when a zero delta resolves to the same clamped scale", () => {

@@ -197,18 +197,19 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("defaults to wheelZoom \"always\": plain wheel pans and is preventDefault'ed, touchAction is none", () => {
+  it("defaults to wheelZoom \"always\": plain wheel zooms and is preventDefault'ed, touchAction is none", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     const { result } = renderHook(() => usePanZoom({ current: viewport }));
-    const event = new WheelEvent("wheel", { deltaY: 40, bubbles: true, cancelable: true });
+    const event = new WheelEvent("wheel", { deltaY: -2, clientX: 50, clientY: 50, bubbles: true, cancelable: true });
 
     act(() => {
       viewport.dispatchEvent(event);
     });
 
     expect(event.defaultPrevented).toBe(true);
-    expect(result.current.panY).toBe(-40);
+    expect(result.current.zoomScale).toBeGreaterThan(1);
     expect(result.current.touchAction).toBe("none");
     document.body.removeChild(viewport);
   });
@@ -260,20 +261,6 @@ describe("usePanZoom", () => {
     expect(result.current.panX).toBe(-30);
     expect(result.current.panY).toBe(0);
     expect(result.current.zoomScale).toBe(1);
-    document.body.removeChild(viewport);
-  });
-
-  it("wheelZoom \"always\" pans both axes on a horizontal-dominant plain wheel", () => {
-    const viewport = document.createElement("div");
-    document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
-
-    act(() => {
-      viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: 30, deltaY: 10, bubbles: true, cancelable: true }));
-    });
-
-    expect(result.current.panX).toBe(-30);
-    expect(result.current.panY).toBe(-10);
     document.body.removeChild(viewport);
   });
 
@@ -370,7 +357,7 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("clamps plain wheel-panning so content can never be dragged fully out of view", () => {
+  it("clamps modifier-mode horizontal wheel-panning so content can never be dragged fully out of view", () => {
     const viewport = document.createElement("div");
     const content = document.createElement("div");
     document.body.appendChild(viewport);
@@ -384,7 +371,7 @@ describe("usePanZoom", () => {
     Object.defineProperty(viewport, "clientHeight", { value: 750, configurable: true });
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -395,27 +382,24 @@ describe("usePanZoom", () => {
     // that would otherwise carry panX/panY off to infinity.
     for (let i = 0; i < 50; i++) {
       act(() => {
-        viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: 1_000_000, deltaY: 1_000_000, bubbles: true }));
+        viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: 1_000_000, bubbles: true }));
       });
     }
 
-    const { panX, panY } = result.current;
+    const { panX } = result.current;
     const screenRight = panX + 3000 * zoomScale;
-    const screenBottom = panY + 4000 * zoomScale;
     // The content's trailing edge must never be dragged past PAN_MIN_VISIBLE_PX from the
     // viewport's leading edge — some part of the tree always stays visible and draggable back.
     expect(screenRight).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
-    expect(screenBottom).toBeGreaterThanOrEqual(PAN_MIN_VISIBLE_PX);
 
     for (let i = 0; i < 50; i++) {
       act(() => {
-        viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: -1_000_000, deltaY: -1_000_000, bubbles: true }));
+        viewport.dispatchEvent(new WheelEvent("wheel", { deltaX: -1_000_000, bubbles: true }));
       });
     }
 
     const opposite = result.current;
     expect(opposite.panX).toBeLessThanOrEqual(1200 - PAN_MIN_VISIBLE_PX);
-    expect(opposite.panY).toBeLessThanOrEqual(750 - PAN_MIN_VISIBLE_PX);
 
     document.body.removeChild(viewport);
     document.body.removeChild(content);
