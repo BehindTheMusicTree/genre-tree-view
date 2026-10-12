@@ -254,7 +254,7 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
 }
 
 export const NODE_DOT_MIN_RADIUS = 3;
-export const NODE_DOT_MAX_RADIUS = 20;
+export const NODE_DOT_MAX_RADIUS = 50;
 export const NODE_DOT_LABEL_GAP = 6;
 
 /** Radius of a radial-wheel subgenre dot: area proportional to its track count (radius ∝ √count),
