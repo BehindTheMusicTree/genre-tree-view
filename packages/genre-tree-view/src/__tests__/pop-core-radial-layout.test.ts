@@ -966,3 +966,24 @@ describe("measureWedge", () => {
     expect(inner).toBeCloseTo(outer * 2, 9);
   });
 });
+
+describe("computePopRadialLayout stretch cap", () => {
+  const fan: GenreTreeNode[] = [
+    { id: "r", parentId: null, name: "R", itemCount: 1 },
+    ...Array.from({ length: 5 }, (_, i) => ({ id: `c${i}`, parentId: "r", name: `C${i}`, itemCount: 1 })),
+  ];
+  const angles = (wedgeSpanDeg: number) => {
+    const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, fan), 90, 5000, wedgeSpanDeg);
+    return laidOut.leaves().map((d) => Math.atan2(d.x!, -d.y!));
+  };
+  const span = (a: number[]) => Math.max(...a) - Math.min(...a);
+
+  it("stops spreading siblings past MAX_WEDGE_STRETCH when the slice has far more room than they need", () => {
+    expect(span(angles(170))).toBeCloseTo(span(angles(160)), 9);
+  });
+
+  it("keeps the capped layout centered on the wedge center", () => {
+    const a = angles(170);
+    expect(((Math.max(...a) + Math.min(...a)) / 2) * (180 / Math.PI)).toBeCloseTo(90, 6);
+  });
+});

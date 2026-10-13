@@ -134,7 +134,7 @@ export function calculatePopSubtreeRadialExtent(
  * off the ring roots' circle.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES`; the wheel passes each branch's slice of
- * its root's sector, sized from `measureWedge` so the measured layout fills it edge to edge.
+ * its root's sector, sized from `measureWedge`; the layout fills it up to `MAX_WEDGE_STRETCH` (see layoutWedge).
  *
  * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` — kept constant per depth step
  * regardless of how far out the wheel's own outer circle ends up sitting; it's the outer circle's
@@ -202,9 +202,14 @@ export function measureWedge(
   return max - min;
 }
 
-/** Measures `hierarchy` (see measureWedge), stretches or squeezes it to fill `wedgeSpanDegrees`
- * centered on `wedgeCenterAngleDegrees`, and projects each node to cartesian x/y around the wheel's
- * center at its depth's radius. */
+// Cap on how far a wedge's measured layout may stretch to use slack in its slice: a uniform angular
+// stretch grows outer rings' arc gaps with their radius, so stretching to fill pushes deep siblings
+// far apart. Unused slack stays as empty gutter around the centered layout.
+export const MAX_WEDGE_STRETCH = 1.5;
+
+/** Measures `hierarchy` (see measureWedge), squeezes it to fit `wedgeSpanDegrees` or stretches it
+ * by at most `MAX_WEDGE_STRETCH`, centered on `wedgeCenterAngleDegrees`, and projects each node to
+ * cartesian x/y around the wheel's center at its depth's radius. */
 export function layoutWedge(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
@@ -215,8 +220,8 @@ export function layoutWedge(
 ): D3Node {
   const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
-  const scale = wedgeSpanRad / neededRad;
-  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - wedgeSpanRad / 2;
+  const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
+  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - (neededRad * scale) / 2;
   hierarchy.each((d) => {
     const angleRad = wedgeStartRad + d.x! * scale;
     const radius = radiusOfDepth(d.depth);
