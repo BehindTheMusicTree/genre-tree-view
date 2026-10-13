@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-10-13
+
+### Fixed
+
+- Radial pop/core wheel, zoomed in: `onNodeClick`, `onSelectedNodeChange` and toolbar callbacks
+  now receive the original node (real `parentId`) for the center and ring roots instead of the
+  layout copy re-rooted to `parentId: null`. A label-only center (focus with no pop child) is now
+  clickable, opening its info panel and toolbar. Changing `focusNodeId` from outside the wheel now
+  closes the open info panel, as the wheel's own zoom and back buttons already did.
+
 ## [1.19.0] - 2026-10-13
 
 ### Added
