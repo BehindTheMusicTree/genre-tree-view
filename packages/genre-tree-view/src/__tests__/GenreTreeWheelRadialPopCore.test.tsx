@@ -1201,5 +1201,79 @@ describe("GenreTreeWheelRadialPopCore", () => {
       fireEvent.click(getByRole("button", { name: "← Rock" }));
       expect(onFocusChange).toHaveBeenCalledWith("root-a");
     });
+
+    it("hands consumers the original nodes, with their real parentId, while zoomed", () => {
+      const onNodeClick = vi.fn();
+      const onSelectedNodeChange = vi.fn();
+      const onRenameRequest = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-a"
+          onNodeClick={onNodeClick}
+          onSelectedNodeChange={onSelectedNodeChange}
+          onRenameRequest={onRenameRequest}
+        />,
+      );
+
+      fireEvent.click(chipFor(container, "Punk"));
+      const punk = expect.objectContaining({ id: "a-core", parentId: "root-a" });
+      expect(onNodeClick).toHaveBeenLastCalledWith(punk, expect.anything());
+      expect(onSelectedNodeChange).toHaveBeenLastCalledWith(punk);
+
+      const punkAnchor = within(chipFor(container, "Punk").closest(".gtv-wheel-chip-anchor") as HTMLElement);
+      fireEvent.click(punkAnchor.getByRole("button", { name: "More actions" }));
+      fireEvent.click(punkAnchor.getByRole("button", { name: "Rename" }));
+      expect(onRenameRequest).toHaveBeenCalledWith(punk);
+
+      fireEvent.click(chipFor(container, "Pop Rock"));
+      const popRock = expect.objectContaining({ id: "a-pop", parentId: "root-a" });
+      expect(onNodeClick).toHaveBeenLastCalledWith(popRock, expect.anything());
+      expect(onSelectedNodeChange).toHaveBeenLastCalledWith(popRock);
+    });
+
+    it("keeps a label-only center selectable without drawing the pop disc", () => {
+      const onNodeClick = vi.fn();
+      const onAddChild = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="a-core"
+          onNodeClick={onNodeClick}
+          onAddChild={onAddChild}
+        />,
+      );
+      expect(container.querySelector(".gtv-wheel-chip--center")).toBeNull();
+
+      const centerAnchor = within(container.querySelector(".gtv-wheel-center-node") as HTMLElement);
+      fireEvent.click(centerAnchor.getByRole("button", { name: "Punk" }));
+      expect(onNodeClick).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "a-core", parentId: "root-a" }),
+        expect.anything(),
+      );
+      expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+
+      fireEvent.click(centerAnchor.getByRole("button", { name: "Add sub-genre" }));
+      expect(onAddChild).toHaveBeenCalledWith("a-core");
+    });
+
+    it("closes the info panel when the consumer changes focusNodeId", () => {
+      const onSelectedNodeChange = vi.fn();
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onSelectedNodeChange={onSelectedNodeChange} />,
+      );
+      fireEvent.click(chipFor(container, "Rock"));
+      expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-b"
+          onSelectedNodeChange={onSelectedNodeChange}
+        />,
+      );
+      expect(container.querySelector(".gtv-info-panel")).toBeNull();
+      expect(onSelectedNodeChange).toHaveBeenLastCalledWith(null);
+    });
   });
 });
