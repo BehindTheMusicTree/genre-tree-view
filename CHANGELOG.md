@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.19.2] - 2026-10-13
+
 ### Fixed
 
 - Radial pop/core wheel: a `focusNodeId` the zoom buttons can't produce (unknown id, pop-side
