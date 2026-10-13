@@ -3,8 +3,6 @@
 // swapped by editing only these values.
 export const SURFACE_FILL = "#FFFFFF";
 export const SURFACE_BORDER_COLOR = "#E4E4E7";
-export const SURFACE_BORDER_WIDTH = 1;
-export const ROOT_BORDER_WIDTH = 1;
 export const CORNER_RADIUS = 8;
 export const ELEVATION = false;
 
@@ -27,7 +25,7 @@ export const ACCENT_TEXT_COLOR = "#FFFFFF";
 // while every other node dims (see .gtv-node--dimmed in styles.css) — reuses ACCENT_COLOR
 // rather than a separate color so the highlight reads as the same "accent" language as the
 // reparent-target overlay (NodeHelper.tsx).
-export const SELECTED_BORDER_WIDTH = 2.5;
+export const SELECTED_BORDER_WIDTH_RATIO = 2.5;
 
 // Tokens for the toolbar's inline icon row and its overflow menu — reuse the surface/text/
 // accent tokens above so both read as part of the same light, neutral card language.
@@ -229,6 +227,17 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
     WIDTH: Math.round(MIN_NODE_WIDTH + t * (MAX_NODE_WIDTH - MIN_NODE_WIDTH)),
     HEIGHT: Math.round(MIN_NODE_HEIGHT + t * (MAX_NODE_HEIGHT - MIN_NODE_HEIGHT)),
   };
+}
+
+export const NODE_MIN_BORDER_WIDTH = 1;
+export const NODE_MAX_BORDER_WIDTH = 4;
+
+/** Border width of a node (card or dot), on the same log scale as its size; the selected node's
+ * is SELECTED_BORDER_WIDTH_RATIO times heavier so it stays the thickest at any size. */
+export function calculateNodeBorderWidth(itemCount: number, range: ItemCountRange, selected = false): number {
+  const width =
+    NODE_MIN_BORDER_WIDTH + logarithmicPosition(itemCount, range) * (NODE_MAX_BORDER_WIDTH - NODE_MIN_BORDER_WIDTH);
+  return selected ? width * SELECTED_BORDER_WIDTH_RATIO : width;
 }
 
 export const LINK_TO_NODE_HEIGHT_RATIO = 1 / 6;

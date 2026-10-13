@@ -17,6 +17,10 @@ import {
   NODE_DOT_MAX_RADIUS,
   calculateLinkWidth,
   LINK_TO_NODE_HEIGHT_RATIO,
+  calculateNodeBorderWidth,
+  NODE_MIN_BORDER_WIDTH,
+  NODE_MAX_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH_RATIO,
   getItemCountRange,
   ROOT_GENRE_COLORS,
   FALLBACK_ROOT_COLOR,
@@ -60,6 +64,17 @@ describe("calculateLinkWidth", () => {
     expect(calculateLinkWidth(10, range)).toBeCloseTo(MIN_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
     expect(calculateLinkWidth(10000, range)).toBeCloseTo(MAX_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
     expect(calculateLinkWidth(5, { min: 5, max: 5 })).toBeCloseTo(MIN_NODE_HEIGHT * LINK_TO_NODE_HEIGHT_RATIO, 5);
+  });
+});
+
+describe("calculateNodeBorderWidth", () => {
+  it("spans min to max border width over the range, scaled up when selected", () => {
+    const range = { min: 10, max: 10000 };
+    expect(calculateNodeBorderWidth(10, range)).toBe(NODE_MIN_BORDER_WIDTH);
+    expect(calculateNodeBorderWidth(10000, range)).toBe(NODE_MAX_BORDER_WIDTH);
+    expect(calculateNodeBorderWidth(500, range)).toBeGreaterThan(NODE_MIN_BORDER_WIDTH);
+    expect(calculateNodeBorderWidth(500, range)).toBeLessThan(NODE_MAX_BORDER_WIDTH);
+    expect(calculateNodeBorderWidth(10, range, true)).toBe(NODE_MIN_BORDER_WIDTH * SELECTED_BORDER_WIDTH_RATIO);
   });
 });
 

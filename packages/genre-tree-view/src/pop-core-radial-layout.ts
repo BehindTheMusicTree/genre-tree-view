@@ -18,14 +18,12 @@ import {
   POP_TREE_DEPTH_RADIAL_SPACING,
   RADIAL_CORE_LINK_TINT_RATIO,
   RADIAL_POP_LINK_TINT_RATIO,
-  ROOT_BORDER_WIDTH,
-  SELECTED_BORDER_WIDTH,
   SURFACE_BORDER_COLOR,
-  SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
   calculateRootLabelFontSize,
   TEXT_MUTED_COLOR,
   calculateLinkWidth,
+  calculateNodeBorderWidth,
   calculateNodeDotRadius,
   calculateLabelFontSizeAtZoom,
   calculateLabelRank,
@@ -714,11 +712,7 @@ export function renderPopSubtree(
           : SURFACE_BORDER_COLOR,
     )
     .attr("stroke-width", (d) =>
-      isSelected(d)
-        ? SELECTED_BORDER_WIDTH
-        : isCoreSector
-          ? ROOT_BORDER_WIDTH
-          : SURFACE_BORDER_WIDTH,
+      calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
     )
     .style("pointer-events", "none");
 

@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Node borders (tree cards and radial wheel dots) now scale with track count on the same log
+  scale as node size, from 1px to 4px; the selected node's border stays 2.5× its own width.
+
 ### Fixed
 
 - Radial pop/core wheel: links from a root to its branches no longer paint over other branches'
