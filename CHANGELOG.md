@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Radial pop/core wheel: a `focusNodeId` the zoom buttons can't produce (unknown id, pop-side
+  node, Mainstream Pop or its subtree, a node with several pop children) no longer throws — the
+  wheel renders unfocused and calls `onFocusChange(null)` once. "Zoom in" is only offered on such
+  zoomable nodes, a rule now exported as `isZoomableNode(nodes, id)`. Selecting a node outside the
+  current zoom (e.g. from search) refocuses on its nearest zoomable ancestor, or all genres. A
+  label-only center's whole label is now clickable.
+
 ## [1.19.1] - 2026-10-13
 
 ### Fixed

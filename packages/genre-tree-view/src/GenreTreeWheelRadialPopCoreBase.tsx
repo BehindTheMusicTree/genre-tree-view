@@ -30,6 +30,7 @@ import {
   POP_SUBTREE_OUTER_MARGIN,
   POP_WEDGE_SPAN_DEGREES,
   renderPopSubtree,
+  type RootLabelDatum,
 } from "./pop-core-radial-layout";
 import {
   buildSectorClipPathPolygon,
@@ -46,7 +47,7 @@ import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { resolvePopCoreFrame } from "./pop-core-frame";
+import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -153,10 +154,21 @@ export function WheelRadialPopCoreCore({
   controlsOrientation = "vertical",
   allowWheelRotation = true,
   selectedNodeId,
-  focusNodeId = null,
+  focusNodeId: requestedFocusNodeId = null,
   onFocusChange,
 }: WheelRadialPopCoreProps) {
   const index = useTreeIndex(nodes);
+  // A focus the zoom buttons couldn't have produced (stale URL, deleted node, ...) renders the
+  // unfocused wheel and asks the consumer to reset it, instead of letting resolvePopCoreFrame throw.
+  const focusNodeId = useMemo(
+    () => (requestedFocusNodeId !== null && isZoomableNode(nodes, requestedFocusNodeId) ? requestedFocusNodeId : null),
+    [nodes, requestedFocusNodeId],
+  );
+  const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
+  useEffect(() => {
+    if (isFocusRejected) onFocusChange?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
+  }, [isFocusRejected, requestedFocusNodeId]);
   const { center: layoutCenterNode, centerHasPopDisc, centerNodes: centerSubtreeNodes, ringNodes } = useMemo(
     () => resolvePopCoreFrame(nodes, focusNodeId),
     [nodes, focusNodeId],
@@ -303,6 +315,7 @@ export function WheelRadialPopCoreCore({
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
+  const centerChipRef = useRef<HTMLButtonElement>(null);
   const regionLabelRef = useRef<HTMLDivElement>(null);
   // Stage-space (pre pan/zoom) position and font size of the current root's name, so it pans and
   // scales with the tree between re-placements.
@@ -903,8 +916,20 @@ export function WheelRadialPopCoreCore({
       }),
     ]);
     hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
+    // A label-only center's name usually spills past its invisible chip, so the label itself
+    // forwards clicks to the chip.
+    if (!centerHasPopDisc) {
+      originGroup
+        .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
+        .filter((d) => d.id === centerNode.id)
+        .select("text")
+        .style("pointer-events", "all")
+        .style("cursor", "pointer")
+        .on("click", () => centerChipRef.current?.click());
+    }
   }, [
     centerNode,
+    centerHasPopDisc,
     centerChipDiameter,
     groups,
     aggregatedRootItemCountById,
@@ -1055,6 +1080,18 @@ export function WheelRadialPopCoreCore({
   useEffect(() => {
     if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
     const targetNode = index.byId.get(selectedNodeId);
+    if (
+      targetNode &&
+      onFocusChange &&
+      !centerSubtreeNodeIds.has(selectedNodeId) &&
+      !ringRootById.has(selectedNodeId)
+    ) {
+      // Outside the current zoom (e.g. a search result): refocus on the nearest zoomable ancestor,
+      // whose frame holds its whole subtree; this effect re-runs once the new frame is drawn.
+      const ancestor = index.ancestorsOf(selectedNodeId).reverse().find((node) => isZoomableNode(nodes, node.id));
+      onFocusChange(ancestor?.id ?? null);
+      return;
+    }
     const element = viewportRef.current?.querySelector(
       `#group-${CSS.escape(selectedNodeId)}`,
     );
@@ -1066,7 +1103,7 @@ export function WheelRadialPopCoreCore({
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
-  }, [selectedNodeId, index, panel, showNodeInfo]);
+  }, [selectedNodeId, index, panel, showNodeInfo, centerSubtreeNodeIds, ringRootById]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its
@@ -1196,6 +1233,7 @@ export function WheelRadialPopCoreCore({
                 .join(" ")}
             >
               <button
+                ref={centerChipRef}
                 type="button"
                 className={[
                   "gtv-wheel-chip",
@@ -1448,7 +1486,7 @@ export function WheelRadialPopCoreCore({
           onZoomIn={
             onFocusChange &&
             groups.some((group) => group.root.id === panel.node.id) &&
-            index.childrenByParentId.has(panel.node.id)
+            isZoomableNode(nodes, panel.node.id)
               ? () => {
                   closeNodeInfo();
                   onFocusChange(panel.node.id);

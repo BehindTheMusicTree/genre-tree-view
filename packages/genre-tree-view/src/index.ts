@@ -10,6 +10,7 @@ export { GenreTreeOutlineSkeleton } from "./GenreTreeOutlineSkeleton";
 export { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
 export { getGenreTreeColor, DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT } from "./constants";
 export { groupNodesByRoot } from "./root-grouping";
+export { isZoomableNode } from "./pop-core-frame";
 export type {
   GenreTreeNode,
   GenreTreeProps,
