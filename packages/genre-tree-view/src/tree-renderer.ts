@@ -629,7 +629,14 @@ export function renderTree(
       // never changes the card's own filtered silhouette — the card's shadow must look identical
       // hovered or not.
       const labelColor = isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
+      addHoverNameLabel(
+        d3Lib,
+        d.data,
+        group,
+        itemCountRange,
+        labelColor,
+        calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
+      );
 
       addToolbarActions(
         d3Lib,

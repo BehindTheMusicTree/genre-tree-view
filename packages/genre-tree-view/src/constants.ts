@@ -233,7 +233,8 @@ export const NODE_MIN_BORDER_WIDTH = 1;
 export const NODE_MAX_BORDER_WIDTH = 4;
 
 /** Border width of a node (card or dot), on the same log scale as its size; the selected node's
- * is SELECTED_BORDER_WIDTH_RATIO times heavier so it stays the thickest at any size. */
+ * is SELECTED_BORDER_WIDTH_RATIO times its own width, so a selected small node can still be
+ * thinner than an unselected large one. */
 export function calculateNodeBorderWidth(itemCount: number, range: ItemCountRange, selected = false): number {
   const width =
     NODE_MIN_BORDER_WIDTH + logarithmicPosition(itemCount, range) * (NODE_MAX_BORDER_WIDTH - NODE_MIN_BORDER_WIDTH);
