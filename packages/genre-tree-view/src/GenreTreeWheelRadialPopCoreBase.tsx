@@ -157,10 +157,13 @@ export function WheelRadialPopCoreCore({
   onFocusChange,
 }: WheelRadialPopCoreProps) {
   const index = useTreeIndex(nodes);
-  const { center: centerNode, centerHasPopDisc, centerNodes: centerSubtreeNodes, ringNodes } = useMemo(
+  const { center: layoutCenterNode, centerHasPopDisc, centerNodes: centerSubtreeNodes, ringNodes } = useMemo(
     () => resolvePopCoreFrame(nodes, focusNodeId),
     [nodes, focusNodeId],
   );
+  // The frame rewrites a focused view's center/ring roots to parentId: null for layout only —
+  // anything handed to the consumer or the info panel gets the original node instead.
+  const centerNode = index.byId.get(layoutCenterNode.id)!;
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
@@ -174,12 +177,12 @@ export function WheelRadialPopCoreCore({
   // one. Unlike the ring roots, the center node's own pop branch (if any) has no dedicated wedge
   // rendering path today, so excluding it here also drops it from view entirely.
   const centerCoreSubtreeNodes = useMemo(() => {
-    if (!centerHasPopDisc) return [centerNode];
+    if (!centerHasPopDisc) return [layoutCenterNode];
     const { childrenByParentId } = index;
-    const coreChildren = (childrenByParentId.get(centerNode.id) ?? []).filter(
+    const coreChildren = (childrenByParentId.get(layoutCenterNode.id) ?? []).filter(
       (child) => child.side !== "pop",
     );
-    const subtree: GenreTreeNode[] = [centerNode];
+    const subtree: GenreTreeNode[] = [layoutCenterNode];
     const stack = [...coreChildren];
     while (stack.length > 0) {
       const current = stack.pop()!;
@@ -187,7 +190,7 @@ export function WheelRadialPopCoreCore({
       stack.push(...(childrenByParentId.get(current.id) ?? []));
     }
     return subtree;
-  }, [index, centerNode, centerHasPopDisc]);
+  }, [index, layoutCenterNode, centerHasPopDisc]);
 
   const centerSubtreeHierarchy = useMemo(
     () =>
@@ -270,6 +273,13 @@ export function WheelRadialPopCoreCore({
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
+  // A consumer-driven focus change (not the wheel's own zoom/back buttons, which already close the
+  // panel before calling onFocusChange) would otherwise leave the panel open on a node that may no
+  // longer be drawn.
+  useEffect(() => {
+    if (panel) closeNodeInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a focus change should close the panel
+  }, [focusNodeId]);
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -1176,7 +1186,6 @@ export function WheelRadialPopCoreCore({
             height={svgCanvasRadius * 2}
           />
 
-          {centerHasPopDisc && (
           <div className="gtv-wheel-center-node">
             <div
               className={[
@@ -1190,7 +1199,7 @@ export function WheelRadialPopCoreCore({
                 type="button"
                 className={[
                   "gtv-wheel-chip",
-                  "gtv-wheel-chip--center",
+                  centerHasPopDisc ? "gtv-wheel-chip--center" : "gtv-wheel-chip--label-only",
                   "gtv-wheel-chip--circle",
                 ]
                   .filter(Boolean)
@@ -1219,8 +1228,8 @@ export function WheelRadialPopCoreCore({
                 }}
                 aria-label={centerNode.name}
               >
-                {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                {showToolbar && (
+                {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
+                {showToolbar && centerHasPopDisc && (
                   <span
                     className="gtv-wheel-chip-hover-name"
                     style={{ fontSize: centerNodeFontSize }}
@@ -1262,8 +1271,6 @@ export function WheelRadialPopCoreCore({
             </div>
           </div>
 
-          )}
-
           <div className="gtv-wheel">
             {dividerAngles.map((angle, index) => (
               <div
@@ -1277,8 +1284,9 @@ export function WheelRadialPopCoreCore({
               />
             ))}
 
-            {groups.map((group, index) => {
-              const slot = layout[index];
+            {groups.map((group, groupIndex) => {
+              const slot = layout[groupIndex];
+              const root = index.byId.get(group.root.id)!;
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const chipColor = getGenreTreeColor(group.root.wikidataId);
@@ -1318,7 +1326,7 @@ export function WheelRadialPopCoreCore({
                         } as React.CSSProperties
                       }
                       aria-label={group.root.name}
-                      onPointerEnter={() => onNodeHover?.(group.root)}
+                      onPointerEnter={() => onNodeHover?.(root)}
                       onClick={(event) => {
                         panZoom.centerOnElement(
                           event.currentTarget,
@@ -1328,11 +1336,11 @@ export function WheelRadialPopCoreCore({
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
                           showNodeInfo(
-                            group.root,
+                            root,
                             event.currentTarget,
                             viewportRef.current,
                           );
-                          onNodeClick?.(group.root, event.nativeEvent);
+                          onNodeClick?.(root, event.nativeEvent);
                         }
                       }}
                     >
@@ -1361,7 +1369,7 @@ export function WheelRadialPopCoreCore({
                         onPointerDown={(event) => event.stopPropagation()}
                       >
                         <NodeToolbar
-                          node={group.root}
+                          node={root}
                           itemCount={aggregatedItemCount}
                           playingNodeId={playingNodeId}
                           playState={playState}
