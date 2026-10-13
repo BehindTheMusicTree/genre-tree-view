@@ -16,9 +16,6 @@ import {
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
   SURFACE_BORDER_COLOR,
-  SURFACE_BORDER_WIDTH,
-  ROOT_BORDER_WIDTH,
-  SELECTED_BORDER_WIDTH,
   CORNER_RADIUS,
   ELEVATION,
   TEXT_COLOR,
@@ -27,6 +24,7 @@ import {
   ACCENT_TEXT_COLOR,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
+  calculateNodeBorderWidth,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getItemCountRange,
@@ -549,11 +547,7 @@ export function renderTree(
       isSelected(d) ? ACCENT_COLOR : SURFACE_BORDER_COLOR,
     )
     .attr("stroke-width", (d) =>
-      isSelected(d)
-        ? SELECTED_BORDER_WIDTH
-        : d.depth === 0
-          ? ROOT_BORDER_WIDTH
-          : SURFACE_BORDER_WIDTH,
+      calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
     );
 
   nodes
@@ -635,7 +629,14 @@ export function renderTree(
       // never changes the card's own filtered silhouette — the card's shadow must look identical
       // hovered or not.
       const labelColor = isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
+      addHoverNameLabel(
+        d3Lib,
+        d.data,
+        group,
+        itemCountRange,
+        labelColor,
+        calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
+      );
 
       addToolbarActions(
         d3Lib,
