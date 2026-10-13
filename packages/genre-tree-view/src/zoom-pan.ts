@@ -1,19 +1,10 @@
 import {
-  LABEL_SCALE_MAX,
-  LABEL_SCALE_MIN,
   ZOOM_BUTTON_SCALE_STEP,
   ZOOM_MAX_SCALE,
-  ZOOM_FOCUS_SCALE,
   ZOOM_MIN_SCALE,
   ZOOM_WHEEL_MAX_EXPONENT,
   ZOOM_WHEEL_SCALE_SPEED,
 } from "./constants";
-
-/** Dot-label size factor (layout units) for `zoomScale`: 1 at ZOOM_FOCUS_SCALE, inversely
- * proportional to the zoom so labels hold their on-screen size, clamped to LABEL_SCALE_MIN..MAX. */
-export function computeLabelScale(zoomScale: number): number {
-  return Math.min(LABEL_SCALE_MAX, Math.max(LABEL_SCALE_MIN, ZOOM_FOCUS_SCALE / zoomScale));
-}
 
 /** `minScale` defaults to ZOOM_MIN_SCALE but accepts an override so manual zoom-out's floor can
  * be relaxed to match a "fit to frame" scale computed for content too large for the static

@@ -255,6 +255,22 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
   return Math.round(HEIGHT * ratio);
 }
 
+/** Layout-unit font size that renders a dot label at its on-screen size (LABEL_SCREEN_*_PX, log
+ * scale like calculateNodeFontSize) under `zoomScale`. */
+export function calculateLabelFontSizeAtZoom(itemCount: number, range: ItemCountRange, zoomScale: number): number {
+  const t = logarithmicPosition(itemCount, range);
+  return (LABEL_SCREEN_MIN_PX + t * (LABEL_SCREEN_MAX_PX - LABEL_SCREEN_MIN_PX)) / zoomScale;
+}
+
+/** Whether a dot label is important enough to be named at `zoomScale` (see
+ * LABEL_MIN_RANK_AT_MIN_ZOOM); the threshold falls linearly in log-zoom from ZOOM_MIN_SCALE to
+ * ZOOM_FOCUS_SCALE. */
+export function isLabelRankedForZoom(itemCount: number, range: ItemCountRange, zoomScale: number): boolean {
+  const zoomOut = Math.log(ZOOM_FOCUS_SCALE / zoomScale) / Math.log(ZOOM_FOCUS_SCALE / ZOOM_MIN_SCALE);
+  const minRank = Math.min(1, Math.max(0, zoomOut)) * LABEL_MIN_RANK_AT_MIN_ZOOM;
+  return logarithmicPosition(itemCount, range) >= minRank;
+}
+
 export const NODE_DOT_MIN_RADIUS = 3;
 export const NODE_DOT_MAX_RADIUS = 50;
 export const NODE_DOT_LABEL_GAP = 6;
@@ -336,11 +352,15 @@ export const ZOOM_FIT_PADDING = 40;
 // so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
 // 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
 export const ZOOM_FOCUS_SCALE = 0.2;
-// Bounds of the dot-label size factor computeLabelScale derives from the zoom: labels keep a
-// roughly constant on-screen size (map-style), so zooming out hides small labels and zooming in
-// brings them back, without labels growing huge when far out or vanishing when far in.
-export const LABEL_SCALE_MIN = 0.4;
-export const LABEL_SCALE_MAX = 3;
+// On-screen font size (px) of radial dot labels, smallest to biggest genre: labels keep this size
+// at every zoom like place names on a map, so zooming out hides small labels (bigger in layout
+// units, they collide more) and zooming in brings them back.
+export const LABEL_SCREEN_MIN_PX = 11;
+export const LABEL_SCREEN_MAX_PX = 22;
+// Minimum log-scaled itemCount position (0 = smallest genre, 1 = biggest) a label needs to be shown
+// at ZOOM_MIN_SCALE, easing to 0 at ZOOM_FOCUS_SCALE: like a map, a far-out view names only the
+// main genres even where smaller labels would fit.
+export const LABEL_MIN_RANK_AT_MIN_ZOOM = 0.6;
 // Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
 export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
 // Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer

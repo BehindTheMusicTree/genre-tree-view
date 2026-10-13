@@ -38,7 +38,7 @@ import {
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
-import { computeLabelScale, queryTreeContentElements } from "./zoom-pan";
+import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
@@ -282,10 +282,10 @@ export function WheelRadialPopCoreCore({
   useEffect(() => {
     onNodeHoverRef.current = onNodeHover;
   });
-  const labelScale = computeLabelScale(panZoom.zoomScale);
-  const labelScaleRef = useRef(labelScale);
+  const { zoomScale } = panZoom;
+  const zoomScaleRef = useRef(zoomScale);
   useEffect(() => {
-    labelScaleRef.current = labelScale;
+    zoomScaleRef.current = zoomScale;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
@@ -860,7 +860,7 @@ export function WheelRadialPopCoreCore({
       );
     }
 
-    hideCollidingLabels(d3, originGroup, wheelItemCountRange, labelScaleRef.current);
+    hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
   }, [
     index.byId,
     popHierarchyByRootId,
@@ -891,10 +891,10 @@ export function WheelRadialPopCoreCore({
   // like place names on a map — kept out of the render effect above, which must not re-mount on zoom.
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (popSvgRef.current) hideCollidingLabels(d3, d3.select(popSvgRef.current), wheelItemCountRange, labelScale);
+      if (popSvgRef.current) hideCollidingLabels(d3, d3.select(popSvgRef.current), wheelItemCountRange, zoomScale);
     }, LABEL_RELAYOUT_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [labelScale, wheelItemCountRange]);
+  }, [zoomScale, wheelItemCountRange]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once popSvgRef has actually rendered content, and never again

@@ -923,13 +923,13 @@ describe("renderPopSubtree dot + label nodes", () => {
     const range = getItemCountRange(siblings);
     const svg = createSvg();
     renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
-    hideCollidingLabels(d3, svg, range);
+    hideCollidingLabels(d3, svg, range, 1);
 
     expect(svg.selectAll(".gtv-node-label--hidden").size()).toBeGreaterThan(0);
     expect(svg.select("#group-sub-16 .gtv-node-label").classed("gtv-node-label--hidden")).toBe(false);
   });
 
-  it("names more nodes at a smaller label scale (zoomed in) than a larger one (zoomed out)", () => {
+  it("names more nodes zoomed in than zoomed out", () => {
     const siblings: GenreTreeNode[] = [
       { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
       ...Array.from({ length: 17 }, (_, i) => ({
@@ -942,13 +942,12 @@ describe("renderPopSubtree dot + label nodes", () => {
     const range = getItemCountRange(siblings);
     const svg = createSvg();
     renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
-    const hiddenAt = (labelScale: number) => {
-      hideCollidingLabels(d3, svg, range, labelScale);
+    const hiddenAt = (zoomScale: number) => {
+      hideCollidingLabels(d3, svg, range, zoomScale);
       return svg.selectAll(".gtv-node-label--hidden").size();
     };
 
-    expect(hiddenAt(0.4)).toBeLessThanOrEqual(hiddenAt(1));
-    expect(hiddenAt(1)).toBeLessThan(hiddenAt(3));
+    expect(hiddenAt(3)).toBeLessThan(hiddenAt(0.2));
   });
 
   it("keeps every dot of a 17-child branch inside its measured wedge", () => {

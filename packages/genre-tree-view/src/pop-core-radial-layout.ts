@@ -26,7 +26,9 @@ import {
   TEXT_MUTED_COLOR,
   calculateLinkWidth,
   calculateNodeDotRadius,
+  calculateLabelFontSizeAtZoom,
   calculateNodeFontSize,
+  isLabelRankedForZoom,
   tintSurface,
 } from "./constants";
 import {
@@ -359,13 +361,14 @@ export interface DotLabelCandidate {
  * the label's possible spots in preference order (see hideCollidingLabels): beside the dot facing
  * away from the wheel's vertical axis (right of the dot when `x >= 0`, left otherwise, so it never
  * reads across the wheel's center), then the other side, then centered above, then below.
- * `labelX`/`anchor`/`label` are the first candidate. `labelScale` multiplies the font size. */
+ * `labelX`/`anchor`/`label` are the first candidate. With `zoomScale`, the font size is the one that
+ * renders at the label's fixed on-screen size under that zoom (see calculateLabelFontSizeAtZoom). */
 export function getDotLabelGeometry(
   x: number,
   name: string,
   itemCount: number,
   itemCountRange: ItemCountRange,
-  labelScale = 1,
+  zoomScale?: number,
 ): {
   dotRadius: number;
   fontSize: number;
@@ -377,7 +380,10 @@ export function getDotLabelGeometry(
   candidates: DotLabelCandidate[];
 } {
   const dotRadius = calculateNodeDotRadius(itemCount, itemCountRange);
-  const fontSize = calculateNodeFontSize(itemCount, itemCountRange) * labelScale;
+  const fontSize =
+    zoomScale === undefined
+      ? calculateNodeFontSize(itemCount, itemCountRange)
+      : calculateLabelFontSizeAtZoom(itemCount, itemCountRange, zoomScale);
   const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
   const halfFont = fontSize / 2;
   const side = (right: boolean): DotLabelCandidate => {
@@ -763,13 +769,14 @@ export function renderPopSubtree(
 /** Places every dot label under `container` (across all rendered subtrees, so labels of
  * neighboring branches/sectors are checked against each other) on its first candidate spot (see
  * getDotLabelGeometry) that overlaps no bigger node's label and no dot, else marks it
- * `gtv-node-label--hidden` (CSS reveals it again on hover). `labelScale` sizes labels for the
- * current zoom (see computeLabelScale): bigger labels collide more, so fewer of them show. */
+ * `gtv-node-label--hidden` (CSS reveals it again on hover). Labels below the zoom's importance
+ * threshold (see isLabelRankedForZoom) are hidden outright. Labels are sized for `zoomScale`: zoomed
+ * out they are bigger in layout units and collide more, so fewer of them show. */
 export function hideCollidingLabels<E extends SVGElement>(
   d3Lib: typeof import("d3"),
   container: d3.Selection<E, unknown, null, undefined>,
   itemCountRange: ItemCountRange,
-  labelScale = 1,
+  zoomScale: number,
 ): void {
   const nodes = container.selectAll<SVGGElement, D3Node>("g.node");
   const offset = (box: Box, x: number, y: number): Box => ({
@@ -783,11 +790,14 @@ export function hideCollidingLabels<E extends SVGElement>(
       .data()
       .map((d) => [
         d.data.id,
-        getDotLabelGeometry(d.x!, d.data.name, d.data.itemCount, itemCountRange, labelScale),
+        getDotLabelGeometry(d.x!, d.data.name, d.data.itemCount, itemCountRange, zoomScale),
       ]),
   );
   const placement = placeLabels(
-    nodes.data().map((d) => {
+    nodes
+      .data()
+      .filter((d) => isLabelRankedForZoom(d.data.itemCount, itemCountRange, zoomScale))
+      .map((d) => {
       const { candidates, dot } = geometryById.get(d.data.id)!;
       return {
         id: d.data.id,
@@ -799,7 +809,7 @@ export function hideCollidingLabels<E extends SVGElement>(
   );
   nodes.each(function (d) {
     const { candidates, fontSize } = geometryById.get(d.data.id)!;
-    const index = placement.get(d.data.id)!;
+    const index = placement.get(d.data.id) ?? -1;
     const candidate = candidates[Math.max(index, 0)];
     d3Lib
       .select(this)

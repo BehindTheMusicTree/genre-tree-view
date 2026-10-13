@@ -3,7 +3,13 @@ import {
   getGenreTreeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
+  calculateLabelFontSizeAtZoom,
   calculateNodeFontSize,
+  isLabelRankedForZoom,
+  LABEL_SCREEN_MAX_PX,
+  LABEL_SCREEN_MIN_PX,
+  ZOOM_FOCUS_SCALE,
+  ZOOM_MIN_SCALE,
   NODE_DOT_MIN_RADIUS,
   NODE_DOT_MAX_RADIUS,
   calculateLinkWidth,
@@ -110,5 +116,29 @@ describe("calculateNodeDotRadius", () => {
   it("floors near-empty genres at the minimum radius", () => {
     expect(calculateNodeDotRadius(0, range)).toBe(NODE_DOT_MIN_RADIUS);
     expect(calculateNodeDotRadius(0, { min: 0, max: 0 })).toBe(NODE_DOT_MIN_RADIUS);
+  });
+});
+
+describe("calculateLabelFontSizeAtZoom", () => {
+  it("keeps labels at their fixed on-screen size whatever the zoom", () => {
+    const range = { min: 1, max: 100 };
+    for (const zoom of [0.05, 0.2, 3]) {
+      expect(calculateLabelFontSizeAtZoom(1, range, zoom) * zoom).toBeCloseTo(LABEL_SCREEN_MIN_PX);
+      expect(calculateLabelFontSizeAtZoom(100, range, zoom) * zoom).toBeCloseTo(LABEL_SCREEN_MAX_PX);
+    }
+  });
+});
+
+describe("isLabelRankedForZoom", () => {
+  const range = { min: 1, max: 1000 };
+
+  it("names every genre from the focus zoom in", () => {
+    expect(isLabelRankedForZoom(1, range, ZOOM_FOCUS_SCALE)).toBe(true);
+    expect(isLabelRankedForZoom(1, range, 3)).toBe(true);
+  });
+
+  it("names only the main genres fully zoomed out", () => {
+    expect(isLabelRankedForZoom(5, range, ZOOM_MIN_SCALE)).toBe(false);
+    expect(isLabelRankedForZoom(1000, range, ZOOM_MIN_SCALE / 2)).toBe(true);
   });
 });
