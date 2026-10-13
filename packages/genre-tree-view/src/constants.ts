@@ -284,7 +284,7 @@ export const WHEEL_POP_CORE_RADIUS = 945;
 // Radial (depth-axis) step for a pop subtree's polar layout — analogous to
 // VERTICAL_ORIENTATION_DEPTH_SEPARATION for the cartesian renderers, but expressed directly as a
 // radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
-export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
+export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.35;
 
 // Suggested size for the fixed-size ancestor any GenreTree/GenreTreeWheel variant requires (see
 // GenreTreeWheel's own doc comment): enough room for a typically-deep tree, or the wheel's chip
