@@ -202,25 +202,29 @@ export interface Box {
 
 export interface LabelCullItem {
   id: string;
-  label: Box;
+  /** Candidate label boxes, in preference order. */
+  labels: Box[];
   dot: Box;
   priority: number;
 }
 
 const boxesOverlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
-/** Ids whose label must be hidden: greedily keeps labels by descending priority, hiding any that
- * overlaps an already-kept label or any other node's dot. */
+/** Index of each item's chosen label candidate, or -1 when it must be hidden: greedily, by
+ * descending priority, takes each item's first candidate that overlaps no already-placed label and
+ * no other node's dot. */
 // ponytail: O(n²) pairwise scan, add a grid index if a wheel ever gets big enough to show in profiles.
-export function cullOverlappingLabels(items: LabelCullItem[]): Set<string> {
-  const hidden = new Set<string>();
+export function placeLabels(items: LabelCullItem[]): Map<string, number> {
+  const placement = new Map<string, number>();
   const kept: Box[] = [];
   for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
-    const collides =
-      kept.some((box) => boxesOverlap(item.label, box)) ||
-      items.some((other) => other.id !== item.id && boxesOverlap(item.label, other.dot));
-    if (collides) hidden.add(item.id);
-    else kept.push(item.label);
+    const index = item.labels.findIndex(
+      (label) =>
+        !kept.some((box) => boxesOverlap(label, box)) &&
+        !items.some((other) => other.id !== item.id && boxesOverlap(label, other.dot)),
+    );
+    placement.set(item.id, index);
+    if (index >= 0) kept.push(item.labels[index]);
   }
-  return hidden;
+  return placement;
 }

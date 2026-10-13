@@ -3,12 +3,13 @@ import {
   clampZoomScale,
   classifyWheelEvent,
   computeFitScale,
+  computeLabelScale,
   computeZoomScale,
   computeZoomScaleForButton,
   createWheelClassifierState,
   queryTreeContentElements,
 } from "../zoom-pan";
-import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
+import { LABEL_SCALE_MAX, LABEL_SCALE_MIN, ZOOM_FOCUS_SCALE, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
 
 describe("clampZoomScale", () => {
   it("passes through values already within bounds", () => {
@@ -27,6 +28,15 @@ describe("clampZoomScale", () => {
     const minScale = ZOOM_MIN_SCALE / 10;
     expect(clampZoomScale(minScale / 2, minScale)).toBe(minScale);
     expect(clampZoomScale(ZOOM_MIN_SCALE / 2, minScale)).toBe(ZOOM_MIN_SCALE / 2);
+  });
+});
+
+describe("computeLabelScale", () => {
+  it("is 1 at the focus zoom and shrinks as the zoom grows, within its bounds", () => {
+    expect(computeLabelScale(ZOOM_FOCUS_SCALE)).toBe(1);
+    expect(computeLabelScale(ZOOM_FOCUS_SCALE * 2)).toBe(0.5);
+    expect(computeLabelScale(ZOOM_MAX_SCALE)).toBe(LABEL_SCALE_MIN);
+    expect(computeLabelScale(ZOOM_MIN_SCALE / 10)).toBe(LABEL_SCALE_MAX);
   });
 });
 

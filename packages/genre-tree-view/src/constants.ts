@@ -336,6 +336,13 @@ export const ZOOM_FIT_PADDING = 40;
 // so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
 // 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
 export const ZOOM_FOCUS_SCALE = 0.2;
+// Bounds of the dot-label size factor computeLabelScale derives from the zoom: labels keep a
+// roughly constant on-screen size (map-style), so zooming out hides small labels and zooming in
+// brings them back, without labels growing huge when far out or vanishing when far in.
+export const LABEL_SCALE_MIN = 0.4;
+export const LABEL_SCALE_MAX = 3;
+// Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
+export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
 // Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer
 // than ZOOM_ANIMATION_DURATION_MS's wheel-notch glide since this one also covers a pan distance,
 // not just a scale change, and should read as one deliberate "fly to" (Google Maps' own

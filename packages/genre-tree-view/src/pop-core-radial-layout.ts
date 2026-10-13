@@ -31,7 +31,7 @@ import {
 } from "./constants";
 import {
   Box,
-  cullOverlappingLabels,
+  placeLabels,
 } from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -348,14 +348,24 @@ export function getRadialPointOnCircle(
 // and collision culling stay deterministic (happy-dom has no getBBox).
 const LABEL_CHAR_WIDTH_RATIO = 0.6;
 
-/** A radial dot node's label placement and boxes, local to the node's own center: the label sits
- * beside the dot, on the side facing away from the wheel's vertical axis (right of the dot when
- * `x >= 0`, left otherwise), so it never reads across the wheel's center. */
+export interface DotLabelCandidate {
+  x: number;
+  y: number;
+  anchor: "start" | "middle" | "end";
+  box: Box;
+}
+
+/** A radial dot node's label placement and boxes, local to the node's own center. `candidates` are
+ * the label's possible spots in preference order (see hideCollidingLabels): beside the dot facing
+ * away from the wheel's vertical axis (right of the dot when `x >= 0`, left otherwise, so it never
+ * reads across the wheel's center), then the other side, then centered above, then below.
+ * `labelX`/`anchor`/`label` are the first candidate. `labelScale` multiplies the font size. */
 export function getDotLabelGeometry(
   x: number,
   name: string,
   itemCount: number,
   itemCountRange: ItemCountRange,
+  labelScale = 1,
 ): {
   dotRadius: number;
   fontSize: number;
@@ -364,20 +374,30 @@ export function getDotLabelGeometry(
   label: Box;
   dot: Box;
   hitArea: Box;
+  candidates: DotLabelCandidate[];
 } {
   const dotRadius = calculateNodeDotRadius(itemCount, itemCountRange);
-  const fontSize = calculateNodeFontSize(itemCount, itemCountRange);
+  const fontSize = calculateNodeFontSize(itemCount, itemCountRange) * labelScale;
   const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
-  const right = x >= 0;
-  const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
-  const label = {
-    x0: right ? labelX : labelX - width,
-    x1: right ? labelX + width : labelX,
-    y0: -fontSize / 2,
-    y1: fontSize / 2,
+  const halfFont = fontSize / 2;
+  const side = (right: boolean): DotLabelCandidate => {
+    const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
+    return {
+      x: labelX,
+      y: 0,
+      anchor: right ? "start" : "end",
+      box: { x0: right ? labelX : labelX - width, x1: right ? labelX + width : labelX, y0: -halfFont, y1: halfFont },
+    };
   };
+  const stacked = (below: boolean): DotLabelCandidate => {
+    const y = (below ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP + halfFont);
+    return { x: 0, y, anchor: "middle", box: { x0: -width / 2, x1: width / 2, y0: y - halfFont, y1: y + halfFont } };
+  };
+  const right = x >= 0;
+  const candidates = [side(right), side(!right), stacked(false), stacked(true)];
+  const { x: labelX, box: label } = candidates[0];
   const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
-  const halfHeight = Math.max(dotRadius, fontSize / 2);
+  const halfHeight = Math.max(dotRadius, halfFont);
   return {
     dotRadius,
     fontSize,
@@ -391,6 +411,7 @@ export function getDotLabelGeometry(
       y0: -halfHeight,
       y1: halfHeight,
     },
+    candidates,
   };
 }
 
@@ -739,13 +760,16 @@ export function renderPopSubtree(
   });
 }
 
-/** Marks `gtv-node-label--hidden` on every dot label under `container` (across all rendered
- * subtrees, so labels of neighboring branches/sectors are checked against each other) that would
- * overlap a bigger node's label or any dot; CSS reveals it again on hover. */
-export function hideCollidingLabels(
+/** Places every dot label under `container` (across all rendered subtrees, so labels of
+ * neighboring branches/sectors are checked against each other) on its first candidate spot (see
+ * getDotLabelGeometry) that overlaps no bigger node's label and no dot, else marks it
+ * `gtv-node-label--hidden` (CSS reveals it again on hover). `labelScale` sizes labels for the
+ * current zoom (see computeLabelScale): bigger labels collide more, so fewer of them show. */
+export function hideCollidingLabels<E extends SVGElement>(
   d3Lib: typeof import("d3"),
-  container: D3Selection,
+  container: d3.Selection<E, unknown, null, undefined>,
   itemCountRange: ItemCountRange,
+  labelScale = 1,
 ): void {
   const nodes = container.selectAll<SVGGElement, D3Node>("g.node");
   const offset = (box: Box, x: number, y: number): Box => ({
@@ -754,26 +778,36 @@ export function hideCollidingLabels(
     y0: box.y0 + y,
     y1: box.y1 + y,
   });
-  const hidden = cullOverlappingLabels(
+  const geometryById = new Map(
+    nodes
+      .data()
+      .map((d) => [
+        d.data.id,
+        getDotLabelGeometry(d.x!, d.data.name, d.data.itemCount, itemCountRange, labelScale),
+      ]),
+  );
+  const placement = placeLabels(
     nodes.data().map((d) => {
-      const { label, dot } = getDotLabelGeometry(
-        d.x!,
-        d.data.name,
-        d.data.itemCount,
-        itemCountRange,
-      );
+      const { candidates, dot } = geometryById.get(d.data.id)!;
       return {
         id: d.data.id,
-        label: offset(label, d.x!, d.y!),
+        labels: candidates.map((candidate) => offset(candidate.box, d.x!, d.y!)),
         dot: offset(dot, d.x!, d.y!),
         priority: d.data.itemCount,
       };
     }),
   );
   nodes.each(function (d) {
+    const { candidates, fontSize } = geometryById.get(d.data.id)!;
+    const index = placement.get(d.data.id)!;
+    const candidate = candidates[Math.max(index, 0)];
     d3Lib
       .select(this)
       .select(".gtv-node-label")
-      .classed("gtv-node-label--hidden", hidden.has(d.data.id));
+      .attr("x", candidate.x)
+      .attr("y", candidate.y)
+      .attr("text-anchor", candidate.anchor)
+      .style("font-size", `${fontSize}px`)
+      .classed("gtv-node-label--hidden", index < 0);
   });
 }

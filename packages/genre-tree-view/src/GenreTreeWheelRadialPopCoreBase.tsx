@@ -38,7 +38,7 @@ import {
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { usePanZoom } from "./use-pan-zoom";
-import { queryTreeContentElements } from "./zoom-pan";
+import { computeLabelScale, queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
@@ -57,6 +57,7 @@ import {
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
+  LABEL_RELAYOUT_DEBOUNCE_MS,
   TEXT_COLOR,
   tintSurface,
   WHEEL_POP_CORE_RADIUS,
@@ -280,6 +281,11 @@ export function WheelRadialPopCoreCore({
   const onNodeHoverRef = useRef(onNodeHover);
   useEffect(() => {
     onNodeHoverRef.current = onNodeHover;
+  });
+  const labelScale = computeLabelScale(panZoom.zoomScale);
+  const labelScaleRef = useRef(labelScale);
+  useEffect(() => {
+    labelScaleRef.current = labelScale;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
@@ -854,7 +860,7 @@ export function WheelRadialPopCoreCore({
       );
     }
 
-    hideCollidingLabels(d3, originGroup, wheelItemCountRange);
+    hideCollidingLabels(d3, originGroup, wheelItemCountRange, labelScaleRef.current);
   }, [
     index.byId,
     popHierarchyByRootId,
@@ -880,6 +886,15 @@ export function WheelRadialPopCoreCore({
     showToolbar,
     panel?.node.id,
   ]);
+
+  // Re-places dot labels once a zoom gesture settles, so the set of named nodes follows the zoom
+  // like place names on a map — kept out of the render effect above, which must not re-mount on zoom.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (popSvgRef.current) hideCollidingLabels(d3, d3.select(popSvgRef.current), wheelItemCountRange, labelScale);
+    }, LABEL_RELAYOUT_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [labelScale, wheelItemCountRange]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once popSvgRef has actually rendered content, and never again
