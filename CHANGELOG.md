@@ -18,6 +18,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Radial pop/core wheel: every root is always visible and named, at any zoom. Root chips are circles
+  sized by their subtree's track count, and their labels are SVG text with the same look and size
+  scale as other labels, placed by the same collision pass (non-root labels no longer overlap them).
+- Radial pop/core wheel: labels keep a constant on-screen size and are culled by zoom level, so
+  zooming out names only the biggest genres and zooming in reveals more. Big labels move around
+  their dot (outer, inner, above, below) instead of being hidden.
 - Radial pop/core subgenre nodes are a colored dot (area proportional to its track count, `itemCount`) with a horizontal label
   beside it instead of a rectangle card. Labels that would collide are hidden and shown on hover.
   Ring root chips are unchanged.

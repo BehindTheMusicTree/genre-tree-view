@@ -255,16 +255,42 @@ export function calculateNodeFontSize(itemCount: number, range: ItemCountRange):
   return Math.round(HEIGHT * ratio);
 }
 
+/** Layout-unit font size that renders a dot label at its on-screen size (LABEL_SCREEN_*_PX, log
+ * scale like calculateNodeFontSize) under `zoomScale`. */
+export function calculateLabelFontSizeAtZoom(itemCount: number, range: ItemCountRange, zoomScale: number): number {
+  const t = logarithmicPosition(itemCount, range);
+  return (LABEL_SCREEN_MIN_PX + t * (LABEL_SCREEN_MAX_PX - LABEL_SCREEN_MIN_PX)) / zoomScale;
+}
+
+/** A dot label's map-style importance: its log-scaled itemCount, lowered by
+ * LABEL_DEPTH_RANK_PENALTY per level below the first under its root (`depth` 1), so a level is
+ * named before the levels under it unless a deeper genre is much bigger. */
+export function calculateLabelRank(itemCount: number, range: ItemCountRange, depth: number): number {
+  return logarithmicPosition(itemCount, range) - Math.max(0, depth - 1) * LABEL_DEPTH_RANK_PENALTY;
+}
+
+/** Whether a label of `rank` (see calculateLabelRank) is named at `zoomScale` (see
+ * LABEL_MIN_RANK_AT_MIN_ZOOM); the threshold falls linearly in log-zoom from ZOOM_MIN_SCALE to
+ * ZOOM_FOCUS_SCALE, and below 0 past it so deep levels keep appearing while zooming further in. */
+export function isLabelRankedForZoom(rank: number, zoomScale: number): boolean {
+  const zoomOut = Math.log(ZOOM_FOCUS_SCALE / zoomScale) / Math.log(ZOOM_FOCUS_SCALE / ZOOM_MIN_SCALE);
+  return rank >= Math.min(1, zoomOut) * LABEL_MIN_RANK_AT_MIN_ZOOM;
+}
+
+/** Root chip label size: its own layout size, floored so it never renders below
+ * ROOT_LABEL_MIN_SCREEN_PX on screen — every root stays named at any zoom. */
+export function calculateRootLabelFontSize(layoutFontSize: number, zoomScale: number): number {
+  return Math.max(layoutFontSize, ROOT_LABEL_MIN_SCREEN_PX / zoomScale);
+}
+
 export const NODE_DOT_MIN_RADIUS = 3;
 export const NODE_DOT_MAX_RADIUS = 50;
 export const NODE_DOT_LABEL_GAP = 6;
 
-/** Radius of a radial-wheel subgenre dot: area proportional to its track count (radius ∝ √count),
- * the range's max getting NODE_DOT_MAX_RADIUS. Floored at NODE_DOT_MIN_RADIUS so near-empty
- * genres stay visible and hoverable. */
+/** Radius of a radial-wheel subgenre dot, on the same log scale as its label's font size
+ * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
-  if (range.max <= 0) return NODE_DOT_MIN_RADIUS;
-  return Math.max(NODE_DOT_MIN_RADIUS, NODE_DOT_MAX_RADIUS * Math.sqrt(itemCount / range.max));
+  return NODE_DOT_MIN_RADIUS + logarithmicPosition(itemCount, range) * (NODE_DOT_MAX_RADIUS - NODE_DOT_MIN_RADIUS);
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
@@ -284,7 +310,7 @@ export const WHEEL_POP_CORE_RADIUS = 945;
 // Radial (depth-axis) step for a pop subtree's polar layout — analogous to
 // VERTICAL_ORIENTATION_DEPTH_SEPARATION for the cartesian renderers, but expressed directly as a
 // radius increment per depth since pop-core-radial-layout.ts positions nodes in polar coordinates.
-export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.7;
+export const POP_TREE_DEPTH_RADIAL_SPACING = NODE_DIMENSIONS.WIDTH * 0.35;
 
 // Suggested size for the fixed-size ancestor any GenreTree/GenreTreeWheel variant requires (see
 // GenreTreeWheel's own doc comment): enough room for a typically-deep tree, or the wheel's chip
@@ -338,6 +364,20 @@ export const ZOOM_FIT_PADDING = 40;
 // so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
 // 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
 export const ZOOM_FOCUS_SCALE = 0.2;
+// On-screen font size (px) of radial dot labels, smallest to biggest genre: labels keep this size
+// at every zoom like place names on a map, so zooming out hides small labels (bigger in layout
+// units, they collide more) and zooming in brings them back.
+export const LABEL_SCREEN_MIN_PX = 11;
+export const LABEL_SCREEN_MAX_PX = 22;
+// Minimum log-scaled itemCount position (0 = smallest genre, 1 = biggest) a label needs to be shown
+// at ZOOM_MIN_SCALE, easing to 0 at ZOOM_FOCUS_SCALE: like a map, a far-out view names only the
+// main genres even where smaller labels would fit.
+export const LABEL_MIN_RANK_AT_MIN_ZOOM = 0.6;
+// Rank (see calculateLabelRank) a label loses per hierarchy level below its root's direct children.
+export const LABEL_DEPTH_RANK_PENALTY = 0.15;
+export const ROOT_LABEL_MIN_SCREEN_PX = 15;
+// Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
+export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
 // Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer
 // than ZOOM_ANIMATION_DURATION_MS's wheel-notch glide since this one also covers a pan distance,
 // not just a scale change, and should read as one deliberate "fly to" (Google Maps' own

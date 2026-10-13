@@ -10,9 +10,11 @@ import {
   getRadialPointOnCircle,
   hideCollidingLabels,
   measureWedge,
+  MIN_DOT_GAP,
   POP_WEDGE_SPAN_DEGREES,
   popRadiusOfDepth,
   renderPopSubtree,
+  renderRootLabels,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
@@ -922,10 +924,52 @@ describe("renderPopSubtree dot + label nodes", () => {
     const range = getItemCountRange(siblings);
     const svg = createSvg();
     renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
-    hideCollidingLabels(d3, svg, range);
+    hideCollidingLabels(d3, svg, range, 1);
 
     expect(svg.selectAll(".gtv-node-label--hidden").size()).toBeGreaterThan(0);
     expect(svg.select("#group-sub-16 .gtv-node-label").classed("gtv-node-label--hidden")).toBe(false);
+  });
+
+  it("names more nodes zoomed in than zoomed out", () => {
+    const siblings: GenreTreeNode[] = [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
+      ...Array.from({ length: 17 }, (_, i) => ({
+        id: `sub-${i}`,
+        parentId: "reggae",
+        name: `Reggae Subgenre Number ${i}`,
+        itemCount: i + 1,
+      })),
+    ];
+    const range = getItemCountRange(siblings);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, siblings), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
+    const hiddenAt = (zoomScale: number) => {
+      hideCollidingLabels(d3, svg, range, zoomScale);
+      return svg.selectAll(".gtv-node-label--hidden").size();
+    };
+
+    expect(hiddenAt(3)).toBeLessThan(hiddenAt(0.2));
+  });
+
+  it("always names roots and keeps dot labels off a root's circle", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
+      { id: "dub", parentId: "reggae", name: "Dub", itemCount: 1 },
+    ];
+    const range = getItemCountRange(nodes);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
+    const dub = svg.select<SVGGElement>("#group-dub").datum() as { x: number; y: number };
+    renderRootLabels(svg, [{ id: "rock", name: "Rock music", x: dub.x + 25, y: dub.y, radius: 10, itemCount: 1 }]);
+
+    hideCollidingLabels(d3, svg, range, 1);
+
+    const rootLabel = svg.select(".gtv-root-label .gtv-node-label");
+    expect(rootLabel.text()).toBe("Rock music");
+    expect(rootLabel.classed("gtv-node-label--hidden")).toBe(false);
+    expect(rootLabel.attr("text-anchor")).toBe("start");
+    expect(dub.x).toBeGreaterThanOrEqual(0);
+    expect(svg.select("#group-dub .gtv-node-label").attr("text-anchor")).not.toBe("start");
   });
 
   it("keeps every dot of a 17-child branch inside its measured wedge", () => {
@@ -964,5 +1008,46 @@ describe("measureWedge", () => {
     const outer = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => 3000);
     const inner = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => 1500);
     expect(inner).toBeCloseTo(outer * 2, 9);
+  });
+
+  it("keeps leaf siblings between two wide subtrees one dot slot apart instead of spreading them", () => {
+    const wide = (id: string): GenreTreeNode[] => [
+      { id, parentId: "r", name: id, itemCount: 1 },
+      ...Array.from({ length: 6 }, (_, i) => ({ id: `${id}${i}`, parentId: id, name: `${id}${i}`, itemCount: 1 })),
+    ];
+    const nodes: GenreTreeNode[] = [
+      { id: "r", parentId: null, name: "R", itemCount: 1 },
+      ...wide("a"),
+      ...["l0", "l1", "l2"].map((id) => ({ id, parentId: "r", name: id, itemCount: 1 })),
+      ...wide("b"),
+    ];
+    const ringRadius = 1000;
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    measureWedge(d3, hierarchy, () => ringRadius);
+    const x = (id: string) => hierarchy.find((d) => d.data.id === id)!.x!;
+    const slot = (2 * NODE_DOT_MAX_RADIUS + MIN_DOT_GAP) / ringRadius;
+    expect(x("l1") - x("l0")).toBeCloseTo(slot, 9);
+    expect(x("l2") - x("l1")).toBeCloseTo(slot, 9);
+  });
+});
+
+describe("computePopRadialLayout stretch cap", () => {
+  const fan: GenreTreeNode[] = [
+    { id: "r", parentId: null, name: "R", itemCount: 1 },
+    ...Array.from({ length: 5 }, (_, i) => ({ id: `c${i}`, parentId: "r", name: `C${i}`, itemCount: 1 })),
+  ];
+  const angles = (wedgeSpanDeg: number) => {
+    const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, fan), 90, 5000, wedgeSpanDeg);
+    return laidOut.leaves().map((d) => Math.atan2(d.x!, -d.y!));
+  };
+  const span = (a: number[]) => Math.max(...a) - Math.min(...a);
+
+  it("stops spreading siblings past MAX_WEDGE_STRETCH when the slice has far more room than they need", () => {
+    expect(span(angles(170))).toBeCloseTo(span(angles(160)), 9);
+  });
+
+  it("keeps the capped layout centered on the wedge center", () => {
+    const a = angles(170);
+    expect(((Math.max(...a) + Math.min(...a)) / 2) * (180 / Math.PI)).toBeCloseTo(90, 6);
   });
 });

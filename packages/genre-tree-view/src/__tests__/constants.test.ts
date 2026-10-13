@@ -3,6 +3,16 @@ import {
   getGenreTreeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
+  calculateLabelFontSizeAtZoom,
+  calculateNodeFontSize,
+  isLabelRankedForZoom,
+  calculateLabelRank,
+  calculateRootLabelFontSize,
+  ROOT_LABEL_MIN_SCREEN_PX,
+  LABEL_SCREEN_MAX_PX,
+  LABEL_SCREEN_MIN_PX,
+  ZOOM_FOCUS_SCALE,
+  ZOOM_MIN_SCALE,
   NODE_DOT_MIN_RADIUS,
   NODE_DOT_MAX_RADIUS,
   calculateLinkWidth,
@@ -95,15 +105,56 @@ describe("calculateNodeDimensions", () => {
 describe("calculateNodeDotRadius", () => {
   const range = { min: 0, max: 400 };
 
-  it("makes dot area proportional to track count", () => {
-    const r100 = calculateNodeDotRadius(100, range);
-    const r400 = calculateNodeDotRadius(400, range);
-    expect(r400).toBe(NODE_DOT_MAX_RADIUS);
-    expect((r400 / r100) ** 2).toBeCloseTo(4, 9);
+  it("grows the dot in step with the label font size", () => {
+    const counts = [0, 3, 20, 100, 400];
+    const radii = counts.map((count) => calculateNodeDotRadius(count, range));
+    const fonts = counts.map((count) => calculateNodeFontSize(count, range));
+    expect(radii[4]).toBe(NODE_DOT_MAX_RADIUS);
+    for (let i = 1; i < counts.length; i++) {
+      expect(radii[i]).toBeGreaterThan(radii[i - 1]);
+      expect(fonts[i]).toBeGreaterThanOrEqual(fonts[i - 1]);
+    }
   });
 
   it("floors near-empty genres at the minimum radius", () => {
     expect(calculateNodeDotRadius(0, range)).toBe(NODE_DOT_MIN_RADIUS);
     expect(calculateNodeDotRadius(0, { min: 0, max: 0 })).toBe(NODE_DOT_MIN_RADIUS);
+  });
+});
+
+describe("calculateLabelFontSizeAtZoom", () => {
+  it("keeps labels at their fixed on-screen size whatever the zoom", () => {
+    const range = { min: 1, max: 100 };
+    for (const zoom of [0.05, 0.2, 3]) {
+      expect(calculateLabelFontSizeAtZoom(1, range, zoom) * zoom).toBeCloseTo(LABEL_SCREEN_MIN_PX);
+      expect(calculateLabelFontSizeAtZoom(100, range, zoom) * zoom).toBeCloseTo(LABEL_SCREEN_MAX_PX);
+    }
+  });
+});
+
+describe("isLabelRankedForZoom", () => {
+  const range = { min: 1, max: 1000 };
+
+  it("names the first level from the focus zoom, deeper levels only further in", () => {
+    expect(isLabelRankedForZoom(0, ZOOM_FOCUS_SCALE)).toBe(true);
+    expect(isLabelRankedForZoom(-0.5, 3)).toBe(true);
+  });
+
+  it("names only the main genres fully zoomed out", () => {
+    expect(isLabelRankedForZoom(calculateLabelRank(5, range, 1), ZOOM_MIN_SCALE)).toBe(false);
+    expect(isLabelRankedForZoom(calculateLabelRank(1000, range, 1), ZOOM_MIN_SCALE / 2)).toBe(true);
+  });
+
+  it("ranks a deeper genre below a same-size shallower one", () => {
+    expect(calculateLabelRank(1, range, 3)).toBeLessThan(calculateLabelRank(1, range, 1));
+    expect(isLabelRankedForZoom(calculateLabelRank(1, range, 3), ZOOM_FOCUS_SCALE)).toBe(false);
+    expect(isLabelRankedForZoom(calculateLabelRank(1, range, 3), 3)).toBe(true);
+  });
+});
+
+describe("calculateRootLabelFontSize", () => {
+  it("floors a root label at ROOT_LABEL_MIN_SCREEN_PX on screen", () => {
+    expect(calculateRootLabelFontSize(14, ZOOM_MIN_SCALE) * ZOOM_MIN_SCALE).toBeCloseTo(ROOT_LABEL_MIN_SCREEN_PX);
+    expect(calculateRootLabelFontSize(14, 3)).toBe(14);
   });
 });

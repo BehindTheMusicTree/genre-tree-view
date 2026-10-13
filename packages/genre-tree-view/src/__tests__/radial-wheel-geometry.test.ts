@@ -7,7 +7,7 @@ import {
   computeSectorBounds,
   computeSectorSymmetricSpan,
   computeSectorWidths,
-  cullOverlappingLabels,
+  placeLabels,
   solveRingRadius,
   subdivideWedge,
 } from "../radial-wheel-geometry";
@@ -367,31 +367,41 @@ describe("solveRingRadius", () => {
   });
 });
 
-describe("cullOverlappingLabels", () => {
+describe("placeLabels", () => {
   const box = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });
   const farDot = (i: number) => box(1000 + i * 10, 1000, 1005 + i * 10, 1005);
 
-  it("keeps the higher-priority label of a colliding pair", () => {
-    const hidden = cullOverlappingLabels([
-      { id: "low", label: box(0, 0, 50, 10), dot: farDot(0), priority: 1 },
-      { id: "high", label: box(20, 0, 70, 10), dot: farDot(1), priority: 5 },
+  it("hides the lower-priority label of a colliding pair with no other spot", () => {
+    const placement = placeLabels([
+      { id: "low", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
+      { id: "high", labels: [box(20, 0, 70, 10)], dot: farDot(1), priority: 5 },
     ]);
-    expect([...hidden]).toEqual(["low"]);
+    expect(placement.get("high")).toBe(0);
+    expect(placement.get("low")).toBe(-1);
   });
 
   it("keeps both labels when they are disjoint", () => {
-    const hidden = cullOverlappingLabels([
-      { id: "a", label: box(0, 0, 50, 10), dot: farDot(0), priority: 1 },
-      { id: "b", label: box(0, 20, 50, 30), dot: farDot(1), priority: 1 },
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
+      { id: "b", labels: [box(0, 20, 50, 30)], dot: farDot(1), priority: 1 },
     ]);
-    expect(hidden.size).toBe(0);
+    expect([...placement.values()]).toEqual([0, 0]);
   });
 
-  it("hides a label covering another node's dot", () => {
-    const hidden = cullOverlappingLabels([
-      { id: "a", label: box(0, 0, 50, 10), dot: farDot(0), priority: 9 },
-      { id: "b", label: box(0, 100, 50, 110), dot: box(10, 2, 16, 8), priority: 1 },
+  it("moves a label covering another node's dot to its next free candidate", () => {
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10), box(0, 40, 50, 50)], dot: farDot(0), priority: 9 },
+      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
     ]);
-    expect([...hidden]).toEqual(["a"]);
+    expect(placement.get("a")).toBe(1);
+    expect(placement.get("b")).toBe(0);
+  });
+
+  it("hides a label when every candidate is blocked", () => {
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 9 },
+      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
+    ]);
+    expect(placement.get("a")).toBe(-1);
   });
 });

@@ -23,15 +23,19 @@ import {
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
+  calculateRootLabelFontSize,
   TEXT_MUTED_COLOR,
   calculateLinkWidth,
   calculateNodeDotRadius,
+  calculateLabelFontSizeAtZoom,
+  calculateLabelRank,
   calculateNodeFontSize,
+  isLabelRankedForZoom,
   tintSurface,
 } from "./constants";
 import {
   Box,
-  cullOverlappingLabels,
+  placeLabels,
 } from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
@@ -134,7 +138,7 @@ export function calculatePopSubtreeRadialExtent(
  * off the ring roots' circle.
  *
  * `wedgeSpanDegrees` defaults to `POP_WEDGE_SPAN_DEGREES`; the wheel passes each branch's slice of
- * its root's sector, sized from `measureWedge` so the measured layout fills it edge to edge.
+ * its root's sector, sized from `measureWedge`; the layout fills it up to `MAX_WEDGE_STRETCH` (see layoutWedge).
  *
  * `depthSpacing` defaults to `POP_TREE_DEPTH_RADIAL_SPACING` — kept constant per depth step
  * regardless of how far out the wheel's own outer circle ends up sitting; it's the outer circle's
@@ -160,7 +164,7 @@ export function computePopRadialLayout(
   );
 }
 
-const MIN_DOT_GAP = 8;
+export const MIN_DOT_GAP = 5.6;
 
 /** Radius of a pop hierarchy's node at `depth`, climbing inward from the ring roots' circle. */
 export function popRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: number) {
@@ -173,22 +177,64 @@ export function coreRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: nu
   return (depth: number) => getRadialDepthRadius(depth + 1, coreRootCircleRadius, depthSpacing);
 }
 
+type ContourEdge = { x: number; dotRadius: number };
+type Contour = { left: ContourEdge; right: ContourEdge }[];
+
 /** Lays `hierarchy` out angularly with each pair of same-depth neighbours just far enough apart for
  * their dots not to overlap on their own ring — a deeper (pop) ring is smaller, so its nodes need
  * more angle each. Leaves each node's `.x` as its angle (rad) from the wedge's leading edge and
- * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size. */
+ * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size.
+ *
+ * Packs each node's children left to right, each one shifted just far enough to clear the
+ * accumulated contour of its earlier siblings, parent centered over its first and last child. Not
+ * d3.tree: its Reingold–Tilford pass spreads the push between two wide subtrees evenly across every
+ * small sibling between them, which on deep rings leaves leaf siblings far apart. */
 export function measureWedge(
-  d3Lib: typeof import("d3"),
+  _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
   itemCountRange?: ItemCountRange,
 ): number {
   const dotRadius = (d: D3Node) =>
     itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
-  d3Lib
-    .tree<GenreTreeNode>()
-    .nodeSize([1, 1])
-    .separation((a, b) => (dotRadius(a) + dotRadius(b) + MIN_DOT_GAP) / radiusOfDepth(a.depth))(hierarchy);
+  const offsetFromParent = new Map<D3Node, number>();
+  const shiftLevel = (level: Contour[number], by: number) => ({
+    left: { ...level.left, x: level.left.x + by },
+    right: { ...level.right, x: level.right.x + by },
+  });
+
+  const pack = (node: D3Node): Contour => {
+    const own = { x: 0, dotRadius: dotRadius(node) };
+    if (!node.children) return [{ left: own, right: own }];
+    const below: Contour = [];
+    const childOffsets: number[] = [];
+    for (const child of node.children) {
+      const contour = pack(child);
+      let offset = 0;
+      if (childOffsets.length > 0) {
+        offset = -Infinity;
+        for (let k = 0; k < Math.min(below.length, contour.length); k++) {
+          const gap =
+            (below[k].right.dotRadius + contour[k].left.dotRadius + MIN_DOT_GAP) / radiusOfDepth(child.depth + k);
+          offset = Math.max(offset, below[k].right.x - contour[k].left.x + gap);
+        }
+      }
+      childOffsets.push(offset);
+      contour.forEach((level, k) => {
+        const shifted = shiftLevel(level, offset);
+        if (k < below.length) below[k].right = shifted.right;
+        else below.push(shifted);
+      });
+    }
+    const center = (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2;
+    node.children.forEach((child, i) => offsetFromParent.set(child, childOffsets[i] - center));
+    return [{ left: own, right: own }, ...below.map((level) => shiftLevel(level, -center))];
+  };
+
+  pack(hierarchy);
+  hierarchy.eachBefore((d) => {
+    d.x = d.parent ? d.parent.x! + offsetFromParent.get(d)! : 0;
+  });
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {
@@ -202,9 +248,14 @@ export function measureWedge(
   return max - min;
 }
 
-/** Measures `hierarchy` (see measureWedge), stretches or squeezes it to fill `wedgeSpanDegrees`
- * centered on `wedgeCenterAngleDegrees`, and projects each node to cartesian x/y around the wheel's
- * center at its depth's radius. */
+// Cap on how far a wedge's measured layout may stretch to use slack in its slice: a uniform angular
+// stretch grows outer rings' arc gaps with their radius, so stretching to fill pushes deep siblings
+// far apart. Unused slack stays as empty gutter around the centered layout.
+export const MAX_WEDGE_STRETCH = 1.42;
+
+/** Measures `hierarchy` (see measureWedge), squeezes it to fit `wedgeSpanDegrees` or stretches it
+ * by at most `MAX_WEDGE_STRETCH`, centered on `wedgeCenterAngleDegrees`, and projects each node to
+ * cartesian x/y around the wheel's center at its depth's radius. */
 export function layoutWedge(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
@@ -215,8 +266,8 @@ export function layoutWedge(
 ): D3Node {
   const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
-  const scale = wedgeSpanRad / neededRad;
-  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - wedgeSpanRad / 2;
+  const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
+  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - (neededRad * scale) / 2;
   hierarchy.each((d) => {
     const angleRad = wedgeStartRad + d.x! * scale;
     const radius = radiusOfDepth(d.depth);
@@ -301,14 +352,25 @@ export function getRadialPointOnCircle(
 // and collision culling stay deterministic (happy-dom has no getBBox).
 const LABEL_CHAR_WIDTH_RATIO = 0.6;
 
-/** A radial dot node's label placement and boxes, local to the node's own center: the label sits
- * beside the dot, on the side facing away from the wheel's vertical axis (right of the dot when
- * `x >= 0`, left otherwise), so it never reads across the wheel's center. */
+export interface DotLabelCandidate {
+  x: number;
+  y: number;
+  anchor: "start" | "middle" | "end";
+  box: Box;
+}
+
+/** A radial dot node's label placement and boxes, local to the node's own center. `candidates` are
+ * the label's possible spots in preference order (see hideCollidingLabels): beside the dot facing
+ * away from the wheel's vertical axis (right of the dot when `x >= 0`, left otherwise, so it never
+ * reads across the wheel's center), then the other side, then centered above, then below.
+ * `labelX`/`anchor`/`label` are the first candidate. With `zoomScale`, the font size is the one that
+ * renders at the label's fixed on-screen size under that zoom (see calculateLabelFontSizeAtZoom). */
 export function getDotLabelGeometry(
   x: number,
   name: string,
   itemCount: number,
   itemCountRange: ItemCountRange,
+  zoomScale?: number,
 ): {
   dotRadius: number;
   fontSize: number;
@@ -317,25 +379,22 @@ export function getDotLabelGeometry(
   label: Box;
   dot: Box;
   hitArea: Box;
+  candidates: DotLabelCandidate[];
 } {
   const dotRadius = calculateNodeDotRadius(itemCount, itemCountRange);
-  const fontSize = calculateNodeFontSize(itemCount, itemCountRange);
-  const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
-  const right = x >= 0;
-  const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
-  const label = {
-    x0: right ? labelX : labelX - width,
-    x1: right ? labelX + width : labelX,
-    y0: -fontSize / 2,
-    y1: fontSize / 2,
-  };
+  const fontSize =
+    zoomScale === undefined
+      ? calculateNodeFontSize(itemCount, itemCountRange)
+      : calculateLabelFontSizeAtZoom(itemCount, itemCountRange, zoomScale);
+  const candidates = getLabelCandidates(x, name, dotRadius, fontSize);
+  const { x: labelX, box: label } = candidates[0];
   const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
   const halfHeight = Math.max(dotRadius, fontSize / 2);
   return {
     dotRadius,
     fontSize,
     labelX,
-    anchor: right ? "start" : "end",
+    anchor: x >= 0 ? "start" : "end",
     label,
     dot,
     hitArea: {
@@ -344,7 +403,59 @@ export function getDotLabelGeometry(
       y0: -halfHeight,
       y1: halfHeight,
     },
+    candidates,
   };
+}
+
+function getLabelCandidates(x: number, name: string, dotRadius: number, fontSize: number): DotLabelCandidate[] {
+  const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
+  const halfFont = fontSize / 2;
+  const side = (right: boolean): DotLabelCandidate => {
+    const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
+    return {
+      x: labelX,
+      y: 0,
+      anchor: right ? "start" : "end",
+      box: { x0: right ? labelX : labelX - width, x1: right ? labelX + width : labelX, y0: -halfFont, y1: halfFont },
+    };
+  };
+  const stacked = (below: boolean): DotLabelCandidate => {
+    const y = (below ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP + halfFont);
+    return { x: 0, y, anchor: "middle", box: { x0: -width / 2, x1: width / 2, y0: y - halfFont, y1: y + halfFont } };
+  };
+  const right = x >= 0;
+  return [side(right), side(!right), stacked(false), stacked(true)];
+}
+
+/** A root chip's label, drawn in the SVG (see renderRootLabels) so it shares the dot labels' look
+ * and collision placement. `x`/`y` are the chip's center, `itemCount` its subtree total. */
+export interface RootLabelDatum {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  radius: number;
+  itemCount: number;
+}
+
+export function renderRootLabels<E extends SVGElement>(
+  container: d3.Selection<E, unknown, null, undefined>,
+  roots: RootLabelDatum[],
+): void {
+  container
+    .append("g")
+    .attr("class", "gtv-wheel-root-labels")
+    .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
+    .data(roots)
+    .join("g")
+    .attr("class", "gtv-root-label")
+    .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+    .append("text")
+    .attr("class", "gtv-node-label")
+    .attr("dominant-baseline", "middle")
+    .attr("fill", TEXT_COLOR)
+    .style("pointer-events", "none")
+    .text((d) => d.name);
 }
 
 export interface RenderPopSubtreeCallbacks {
@@ -535,6 +646,9 @@ export function renderPopSubtree(
           : ""),
     )
     .attr("id", (d) => "group-" + d.data.id)
+    // Levels below the nearest root chip (1 = its direct child), for hideCollidingLabels' ranking:
+    // with skipRootNode, depth 0 is that chip itself.
+    .attr("data-gtv-depth", (d) => d.depth + (skipRootNode ? 0 : 1))
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", nodeFill);
 
@@ -612,7 +726,7 @@ export function renderPopSubtree(
     .append("text")
     .attr(
       "class",
-      "gtv-node-label" + (isCoreSector ? " gtv-node-label--root" : ""),
+      "gtv-node-label",
     )
     .each(function (d) {
       const { labelX, anchor, fontSize } = getDotLabelGeometry(
@@ -692,13 +806,17 @@ export function renderPopSubtree(
   });
 }
 
-/** Marks `gtv-node-label--hidden` on every dot label under `container` (across all rendered
- * subtrees, so labels of neighboring branches/sectors are checked against each other) that would
- * overlap a bigger node's label or any dot; CSS reveals it again on hover. */
-export function hideCollidingLabels(
+/** Places every dot label under `container` (across all rendered subtrees, so labels of
+ * neighboring branches/sectors are checked against each other) on its first candidate spot (see
+ * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
+ * `gtv-node-label--hidden` (CSS reveals it again on hover). Labels below the zoom's importance
+ * threshold (see isLabelRankedForZoom) are hidden outright. Labels are sized for `zoomScale`: zoomed
+ * out they are bigger in layout units and collide more, so fewer of them show. */
+export function hideCollidingLabels<E extends SVGElement>(
   d3Lib: typeof import("d3"),
-  container: D3Selection,
+  container: d3.Selection<E, unknown, null, undefined>,
   itemCountRange: ItemCountRange,
+  zoomScale: number,
 ): void {
   const nodes = container.selectAll<SVGGElement, D3Node>("g.node");
   const offset = (box: Box, x: number, y: number): Box => ({
@@ -707,26 +825,69 @@ export function hideCollidingLabels(
     y0: box.y0 + y,
     y1: box.y1 + y,
   });
-  const hidden = cullOverlappingLabels(
-    nodes.data().map((d) => {
-      const { label, dot } = getDotLabelGeometry(
-        d.x!,
-        d.data.name,
-        d.data.itemCount,
-        itemCountRange,
+  const geometryById = new Map(
+    nodes
+      .data()
+      .map((d) => [
+        d.data.id,
+        getDotLabelGeometry(d.x!, d.data.name, d.data.itemCount, itemCountRange, zoomScale),
+      ]),
+  );
+  const roots = container.selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label");
+  const rootGeometryById = new Map(
+    roots.data().map((d) => {
+      const fontSize = calculateRootLabelFontSize(
+        calculateLabelFontSizeAtZoom(d.itemCount, itemCountRange, zoomScale),
+        zoomScale,
       );
-      return {
-        id: d.data.id,
-        label: offset(label, d.x!, d.y!),
-        dot: offset(dot, d.x!, d.y!),
-        priority: d.data.itemCount,
-      };
+      return [d.id, { fontSize, candidates: getLabelCandidates(d.x, d.name, d.radius, fontSize) }];
     }),
   );
-  nodes.each(function (d) {
+  const placement = placeLabels([
+    ...roots.data().map((d) => ({
+      id: `root:${d.id}`,
+      labels: rootGeometryById.get(d.id)!.candidates.map((candidate) => offset(candidate.box, d.x, d.y)),
+      dot: { x0: d.x - d.radius, x1: d.x + d.radius, y0: d.y - d.radius, y1: d.y + d.radius },
+      priority: Infinity,
+    })),
+    ...nodes.nodes().map((element) => {
+      const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
+      const { candidates, dot } = geometryById.get(d.data.id)!;
+      const rank = calculateLabelRank(d.data.itemCount, itemCountRange, Number(element.dataset.gtvDepth));
+      return {
+        id: d.data.id,
+        // An unranked node still keeps its dot as an obstacle for every other label.
+        labels: isLabelRankedForZoom(rank, zoomScale)
+          ? candidates.map((candidate) => offset(candidate.box, d.x!, d.y!))
+          : [],
+        dot: offset(dot, d.x!, d.y!),
+        priority: rank,
+      };
+    }),
+  ]);
+  // Roots are always named, even when no candidate is free.
+  roots.each(function (d) {
+    const { candidates, fontSize } = rootGeometryById.get(d.id)!;
+    const candidate = candidates[Math.max(placement.get(`root:${d.id}`) ?? 0, 0)];
     d3Lib
       .select(this)
       .select(".gtv-node-label")
-      .classed("gtv-node-label--hidden", hidden.has(d.data.id));
+      .attr("x", candidate.x)
+      .attr("y", candidate.y)
+      .attr("text-anchor", candidate.anchor)
+      .style("font-size", `${fontSize}px`);
+  });
+  nodes.each(function (d) {
+    const { candidates, fontSize } = geometryById.get(d.data.id)!;
+    const index = placement.get(d.data.id) ?? -1;
+    const candidate = candidates[Math.max(index, 0)];
+    d3Lib
+      .select(this)
+      .select(".gtv-node-label")
+      .attr("x", candidate.x)
+      .attr("y", candidate.y)
+      .attr("text-anchor", candidate.anchor)
+      .style("font-size", `${fontSize}px`)
+      .classed("gtv-node-label--hidden", index < 0);
   });
 }
