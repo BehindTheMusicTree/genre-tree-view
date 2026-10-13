@@ -160,7 +160,7 @@ export function computePopRadialLayout(
   );
 }
 
-const MIN_DOT_GAP = 8;
+export const MIN_DOT_GAP = 5.6;
 
 /** Radius of a pop hierarchy's node at `depth`, climbing inward from the ring roots' circle. */
 export function popRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: number) {
@@ -247,7 +247,7 @@ export function measureWedge(
 // Cap on how far a wedge's measured layout may stretch to use slack in its slice: a uniform angular
 // stretch grows outer rings' arc gaps with their radius, so stretching to fill pushes deep siblings
 // far apart. Unused slack stays as empty gutter around the centered layout.
-export const MAX_WEDGE_STRETCH = 1.5;
+export const MAX_WEDGE_STRETCH = 1.42;
 
 /** Measures `hierarchy` (see measureWedge), squeezes it to fit `wedgeSpanDegrees` or stretches it
  * by at most `MAX_WEDGE_STRETCH`, centered on `wedgeCenterAngleDegrees`, and projects each node to

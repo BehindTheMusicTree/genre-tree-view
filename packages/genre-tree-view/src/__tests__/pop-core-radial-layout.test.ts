@@ -10,6 +10,7 @@ import {
   getRadialPointOnCircle,
   hideCollidingLabels,
   measureWedge,
+  MIN_DOT_GAP,
   POP_WEDGE_SPAN_DEGREES,
   popRadiusOfDepth,
   renderPopSubtree,
@@ -981,7 +982,7 @@ describe("measureWedge", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     measureWedge(d3, hierarchy, () => ringRadius);
     const x = (id: string) => hierarchy.find((d) => d.data.id === id)!.x!;
-    const slot = (2 * NODE_DOT_MAX_RADIUS + 8) / ringRadius;
+    const slot = (2 * NODE_DOT_MAX_RADIUS + MIN_DOT_GAP) / ringRadius;
     expect(x("l1") - x("l0")).toBeCloseTo(slot, 9);
     expect(x("l2") - x("l1")).toBeCloseTo(slot, 9);
   });
