@@ -26,6 +26,25 @@ function collectSubtree(root: GenreTreeNode, childrenByParentId: Map<string, Gen
 }
 
 /**
+ * Whether `id` can be the pop-core wheel's focus: a non-pop node with children and at most one pop
+ * child, reachable through the zoom buttons — a top-level root other than Mainstream Pop, or a
+ * non-pop child of a zoomable node.
+ */
+export function isZoomableNode(nodes: readonly GenreTreeNode[], id: string): boolean {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  let current = byId.get(id);
+  while (current) {
+    const { id: currentId, parentId } = current;
+    if (current.side === "pop") return false;
+    const children = nodes.filter((node) => node.parentId === currentId);
+    if (children.length === 0 || children.filter((child) => child.side === "pop").length > 1) return false;
+    if (parentId === null) return current.name !== CENTER_NODE_NAME;
+    current = byId.get(parentId);
+  }
+  return false;
+}
+
+/**
  * Picks what the pop-core wheel renders. Without a focus, the "Mainstream Pop" root is the center
  * and every other root is a ring root. With a focus, the focus node's single pop-side child (if
  * any) becomes the center pop disc, otherwise the focus node itself is the center (label only);
