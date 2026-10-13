@@ -23,6 +23,7 @@ import {
   coreRadiusOfDepth,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  renderRootLabels,
   measureWedge,
   popRadiusOfDepth,
   POP_SUBTREE_OUTER_MARGIN,
@@ -45,14 +46,15 @@ import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
-  calculateNodeDimensions,
+  calculateNodeDotRadius,
   calculateNodeFontSize,
+  calculateRootLabelFontSize,
   CENTER_NODE_NAME,
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
   INFO_PANEL_WIDTH,
-  MAX_NODE_WIDTH,
+  NODE_DOT_MAX_RADIUS,
   PER_TREE_ACCENT_DOT,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
@@ -331,21 +333,19 @@ export function WheelRadialPopCoreCore({
   // Pop-subtree node cards scale against the whole tree's item counts, not just their own subtree's
   // — a pop chain's few nodes can have a narrow itemCount spread that would otherwise get stretched
   // across the full size range and render wildly inconsistent card sizes next to core siblings.
-  const wheelItemCountRange = useMemo(() => getItemCountRange(nodes), [nodes]);
+  // Root aggregates included so root circles and node dots share one track-count scale.
+  const wheelItemCountRange = useMemo(
+    () =>
+      getItemCountRange([
+        ...nodes,
+        ...[...aggregatedRootItemCountById.values()].map((itemCount) => ({ itemCount })),
+      ]),
+    [nodes, aggregatedRootItemCountById],
+  );
 
   // Center root node ("Mainstream Pop") renders at 2x the chip size normal itemCount scaling would give it,
   // so it reads as the wheel's focal point rather than blending in with the ring chips.
   const CENTER_NODE_SCALE = 2;
-  const centerNodeDimensions = useMemo(() => {
-    const base = calculateNodeDimensions(
-      centerNode.itemCount,
-      rootItemCountRange,
-    );
-    return {
-      WIDTH: base.WIDTH * CENTER_NODE_SCALE,
-      HEIGHT: base.HEIGHT * CENTER_NODE_SCALE,
-    };
-  }, [centerNode, rootItemCountRange]);
   const centerNodeFontSize = useMemo(
     () =>
       calculateNodeFontSize(centerNode.itemCount, rootItemCountRange) *
@@ -353,12 +353,7 @@ export function WheelRadialPopCoreCore({
     [centerNode, rootItemCountRange],
   );
   const centerNodeColor = "#ffffff";
-  // Collapsed, the center chip reads as a circular pivot rather than a rectangular card like the
-  // ring chips — a perfect circle needs equal width/height, so pick the larger of the two.
-  const centerChipDiameter = Math.max(
-    centerNodeDimensions.WIDTH,
-    centerNodeDimensions.HEIGHT,
-  );
+  const centerChipDiameter = 2 * calculateNodeDotRadius(centerNode.itemCount, wheelItemCountRange);
 
   const branchHierarchiesByRootId = useMemo(
     () =>
@@ -445,10 +440,8 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
-          const chipWidth = calculateNodeDimensions(
-            aggregatedRootItemCountById.get(group.root.id)!,
-            rootItemCountRange,
-          ).WIDTH;
+          const chipWidth =
+            2 * calculateNodeDotRadius(aggregatedRootItemCountById.get(group.root.id)!, wheelItemCountRange);
           return [
             group.root.id,
             {
@@ -473,7 +466,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, aggregatedRootItemCountById, rootItemCountRange, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId, aggregatedRootItemCountById, wheelItemCountRange],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -491,7 +484,7 @@ export function WheelRadialPopCoreCore({
           ),
         Math.max(
           WHEEL_POP_CORE_RADIUS,
-          mainstreamCircleRadius + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
+          mainstreamCircleRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN,
           popReachRequiredRadius,
         ),
       ),
@@ -860,8 +853,34 @@ export function WheelRadialPopCoreCore({
       );
     }
 
+    renderRootLabels(originGroup, [
+      {
+        id: centerNode.id,
+        name: centerNode.name,
+        x: 0,
+        y: 0,
+        radius: centerChipDiameter / 2,
+        itemCount: centerNode.itemCount,
+      },
+      ...groups.map((group) => {
+        const itemCount = aggregatedRootItemCountById.get(group.root.id)!;
+        const { x, y } = getRadialPointOnCircle(rootAngleByRootId.get(group.root.id) ?? 0, coreRootCircleRadius);
+        return {
+          id: group.root.id,
+          name: group.root.name,
+          x,
+          y,
+          radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
+          itemCount,
+        };
+      }),
+    ]);
     hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
   }, [
+    centerNode,
+    centerChipDiameter,
+    groups,
+    aggregatedRootItemCountById,
     index.byId,
     popHierarchyByRootId,
     coreHierarchyByRootId,
@@ -1066,23 +1085,16 @@ export function WheelRadialPopCoreCore({
                 className={[
                   "gtv-wheel-chip",
                   "gtv-wheel-chip--center",
-                  !isPopExpanded && "gtv-wheel-chip--circle",
+                  "gtv-wheel-chip--circle",
                 ]
                   .filter(Boolean)
                   .join(" ")}
                 style={
-                  isPopExpanded
-                    ? ({
-                        width: centerNodeDimensions.WIDTH,
-                        "--gtv-wheel-chip-base-height": `${centerNodeDimensions.HEIGHT}px`,
-                        "--gtv-chip-color": centerNodeColor,
-                        "--gtv-hover-label-height": `${centerNodeDimensions.HEIGHT}px`,
-                      } as React.CSSProperties)
-                    : ({
-                        width: centerChipDiameter,
-                        "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
-                        "--gtv-chip-color": centerNodeColor,
-                      } as React.CSSProperties)
+                  {
+                    width: centerChipDiameter,
+                    "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
+                    "--gtv-chip-color": centerNodeColor,
+                  } as React.CSSProperties
                 }
                 onClick={(event) => {
                   panZoom.centerOnElement(
@@ -1102,12 +1114,6 @@ export function WheelRadialPopCoreCore({
                 aria-label={centerNode.name}
               >
                 {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
-                <span
-                  className="gtv-node-label gtv-node-label--root"
-                  style={{ fontSize: centerNodeFontSize }}
-                >
-                  {centerNode.name}
-                </span>
                 {showToolbar && (
                   <span
                     className="gtv-wheel-chip-hover-name"
@@ -1121,7 +1127,7 @@ export function WheelRadialPopCoreCore({
                 <div
                   className={[
                     "gtv-wheel-chip-toolbar",
-                    !isPopExpanded && "gtv-wheel-chip-toolbar--circle",
+                    "gtv-wheel-chip-toolbar--circle",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -1171,13 +1177,10 @@ export function WheelRadialPopCoreCore({
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;
-              const dimensions = calculateNodeDimensions(
-                aggregatedItemCount,
-                rootItemCountRange,
-              );
-              const fontSize = calculateNodeFontSize(
-                aggregatedItemCount,
-                rootItemCountRange,
+              const diameter = 2 * calculateNodeDotRadius(aggregatedItemCount, wheelItemCountRange);
+              const fontSize = calculateRootLabelFontSize(
+                calculateNodeFontSize(aggregatedItemCount, rootItemCountRange),
+                zoomScale,
               );
               return (
                 <div
@@ -1198,15 +1201,15 @@ export function WheelRadialPopCoreCore({
                     <button
                       type="button"
                       id={`group-${group.root.id}`}
-                      className="gtv-wheel-chip gtv-wheel-chip--selected"
+                      className="gtv-wheel-chip gtv-wheel-chip--selected gtv-wheel-chip--circle"
                       style={
                         {
-                          width: dimensions.WIDTH,
-                          "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
+                          width: diameter,
+                          "--gtv-wheel-chip-base-height": `${diameter}px`,
                           "--gtv-chip-color": chipColor,
-                          "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
+                      aria-label={group.root.name}
                       onPointerEnter={() => onNodeHover?.(group.root)}
                       onClick={(event) => {
                         panZoom.centerOnElement(
@@ -1228,12 +1231,6 @@ export function WheelRadialPopCoreCore({
                       {PER_TREE_ACCENT_DOT && (
                         <span className="gtv-wheel-chip-dot" />
                       )}
-                      <span
-                        className="gtv-node-label gtv-node-label--root"
-                        style={{ fontSize }}
-                      >
-                        {group.root.name}
-                      </span>
                       {showToolbar && (
                         <span
                           className="gtv-wheel-chip-hover-name"
@@ -1245,7 +1242,7 @@ export function WheelRadialPopCoreCore({
                     </button>
                     {showToolbar && (
                       <div
-                        className="gtv-wheel-chip-toolbar"
+                        className="gtv-wheel-chip-toolbar gtv-wheel-chip-toolbar--circle"
                         style={
                           {
                             "--gtv-node-fill": chipColor,

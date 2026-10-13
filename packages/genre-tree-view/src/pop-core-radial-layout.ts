@@ -23,10 +23,12 @@ import {
   SURFACE_BORDER_COLOR,
   SURFACE_BORDER_WIDTH,
   TEXT_COLOR,
+  calculateRootLabelFontSize,
   TEXT_MUTED_COLOR,
   calculateLinkWidth,
   calculateNodeDotRadius,
   calculateLabelFontSizeAtZoom,
+  calculateLabelRank,
   calculateNodeFontSize,
   isLabelRankedForZoom,
   tintSurface,
@@ -384,6 +386,28 @@ export function getDotLabelGeometry(
     zoomScale === undefined
       ? calculateNodeFontSize(itemCount, itemCountRange)
       : calculateLabelFontSizeAtZoom(itemCount, itemCountRange, zoomScale);
+  const candidates = getLabelCandidates(x, name, dotRadius, fontSize);
+  const { x: labelX, box: label } = candidates[0];
+  const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
+  const halfHeight = Math.max(dotRadius, fontSize / 2);
+  return {
+    dotRadius,
+    fontSize,
+    labelX,
+    anchor: x >= 0 ? "start" : "end",
+    label,
+    dot,
+    hitArea: {
+      x0: Math.min(dot.x0, label.x0),
+      x1: Math.max(dot.x1, label.x1),
+      y0: -halfHeight,
+      y1: halfHeight,
+    },
+    candidates,
+  };
+}
+
+function getLabelCandidates(x: number, name: string, dotRadius: number, fontSize: number): DotLabelCandidate[] {
   const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
   const halfFont = fontSize / 2;
   const side = (right: boolean): DotLabelCandidate => {
@@ -400,25 +424,38 @@ export function getDotLabelGeometry(
     return { x: 0, y, anchor: "middle", box: { x0: -width / 2, x1: width / 2, y0: y - halfFont, y1: y + halfFont } };
   };
   const right = x >= 0;
-  const candidates = [side(right), side(!right), stacked(false), stacked(true)];
-  const { x: labelX, box: label } = candidates[0];
-  const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
-  const halfHeight = Math.max(dotRadius, halfFont);
-  return {
-    dotRadius,
-    fontSize,
-    labelX,
-    anchor: right ? "start" : "end",
-    label,
-    dot,
-    hitArea: {
-      x0: Math.min(dot.x0, label.x0),
-      x1: Math.max(dot.x1, label.x1),
-      y0: -halfHeight,
-      y1: halfHeight,
-    },
-    candidates,
-  };
+  return [side(right), side(!right), stacked(false), stacked(true)];
+}
+
+/** A root chip's label, drawn in the SVG (see renderRootLabels) so it shares the dot labels' look
+ * and collision placement. `x`/`y` are the chip's center, `itemCount` its subtree total. */
+export interface RootLabelDatum {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  radius: number;
+  itemCount: number;
+}
+
+export function renderRootLabels<E extends SVGElement>(
+  container: d3.Selection<E, unknown, null, undefined>,
+  roots: RootLabelDatum[],
+): void {
+  container
+    .append("g")
+    .attr("class", "gtv-wheel-root-labels")
+    .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
+    .data(roots)
+    .join("g")
+    .attr("class", "gtv-root-label")
+    .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+    .append("text")
+    .attr("class", "gtv-node-label")
+    .attr("dominant-baseline", "middle")
+    .attr("fill", TEXT_COLOR)
+    .style("pointer-events", "none")
+    .text((d) => d.name);
 }
 
 export interface RenderPopSubtreeCallbacks {
@@ -609,6 +646,9 @@ export function renderPopSubtree(
           : ""),
     )
     .attr("id", (d) => "group-" + d.data.id)
+    // Levels below the nearest root chip (1 = its direct child), for hideCollidingLabels' ranking:
+    // with skipRootNode, depth 0 is that chip itself.
+    .attr("data-gtv-depth", (d) => d.depth + (skipRootNode ? 0 : 1))
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", nodeFill);
 
@@ -686,7 +726,7 @@ export function renderPopSubtree(
     .append("text")
     .attr(
       "class",
-      "gtv-node-label" + (isCoreSector ? " gtv-node-label--root" : ""),
+      "gtv-node-label",
     )
     .each(function (d) {
       const { labelX, anchor, fontSize } = getDotLabelGeometry(
@@ -768,7 +808,7 @@ export function renderPopSubtree(
 
 /** Places every dot label under `container` (across all rendered subtrees, so labels of
  * neighboring branches/sectors are checked against each other) on its first candidate spot (see
- * getDotLabelGeometry) that overlaps no bigger node's label and no dot, else marks it
+ * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
  * `gtv-node-label--hidden` (CSS reveals it again on hover). Labels below the zoom's importance
  * threshold (see isLabelRankedForZoom) are hidden outright. Labels are sized for `zoomScale`: zoomed
  * out they are bigger in layout units and collide more, so fewer of them show. */
@@ -793,20 +833,50 @@ export function hideCollidingLabels<E extends SVGElement>(
         getDotLabelGeometry(d.x!, d.data.name, d.data.itemCount, itemCountRange, zoomScale),
       ]),
   );
-  const placement = placeLabels(
-    nodes
-      .data()
-      .filter((d) => isLabelRankedForZoom(d.data.itemCount, itemCountRange, zoomScale))
-      .map((d) => {
-      const { candidates, dot } = geometryById.get(d.data.id)!;
-      return {
-        id: d.data.id,
-        labels: candidates.map((candidate) => offset(candidate.box, d.x!, d.y!)),
-        dot: offset(dot, d.x!, d.y!),
-        priority: d.data.itemCount,
-      };
+  const roots = container.selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label");
+  const rootGeometryById = new Map(
+    roots.data().map((d) => {
+      const fontSize = calculateRootLabelFontSize(
+        calculateLabelFontSizeAtZoom(d.itemCount, itemCountRange, zoomScale),
+        zoomScale,
+      );
+      return [d.id, { fontSize, candidates: getLabelCandidates(d.x, d.name, d.radius, fontSize) }];
     }),
   );
+  const placement = placeLabels([
+    ...roots.data().map((d) => ({
+      id: `root:${d.id}`,
+      labels: rootGeometryById.get(d.id)!.candidates.map((candidate) => offset(candidate.box, d.x, d.y)),
+      dot: { x0: d.x - d.radius, x1: d.x + d.radius, y0: d.y - d.radius, y1: d.y + d.radius },
+      priority: Infinity,
+    })),
+    ...nodes.nodes().map((element) => {
+      const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
+      const { candidates, dot } = geometryById.get(d.data.id)!;
+      const rank = calculateLabelRank(d.data.itemCount, itemCountRange, Number(element.dataset.gtvDepth));
+      return {
+        id: d.data.id,
+        // An unranked node still keeps its dot as an obstacle for every other label.
+        labels: isLabelRankedForZoom(rank, zoomScale)
+          ? candidates.map((candidate) => offset(candidate.box, d.x!, d.y!))
+          : [],
+        dot: offset(dot, d.x!, d.y!),
+        priority: rank,
+      };
+    }),
+  ]);
+  // Roots are always named, even when no candidate is free.
+  roots.each(function (d) {
+    const { candidates, fontSize } = rootGeometryById.get(d.id)!;
+    const candidate = candidates[Math.max(placement.get(`root:${d.id}`) ?? 0, 0)];
+    d3Lib
+      .select(this)
+      .select(".gtv-node-label")
+      .attr("x", candidate.x)
+      .attr("y", candidate.y)
+      .attr("text-anchor", candidate.anchor)
+      .style("font-size", `${fontSize}px`);
+  });
   nodes.each(function (d) {
     const { candidates, fontSize } = geometryById.get(d.data.id)!;
     const index = placement.get(d.data.id) ?? -1;

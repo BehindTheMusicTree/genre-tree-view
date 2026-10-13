@@ -11,7 +11,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { MAX_NODE_WIDTH, POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
+import { NODE_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -186,7 +186,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const manyRoots = [
       ...NO_POP_NODES,
       ...Array.from({ length: 60 }, (_, i) => [
-        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
+        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 1000 } satisfies GenreTreeNode,
         { id: `extra-root-${i}-child`, parentId: `extra-root-${i}`, name: `Extra ${i} Child`, itemCount: 0 } satisfies GenreTreeNode,
       ]).flat(),
     ];
@@ -195,7 +195,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const withRadius = getWheelRadius(render(<GenreTreeWheelRadialPopCore nodes={withCenterSubtree} />).container);
 
     expect(withRadius).toBeGreaterThan(
-      mainstreamRadiusFor(withCenterSubtree) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
+      mainstreamRadiusFor(withCenterSubtree) + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN,
     );
     // solveRingRadius resolves to within 1px.
     expect(Math.abs(withRadius - withoutRadius)).toBeLessThanOrEqual(1);
@@ -208,7 +208,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const radius = getWheelRadius(render(<GenreTreeWheelRadialPopCore nodes={deepCenterNodes} />).container);
 
     expect(radius).toBeGreaterThan(chipClearanceRadius);
-    expect(radius).toBeCloseTo(mainstreamRadius + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN, 6);
+    expect(radius).toBeCloseTo(mainstreamRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN, 6);
     expect(radius).toBeLessThan(chipClearanceRadius + mainstreamRadius);
   });
 
@@ -319,7 +319,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       ...Array.from({ length: 60 }, (_, i) => [
-        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
+        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 1000 } satisfies GenreTreeNode,
         {
           id: `extra-root-${i}-child`,
           parentId: `extra-root-${i}`,
@@ -409,11 +409,12 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
     const endpointsMatch = (d: string, targetX: number, targetY: number) => {
       const { start, end } = linkPathEndpoints(d);
+      // d3 path strings keep 3 decimals.
       return (
-        Math.abs(start[0] - rootX) < 1e-6 &&
-        Math.abs(start[1] - rootY) < 1e-6 &&
-        Math.abs(end[0] - targetX) < 1e-6 &&
-        Math.abs(end[1] - targetY) < 1e-6
+        Math.abs(start[0] - rootX) < 1e-3 &&
+        Math.abs(start[1] - rootY) < 1e-3 &&
+        Math.abs(end[0] - targetX) < 1e-3 &&
+        Math.abs(end[1] - targetY) < 1e-3
       );
     };
 

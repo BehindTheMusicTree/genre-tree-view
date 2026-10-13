@@ -262,13 +262,25 @@ export function calculateLabelFontSizeAtZoom(itemCount: number, range: ItemCount
   return (LABEL_SCREEN_MIN_PX + t * (LABEL_SCREEN_MAX_PX - LABEL_SCREEN_MIN_PX)) / zoomScale;
 }
 
-/** Whether a dot label is important enough to be named at `zoomScale` (see
+/** A dot label's map-style importance: its log-scaled itemCount, lowered by
+ * LABEL_DEPTH_RANK_PENALTY per level below the first under its root (`depth` 1), so a level is
+ * named before the levels under it unless a deeper genre is much bigger. */
+export function calculateLabelRank(itemCount: number, range: ItemCountRange, depth: number): number {
+  return logarithmicPosition(itemCount, range) - Math.max(0, depth - 1) * LABEL_DEPTH_RANK_PENALTY;
+}
+
+/** Whether a label of `rank` (see calculateLabelRank) is named at `zoomScale` (see
  * LABEL_MIN_RANK_AT_MIN_ZOOM); the threshold falls linearly in log-zoom from ZOOM_MIN_SCALE to
- * ZOOM_FOCUS_SCALE. */
-export function isLabelRankedForZoom(itemCount: number, range: ItemCountRange, zoomScale: number): boolean {
+ * ZOOM_FOCUS_SCALE, and below 0 past it so deep levels keep appearing while zooming further in. */
+export function isLabelRankedForZoom(rank: number, zoomScale: number): boolean {
   const zoomOut = Math.log(ZOOM_FOCUS_SCALE / zoomScale) / Math.log(ZOOM_FOCUS_SCALE / ZOOM_MIN_SCALE);
-  const minRank = Math.min(1, Math.max(0, zoomOut)) * LABEL_MIN_RANK_AT_MIN_ZOOM;
-  return logarithmicPosition(itemCount, range) >= minRank;
+  return rank >= Math.min(1, zoomOut) * LABEL_MIN_RANK_AT_MIN_ZOOM;
+}
+
+/** Root chip label size: its own layout size, floored so it never renders below
+ * ROOT_LABEL_MIN_SCREEN_PX on screen — every root stays named at any zoom. */
+export function calculateRootLabelFontSize(layoutFontSize: number, zoomScale: number): number {
+  return Math.max(layoutFontSize, ROOT_LABEL_MIN_SCREEN_PX / zoomScale);
 }
 
 export const NODE_DOT_MIN_RADIUS = 3;
@@ -361,6 +373,9 @@ export const LABEL_SCREEN_MAX_PX = 22;
 // at ZOOM_MIN_SCALE, easing to 0 at ZOOM_FOCUS_SCALE: like a map, a far-out view names only the
 // main genres even where smaller labels would fit.
 export const LABEL_MIN_RANK_AT_MIN_ZOOM = 0.6;
+// Rank (see calculateLabelRank) a label loses per hierarchy level below its root's direct children.
+export const LABEL_DEPTH_RANK_PENALTY = 0.15;
+export const ROOT_LABEL_MIN_SCREEN_PX = 15;
 // Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
 export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
 // Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer

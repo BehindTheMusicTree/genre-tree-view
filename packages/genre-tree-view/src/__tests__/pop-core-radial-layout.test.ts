@@ -14,6 +14,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
   popRadiusOfDepth,
   renderPopSubtree,
+  renderRootLabels,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
@@ -948,6 +949,27 @@ describe("renderPopSubtree dot + label nodes", () => {
     };
 
     expect(hiddenAt(3)).toBeLessThan(hiddenAt(0.2));
+  });
+
+  it("always names roots and keeps dot labels off a root's circle", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
+      { id: "dub", parentId: "reggae", name: "Dub", itemCount: 1 },
+    ];
+    const range = getItemCountRange(nodes);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 0, 1000, 6), "#123456", null, [], noopCallbacks, range);
+    const dub = svg.select<SVGGElement>("#group-dub").datum() as { x: number; y: number };
+    renderRootLabels(svg, [{ id: "rock", name: "Rock music", x: dub.x + 25, y: dub.y, radius: 10, itemCount: 1 }]);
+
+    hideCollidingLabels(d3, svg, range, 1);
+
+    const rootLabel = svg.select(".gtv-root-label .gtv-node-label");
+    expect(rootLabel.text()).toBe("Rock music");
+    expect(rootLabel.classed("gtv-node-label--hidden")).toBe(false);
+    expect(rootLabel.attr("text-anchor")).toBe("start");
+    expect(dub.x).toBeGreaterThanOrEqual(0);
+    expect(svg.select("#group-dub .gtv-node-label").attr("text-anchor")).not.toBe("start");
   });
 
   it("keeps every dot of a 17-child branch inside its measured wedge", () => {

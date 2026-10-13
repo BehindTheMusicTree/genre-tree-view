@@ -6,6 +6,9 @@ import {
   calculateLabelFontSizeAtZoom,
   calculateNodeFontSize,
   isLabelRankedForZoom,
+  calculateLabelRank,
+  calculateRootLabelFontSize,
+  ROOT_LABEL_MIN_SCREEN_PX,
   LABEL_SCREEN_MAX_PX,
   LABEL_SCREEN_MIN_PX,
   ZOOM_FOCUS_SCALE,
@@ -132,13 +135,26 @@ describe("calculateLabelFontSizeAtZoom", () => {
 describe("isLabelRankedForZoom", () => {
   const range = { min: 1, max: 1000 };
 
-  it("names every genre from the focus zoom in", () => {
-    expect(isLabelRankedForZoom(1, range, ZOOM_FOCUS_SCALE)).toBe(true);
-    expect(isLabelRankedForZoom(1, range, 3)).toBe(true);
+  it("names the first level from the focus zoom, deeper levels only further in", () => {
+    expect(isLabelRankedForZoom(0, ZOOM_FOCUS_SCALE)).toBe(true);
+    expect(isLabelRankedForZoom(-0.5, 3)).toBe(true);
   });
 
   it("names only the main genres fully zoomed out", () => {
-    expect(isLabelRankedForZoom(5, range, ZOOM_MIN_SCALE)).toBe(false);
-    expect(isLabelRankedForZoom(1000, range, ZOOM_MIN_SCALE / 2)).toBe(true);
+    expect(isLabelRankedForZoom(calculateLabelRank(5, range, 1), ZOOM_MIN_SCALE)).toBe(false);
+    expect(isLabelRankedForZoom(calculateLabelRank(1000, range, 1), ZOOM_MIN_SCALE / 2)).toBe(true);
+  });
+
+  it("ranks a deeper genre below a same-size shallower one", () => {
+    expect(calculateLabelRank(1, range, 3)).toBeLessThan(calculateLabelRank(1, range, 1));
+    expect(isLabelRankedForZoom(calculateLabelRank(1, range, 3), ZOOM_FOCUS_SCALE)).toBe(false);
+    expect(isLabelRankedForZoom(calculateLabelRank(1, range, 3), 3)).toBe(true);
+  });
+});
+
+describe("calculateRootLabelFontSize", () => {
+  it("floors a root label at ROOT_LABEL_MIN_SCREEN_PX on screen", () => {
+    expect(calculateRootLabelFontSize(14, ZOOM_MIN_SCALE) * ZOOM_MIN_SCALE).toBeCloseTo(ROOT_LABEL_MIN_SCREEN_PX);
+    expect(calculateRootLabelFontSize(14, 3)).toBe(14);
   });
 });
