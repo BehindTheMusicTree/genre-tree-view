@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Radial pop/core wheel: links from a root to its branches no longer paint over other branches'
+  labels — every link now renders beneath every node.
+
 ## [1.18.0] - 2026-10-13
 
 ### Added
