@@ -10,6 +10,8 @@ import { buildTreeHierarchyStructure } from "../NodeHelper";
 import {
   ACTIONS_OVERLAY_HEIGHT,
   MAX_NODE_HEIGHT,
+  NODE_MIN_BORDER_WIDTH,
+  SELECTED_BORDER_WIDTH_RATIO,
   calculateNodeDimensions,
   getItemCountRange,
 } from "../constants";
@@ -536,7 +538,9 @@ describe("renderTree", () => {
       ".gtv-node-border",
     ) as SVGPathElement;
     expect(childBorder.getAttribute("stroke")).toBe("#4F46E5");
-    expect(childBorder.getAttribute("stroke-width")).toBe("2.5");
+    expect(childBorder.getAttribute("stroke-width")).toBe(
+      String(NODE_MIN_BORDER_WIDTH * SELECTED_BORDER_WIDTH_RATIO),
+    );
     expect(rootBorder.getAttribute("stroke")).not.toBe("#4F46E5");
   });
 

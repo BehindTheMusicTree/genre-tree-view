@@ -543,6 +543,7 @@ export function App() {
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
   const [popCoreNodes, setPopCoreNodes] = useState<GenreTreeNode[]>(popCoreWheelNodes);
+  const [popCoreFocusNodeId, setPopCoreFocusNodeId] = useState<string | null>(null);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
@@ -728,6 +729,8 @@ export function App() {
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
+            focusNodeId={popCoreFocusNodeId}
+            onFocusChange={setPopCoreFocusNodeId}
           />
         </div>
       )}

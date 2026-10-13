@@ -46,13 +46,13 @@ import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
   calculateNodeDotRadius,
   calculateNodeFontSize,
   calculateRootLabelFontSize,
-  CENTER_NODE_NAME,
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
@@ -83,6 +83,12 @@ export interface WheelRadialPopCoreProps
   /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
+  /** Renders this node's subtree as its own wheel instead of the whole tree — its single pop
+   * child (if any) becomes the center disc, its other children the ring roots. */
+  focusNodeId?: string | null;
+  /** Fired with the node to zoom into from a ring root's info panel, or with the focus node's
+   * parent (null for the whole tree) from the back button. Omit to hide both controls. */
+  onFocusChange?: (id: string | null) => void;
 }
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
@@ -147,30 +153,14 @@ export function WheelRadialPopCoreCore({
   controlsOrientation = "vertical",
   allowWheelRotation = true,
   selectedNodeId,
+  focusNodeId = null,
+  onFocusChange,
 }: WheelRadialPopCoreProps) {
   const index = useTreeIndex(nodes);
-  const centerNode = nodes.find(
-    (node) => node.parentId === null && node.name === CENTER_NODE_NAME,
+  const { center: centerNode, centerHasPopDisc, centerNodes: centerSubtreeNodes, ringNodes } = useMemo(
+    () => resolvePopCoreFrame(nodes, focusNodeId),
+    [nodes, focusNodeId],
   );
-  if (!centerNode) {
-    throw new Error(
-      `GenreTreeWheelRadialPopCore requires a root node named "${CENTER_NODE_NAME}"`,
-    );
-  }
-
-  // The center node's own subtree (if any) renders inside the wheel's circle (see
-  // centerSubtreeHierarchy below) rather than as a ring root, so it — and all its descendants —
-  // must be excluded from ringNodes, not just the center node itself.
-  const centerSubtreeNodes = useMemo(() => {
-    const subtree: GenreTreeNode[] = [];
-    const stack = [centerNode];
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-      subtree.push(current);
-      stack.push(...(index.childrenByParentId.get(current.id) ?? []));
-    }
-    return subtree;
-  }, [index, centerNode]);
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
@@ -184,6 +174,7 @@ export function WheelRadialPopCoreCore({
   // one. Unlike the ring roots, the center node's own pop branch (if any) has no dedicated wedge
   // rendering path today, so excluding it here also drops it from view entirely.
   const centerCoreSubtreeNodes = useMemo(() => {
+    if (!centerHasPopDisc) return [centerNode];
     const { childrenByParentId } = index;
     const coreChildren = (childrenByParentId.get(centerNode.id) ?? []).filter(
       (child) => child.side !== "pop",
@@ -196,7 +187,7 @@ export function WheelRadialPopCoreCore({
       stack.push(...(childrenByParentId.get(current.id) ?? []));
     }
     return subtree;
-  }, [index, centerNode]);
+  }, [index, centerNode, centerHasPopDisc]);
 
   const centerSubtreeHierarchy = useMemo(
     () =>
@@ -209,10 +200,6 @@ export function WheelRadialPopCoreCore({
   // center chip stays a plain disc.
   const isPopExpanded = centerSubtreeHierarchy != null;
 
-  const ringNodes = useMemo(
-    () => nodes.filter((node) => !centerSubtreeNodeIds.has(node.id)),
-    [nodes, centerSubtreeNodeIds],
-  );
   const groups = useMemo(() => groupNodesByRoot(ringNodes), [ringNodes]);
 
   const splitByRootId = useMemo(
@@ -220,6 +207,10 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => [group.root.id, splitRootGroupBySide(group)]),
       ),
+    [groups],
+  );
+  const ringRootById = useMemo(
+    () => new Map(groups.flatMap((group) => group.nodes.map((node) => [node.id, group.root]))),
     [groups],
   );
   const coreNodeIds = useMemo(
@@ -246,8 +237,7 @@ export function WheelRadialPopCoreCore({
           textColor: TEXT_COLOR,
         };
       }
-      const rootId = index.rootIdById.get(node.id) ?? node.id;
-      const rootColor = getGenreTreeColor(index.byId.get(rootId)?.wikidataId);
+      const rootColor = getGenreTreeColor(ringRootById.get(node.id)?.wikidataId);
       return {
         fill: coreNodeIds.has(node.id)
           ? rootColor
@@ -255,7 +245,7 @@ export function WheelRadialPopCoreCore({
         textColor: ACCENT_TEXT_COLOR,
       };
     },
-    [centerSubtreeNodeIds, coreNodeIds, index],
+    [centerSubtreeNodeIds, coreNodeIds, ringRootById],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -268,6 +258,12 @@ export function WheelRadialPopCoreCore({
   const [rotationTopRootId, setRotationTopRootId] = useState<string | null>(
     groups[0]?.root.id ?? null,
   );
+  const [renderedFocusNodeId, setRenderedFocusNodeId] = useState(focusNodeId);
+  if (renderedFocusNodeId !== focusNodeId) {
+    setRenderedFocusNodeId(focusNodeId);
+    setTopRootId(groups[0]?.root.id ?? null);
+    setRotationTopRootId(groups[0]?.root.id ?? null);
+  }
   const viewportRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef, wheelZoom);
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
@@ -868,6 +864,12 @@ export function WheelRadialPopCoreCore({
       );
     }
 
+    // Each branch draws its own links, so a later branch's links would paint over earlier ones' labels.
+    const linksLayer = originGroup.insert("g", ":first-child").attr("class", "gtv-wheel-links").node()!;
+    originGroup.selectAll<SVGPathElement, unknown>("path.gtv-link").each(function () {
+      linksLayer.appendChild(this);
+    });
+
     renderRootLabels(originGroup, [
       {
         id: centerNode.id,
@@ -1020,6 +1022,9 @@ export function WheelRadialPopCoreCore({
   // afterward so it doesn't fight the user's own pan/zoom on later selections/expansions.
   const hasInitialFitRef = useRef(false);
   useEffect(() => {
+    hasInitialFitRef.current = false;
+  }, [focusNodeId]);
+  useEffect(() => {
     if (hasInitialFitRef.current) return;
     const elements = [
       wheelCircleRef.current,
@@ -1171,6 +1176,7 @@ export function WheelRadialPopCoreCore({
             height={svgCanvasRadius * 2}
           />
 
+          {centerHasPopDisc && (
           <div className="gtv-wheel-center-node">
             <div
               className={[
@@ -1255,6 +1261,8 @@ export function WheelRadialPopCoreCore({
               )}
             </div>
           </div>
+
+          )}
 
           <div className="gtv-wheel">
             {dividerAngles.map((angle, index) => (
@@ -1398,7 +1406,7 @@ export function WheelRadialPopCoreCore({
           node={panel.node}
           {...getNodeVisualStyle(panel.node)}
           parentNode={(() => {
-            const parent = index.byId.get(panel.node.parentId ?? "");
+            const parent = index.byId.get(index.byId.get(panel.node.id)?.parentId ?? "");
             return parent
               ? { node: parent, ...getNodeVisualStyle(parent) }
               : null;
@@ -1429,7 +1437,37 @@ export function WheelRadialPopCoreCore({
           }}
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
+          onZoomIn={
+            onFocusChange &&
+            groups.some((group) => group.root.id === panel.node.id) &&
+            index.childrenByParentId.has(panel.node.id)
+              ? () => {
+                  closeNodeInfo();
+                  onFocusChange(panel.node.id);
+                }
+              : undefined
+          }
         />
+      )}
+
+      {onFocusChange && focusNodeId !== null && (
+        <div className="gtv-wheel-back-controls">
+          {(() => {
+            const parent = index.byId.get(index.byId.get(focusNodeId)?.parentId ?? "");
+            return (
+              <button
+                type="button"
+                className="gtv-wheel-back-btn"
+                onClick={() => {
+                  closeNodeInfo();
+                  onFocusChange(parent?.id ?? null);
+                }}
+              >
+                ← {parent?.name ?? "All genres"}
+              </button>
+            );
+          })()}
+        </div>
       )}
 
       <div

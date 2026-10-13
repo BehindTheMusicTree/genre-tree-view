@@ -5,6 +5,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-10-13
+
+### Added
+
+- Radial pop/core wheel: zoom into any ring root that has children from its info panel — the
+  wheel re-renders that node's subtree as its own circle (its pop child, if any, as the center
+  disc; otherwise the node is shown as a center label). A top-left back button returns to the
+  parent, or to all genres. Controlled via the new `focusNodeId` / `onFocusChange` props.
+
+### Changed
+
+- Node borders (tree cards and radial wheel dots) now scale with track count on the same log
+  scale as node size, from 1px to 4px; the selected node's border stays 2.5× its own width.
+
+### Fixed
+
+- Radial pop/core wheel: links from a root to its branches no longer paint over other branches'
+  labels — every link now renders beneath every node.
+
 ## [1.18.0] - 2026-10-13
 
 ### Added

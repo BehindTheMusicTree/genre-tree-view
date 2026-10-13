@@ -11,6 +11,12 @@ export interface GenreTreeWheelRadialPopCoreProps extends Omit<GenreTreeProps, "
   /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
+  /** Renders this node's subtree as its own wheel instead of the whole tree — its single pop
+   * child (if any) becomes the center disc, its other children the ring roots. */
+  focusNodeId?: string | null;
+  /** Fired with the node to zoom into from a ring root's info panel, or with the focus node's
+   * parent (null for the whole tree) from the back button. Omit to hide both controls. */
+  onFocusChange?: (id: string | null) => void;
 }
 
 /**

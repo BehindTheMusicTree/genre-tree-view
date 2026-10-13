@@ -25,6 +25,7 @@ import {
   Dimensions,
   getItemCountRange,
   HOVER_LABEL_CARD_OVERLAP,
+  NODE_MIN_BORDER_WIDTH,
   ItemCountRange,
 } from "./constants";
 
@@ -287,6 +288,7 @@ export function addHoverNameLabel(
   nodeGroup: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
   itemCountRange: ItemCountRange,
   color: string,
+  cardBorderWidth = NODE_MIN_BORDER_WIDTH,
 ) {
   if (!nodeGroup.select("#hover-label-" + node.id).empty()) return;
 
@@ -296,13 +298,13 @@ export function addHoverNameLabel(
 
   group
     .append("foreignObject")
-    .attr("x", -dimensions.WIDTH / 2 - HOVER_LABEL_CARD_OVERLAP + 0.5)
+    .attr("x", -dimensions.WIDTH / 2 - cardBorderWidth / 2)
     .attr("y", -dimensions.HEIGHT / 2 - dimensions.HEIGHT)
-    .attr("width", dimensions.WIDTH + HOVER_LABEL_CARD_OVERLAP * 2 - 1)
+    .attr("width", dimensions.WIDTH + cardBorderWidth)
     .attr("height", dimensions.HEIGHT + HOVER_LABEL_CARD_OVERLAP)
     .html(
       () =>
-        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px;color:${color}">${node.name}</div>`,
+        `<div class="gtv-hover-label" style="width:100%;height:100%;font-size:${fontSize}px;color:${color};border-width:${cardBorderWidth}px">${node.name}</div>`,
     );
 
   return group;

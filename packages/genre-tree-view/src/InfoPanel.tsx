@@ -35,6 +35,8 @@ export interface InfoPanelProps {
   hideClose?: boolean;
   /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** When set, shows a "Zoom in" action that fires it. */
+  onZoomIn?: () => void;
 }
 
 /** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
@@ -53,6 +55,7 @@ export function InfoPanel({
   onSelectNode,
   renderExtraDetails,
   hideClose = false,
+  onZoomIn,
 }: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
@@ -81,6 +84,13 @@ export function InfoPanel({
         <dt>Side</dt>
         <dd>{node.side ?? "core"}</dd>
       </dl>
+      {onZoomIn && (
+        <div className="gtv-info-panel-actions">
+          <button type="button" className="gtv-info-panel-child" onClick={onZoomIn}>
+            Zoom in
+          </button>
+        </div>
+      )}
       {ancestorNodes.length > 0 && (
         <div className="gtv-info-panel-children">
           <span className="gtv-info-panel-children-title">Ancestors</span>
