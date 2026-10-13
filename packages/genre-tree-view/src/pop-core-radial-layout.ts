@@ -173,22 +173,64 @@ export function coreRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: nu
   return (depth: number) => getRadialDepthRadius(depth + 1, coreRootCircleRadius, depthSpacing);
 }
 
+type ContourEdge = { x: number; dotRadius: number };
+type Contour = { left: ContourEdge; right: ContourEdge }[];
+
 /** Lays `hierarchy` out angularly with each pair of same-depth neighbours just far enough apart for
  * their dots not to overlap on their own ring — a deeper (pop) ring is smaller, so its nodes need
  * more angle each. Leaves each node's `.x` as its angle (rad) from the wedge's leading edge and
- * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size. */
+ * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size.
+ *
+ * Packs each node's children left to right, each one shifted just far enough to clear the
+ * accumulated contour of its earlier siblings, parent centered over its first and last child. Not
+ * d3.tree: its Reingold–Tilford pass spreads the push between two wide subtrees evenly across every
+ * small sibling between them, which on deep rings leaves leaf siblings far apart. */
 export function measureWedge(
-  d3Lib: typeof import("d3"),
+  _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
   itemCountRange?: ItemCountRange,
 ): number {
   const dotRadius = (d: D3Node) =>
     itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
-  d3Lib
-    .tree<GenreTreeNode>()
-    .nodeSize([1, 1])
-    .separation((a, b) => (dotRadius(a) + dotRadius(b) + MIN_DOT_GAP) / radiusOfDepth(a.depth))(hierarchy);
+  const offsetFromParent = new Map<D3Node, number>();
+  const shiftLevel = (level: Contour[number], by: number) => ({
+    left: { ...level.left, x: level.left.x + by },
+    right: { ...level.right, x: level.right.x + by },
+  });
+
+  const pack = (node: D3Node): Contour => {
+    const own = { x: 0, dotRadius: dotRadius(node) };
+    if (!node.children) return [{ left: own, right: own }];
+    const below: Contour = [];
+    const childOffsets: number[] = [];
+    for (const child of node.children) {
+      const contour = pack(child);
+      let offset = 0;
+      if (childOffsets.length > 0) {
+        offset = -Infinity;
+        for (let k = 0; k < Math.min(below.length, contour.length); k++) {
+          const gap =
+            (below[k].right.dotRadius + contour[k].left.dotRadius + MIN_DOT_GAP) / radiusOfDepth(child.depth + k);
+          offset = Math.max(offset, below[k].right.x - contour[k].left.x + gap);
+        }
+      }
+      childOffsets.push(offset);
+      contour.forEach((level, k) => {
+        const shifted = shiftLevel(level, offset);
+        if (k < below.length) below[k].right = shifted.right;
+        else below.push(shifted);
+      });
+    }
+    const center = (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2;
+    node.children.forEach((child, i) => offsetFromParent.set(child, childOffsets[i] - center));
+    return [{ left: own, right: own }, ...below.map((level) => shiftLevel(level, -center))];
+  };
+
+  pack(hierarchy);
+  hierarchy.eachBefore((d) => {
+    d.x = d.parent ? d.parent.x! + offsetFromParent.get(d)! : 0;
+  });
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {

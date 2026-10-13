@@ -965,6 +965,26 @@ describe("measureWedge", () => {
     const inner = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => 1500);
     expect(inner).toBeCloseTo(outer * 2, 9);
   });
+
+  it("keeps leaf siblings between two wide subtrees one dot slot apart instead of spreading them", () => {
+    const wide = (id: string): GenreTreeNode[] => [
+      { id, parentId: "r", name: id, itemCount: 1 },
+      ...Array.from({ length: 6 }, (_, i) => ({ id: `${id}${i}`, parentId: id, name: `${id}${i}`, itemCount: 1 })),
+    ];
+    const nodes: GenreTreeNode[] = [
+      { id: "r", parentId: null, name: "R", itemCount: 1 },
+      ...wide("a"),
+      ...["l0", "l1", "l2"].map((id) => ({ id, parentId: "r", name: id, itemCount: 1 })),
+      ...wide("b"),
+    ];
+    const ringRadius = 1000;
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    measureWedge(d3, hierarchy, () => ringRadius);
+    const x = (id: string) => hierarchy.find((d) => d.data.id === id)!.x!;
+    const slot = (2 * NODE_DOT_MAX_RADIUS + 8) / ringRadius;
+    expect(x("l1") - x("l0")).toBeCloseTo(slot, 9);
+    expect(x("l2") - x("l1")).toBeCloseTo(slot, 9);
+  });
 });
 
 describe("computePopRadialLayout stretch cap", () => {
