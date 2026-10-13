@@ -1137,4 +1137,69 @@ describe("GenreTreeWheelRadialPopCore", () => {
       rectSpy.mockRestore();
     });
   });
+
+  describe("focus", () => {
+    const panelOf = (container: HTMLElement) => within(container.querySelector(".gtv-info-panel") as HTMLElement);
+
+    it("shows no zoom-in action or back button without onFocusChange", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" />);
+      fireEvent.click(chipFor(container, "Punk"));
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+    });
+
+    it("offers zoom-in on a ring root with children, but not on the center", () => {
+      const onFocusChange = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onFocusChange={onFocusChange} />,
+      );
+      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+
+      fireEvent.click(chipFor(container, "Mainstream Pop"));
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+
+      fireEvent.click(chipFor(container, "Rock"));
+      fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
+      expect(onFocusChange).toHaveBeenCalledWith("root-a");
+      expect(container.querySelector(".gtv-info-panel")).toBeNull();
+    });
+
+    it("centers the focus node's pop child as the disc, rings its other children, and backs out to all genres", () => {
+      const onFocusChange = vi.fn();
+      const onRootSelect = vi.fn();
+      const { container, rerender, getByRole } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onFocusChange={onFocusChange} onRootSelect={onRootSelect} />,
+      );
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-a"
+          onFocusChange={onFocusChange}
+          onRootSelect={onRootSelect}
+        />,
+      );
+      expect(container.querySelector(".gtv-wheel-chip--center")?.getAttribute("aria-label")).toBe("Pop Rock");
+      expect(onRootSelect).toHaveBeenLastCalledWith("a-core");
+      expect(chipFor(container, "Rock")).toBeUndefined();
+
+      fireEvent.click(getByRole("button", { name: "← All genres" }));
+      expect(onFocusChange).toHaveBeenCalledWith(null);
+    });
+
+    it("shows the focus node as a label only when it has no pop child, and backs out to its parent", () => {
+      const onFocusChange = vi.fn();
+      const { container, getByRole } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />,
+      );
+      expect(container.querySelector(".gtv-wheel-chip--center")).toBeNull();
+      expect(chipFor(container, "Hardcore")).toBeDefined();
+
+      fireEvent.click(chipFor(container, "Hardcore"));
+      expect(panelOf(container).getByText("Punk")).toBeDefined();
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+
+      fireEvent.click(getByRole("button", { name: "← Rock" }));
+      expect(onFocusChange).toHaveBeenCalledWith("root-a");
+    });
+  });
 });

@@ -120,6 +120,9 @@ pnpm workspace with two members:
     a rectangle intersection.
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
     wheel radius, rotation easing/timing) consumed by all renderers.
+  - `pop-core-frame.ts` — `resolvePopCoreFrame` picks the pop-core wheel's center node (the
+    "Mainstream Pop" root, or a focused node's single pop child / the focused node itself) and its
+    ring nodes, so `focusNodeId` can render any subtree as its own wheel.
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and
     pop direct children, each becoming its own branch.
