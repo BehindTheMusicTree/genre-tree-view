@@ -122,7 +122,8 @@ pnpm workspace with two members:
     wheel radius, rotation easing/timing) consumed by all renderers.
   - `pop-core-frame.ts` — `resolvePopCoreFrame` picks the pop-core wheel's center node (the
     "Mainstream Pop" root, or a focused node's single pop child / the focused node itself) and its
-    ring nodes, so `focusNodeId` can render any subtree as its own wheel.
+    ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
+    rule for which nodes may be that focus.
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and
     pop direct children, each becoming its own branch.
@@ -189,7 +190,7 @@ pnpm workspace with two members:
 - Components: `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
   `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`.
 - Helpers: `getGenreTreeColor`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
-  `groupNodesByRoot`.
+  `groupNodesByRoot`, `isZoomableNode`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,

@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Radial pop/core wheel: picking a search result outside the current zoom while another node's
+  info panel is open no longer clears the selection — the wheel refocuses and opens the result.
+
 ## [1.19.2] - 2026-10-13
 
 ### Fixed
