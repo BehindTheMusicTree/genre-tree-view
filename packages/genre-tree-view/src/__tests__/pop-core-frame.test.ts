@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolvePopCoreFrame } from "../pop-core-frame";
+import { isZoomableNode, resolvePopCoreFrame } from "../pop-core-frame";
 import type { GenreTreeNode } from "../types";
 
 const NODES: GenreTreeNode[] = [
@@ -62,5 +62,48 @@ describe("resolvePopCoreFrame", () => {
   it("throws when the focus node has two pop children", () => {
     const nodes = [...NODES, { id: "glam", parentId: "rock", name: "Glam", itemCount: 0, side: "pop" as const }];
     expect(() => resolvePopCoreFrame(nodes, "rock")).toThrow(/more than one pop child/);
+  });
+});
+
+describe("isZoomableNode", () => {
+  it("accepts a top-level root with children other than Mainstream Pop", () => {
+    expect(isZoomableNode(NODES, "rock")).toBe(true);
+  });
+
+  it("accepts a nested non-pop child of a zoomable node", () => {
+    expect(isZoomableNode(NODES, "punk")).toBe(true);
+  });
+
+  it("rejects pop-side nodes and their descendants", () => {
+    expect(isZoomableNode(NODES, "pop-rock")).toBe(false);
+    expect(isZoomableNode([...NODES, { id: "yacht", parentId: "soft-rock", name: "Yacht Rock", itemCount: 0 }], "soft-rock")).toBe(
+      false,
+    );
+  });
+
+  it("rejects Mainstream Pop and its descendants", () => {
+    const nodes = [...NODES, { id: "teen-pop", parentId: "dance-pop", name: "Teen Pop", itemCount: 0 }];
+    expect(isZoomableNode(nodes, "pop")).toBe(false);
+    expect(isZoomableNode(nodes, "dance-pop")).toBe(false);
+  });
+
+  it("rejects a node with more than one pop child, and anything below it", () => {
+    const nodes = [
+      ...NODES,
+      { id: "power-pop", parentId: "rock", name: "Power Pop", itemCount: 0, side: "pop" as const },
+    ];
+    expect(isZoomableNode(nodes, "rock")).toBe(false);
+    expect(isZoomableNode(nodes, "punk")).toBe(false);
+  });
+
+  it("rejects a node without children", () => {
+    expect(isZoomableNode(NODES, "metal")).toBe(false);
+  });
+
+  it("rejects an unknown id or a dangling parent", () => {
+    expect(isZoomableNode(NODES, "nope")).toBe(false);
+    expect(
+      isZoomableNode([{ id: "orphan", parentId: "gone", name: "Orphan", itemCount: 0 }, { id: "kid", parentId: "orphan", name: "Kid", itemCount: 0 }], "orphan"),
+    ).toBe(false);
   });
 });

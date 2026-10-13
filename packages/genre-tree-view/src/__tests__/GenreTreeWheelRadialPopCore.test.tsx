@@ -1257,6 +1257,63 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onAddChild).toHaveBeenCalledWith("a-core");
     });
 
+    it("resets an unzoomable focus via onFocusChange(null) instead of throwing", () => {
+      const onFocusChange = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="nope" onFocusChange={onFocusChange} />,
+      );
+      expect(container.querySelector(".gtv-wheel-chip--center")?.getAttribute("aria-label")).toBe("Mainstream Pop");
+      expect(onFocusChange).toHaveBeenCalledTimes(1);
+      expect(onFocusChange).toHaveBeenCalledWith(null);
+    });
+
+    it("offers zoom-in only on zoomable ring roots", () => {
+      const nodes: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "b-pop-1", parentId: "root-b", name: "Synth Pop", itemCount: 0, side: "pop" },
+        { id: "b-pop-2", parentId: "root-b", name: "Electropop", itemCount: 0, side: "pop" },
+      ];
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} onFocusChange={vi.fn()} />);
+      fireEvent.click(chipFor(container, "Electronic"));
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+    });
+
+    it("refocuses on the nearest zoomable ancestor when a selection lies outside the zoom", () => {
+      const onFocusChange = vi.fn();
+      const { rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" onFocusChange={onFocusChange} />,
+      );
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-a"
+          onFocusChange={onFocusChange}
+          selectedNodeId="b-child"
+        />,
+      );
+      expect(onFocusChange).toHaveBeenLastCalledWith("root-b");
+
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="a-core"
+          onFocusChange={onFocusChange}
+          selectedNodeId="root-c"
+        />,
+      );
+      expect(onFocusChange).toHaveBeenLastCalledWith(null);
+    });
+
+    it("forwards clicks on a label-only center's label to its chip", () => {
+      const onNodeClick = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onNodeClick={onNodeClick} />,
+      );
+      const label = Array.from(container.querySelectorAll(".gtv-root-label text")).find((el) => el.textContent === "Punk")!;
+      fireEvent.click(label);
+      expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: "a-core" }), expect.anything());
+    });
+
     it("closes the info panel when the consumer changes focusNodeId", () => {
       const onSelectedNodeChange = vi.fn();
       const { container, rerender } = render(
