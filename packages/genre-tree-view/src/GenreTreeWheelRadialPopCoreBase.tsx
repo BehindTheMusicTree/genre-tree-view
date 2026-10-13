@@ -85,10 +85,13 @@ export interface WheelRadialPopCoreProps
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
   /** Renders this node's subtree as its own wheel instead of the whole tree — its single pop
-   * child (if any) becomes the center disc, its other children the ring roots. */
+   * child (if any) becomes the center disc, its other children the ring roots. An id that isn't
+   * zoomable (see `isZoomableNode`) renders the whole tree and fires `onFocusChange(null)`. */
   focusNodeId?: string | null;
-  /** Fired with the node to zoom into from a ring root's info panel, or with the focus node's
-   * parent (null for the whole tree) from the back button. Omit to hide both controls. */
+  /** Fired with the node to zoom into from a ring root's info panel, with the focus node's parent
+   * (null for the whole tree) from the back button, with null when `focusNodeId` isn't zoomable,
+   * and with the nearest zoomable ancestor (or null) when `selectedNodeId` lies outside the zoom.
+   * Omit to hide both controls and keep the wheel from refocusing on an outside selection. */
   onFocusChange?: (id: string | null) => void;
 }
 
@@ -287,9 +290,11 @@ export function WheelRadialPopCoreCore({
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // A consumer-driven focus change (not the wheel's own zoom/back buttons, which already close the
   // panel before calling onFocusChange) would otherwise leave the panel open on a node that may no
-  // longer be drawn.
+  // longer be drawn. When the consumer has already moved the selection to another node (e.g. a
+  // search result that triggered this refocus), closing would notify null and wipe that selection;
+  // the selection effect below swaps the panel to it instead.
   useEffect(() => {
-    if (panel) closeNodeInfo();
+    if (panel && (selectedNodeId == null || selectedNodeId === panel.node.id)) closeNodeInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a focus change should close the panel
   }, [focusNodeId]);
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —

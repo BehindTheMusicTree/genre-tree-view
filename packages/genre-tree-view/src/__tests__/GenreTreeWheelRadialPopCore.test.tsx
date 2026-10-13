@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
+import { useState } from "react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
 import {
@@ -1302,6 +1303,30 @@ describe("GenreTreeWheelRadialPopCore", () => {
         />,
       );
       expect(onFocusChange).toHaveBeenLastCalledWith(null);
+    });
+
+    it("keeps a search selection outside the zoom when another node's panel is open", () => {
+      let select: (id: string) => void = () => {};
+      function Harness() {
+        const [focusNodeId, setFocusNodeId] = useState<string | null>("root-a");
+        const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+        select = setSelectedNodeId;
+        return (
+          <GenreTreeWheelRadialPopCore
+            nodes={NODES_WITH_POP}
+            focusNodeId={focusNodeId}
+            onFocusChange={setFocusNodeId}
+            selectedNodeId={selectedNodeId}
+            onSelectedNodeChange={(node) => setSelectedNodeId(node?.id ?? null)}
+          />
+        );
+      }
+      const { container } = render(<Harness />);
+      fireEvent.click(chipFor(container, "Punk"));
+      expect(panelOf(container).getByText("Punk")).toBeTruthy();
+
+      act(() => select("b-child"));
+      expect(panelOf(container).getByText("Techno")).toBeTruthy();
     });
 
     it("forwards clicks on a label-only center's label to its chip", () => {
