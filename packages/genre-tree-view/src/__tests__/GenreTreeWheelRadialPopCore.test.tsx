@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
 import {
@@ -750,6 +750,46 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(getScale()).toBeLessThan(0.5);
 
     rectSpy.mockRestore();
+  });
+
+  describe("region label", () => {
+    // Viewport 800x600 with the wheel center far to its left, so the viewport center sits at 90°
+    // (root-a "Rock"'s sector) and well outside the mainstream circle.
+    function renderZoomedIntoRock({ chipOnScreen = false } = {}) {
+      vi.useFakeTimers();
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
+      const rockChip = container.querySelector("#group-root-a") as Element;
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === circle) return makeRect(-1000, 200, 200, 200);
+        if (this === rockChip && chipOnScreen) return makeRect(10, 10, 40, 20);
+        if (this.matches(".gtv-wheel-floating-controls")) return makeRect(700, 500, 80, 80);
+        return makeRect(0, 0, 0, 0);
+      });
+      fireEvent.click(within(container).getByRole("button", { name: "Zoom in" }));
+      act(() => vi.advanceTimersByTime(1000));
+      return container;
+    }
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it("names the current root in an empty spot once its chip is off-screen, and keeps it there", () => {
+      const container = renderZoomedIntoRock();
+
+      const label = container.querySelector(".gtv-wheel-region-label") as HTMLElement;
+      expect(label.textContent).toBe("Rock");
+      const left = label.style.getPropertyValue("--gtv-region-label-x");
+      act(() => vi.advanceTimersByTime(1000));
+      expect(label.style.getPropertyValue("--gtv-region-label-x")).toBe(left);
+    });
+
+    it("shows no label while the current root's chip is on screen", () => {
+      const container = renderZoomedIntoRock({ chipOnScreen: true });
+
+      expect(container.querySelector(".gtv-wheel-region-label")).toBeNull();
+    });
   });
 
   it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {

@@ -350,7 +350,7 @@ export function getRadialPointOnCircle(
 
 // Average glyph advance as a fraction of font size — a DOM-free label width estimate, so layout
 // and collision culling stay deterministic (happy-dom has no getBBox).
-const LABEL_CHAR_WIDTH_RATIO = 0.6;
+export const LABEL_CHAR_WIDTH_RATIO = 0.6;
 
 export interface DotLabelCandidate {
   x: number;

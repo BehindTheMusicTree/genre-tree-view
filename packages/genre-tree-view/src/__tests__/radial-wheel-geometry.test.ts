@@ -7,6 +7,8 @@ import {
   computeSectorBounds,
   computeSectorSymmetricSpan,
   computeSectorWidths,
+  findSectorAtAngle,
+  pickEmptyLabelSpot,
   placeLabels,
   solveRingRadius,
   subdivideWedge,
@@ -403,5 +405,34 @@ describe("placeLabels", () => {
       { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
     ]);
     expect(placement.get("a")).toBe(-1);
+  });
+});
+
+describe("findSectorAtAngle", () => {
+  const sectors = [
+    { id: "a", center: 0, span: 90 },
+    { id: "b", center: 450, span: 90 },
+  ];
+
+  it("matches across the 0/360 wrap and any winding", () => {
+    expect(findSectorAtAngle(350, sectors)).toBe("a");
+    expect(findSectorAtAngle(-20, sectors)).toBe("a");
+    expect(findSectorAtAngle(100, sectors)).toBe("b");
+    expect(findSectorAtAngle(200, sectors)).toBeNull();
+  });
+});
+
+describe("pickEmptyLabelSpot", () => {
+  const area = { x0: 0, y0: 0, x1: 100, y1: 100 };
+
+  it("avoids obstacles and honours the preferred region", () => {
+    const left = { x0: 0, y0: 0, x1: 50, y1: 100 };
+    const spot = pickEmptyLabelSpot(area, 20, 10, [left], (x) => x > 80)!;
+    expect(spot.x - 10).toBeGreaterThanOrEqual(50);
+    expect(spot.x).toBeGreaterThan(80);
+  });
+
+  it("returns null when every spot is blocked", () => {
+    expect(pickEmptyLabelSpot(area, 20, 10, [area])).toBeNull();
   });
 });
