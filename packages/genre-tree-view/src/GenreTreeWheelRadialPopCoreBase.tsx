@@ -1228,7 +1228,7 @@ export function WheelRadialPopCoreCore({
                 }}
                 aria-label={centerNode.name}
               >
-                {PER_TREE_ACCENT_DOT && <span className="gtv-wheel-chip-dot" />}
+                {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
                 {showToolbar && centerHasPopDisc && (
                   <span
                     className="gtv-wheel-chip-hover-name"
