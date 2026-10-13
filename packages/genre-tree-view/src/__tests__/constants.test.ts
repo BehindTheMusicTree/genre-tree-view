@@ -3,6 +3,7 @@ import {
   getGenreTreeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
+  calculateNodeFontSize,
   NODE_DOT_MIN_RADIUS,
   NODE_DOT_MAX_RADIUS,
   calculateLinkWidth,
@@ -95,11 +96,15 @@ describe("calculateNodeDimensions", () => {
 describe("calculateNodeDotRadius", () => {
   const range = { min: 0, max: 400 };
 
-  it("makes dot area proportional to track count", () => {
-    const r100 = calculateNodeDotRadius(100, range);
-    const r400 = calculateNodeDotRadius(400, range);
-    expect(r400).toBe(NODE_DOT_MAX_RADIUS);
-    expect((r400 / r100) ** 2).toBeCloseTo(4, 9);
+  it("grows the dot in step with the label font size", () => {
+    const counts = [0, 3, 20, 100, 400];
+    const radii = counts.map((count) => calculateNodeDotRadius(count, range));
+    const fonts = counts.map((count) => calculateNodeFontSize(count, range));
+    expect(radii[4]).toBe(NODE_DOT_MAX_RADIUS);
+    for (let i = 1; i < counts.length; i++) {
+      expect(radii[i]).toBeGreaterThan(radii[i - 1]);
+      expect(fonts[i]).toBeGreaterThanOrEqual(fonts[i - 1]);
+    }
   });
 
   it("floors near-empty genres at the minimum radius", () => {
