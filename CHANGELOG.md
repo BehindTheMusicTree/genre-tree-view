@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Radial pop/core wheel: `onFocusChange` now receives a second `reason` argument
+  (`"zoom-in" | "back" | "search" | "rejected"`), exported as `FocusChangeReason`.
+- `focusNodeId` and `onFocusChange` must now be passed together; passing one without the other
+  fails to typecheck.
+
+### Fixed
+
+- Radial pop/core wheel: the info panel never shows a node that isn't drawn in the current focus
+  frame, including an unknown `selectedNodeId` or a focus and selection change landing together.
+
 ## [1.19.3] - 2026-10-13
 
 ### Fixed

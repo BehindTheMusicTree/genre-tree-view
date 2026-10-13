@@ -153,6 +153,8 @@ pnpm workspace with two members:
   three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
   subtree) plus its ring chip buttons. The panel closes via its own close button (hidden by
   `hideInfoPanelClose`) or when a controlled `selectedNodeId` is cleared to `null`/`undefined`.
+  The pop-core wheel also hides the panel at render time whenever its node isn't drawn in the
+  current focus frame, so a focus change can never leave a panel pointing at an off-screen node.
   The hook fires `onSelectedNodeChange` when a user action changes the shown node (or with `null`
   on the close button); each renderer's effect that follows `selectedNodeId` calls
   `showNodeInfo(…, { notify: false })` so a controlled selection never echoes back, and
@@ -193,7 +195,7 @@ pnpm workspace with two members:
   `groupNodesByRoot`, `isZoomableNode`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
-  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
+  `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
   `WheelZoomMode`, `ControlsOrientation`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
