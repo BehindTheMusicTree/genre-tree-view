@@ -868,6 +868,12 @@ export function WheelRadialPopCoreCore({
       );
     }
 
+    // Each branch draws its own links, so a later branch's links would paint over earlier ones' labels.
+    const linksLayer = originGroup.insert("g", ":first-child").attr("class", "gtv-wheel-links").node()!;
+    originGroup.selectAll<SVGPathElement, unknown>("path.gtv-link").each(function () {
+      linksLayer.appendChild(this);
+    });
+
     renderRootLabels(originGroup, [
       {
         id: centerNode.id,

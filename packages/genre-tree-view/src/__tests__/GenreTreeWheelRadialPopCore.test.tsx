@@ -419,15 +419,25 @@ describe("GenreTreeWheelRadialPopCore", () => {
     };
 
     const [coreChildX, coreChildY] = nodeCoords(container, "a-core");
-    const coreLinks = coreSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    const coreLinks = container.querySelectorAll("path.gtv-link");
     expect(
       Array.from(coreLinks).some((link) => endpointsMatch(link.getAttribute("d")!, coreChildX, coreChildY)),
     ).toBe(true);
 
     const [popChildX, popChildY] = nodeCoords(container, "a-pop");
-    const popLinks = popSectorForRoot(container, "root-a")!.querySelectorAll("path.gtv-link");
+    const popLinks = container.querySelectorAll("path.gtv-link");
     expect(
       Array.from(popLinks).some((link) => endpointsMatch(link.getAttribute("d")!, popChildX, popChildY)),
+    ).toBe(true);
+  });
+
+  it("draws every link beneath every node, so no branch's links cover another branch's labels", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+    const links = Array.from(container.querySelectorAll("path.gtv-link"));
+    const firstNode = container.querySelector("g.node")!;
+    expect(links.length).toBeGreaterThan(0);
+    expect(
+      links.every((link) => link.compareDocumentPosition(firstNode) & Node.DOCUMENT_POSITION_FOLLOWING),
     ).toBe(true);
   });
 
