@@ -1,26 +1,8 @@
 "use client";
 
-import { WheelRadialPopCoreCore } from "./GenreTreeWheelRadialPopCoreBase";
-import { GenreTreeNode, GenreTreeProps } from "./types";
+import { WheelRadialPopCoreCore, WheelRadialPopCoreProps } from "./GenreTreeWheelRadialPopCoreBase";
 
-export interface GenreTreeWheelRadialPopCoreProps extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
-  nodes: GenreTreeNode[];
-  /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
-   * and on every chip click. */
-  onRootSelect?: (rootId: string) => void;
-  /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
-   * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
-  allowWheelRotation?: boolean;
-  /** Renders this node's subtree as its own wheel instead of the whole tree — its single pop
-   * child (if any) becomes the center disc, its other children the ring roots. An id that isn't
-   * zoomable (see `isZoomableNode`) renders the whole tree and fires `onFocusChange(null)`. */
-  focusNodeId?: string | null;
-  /** Fired with the node to zoom into from a ring root's info panel, with the focus node's parent
-   * (null for the whole tree) from the back button, with null when `focusNodeId` isn't zoomable,
-   * and with the nearest zoomable ancestor (or null) when `selectedNodeId` lies outside the zoom.
-   * Omit to hide both controls and keep the wheel from refocusing on an outside selection. */
-  onFocusChange?: (id: string | null) => void;
-}
+export type GenreTreeWheelRadialPopCoreProps = WheelRadialPopCoreProps;
 
 /**
  * `GenreTreeWheelRadial`, but each developed root's outward subtree is only its core (non-pop)

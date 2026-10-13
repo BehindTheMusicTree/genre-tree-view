@@ -75,8 +75,29 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-export interface WheelRadialPopCoreProps
-  extends Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> {
+/** Why `onFocusChange` fired: the info panel's "Zoom in" button, the back button, a
+ * `selectedNodeId` outside the current zoom (e.g. a search result), or a `focusNodeId` that isn't
+ * zoomable (see `isZoomableNode`). */
+export type FocusChangeReason = "zoom-in" | "back" | "search" | "rejected";
+
+/** Focus is controlled-only: pass both props or neither, since the wheel never moves its own focus. */
+export type PopCoreFocusProps =
+  | { focusNodeId?: undefined; onFocusChange?: undefined }
+  | {
+      /** Renders this node's subtree as its own wheel instead of the whole tree (null) — its single
+       * pop child (if any) becomes the center disc, its other children the ring roots. An id that
+       * isn't zoomable (see `isZoomableNode`) renders the whole tree and fires
+       * `onFocusChange(null, "rejected")` once. */
+      focusNodeId: string | null;
+      /** Fired with the node to focus and why: a zoomable ring root from its info panel's "Zoom in"
+       * (`"zoom-in"`), the focus node's parent or null for the whole tree from the back button
+       * (`"back"`), the nearest zoomable ancestor or null when `selectedNodeId` lies outside the
+       * zoom (`"search"`), and null when `focusNodeId` isn't zoomable (`"rejected"`). Omit both
+       * props to hide the zoom-in and back controls and never refocus on an outside selection. */
+      onFocusChange: (id: string | null, reason: FocusChangeReason) => void;
+    };
+
+export type WheelRadialPopCoreProps = Omit<GenreTreeProps, "nodes" | "rootColor" | "orientation"> & {
   nodes: GenreTreeNode[];
   /** Fired whenever the top (just-clicked) root changes — on mount with the default selection,
    * and on every chip click. */
@@ -84,16 +105,7 @@ export interface WheelRadialPopCoreProps
   /** When false, clicking a chip still fires `onRootSelect`, but the ring stays at its current
    * rotation instead of bringing the clicked root to the landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
-  /** Renders this node's subtree as its own wheel instead of the whole tree — its single pop
-   * child (if any) becomes the center disc, its other children the ring roots. An id that isn't
-   * zoomable (see `isZoomableNode`) renders the whole tree and fires `onFocusChange(null)`. */
-  focusNodeId?: string | null;
-  /** Fired with the node to zoom into from a ring root's info panel, with the focus node's parent
-   * (null for the whole tree) from the back button, with null when `focusNodeId` isn't zoomable,
-   * and with the nearest zoomable ancestor (or null) when `selectedNodeId` lies outside the zoom.
-   * Omit to hide both controls and keep the wheel from refocusing on an outside selection. */
-  onFocusChange?: (id: string | null) => void;
-}
+} & PopCoreFocusProps;
 
 // The wheel always lands the just-clicked root on the right (matches WheelRadialCore's own
 // landingAngle=90 convention) — see computeRadialLayout's doc comment for why.
@@ -169,7 +181,7 @@ export function WheelRadialPopCoreCore({
   );
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
   useEffect(() => {
-    if (isFocusRejected) onFocusChange?.(null);
+    if (isFocusRejected) onFocusChange?.(null, "rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
   }, [isFocusRejected, requestedFocusNodeId]);
   const { center: layoutCenterNode, centerHasPopDisc, centerNodes: centerSubtreeNodes, ringNodes } = useMemo(
@@ -287,16 +299,13 @@ export function WheelRadialPopCoreCore({
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
-  // A consumer-driven focus change (not the wheel's own zoom/back buttons, which already close the
-  // panel before calling onFocusChange) would otherwise leave the panel open on a node that may no
-  // longer be drawn. When the consumer has already moved the selection to another node (e.g. a
-  // search result that triggered this refocus), closing would notify null and wipe that selection;
-  // the selection effect below swaps the panel to it instead.
-  useEffect(() => {
-    if (panel && (selectedNodeId == null || selectedNodeId === panel.node.id)) closeNodeInfo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a focus change should close the panel
-  }, [focusNodeId]);
+  const { panel: openPanel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
+  // Derived per frame, not closed by an effect: a focus change can leave the open (or selected)
+  // node outside the drawn subtree, and nothing orders such an effect against the selection one.
+  const panel =
+    openPanel && (centerSubtreeNodeIds.has(openPanel.node.id) || ringRootById.has(openPanel.node.id))
+      ? openPanel
+      : null;
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -1083,7 +1092,7 @@ export function WheelRadialPopCoreCore({
   // Mirrors the onNodeClick/onSelectNode handling below: once the node's sector is mounted, center the viewport on the
   // externally-selected node and open its info panel exactly as a direct click would.
   useEffect(() => {
-    if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
+    if (!selectedNodeId || openPanel?.node.id === selectedNodeId) return;
     const targetNode = index.byId.get(selectedNodeId);
     if (
       targetNode &&
@@ -1094,7 +1103,7 @@ export function WheelRadialPopCoreCore({
       // Outside the current zoom (e.g. a search result): refocus on the nearest zoomable ancestor,
       // whose frame holds its whole subtree; this effect re-runs once the new frame is drawn.
       const ancestor = index.ancestorsOf(selectedNodeId).reverse().find((node) => isZoomableNode(nodes, node.id));
-      onFocusChange(ancestor?.id ?? null);
+      onFocusChange(ancestor?.id ?? null, "search");
       return;
     }
     const element = viewportRef.current?.querySelector(
@@ -1107,8 +1116,8 @@ export function WheelRadialPopCoreCore({
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
-  }, [selectedNodeId, index, panel, showNodeInfo, centerSubtreeNodeIds, ringRootById]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the openPanel?.node.id check above
+  }, [selectedNodeId, index, openPanel, showNodeInfo, centerSubtreeNodeIds, ringRootById]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its
@@ -1494,7 +1503,7 @@ export function WheelRadialPopCoreCore({
             isZoomableNode(nodes, panel.node.id)
               ? () => {
                   closeNodeInfo();
-                  onFocusChange(panel.node.id);
+                  onFocusChange(panel.node.id, "zoom-in");
                 }
               : undefined
           }
@@ -1511,7 +1520,7 @@ export function WheelRadialPopCoreCore({
                 className="gtv-wheel-back-btn"
                 onClick={() => {
                   closeNodeInfo();
-                  onFocusChange(parent?.id ?? null);
+                  onFocusChange(parent?.id ?? null, "back");
                 }}
               >
                 ← {parent?.name ?? "All genres"}

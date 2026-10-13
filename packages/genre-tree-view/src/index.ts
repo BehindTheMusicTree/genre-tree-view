@@ -26,5 +26,6 @@ export type { GenreTreeWheelProps } from "./GenreTreeWheel";
 export type { GenreTreeWheelRightProps } from "./GenreTreeWheelRight";
 export type { GenreTreeWheelRadialProps } from "./GenreTreeWheelRadial";
 export type { GenreTreeWheelRadialPopCoreProps } from "./GenreTreeWheelRadialPopCore";
+export type { FocusChangeReason } from "./GenreTreeWheelRadialPopCoreBase";
 export type { GenreTreeOutlineProps } from "./GenreTreeOutline";
 export type { GenreTreeRootGroup } from "./root-grouping";
