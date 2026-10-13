@@ -17,6 +17,14 @@
     sans-serif;
 }
 
+.gtv-node-label--hidden {
+  opacity: 0;
+}
+
+.node:hover .gtv-node-label--hidden {
+  opacity: 1;
+}
+
 .gtv-node-label--root {
   font-size: 14px;
   font-weight: 700;
@@ -243,6 +251,22 @@
    combinations never translate into a ctrlKey wheel event at all. Positioned absolutely against
    GenreTree's own viewport (the pan/zoom transform lives on a separate inner element, so this
    stays fixed in the corner regardless of pan/zoom state). */
+.gtv-wheel-region-label {
+  position: absolute;
+  top: var(--gtv-region-label-y);
+  left: var(--gtv-region-label-x);
+  transform: translate(-50%, -50%);
+  font-size: var(--gtv-region-label-size);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--gtv-region-label-color);
+  opacity: 0.85;
+  text-shadow: 0 0 0.15em #fff, 0 0 0.3em #fff;
+  pointer-events: none;
+  user-select: none;
+}
+
 .gtv-wheel-floating-controls {
   position: absolute;
   bottom: 12px;
@@ -764,9 +788,10 @@
 }
 
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
-   text and thin border used for colored chips would be invisible / too subtle here. */
+   text and light border used for colored chips would be invisible / too subtle here. */
 .gtv-wheel-chip--center {
   border-width: 2px;
+  border-color: #18181b;
   color: #27272a;
 }
 

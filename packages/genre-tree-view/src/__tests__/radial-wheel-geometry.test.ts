@@ -7,6 +7,10 @@ import {
   computeSectorBounds,
   computeSectorSymmetricSpan,
   computeSectorWidths,
+  findSectorAtAngle,
+  pickEmptyLabelSpot,
+  placeLabels,
+  solveRingRadius,
   subdivideWedge,
 } from "../radial-wheel-geometry";
 
@@ -349,5 +353,86 @@ describe("calculateWheelRadiusForAngles", () => {
     const wraparoundGapDeg = 360 - 200;
     const chordAcrossWraparound = 2 * radius * Math.sin((wraparoundGapDeg * Math.PI) / 360);
     expect(chordAcrossWraparound).toBeGreaterThanOrEqual(350);
+  });
+});
+
+describe("solveRingRadius", () => {
+  it("returns the floor when the ring already fits there", () => {
+    expect(solveRingRadius(() => 1, 500)).toBe(500);
+  });
+
+  it("finds the smallest radius whose chord-sized needs fit the circle", () => {
+    // 60 chips 100px wide need 60·100/R rad → fits from R = 6000/2π ≈ 955
+    const radius = solveRingRadius((r) => (60 * 100) / r, 300);
+    expect(radius).toBeGreaterThanOrEqual(6000 / (2 * Math.PI));
+    expect(radius).toBeLessThan(6000 / (2 * Math.PI) + 1.01);
+  });
+});
+
+describe("placeLabels", () => {
+  const box = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });
+  const farDot = (i: number) => box(1000 + i * 10, 1000, 1005 + i * 10, 1005);
+
+  it("hides the lower-priority label of a colliding pair with no other spot", () => {
+    const placement = placeLabels([
+      { id: "low", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
+      { id: "high", labels: [box(20, 0, 70, 10)], dot: farDot(1), priority: 5 },
+    ]);
+    expect(placement.get("high")).toBe(0);
+    expect(placement.get("low")).toBe(-1);
+  });
+
+  it("keeps both labels when they are disjoint", () => {
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
+      { id: "b", labels: [box(0, 20, 50, 30)], dot: farDot(1), priority: 1 },
+    ]);
+    expect([...placement.values()]).toEqual([0, 0]);
+  });
+
+  it("moves a label covering another node's dot to its next free candidate", () => {
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10), box(0, 40, 50, 50)], dot: farDot(0), priority: 9 },
+      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
+    ]);
+    expect(placement.get("a")).toBe(1);
+    expect(placement.get("b")).toBe(0);
+  });
+
+  it("hides a label when every candidate is blocked", () => {
+    const placement = placeLabels([
+      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 9 },
+      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
+    ]);
+    expect(placement.get("a")).toBe(-1);
+  });
+});
+
+describe("findSectorAtAngle", () => {
+  const sectors = [
+    { id: "a", center: 0, span: 90 },
+    { id: "b", center: 450, span: 90 },
+  ];
+
+  it("matches across the 0/360 wrap and any winding", () => {
+    expect(findSectorAtAngle(350, sectors)).toBe("a");
+    expect(findSectorAtAngle(-20, sectors)).toBe("a");
+    expect(findSectorAtAngle(100, sectors)).toBe("b");
+    expect(findSectorAtAngle(200, sectors)).toBeNull();
+  });
+});
+
+describe("pickEmptyLabelSpot", () => {
+  const area = { x0: 0, y0: 0, x1: 100, y1: 100 };
+
+  it("avoids obstacles and honours the preferred region", () => {
+    const left = { x0: 0, y0: 0, x1: 50, y1: 100 };
+    const spot = pickEmptyLabelSpot(area, 20, 10, [left], (x) => x > 80)!;
+    expect(spot.x - 10).toBeGreaterThanOrEqual(50);
+    expect(spot.x).toBeGreaterThan(80);
+  });
+
+  it("returns null when every spot is blocked", () => {
+    expect(pickEmptyLabelSpot(area, 20, 10, [area])).toBeNull();
   });
 });

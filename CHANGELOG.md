@@ -5,6 +5,40 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-10-13
+
+### Added
+
+- Radial pop/core wheel: once zoomed in, the current root's name is shown in an empty spot on the
+  tree, map-style, so users always know which sector they're in. It scales with the zoom and is
+  moved when the user pans out of view, enters another root's sector, or zooms until it is too
+  small or too large. It is hidden when that root's chip is on screen.
+
+### Fixed
+
+- Radial pop/core wheel: the center Mainstream Pop subtree's links are now grey instead of
+  white-on-white (they tinted its white root color, so the branches were invisible), and its white
+  node dots and center chip get a black border.
+- Radial pop/core wheel: subgenres in narrow sectors (e.g. Reggae) no longer overlap. Each branch
+  now uses its full sector, replacing the fixed 4° `WEDGE_SECTOR_GUTTER_DEGREES` gutter (removed).
+- Radial wheels size root sectors and branch slices by measured angular need (each dot's real arc
+  on its ring, deeper rings needing more angle) instead of node counts, and grow the ring radius
+  just enough for every sector to fit (`solveRingRadius`).
+
+### Changed
+
+- Radial pop/core wheel: every root is always visible and named, at any zoom. Root chips are circles
+  sized by their subtree's track count, and their labels are SVG text with the same look and size
+  scale as other labels, placed by the same collision pass (non-root labels no longer overlap them).
+- Radial pop/core wheel: labels keep a constant on-screen size and are culled by zoom level, so
+  zooming out names only the biggest genres and zooming in reveals more. Big labels move around
+  their dot (outer, inner, above, below) instead of being hidden.
+- Radial pop/core subgenre nodes are a colored dot (area proportional to its track count, `itemCount`) with a horizontal label
+  beside it instead of a rectangle card. Labels that would collide are hidden and shown on hover.
+  Ring root chips are unchanged.
+- Radial pop/core subtree links take a muted tint of their genre's color instead of neutral grey,
+  lighter on the pop side than the core side.
+
 ## [1.17.0] - 2026-10-12
 
 ### Added

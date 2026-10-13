@@ -173,3 +173,109 @@ export function calculateWheelRadiusForAngles(angles: number[], maxChipWidth: nu
   const requiredRadius = (maxChipWidth + CHIP_GAP) / (2 * Math.sin((minGapDeg * Math.PI) / 360));
   return Math.max(baseRadius, requiredRadius);
 }
+
+/** Smallest radius ≥ `floorRadius` at which `angleNeededAt(radius)` (rad, non-increasing in
+ * radius) fits the full circle — binary-searched since what a ring needs depends on its radius. */
+export function solveRingRadius(angleNeededAt: (radius: number) => number, floorRadius: number): number {
+  const fits = (radius: number) => angleNeededAt(radius) <= 2 * Math.PI;
+  if (fits(floorRadius)) return floorRadius;
+  let lo = floorRadius;
+  let hi = floorRadius * 2;
+  while (!fits(hi)) {
+    lo = hi;
+    hi *= 2;
+  }
+  while (hi - lo > 1) {
+    const mid = (lo + hi) / 2;
+    if (fits(mid)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+export interface Box {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface LabelCullItem {
+  id: string;
+  /** Candidate label boxes, in preference order. */
+  labels: Box[];
+  dot: Box;
+  priority: number;
+}
+
+const boxesOverlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/** Index of each item's chosen label candidate, or -1 when it must be hidden: greedily, by
+ * descending priority, takes each item's first candidate that overlaps no already-placed label and
+ * no other node's dot. */
+// ponytail: O(n²) pairwise scan, add a grid index if a wheel ever gets big enough to show in profiles.
+export function placeLabels(items: LabelCullItem[]): Map<string, number> {
+  const placement = new Map<string, number>();
+  const kept: Box[] = [];
+  for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
+    const index = item.labels.findIndex(
+      (label) =>
+        !kept.some((box) => boxesOverlap(label, box)) &&
+        !items.some((other) => other.id !== item.id && boxesOverlap(label, other.dot)),
+    );
+    placement.set(item.id, index);
+    if (index >= 0) kept.push(item.labels[index]);
+  }
+  return placement;
+}
+
+/** Id of the sector (degrees, `center ± span / 2`, any winding) containing `angle`, or null. */
+export function findSectorAtAngle(
+  angle: number,
+  sectors: { id: string; center: number; span: number }[],
+): string | null {
+  const sector = sectors.find(
+    ({ center, span }) => Math.abs(((((angle - center) % 360) + 540) % 360) - 180) <= span / 2,
+  );
+  return sector?.id ?? null;
+}
+
+const boxGap = (a: Box, b: Box) =>
+  Math.hypot(Math.max(0, a.x0 - b.x1, b.x0 - a.x1), Math.max(0, a.y0 - b.y1, b.y0 - a.y1));
+
+/** Center of a `width` x `height` box inside `area` that overlaps no obstacle, sampled on a grid:
+ * spots passing `prefer` first, then the widest gap to the nearest obstacle (capped at `height`, so
+ * "clear enough" ties), then the one closest to the area's center. Null when every spot is blocked. */
+// ponytail: fixed 9x9 sampling grid, sample finer if labels visibly miss obvious gaps.
+export function pickEmptyLabelSpot(
+  area: Box,
+  width: number,
+  height: number,
+  obstacles: Box[],
+  prefer: (x: number, y: number) => boolean = () => true,
+): { x: number; y: number } | null {
+  const STEPS = 9;
+  const spanX = area.x1 - area.x0 - width;
+  const spanY = area.y1 - area.y0 - height;
+  if (spanX < 0 || spanY < 0) return null;
+  const centerX = (area.x0 + area.x1) / 2;
+  const centerY = (area.y0 + area.y1) / 2;
+  let best: { x: number; y: number; score: [number, number, number] } | null = null;
+  for (let i = 0; i < STEPS; i++) {
+    for (let j = 0; j < STEPS; j++) {
+      const x = area.x0 + width / 2 + (spanX * i) / (STEPS - 1);
+      const y = area.y0 + height / 2 + (spanY * j) / (STEPS - 1);
+      const box = { x0: x - width / 2, x1: x + width / 2, y0: y - height / 2, y1: y + height / 2 };
+      if (obstacles.some((obstacle) => boxesOverlap(box, obstacle))) continue;
+      const gap = Math.min(height, ...obstacles.map((obstacle) => boxGap(box, obstacle)));
+      const score: [number, number, number] = [
+        prefer(x, y) ? 1 : 0,
+        gap,
+        -Math.hypot(x - centerX, y - centerY),
+      ];
+      const k = best ? score.findIndex((value, index) => value !== best!.score[index]) : 0;
+      if (!best || (k >= 0 && score[k] > best.score[k])) best = { x, y, score };
+    }
+  }
+  return best && { x: best.x, y: best.y };
+}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
 import {
@@ -11,7 +11,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { MAX_NODE_WIDTH, POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
+import { NODE_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -185,8 +185,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
   it("leaves the wheel's outer circle unchanged when a shallow center subtree doesn't overlap the ring roots' chip clearance", () => {
     const manyRoots = [
       ...NO_POP_NODES,
-      ...Array.from({ length: 24 }, (_, i) => [
-        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
+      ...Array.from({ length: 60 }, (_, i) => [
+        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 1000 } satisfies GenreTreeNode,
         { id: `extra-root-${i}-child`, parentId: `extra-root-${i}`, name: `Extra ${i} Child`, itemCount: 0 } satisfies GenreTreeNode,
       ]).flat(),
     ];
@@ -195,9 +195,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const withRadius = getWheelRadius(render(<GenreTreeWheelRadialPopCore nodes={withCenterSubtree} />).container);
 
     expect(withRadius).toBeGreaterThan(
-      mainstreamRadiusFor(withCenterSubtree) + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN,
+      mainstreamRadiusFor(withCenterSubtree) + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN,
     );
-    expect(withRadius).toBe(withoutRadius);
+    // solveRingRadius resolves to within 1px.
+    expect(Math.abs(withRadius - withoutRadius)).toBeLessThanOrEqual(1);
   });
 
   it("grows the wheel's outer circle only by the overlap when a deep center subtree reaches past chip clearance", () => {
@@ -207,7 +208,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const radius = getWheelRadius(render(<GenreTreeWheelRadialPopCore nodes={deepCenterNodes} />).container);
 
     expect(radius).toBeGreaterThan(chipClearanceRadius);
-    expect(radius).toBeCloseTo(mainstreamRadius + MAX_NODE_WIDTH / 2 + POP_SUBTREE_OUTER_MARGIN, 6);
+    expect(radius).toBeCloseTo(mainstreamRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN, 6);
     expect(radius).toBeLessThan(chipClearanceRadius + mainstreamRadius);
   });
 
@@ -317,8 +318,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
     // chip clearance) left it stranded partway to the ring roots' circle instead of glued to it.
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
-      ...Array.from({ length: 24 }, (_, i) => [
-        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 0 } satisfies GenreTreeNode,
+      ...Array.from({ length: 60 }, (_, i) => [
+        { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 1000 } satisfies GenreTreeNode,
         {
           id: `extra-root-${i}-child`,
           parentId: `extra-root-${i}`,
@@ -408,11 +409,12 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
     const endpointsMatch = (d: string, targetX: number, targetY: number) => {
       const { start, end } = linkPathEndpoints(d);
+      // d3 path strings keep 3 decimals.
       return (
-        Math.abs(start[0] - rootX) < 1e-6 &&
-        Math.abs(start[1] - rootY) < 1e-6 &&
-        Math.abs(end[0] - targetX) < 1e-6 &&
-        Math.abs(end[1] - targetY) < 1e-6
+        Math.abs(start[0] - rootX) < 1e-3 &&
+        Math.abs(start[1] - rootY) < 1e-3 &&
+        Math.abs(end[0] - targetX) < 1e-3 &&
+        Math.abs(end[1] - targetY) < 1e-3
       );
     };
 
@@ -550,7 +552,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onPlayPause).toHaveBeenCalledWith("pop");
 
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     const corePlayButton = container.querySelector(
       '#toolbar-a-core-child [data-menu-key="play"]',
     ) as HTMLButtonElement;
@@ -563,7 +565,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     const popPlayButton = container.querySelector('#toolbar-a-pop [data-menu-key="play"]') as HTMLButtonElement;
     fireEvent.click(popPlayButton);
 
@@ -736,7 +738,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ) {
       if (this === wheelContainer) return makeRect(0, 0, 800, 600);
       if (this === circle) return makeRect(300, 200, 200, 200);
-      if (this.matches(".gtv-node-rect, .gtv-link")) return makeRect(0, 0, 2000, 2000);
+      if (this.matches(".gtv-node-dot, .gtv-link")) return makeRect(0, 0, 2000, 2000);
       return makeRect(0, 0, 0, 0);
     });
 
@@ -748,6 +750,46 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(getScale()).toBeLessThan(0.5);
 
     rectSpy.mockRestore();
+  });
+
+  describe("region label", () => {
+    // Viewport 800x600 with the wheel center far to its left, so the viewport center sits at 90°
+    // (root-a "Rock"'s sector) and well outside the mainstream circle.
+    function renderZoomedIntoRock({ chipOnScreen = false } = {}) {
+      vi.useFakeTimers();
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
+      const rockChip = container.querySelector("#group-root-a") as Element;
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        if (this === circle) return makeRect(-1000, 200, 200, 200);
+        if (this === rockChip && chipOnScreen) return makeRect(10, 10, 40, 20);
+        if (this.matches(".gtv-wheel-floating-controls")) return makeRect(700, 500, 80, 80);
+        return makeRect(0, 0, 0, 0);
+      });
+      fireEvent.click(within(container).getByRole("button", { name: "Zoom in" }));
+      act(() => vi.advanceTimersByTime(1000));
+      return container;
+    }
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it("names the current root in an empty spot once its chip is off-screen, and keeps it there", () => {
+      const container = renderZoomedIntoRock();
+
+      const label = container.querySelector(".gtv-wheel-region-label") as HTMLElement;
+      expect(label.textContent).toBe("Rock");
+      const left = label.style.getPropertyValue("--gtv-region-label-x");
+      act(() => vi.advanceTimersByTime(1000));
+      expect(label.style.getPropertyValue("--gtv-region-label-x")).toBe(left);
+    });
+
+    it("shows no label while the current root's chip is on screen", () => {
+      const container = renderZoomedIntoRock({ chipOnScreen: true });
+
+      expect(container.querySelector(".gtv-wheel-region-label")).toBeNull();
+    });
   });
 
   it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {
@@ -788,7 +830,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
     fireEvent.mouseLeave(popGroup);
@@ -803,7 +845,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
 
     const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
 
     fireEvent.mouseLeave(popGroup);
@@ -915,7 +957,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
 
     const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector("foreignObject") as SVGForeignObjectElement);
+    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
     expect(container.querySelector("#toolbar-a-core-child")).toBeFalsy();
   });
 
