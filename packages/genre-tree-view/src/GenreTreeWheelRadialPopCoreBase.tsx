@@ -23,6 +23,7 @@ import {
   coreRadiusOfDepth,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  LABEL_CHAR_WIDTH_RATIO,
   renderRootLabels,
   measureWedge,
   popRadiusOfDepth,
@@ -34,6 +35,8 @@ import {
   buildSectorClipPathPolygon,
   computeRadialLayout,
   computeSectorWidths,
+  findSectorAtAngle,
+  pickEmptyLabelSpot,
   RadialSlot,
   solveRingRadius,
   subdivideWedge,
@@ -60,6 +63,9 @@ import {
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
+  REGION_LABEL_MAX_PX,
+  REGION_LABEL_MIN_PX,
+  REGION_LABEL_TARGET_PX,
   TEXT_COLOR,
   tintSurface,
   WHEEL_POP_CORE_RADIUS,
@@ -291,6 +297,15 @@ export function WheelRadialPopCoreCore({
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
   const popSvgRef = useRef<SVGSVGElement>(null);
+  const regionLabelRef = useRef<HTMLDivElement>(null);
+  // Stage-space (pre pan/zoom) position and font size of the current root's name, so it pans and
+  // scales with the tree between re-placements.
+  const [regionLabel, setRegionLabel] = useState<{
+    rootId: string;
+    x: number;
+    y: number;
+    fontSize: number;
+  } | null>(null);
 
   // Falls back to the first root without writing state back when the explicitly selected root
   // disappears from `nodes` — avoids a setState-in-effect cascading render for derived state.
@@ -915,6 +930,91 @@ export function WheelRadialPopCoreCore({
     return () => clearTimeout(timeout);
   }, [zoomScale, wheelItemCountRange]);
 
+  // Google Maps-style region label: once pan/zoom settles with the viewport center inside a ring
+  // root's sector whose own chip is off-screen, names that root in an empty spot. Kept in place
+  // until it leaves the viewport, its root changes, or zoom drifts its on-screen size out of range.
+  const { panX, panY } = panZoom;
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const viewport = viewportRef.current;
+      const wheel = wheelCircleRef.current;
+      if (!viewport || !wheel) return;
+      const vp = viewport.getBoundingClientRect();
+      const wheelRect = wheel.getBoundingClientRect();
+      const wheelX = wheelRect.left + wheelRect.width / 2;
+      const wheelY = wheelRect.top + wheelRect.height / 2;
+      const sectors = groups.map((group) => ({
+        id: group.root.id,
+        center: continuousAngleByRootId.get(group.root.id) ?? 0,
+        span: sectorSpanByRootId.get(group.root.id) ?? 360,
+      }));
+      const rootIdAt = (x: number, y: number) =>
+        Math.hypot(x - wheelX, y - wheelY) <= mainstreamCircleRadius * zoomScale
+          ? null
+          : findSectorAtAngle((Math.atan2(x - wheelX, wheelY - y) * 180) / Math.PI, sectors);
+      const isOnScreen = (r: DOMRect) =>
+        r.right > vp.left && r.left < vp.right && r.bottom > vp.top && r.top < vp.bottom;
+
+      const rootId = rootIdAt(vp.left + vp.width / 2, vp.top + vp.height / 2);
+      const chip = rootId && viewport.querySelector(`#group-${CSS.escape(rootId)}`);
+      if (!rootId || !chip || isOnScreen(chip.getBoundingClientRect())) {
+        setRegionLabel(null);
+        return;
+      }
+
+      const shown = regionLabelRef.current?.getBoundingClientRect();
+      const shownPx = (regionLabel?.fontSize ?? 0) * zoomScale;
+      if (
+        regionLabel?.rootId === rootId &&
+        shown &&
+        shown.left >= vp.left &&
+        shown.right <= vp.right &&
+        shown.top >= vp.top &&
+        shown.bottom <= vp.bottom &&
+        shownPx >= REGION_LABEL_MIN_PX &&
+        shownPx <= REGION_LABEL_MAX_PX
+      )
+        return;
+
+      const name = index.byId.get(rootId)?.name ?? "";
+      const obstacles = Array.from(
+        viewport.querySelectorAll(
+          ".gtv-node-dot, .gtv-node-label:not(.gtv-node-label--hidden), .gtv-root-label, .gtv-wheel-chip, .gtv-wheel-floating-controls, .gtv-info-panel",
+        ),
+      )
+        .map((element) => element.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => ({ x0: r.left, y0: r.top, x1: r.right, y1: r.bottom }));
+      const inset = REGION_LABEL_TARGET_PX / 2;
+      const spot = pickEmptyLabelSpot(
+        { x0: vp.left + inset, y0: vp.top + inset, x1: vp.right - inset, y1: vp.bottom - inset },
+        name.length * REGION_LABEL_TARGET_PX * LABEL_CHAR_WIDTH_RATIO,
+        REGION_LABEL_TARGET_PX,
+        obstacles,
+        (x, y) => rootIdAt(x, y) === rootId,
+      );
+      setRegionLabel(
+        spot && {
+          rootId,
+          x: (spot.x - vp.left - panX) / zoomScale,
+          y: (spot.y - vp.top - panY) / zoomScale,
+          fontSize: REGION_LABEL_TARGET_PX / zoomScale,
+        },
+      );
+    }, LABEL_RELAYOUT_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [
+    panX,
+    panY,
+    zoomScale,
+    groups,
+    continuousAngleByRootId,
+    sectorSpanByRootId,
+    mainstreamCircleRadius,
+    index,
+    regionLabel,
+  ]);
+
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once popSvgRef has actually rendered content, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections/expansions.
@@ -1272,6 +1372,25 @@ export function WheelRadialPopCoreCore({
             })}
           </div>
         </div>
+        {regionLabel && index.byId.has(regionLabel.rootId) && (
+          <div
+            ref={regionLabelRef}
+            className="gtv-wheel-region-label"
+            aria-hidden="true"
+            style={
+              {
+                "--gtv-region-label-x": `${regionLabel.x}px`,
+                "--gtv-region-label-y": `${regionLabel.y}px`,
+                "--gtv-region-label-size": `${regionLabel.fontSize}px`,
+                "--gtv-region-label-color": getGenreTreeColor(
+                  index.byId.get(regionLabel.rootId)!.wikidataId,
+                ),
+              } as React.CSSProperties
+            }
+          >
+            {index.byId.get(regionLabel.rootId)!.name}
+          </div>
+        )}
       </div>
 
       {panel && (

@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Radial pop/core wheel: once zoomed in, the current root's name is shown in an empty spot on the
+  tree, map-style, so users always know which sector they're in. It scales with the zoom and is
+  moved when the user pans out of view, enters another root's sector, or zooms until it is too
+  small or too large. It is hidden when that root's chip is on screen.
+
 ### Fixed
 
 - Radial pop/core wheel: the center Mainstream Pop subtree's links are now grey instead of

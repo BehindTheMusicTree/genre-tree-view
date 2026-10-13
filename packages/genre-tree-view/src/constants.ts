@@ -378,6 +378,11 @@ export const LABEL_DEPTH_RANK_PENALTY = 0.15;
 export const ROOT_LABEL_MIN_SCREEN_PX = 15;
 // Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
 export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
+// On-screen font size (px) of the zoomed-in root's region label: placed at TARGET, re-placed once
+// zooming drifts it outside [MIN, MAX] (see WheelRadialPopCoreCore).
+export const REGION_LABEL_TARGET_PX = 28;
+export const REGION_LABEL_MIN_PX = 16;
+export const REGION_LABEL_MAX_PX = 48;
 // Duration (ms) of the eased pan+zoom glide centerOnElement flies to a clicked node with — longer
 // than ZOOM_ANIMATION_DURATION_MS's wheel-notch glide since this one also covers a pan distance,
 // not just a scale change, and should read as one deliberate "fly to" (Google Maps' own
