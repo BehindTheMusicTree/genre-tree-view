@@ -8,7 +8,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Security
 
 - Override `undici` to `^8.10.2` (transitive via jsdom) to fix Dependabot alerts.
-- Bump `vitest` and `@vitest/coverage-v8` to 4.1.11 and the playground's `vite` to 7.3.2 to fix Dependabot alerts.
 
 ## [2.0.0] - 2026-10-14
 
