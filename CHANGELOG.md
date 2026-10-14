@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING:** node actions (play, add, rename, overflow menu, …) now render in the info panel
+  instead of a hover toolbar on the node. `showToolbar={false}` omits them from the panel.
+
+### Removed
+
+- **BREAKING:** the hover toolbar and hover name label on tree nodes, wheel chips and outline rows,
+  and the `showToolbar` argument of `renderTree` / `renderPopSubtree`.
+
 ## [1.20.0] - 2026-10-14
 
 ### Added

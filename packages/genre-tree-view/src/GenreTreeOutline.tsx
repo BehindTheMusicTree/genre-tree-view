@@ -12,11 +12,10 @@ import {
 } from "react";
 
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { NodeToolbar } from "./NodeToolbar";
 import { PopCoreSplit, splitRootGroupBySide } from "./pop-core-split";
 import { groupNodesByRoot } from "./root-grouping";
 import { TreeIndex } from "./tree-index";
-import { GenreTreeAction, GenreTreeNode, GenreTreePlayState, GenreTreeProps } from "./types";
+import { GenreTreeAction, GenreTreeNode, GenreTreeProps } from "./types";
 import { useTreeIndex } from "./use-tree-index";
 import {
   ACCENT_TEXT_COLOR,
@@ -43,11 +42,8 @@ interface OutlineState {
   selectedId: string | null;
   /** Node ids, plus `sectionKey`s, whose `<details>` is expanded. */
   openIds: ReadonlySet<string>;
-  playingNodeId: string | null;
-  playState: GenreTreePlayState | undefined;
   reparentingNodeId: string | null;
   reparentForbiddenIds: ReadonlySet<string>;
-  showToolbar: boolean;
 }
 
 interface OutlineStore {
@@ -169,12 +165,9 @@ function OutlineNodeView({
   const node = model.index.byId.get(nodeId)!;
   const isSelected = useOutlineState(store, (s) => s.selectedId === nodeId);
   const isOpen = useOutlineState(store, (s) => s.openIds.has(nodeId));
-  const isPlaying = useOutlineState(store, (s) => s.playingNodeId === nodeId);
-  const playState = useOutlineState(store, (s) => (s.playingNodeId === nodeId ? s.playState : undefined));
   const reparentStatus = useOutlineState(store, (s) =>
     s.reparentingNodeId === null ? null : s.reparentForbiddenIds.has(nodeId) ? "forbidden" : "target",
   );
-  const showToolbar = useOutlineState(store, (s) => s.showToolbar);
 
   const itemCount = isRoot ? model.aggregatedRootItemCountById.get(nodeId)! : node.itemCount;
   const children = model.index.childrenByParentId.get(nodeId) ?? [];
@@ -200,23 +193,6 @@ function OutlineNodeView({
         {node.name}
       </button>
       <span className="gtv-outline-count">{itemCount}</span>
-      {showToolbar && (
-        // Keeps toolbar clicks from also toggling the enclosing <summary>'s section.
-        <span className="gtv-outline-toolbar" onClick={(event) => event.preventDefault()}>
-          <NodeToolbar
-            node={node}
-            itemCount={itemCount}
-            playingNodeId={isPlaying ? nodeId : null}
-            playState={playState}
-            onPlayPause={callbacks.onPlayPause}
-            onAddChild={callbacks.onAddChild}
-            onRenameRequest={callbacks.onRenameRequest}
-            onDeleteRequest={callbacks.onDeleteRequest}
-            onReparentRequest={callbacks.onReparentRequest}
-            additionalActions={callbacks.additionalActions}
-          />
-        </span>
-      )}
     </span>
   );
 
@@ -317,16 +293,13 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     createOutlineStore({
       selectedId: null,
       openIds: new Set(),
-      playingNodeId,
-      playState,
       reparentingNodeId,
       reparentForbiddenIds,
-      showToolbar,
     }),
   );
   useLayoutEffect(() => {
-    store.set({ playingNodeId, playState, reparentingNodeId, reparentForbiddenIds, showToolbar });
-  }, [store, playingNodeId, playState, reparentingNodeId, reparentForbiddenIds, showToolbar]);
+    store.set({ reparentingNodeId, reparentForbiddenIds });
+  }, [store, reparentingNodeId, reparentForbiddenIds]);
 
   const latestProps = useRef(props);
   useLayoutEffect(() => {
@@ -450,6 +423,21 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           onSelectNode={(id) => selectNodeRef.current(id)}
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
+          actions={
+            showToolbar
+              ? {
+                  itemCount: model.aggregatedRootItemCountById.get(selectedNode.id),
+                  playingNodeId,
+                  playState,
+                  onPlayPause: callbacks.onPlayPause,
+                  onAddChild: callbacks.onAddChild,
+                  onRenameRequest: callbacks.onRenameRequest,
+                  onDeleteRequest: callbacks.onDeleteRequest,
+                  onReparentRequest: callbacks.onReparentRequest,
+                  additionalActions: callbacks.additionalActions,
+                }
+              : undefined
+          }
         />
       )}
     </div>

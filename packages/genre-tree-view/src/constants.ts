@@ -34,13 +34,8 @@ export const MENU_ROW_HOVER_FILL = "#F4F4F5";
 export const DANGER_ROW_HOVER_FILL = "rgba(220, 38, 38, 0.08)";
 export const ACCENT_TINT_FILL = "rgba(79, 70, 229, 0.08)";
 
-// Must match .gtv-toolbar-btn's width/height (1.2em) in styles.css — toolbar buttons scale with
-// the node's font-size, so anything positioning relative to the rendered button size (e.g. the
-// horizontal-orientation overflow menu's Y-offset) needs this ratio to stay in sync.
-export const TOOLBAR_BUTTON_SIZE_RATIO = 1.2;
 export const TOOLBAR_GAP = 2;
 
-export const MENU_ROW_HEIGHT = 30;
 export const MENU_WIDTH = 130;
 
 export const PER_TREE_ACCENT_DOT = true;
@@ -142,22 +137,10 @@ export const MAX_NODE_HEIGHT = 120;
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
 // the overflow menu's own width plus the gap the toolbar renders it at (see the `+ 4` x-offset
-// in addToolbarActions), since the menu is wider than the icon row itself.
+// by the former hover toolbar), since the menu is wider than the icon row itself.
 export const TOOLBAR_MENU_X_GAP = 4;
 export const ACTIONS_OVERLAY_WIDTH = MENU_WIDTH + TOOLBAR_MENU_X_GAP;
 export const ACTIONS_OVERLAY_HEIGHT = RECT_BASE_DIMENSIONS.HEIGHT * 7;
-
-// A node's hover-name label (see addHoverNameLabel), attached like a tab to the top of the card
-// while the toolbar overlay masks the card's own label, sized equal to the node's own height
-// (calculateNodeDimensions) so it scales with it instead of a fixed height. No gap constant: the
-// tab sits flush against the card's top edge, not floating above it.
-
-// The label's foreignObject (HTML) and the card's rect (SVG path) are rasterized by separate
-// engines, so even with pixel-identical position and fill color, butting them exactly edge-to-edge
-// leaves a faint hairline seam from each side's independent anti-aliasing. Extending the label 1px
-// into the card on every touching side (left, right, and bottom) hides that seam under an
-// identical-color overlap instead of a touching boundary.
-export const HOVER_LABEL_CARD_OVERLAP = 1;
 
 // Layout slot size, not a rendered node's actual size (see calculateNodeDimensions) — every
 // node's slot has to fit the largest a node can render at, or a high-itemCount node overflows

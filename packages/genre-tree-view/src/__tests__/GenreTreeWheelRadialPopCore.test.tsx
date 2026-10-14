@@ -12,7 +12,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { NODE_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING, calculateNodeFontSize, getItemCountRange } from "../constants";
+import { NODE_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -46,7 +46,7 @@ const NODES_WITH_POP: GenreTreeNode[] = [
 
 function chipFor(container: HTMLElement, name: string) {
   return Array.from(container.querySelectorAll(".gtv-wheel-chip")).find((el) =>
-    el.textContent?.startsWith(name),
+    el.getAttribute("aria-label") === name || el.textContent?.startsWith(name),
   ) as HTMLButtonElement;
 }
 
@@ -103,7 +103,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
     const centerNode = container.querySelector(".gtv-wheel-center-node") as HTMLElement;
     expect(centerNode.querySelector(".gtv-wheel-chip")).toBeTruthy();
-    expect(centerNode.textContent).toContain("Mainstream Pop");
+    expect(centerNode.querySelector(".gtv-wheel-chip")?.getAttribute("aria-label")).toBe("Mainstream Pop");
     expect(chipFor(container, "Rock").closest(".gtv-wheel-center-node")).toBeNull();
   });
 
@@ -552,67 +552,6 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(["Rock", "Electronic", "Jazz"].map(angleFor)).toEqual(initialAngles);
   });
 
-  it("routes node actions from the center node and a mounted core subtree through the forwarded callbacks", () => {
-    const onPlayPause = vi.fn();
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
-
-    const centerAnchor = container.querySelector(
-      ".gtv-wheel-center-node .gtv-wheel-chip-anchor",
-    ) as HTMLElement;
-    fireEvent.click(centerAnchor.querySelector('[aria-label="Play"]') as HTMLButtonElement);
-    expect(onPlayPause).toHaveBeenCalledWith("pop");
-
-    const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
-    const corePlayButton = container.querySelector(
-      '#toolbar-a-core-child [data-menu-key="play"]',
-    ) as HTMLButtonElement;
-    fireEvent.click(corePlayButton);
-    expect(onPlayPause).toHaveBeenCalledWith("a-core-child");
-  });
-
-  it("routes actions fired from the in-circle pop subtree through the forwarded callbacks", () => {
-    const onPlayPause = vi.fn();
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onPlayPause={onPlayPause} />);
-
-    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
-    const popPlayButton = container.querySelector('#toolbar-a-pop [data-menu-key="play"]') as HTMLButtonElement;
-    fireEvent.click(popPlayButton);
-
-    expect(onPlayPause).toHaveBeenCalledWith("a-pop");
-  });
-
-  it("renders a toolbar for each root chip and routes its actions through the forwarded callbacks", () => {
-    const onAddChild = vi.fn();
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onAddChild={onAddChild} />);
-
-    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
-    fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
-
-    expect(onAddChild).toHaveBeenCalledWith("root-a");
-  });
-
-  it("wires the ring chip and center chip toolbars' font-size to calculateNodeFontSize, so toolbar icons scale with their node instead of staying a fixed size", () => {
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
-
-    const rootItemCountRange = getItemCountRange([{ itemCount: 12 }, { itemCount: 0 }, { itemCount: 0 }]);
-
-    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
-    const rockToolbar = rockAnchor.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
-    expect(rockToolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(
-      `${calculateNodeFontSize(12, rootItemCountRange)}px`,
-    );
-
-    const centerToolbar = container.querySelector(
-      ".gtv-wheel-center-node .gtv-wheel-chip-toolbar",
-    ) as HTMLElement;
-    const CENTER_NODE_SCALE = 2;
-    expect(centerToolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(
-      `${calculateNodeFontSize(10, rootItemCountRange) * CENTER_NODE_SCALE}px`,
-    );
-  });
-
   it("draws the wheel's circle outline", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
@@ -836,37 +775,6 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
-  it("removes a pop node's toolbar and hover label after the mouseleave timeout elapses", () => {
-    vi.useFakeTimers();
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
-
-    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
-    expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
-
-    fireEvent.mouseLeave(popGroup);
-    vi.advanceTimersByTime(150);
-
-    expect(container.querySelector("#toolbar-a-pop")).toBeFalsy();
-    expect(container.querySelector("#hover-label-a-pop")).toBeFalsy();
-  });
-
-  it("keeps a pop node's toolbar mounted when the mouse re-enters before the mouseleave timeout fires", () => {
-    vi.useFakeTimers();
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
-
-    const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
-    fireEvent.mouseOver(popGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
-    expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
-
-    fireEvent.mouseLeave(popGroup);
-    vi.advanceTimersByTime(50);
-    fireEvent.mouseEnter(popGroup);
-    vi.advanceTimersByTime(100);
-
-    expect(container.querySelector("#toolbar-a-pop")).toBeTruthy();
-  });
-
   it("does not add a reparent overlay to a pop node being reparented itself", () => {
     const onReparent = vi.fn();
     const { container } = render(
@@ -956,20 +864,6 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const [pop1X, pop1Y] = nodeCoords(container, "pop-1");
     const [pop2X, pop2Y] = nodeCoords(container, "pop-2");
     expect([pop1X, pop1Y]).not.toEqual([pop2X, pop2Y]);
-  });
-
-  it("keeps ring and center chips visible but hides their inner toolbar and suppresses the core sector's hover toolbar when showToolbar is false", () => {
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} showToolbar={false} />);
-
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
-    expect(container.querySelector(".gtv-wheel-center-node")).toBeTruthy();
-    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
-
-    const coreGroup = container.querySelector("#group-a-core-child") as SVGGElement;
-    fireEvent.mouseOver(coreGroup.querySelector(".gtv-hover-hit-area") as SVGRectElement);
-    expect(container.querySelector("#toolbar-a-core-child")).toBeFalsy();
   });
 
   describe("node info panel", () => {
@@ -1228,9 +1122,9 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onNodeClick).toHaveBeenLastCalledWith(punk, expect.anything());
       expect(onSelectedNodeChange).toHaveBeenLastCalledWith(punk);
 
-      const punkAnchor = within(chipFor(container, "Punk").closest(".gtv-wheel-chip-anchor") as HTMLElement);
-      fireEvent.click(punkAnchor.getByRole("button", { name: "More actions" }));
-      fireEvent.click(punkAnchor.getByRole("button", { name: "Rename" }));
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      fireEvent.click(panel.getByRole("button", { name: "More actions" }));
+      fireEvent.click(panel.getByRole("button", { name: "Rename" }));
       expect(onRenameRequest).toHaveBeenCalledWith(punk);
 
       fireEvent.click(chipFor(container, "Pop Rock"));
@@ -1261,7 +1155,9 @@ describe("GenreTreeWheelRadialPopCore", () => {
       );
       expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
 
-      fireEvent.click(centerAnchor.getByRole("button", { name: "Add sub-genre" }));
+      fireEvent.click(
+        within(container.querySelector(".gtv-info-panel") as HTMLElement).getByRole("button", { name: "Add sub-genre" }),
+      );
       expect(onAddChild).toHaveBeenCalledWith("a-core");
     });
 
