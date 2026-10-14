@@ -78,6 +78,32 @@ describe("GenreTree", () => {
       rerender(<GenreTree nodes={TREE} onPlayPause={onPlayPause} showToolbar={false} />);
       expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).queryByRole("button", { name: /play/i })).toBeNull();
     });
+
+    it("enables Play for a parent whose own count is 0 but whose descendants have tracks", () => {
+      const nodes: GenreTreeNode[] = [
+        { id: "root", parentId: null, name: "Root", itemCount: 0 },
+        { id: "mid", parentId: "root", name: "Mid", itemCount: 0 },
+        { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 3 },
+      ];
+      const { container } = render(<GenreTree nodes={nodes} selectedNodeId="mid" />);
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      expect((panel.getByRole("button", { name: /play/i }) as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("hides the actions while a reparent is in progress", () => {
+      const { container } = render(<GenreTree nodes={TREE} selectedNodeId="root" reparentingNodeId="child-a" />);
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      expect(panel.queryByRole("button", { name: /play/i })).toBeNull();
+    });
+
+    it("closes the overflow menu when the selected node changes", () => {
+      const { container, rerender } = render(<GenreTree nodes={TREE} selectedNodeId="root" />);
+      const panel = () => within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      fireEvent.click(panel().getByRole("button", { name: /more actions/i }));
+      expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).toBe("true");
+      rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" />);
+      expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).not.toBe("true");
+    });
   });
 
   it("fires onNodeClick with the node's data when its body is clicked", () => {

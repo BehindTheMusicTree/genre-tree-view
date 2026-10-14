@@ -1381,9 +1381,9 @@ export function WheelRadialPopCoreCore({
           }}
           hideClose={hideInfoPanelClose}
           actions={
-            showToolbar
+            showToolbar && !reparentingNodeId
               ? {
-                  itemCount: aggregatedRootItemCountById.get(panel.node.id),
+                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,

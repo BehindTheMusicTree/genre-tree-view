@@ -83,7 +83,7 @@ export function InfoPanel({
           </button>
         )}
       </div>
-      {actions && <NodeToolbar node={node} className="gtv-info-panel-toolbar" {...actions} />}
+      {actions && <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} />}
       <dl className="gtv-info-panel-fields">
         <dt>Song count</dt>
         <dd>{node.itemCount}</dd>

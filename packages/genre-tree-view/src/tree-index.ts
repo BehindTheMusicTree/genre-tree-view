@@ -10,6 +10,8 @@ export interface TreeIndex {
   /** `id`'s ancestors, root-first, excluding `id` itself — stops at a dangling `parentId`. Empty
    * for a root or an unknown id. */
   ancestorsOf: (id: string) => GenreTreeNode[];
+  /** Each node's own `itemCount` plus every descendant's. */
+  subtreeItemCountById: ReadonlyMap<string, number>;
 }
 
 /** One O(n) pass over `nodes` building every lookup the renderers need, so per-node queries
@@ -48,5 +50,16 @@ export function buildTreeIndex(nodes: readonly GenreTreeNode[]): TreeIndex {
     return ancestors.reverse();
   };
 
-  return { byId, childrenByParentId, rootIdById, ancestorsOf };
+  const subtreeItemCountById = new Map<string, number>();
+  const subtreeCountOf = (node: GenreTreeNode): number => {
+    const cached = subtreeItemCountById.get(node.id);
+    if (cached !== undefined) return cached;
+    let total = node.itemCount;
+    for (const child of childrenByParentId.get(node.id) ?? []) total += subtreeCountOf(child);
+    subtreeItemCountById.set(node.id, total);
+    return total;
+  };
+  for (const node of nodes) subtreeCountOf(node);
+
+  return { byId, childrenByParentId, rootIdById, ancestorsOf, subtreeItemCountById };
 }
