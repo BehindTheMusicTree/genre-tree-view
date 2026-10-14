@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-14
+
 ### Changed
 
 - **BREAKING:** node actions (play, add, rename, overflow menu, …) now render in the info panel
