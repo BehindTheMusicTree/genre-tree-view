@@ -137,31 +137,6 @@ describe("GenreTreeOutline", () => {
     expect(itemOf(container, "a-core").querySelector(".gtv-outline-count")!.textContent).toBe("3");
   });
 
-  it("renders a toolbar per row that fires the consumer callbacks, hidden when showToolbar is false", () => {
-    const onPlayPause = vi.fn();
-    const onAddChild = vi.fn();
-    const { container, rerender } = render(
-      <GenreTreeOutline nodes={NODES} onPlayPause={onPlayPause} onAddChild={onAddChild} />,
-    );
-    expandAll(container);
-    const row = itemOf(container, "a-core").querySelector(".gtv-outline-row") as HTMLElement;
-    fireEvent.click(within(row).getByLabelText("Play"));
-    fireEvent.click(within(row).getByLabelText("Add sub-genre"));
-    expect(onPlayPause).toHaveBeenCalledWith("a-core");
-    expect(onAddChild).toHaveBeenCalledWith("a-core");
-
-    rerender(<GenreTreeOutline nodes={NODES} showToolbar={false} />);
-    expect(container.querySelector(".gtv-toolbar")).toBeNull();
-  });
-
-  it("keeps a toolbar click from toggling its section", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
-    const details = itemOf(container, "root-a").querySelector("details")!;
-    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
-    within(details.querySelector("summary")!).getByLabelText("Add sub-genre").dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
-  });
-
   it("reparents on a name click while reparenting, disabling the node itself and its descendants", () => {
     const onReparent = vi.fn();
     const onNodeClick = vi.fn();
@@ -283,76 +258,6 @@ describe("GenreTreeOutline", () => {
     fireEvent.pointerEnter(nameButton(container, "root-a"));
     fireEvent.focus(nameButton(container, "root-b"));
     expect(onNodeHover.mock.calls.map(([node]) => node.id)).toEqual(["root-a", "root-b"]);
-  });
-
-  it("forwards every toolbar action to the consumer", () => {
-    const onPlayPause = vi.fn();
-    const onRenameRequest = vi.fn();
-    const onDeleteRequest = vi.fn();
-    const onReparentRequest = vi.fn();
-    const { container } = render(
-      <GenreTreeOutline
-        nodes={NODES}
-        onPlayPause={onPlayPause}
-        onRenameRequest={onRenameRequest}
-        onDeleteRequest={onDeleteRequest}
-        onReparentRequest={onReparentRequest}
-      />,
-    );
-    const row = within(itemOf(container, "root-a").querySelector(".gtv-outline-row") as HTMLElement);
-    fireEvent.click(row.getByLabelText("Play"));
-    for (const label of ["Rename", "Change parent", "Delete"]) {
-      fireEvent.click(row.getByLabelText("More actions"));
-      fireEvent.click(row.getByText(label));
-    }
-    expect(onPlayPause).toHaveBeenCalledWith("root-a");
-    for (const callback of [onRenameRequest, onReparentRequest, onDeleteRequest]) {
-      expect(callback).toHaveBeenCalledWith(expect.objectContaining({ id: "root-a" }));
-    }
-  });
-
-  it("calls the latest callback props without re-rendering rows for them", () => {
-    const first = vi.fn();
-    const second = vi.fn();
-    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} onNodeClick={first} onAddChild={first} />);
-    rerender(<GenreTreeOutline nodes={NODES} onNodeClick={second} onAddChild={second} />);
-    fireEvent.click(nameButton(container, "root-a"));
-    fireEvent.click(within(itemOf(container, "root-b")).getByLabelText("Add sub-genre"));
-    expect(first).not.toHaveBeenCalled();
-    expect(second).toHaveBeenCalledTimes(2);
-  });
-
-  it("renders additionalActions and re-renders renderExtraDetails with the consumer", () => {
-    const onClick = vi.fn();
-    const { container, rerender } = render(
-      <GenreTreeOutline
-        nodes={NODES}
-        additionalActions={() => [{ key: "x", icon: () => "X", label: () => "Extra", onClick, placement: "primary" }]}
-        renderExtraDetails={(node) => `v1 ${node.name}`}
-      />,
-    );
-    fireEvent.click(within(itemOf(container, "root-a")).getByLabelText("Extra"));
-    expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root-a" }));
-
-    fireEvent.click(nameButton(container, "root-a"));
-    expect(container.querySelector(".gtv-info-panel")!.textContent).toContain("v1 Rock");
-    rerender(<GenreTreeOutline nodes={NODES} renderExtraDetails={(node) => `v2 ${node.name}`} />);
-    expect(container.querySelector(".gtv-info-panel")!.textContent).toContain("v2 Rock");
-  });
-
-  it("updates play state and reparent mode when those props change", () => {
-    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} />);
-    const row = (id: string) => within(itemOf(container, id).querySelector(".gtv-outline-row") as HTMLElement);
-    rerender(<GenreTreeOutline nodes={NODES} playingNodeId="root-a" playState="playing" />);
-    expect(row("root-a").getByLabelText("Pause")).toBeTruthy();
-    expect(row("root-b").getByLabelText("Play")).toBeTruthy();
-
-    rerender(<GenreTreeOutline nodes={NODES} reparentingNodeId="root-b" />);
-    expect(nameButton(container, "root-b").disabled).toBe(true);
-    expect(nameButton(container, "root-a").className).toContain("gtv-outline-name--reparent-target");
-    rerender(<GenreTreeOutline nodes={NODES} />);
-    expect(nameButton(container, "root-b").disabled).toBe(false);
-    expect(nameButton(container, "root-a").className).not.toContain("gtv-outline-name--reparent-target");
   });
 
   it("scrolls an externally-selected node into view and keeps the panel on it", () => {

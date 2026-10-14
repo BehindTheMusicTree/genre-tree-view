@@ -2,14 +2,11 @@ import * as d3 from "d3";
 
 import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 import {
-  addHoverNameLabel,
   addReparentTargetOverlay,
-  addToolbarActions,
   buildTreeHierarchyStructure,
 } from "./NodeHelper";
 import {
   ACCENT_COLOR,
-  ACCENT_TEXT_COLOR,
   ItemCountRange,
   MAX_NODE_WIDTH,
   NODE_DOT_LABEL_GAP,
@@ -505,9 +502,6 @@ export function renderPopSubtree(
     // black dot borders; every other pop sector reads light against its tinted fill instead,
     // matching core sectors' solid-color treatment.
     isMainstreamSector?: boolean;
-    // When false, suppresses the hover toolbar and hover name-label on every node in this
-    // subtree. Defaults to true.
-    showToolbar?: boolean;
     // The node whose info panel is currently open (see use-node-info-panel.ts) — gets a heavier
     // accent-colored border while every other node in the subtree dims.
     selectedNodeId?: string | null;
@@ -518,18 +512,9 @@ export function renderPopSubtree(
     isCoreSector = false,
     rootLinkOrigin,
     isMainstreamSector = false,
-    showToolbar = true,
     selectedNodeId = null,
   } = options;
-  const {
-    onPlayPause,
-    onAddChild,
-    onRenameRequest,
-    onDeleteRequest,
-    onReparentTargetSelect,
-    onNodeClick,
-    onNodeHover,
-  } = callbacks;
+  const { onReparentTargetSelect, onNodeClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
   // A node is "related" to the selected node when it's the selected node's own parent or one of
@@ -668,36 +653,7 @@ export function renderPopSubtree(
         .attr("height", hitArea.y1 - hitArea.y0);
     })
     .attr("fill", "transparent")
-    .attr("pointer-events", "all")
-    .on("mouseover", function (_event, d) {
-      if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
-
-      const group = d3Lib.select<SVGGElement, unknown>(
-        this.parentNode as SVGGElement,
-      ) as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
-
-      const labelColor = isMainstreamSector ? TEXT_COLOR : ACCENT_TEXT_COLOR;
-      addHoverNameLabel(d3Lib, d.data, group, itemCountRange, labelColor);
-
-      addToolbarActions(
-        d3Lib,
-        d.data,
-        group,
-        {
-          onPlayPause,
-          additionalActions: callbacks.additionalActions,
-          onAddChild,
-          onRenameRequest,
-          onDeleteRequest,
-          onReparentRequest: callbacks.onReparentRequest,
-          playingNodeId: callbacks.playingNodeId,
-          playState: callbacks.playState,
-        },
-        itemCountRange,
-        labelColor,
-        "horizontal",
-      );
-    });
+    .attr("pointer-events", "all");
 
   nodes
     .append("circle")
@@ -770,16 +726,6 @@ export function renderPopSubtree(
     group.on("mouseleave", function () {
       leaveTimeoutId = setTimeout(() => {
         leaveTimeoutId = null;
-        if (
-          d3Lib
-            .select<SVGGElement, unknown>("#overflow-menu-" + d.data.id)
-            .empty()
-        ) {
-          d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
-          d3Lib
-            .select<SVGGElement, unknown>("#hover-label-" + d.data.id)
-            .remove();
-        }
         d3Lib
           .select<
             SVGGElement,

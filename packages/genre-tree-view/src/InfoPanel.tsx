@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { MdClose } from "react-icons/md";
 
+import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
 
 /** A direct child of the panel's node, styled to match exactly how that child renders as its own
@@ -37,6 +38,9 @@ export interface InfoPanelProps {
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** When set, shows a "Zoom in" action that fires it. */
   onZoomIn?: () => void;
+  /** When set, renders the node's play/add-child/rename/reparent/delete actions below the
+   * header. Omitted when the toolbar is disabled (see GenreTreeProps.showToolbar). */
+  actions?: Omit<NodeToolbarProps, "node" | "className">;
 }
 
 /** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
@@ -56,6 +60,7 @@ export function InfoPanel({
   renderExtraDetails,
   hideClose = false,
   onZoomIn,
+  actions,
 }: InfoPanelProps) {
   return (
     <div className={`gtv-info-panel gtv-info-panel--${side}`}>
@@ -78,6 +83,7 @@ export function InfoPanel({
           </button>
         )}
       </div>
+      {actions && <NodeToolbar node={node} className="gtv-info-panel-toolbar" {...actions} />}
       <dl className="gtv-info-panel-fields">
         <dt>Song count</dt>
         <dd>{node.itemCount}</dd>

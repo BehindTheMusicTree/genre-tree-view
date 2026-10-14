@@ -33,13 +33,10 @@ import {
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import {
   appendPaths,
-  openBottomBorderPath,
   roundedRectPath,
 } from "./d3-helper/d3-path-helper";
 import {
-  addHoverNameLabel,
   addReparentTargetOverlay,
-  addToolbarActions,
 } from "./NodeHelper";
 
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -341,17 +338,9 @@ export function renderTree(
   callbacks: RenderTreeCallbacks,
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
-  showToolbar = true,
   selectedNodeId: string | null = null,
 ): D3Selection {
-  const {
-    onPlayPause,
-    onAddChild,
-    onRenameRequest,
-    onDeleteRequest,
-    onReparentTargetSelect,
-    onNodeClick,
-  } = callbacks;
+  const { onReparentTargetSelect, onNodeClick } = callbacks;
 
   if (!svgRef.current) {
     throw new Error("SVG reference is null");
@@ -580,82 +569,6 @@ export function renderTree(
           : TEXT_COLOR;
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
-    })
-    .on("mouseover", function (event, d) {
-      if (reparentingNodeId || isForbidden(d) || !showToolbar) return;
-
-      const group = d3Lib.select<SVGGElement, unknown>(
-        this.parentNode as SVGGElement,
-      ) as unknown as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
-
-      // Square off the top corners while the hover label sits on top of them — the label only
-      // overlaps the card by HOVER_LABEL_CARD_OVERLAP px, far short of CORNER_RADIUS, so the
-      // card's own rounded corners would otherwise show through beneath the label's straight
-      // bottom edge.
-      const dimensions = calculateNodeDimensions(
-        d.data.itemCount,
-        itemCountRange,
-      );
-      group.select<SVGPathElement>(".gtv-node-rect").attr(
-        "d",
-        roundedRectPath(
-          -dimensions.WIDTH / 2,
-          -dimensions.HEIGHT / 2,
-          dimensions.WIDTH,
-          dimensions.HEIGHT,
-          {
-            tl: 0,
-            tr: 0,
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          },
-        ),
-      );
-      group.select<SVGPathElement>(".gtv-node-border").attr(
-        "d",
-        openBottomBorderPath(
-          -dimensions.WIDTH / 2,
-          -dimensions.HEIGHT / 2,
-          dimensions.WIDTH,
-          dimensions.HEIGHT,
-          {
-            br: CORNER_RADIUS,
-            bl: CORNER_RADIUS,
-          },
-        ),
-      );
-
-      // Appended into this node <g> directly (not .gtv-card-shadow-group) so mounting the label
-      // never changes the card's own filtered silhouette — the card's shadow must look identical
-      // hovered or not.
-      const labelColor = isSubtreeCore(d) ? ACCENT_TEXT_COLOR : TEXT_COLOR;
-      addHoverNameLabel(
-        d3Lib,
-        d.data,
-        group,
-        itemCountRange,
-        labelColor,
-        calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
-      );
-
-      addToolbarActions(
-        d3Lib,
-        d.data,
-        group,
-        {
-          onPlayPause,
-          additionalActions: callbacks.additionalActions,
-          onAddChild,
-          onRenameRequest,
-          onDeleteRequest,
-          onReparentRequest: callbacks.onReparentRequest,
-          playingNodeId: callbacks.playingNodeId,
-          playState: callbacks.playState,
-        },
-        itemCountRange,
-        labelColor,
-        orientation,
-      );
     });
 
   nodes.each(function (d: D3Node) {
@@ -691,45 +604,6 @@ export function renderTree(
     group.on("mouseleave", function () {
       leaveTimeoutId = setTimeout(() => {
         leaveTimeoutId = null;
-        // Leave the toolbar in place while its own overflow menu is still open — the menu is
-        // re-parented to the root layer (see toggleLightActionsMenu), so reaching it with the
-        // mouse necessarily exits this node's <g> and fires this handler; removing the toolbar
-        // here would delete the kebab that anchors the still-open menu.
-        if (
-          d3Lib
-            .select<SVGGElement, unknown>("#overflow-menu-" + d.data.id)
-            .empty()
-        ) {
-          d3Lib.select<SVGGElement, unknown>("#toolbar-" + d.data.id).remove();
-          d3Lib
-            .select<SVGGElement, unknown>("#hover-label-" + d.data.id)
-            .remove();
-
-          const dimensions = calculateNodeDimensions(
-            d.data.itemCount,
-            itemCountRange,
-          );
-          const fullyRounded = roundedRectPath(
-            -dimensions.WIDTH / 2,
-            -dimensions.HEIGHT / 2,
-            dimensions.WIDTH,
-            dimensions.HEIGHT,
-            {
-              tl: CORNER_RADIUS,
-              tr: CORNER_RADIUS,
-              br: CORNER_RADIUS,
-              bl: CORNER_RADIUS,
-            },
-          );
-          group
-            .select<SVGPathElement>(".gtv-node-rect")
-            .attr("d", fullyRounded);
-          group
-            .select<SVGPathElement>(".gtv-node-border")
-            .attr("d", fullyRounded);
-        }
-        // Click-opened popovers (#menu-/#overflow-menu-) are left alone here — they close via
-        // their own outside-click listener from toggleLightActionsMenu, not on node mouseleave.
         d3Lib
           .select<
             SVGGElement,

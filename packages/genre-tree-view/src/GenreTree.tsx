@@ -173,7 +173,6 @@ export function GenreTree({
       },
       orientation,
       hideRoot,
-      showToolbar,
       effectiveSelectedNodeId,
     );
   }, [
@@ -195,7 +194,6 @@ export function GenreTree({
     additionalActions,
     orientation,
     hideRoot,
-    showToolbar,
     effectiveSelectedNodeId,
   ]);
 
@@ -356,6 +354,20 @@ export function GenreTree({
           }}
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
+          actions={
+            showToolbar
+              ? {
+                  playingNodeId,
+                  playState,
+                  onPlayPause,
+                  onAddChild,
+                  onRenameRequest,
+                  onDeleteRequest,
+                  onReparentRequest,
+                  additionalActions,
+                }
+              : undefined
+          }
         />
       )}
       <div

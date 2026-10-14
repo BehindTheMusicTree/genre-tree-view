@@ -25,9 +25,7 @@ export interface NodeToolbarProps {
   className?: string;
 }
 
-/** The same play/add-child/rename/reparent/delete/extra actions `addToolbarActions` renders
- * onto a tree node's SVG card, as a plain React widget — for surfaces outside the SVG tree (the
- * wheel's root chips) that don't carry a mounted node for `addToolbarActions` to attach to. */
+/** The play/add-child/rename/reparent/delete/extra actions for a node, rendered in the info panel. */
 export function NodeToolbar({
   node,
   itemCount = node.itemCount,

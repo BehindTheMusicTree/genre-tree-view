@@ -71,12 +71,6 @@ describe("GenreTreeWheelRight", () => {
     expect(svg.querySelector("#group-root-c")).toBeFalsy();
   });
 
-  it("renders a hover-revealed name label inside each root chip", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
-
-    expect(chipFor(container, "Rock").querySelector(".gtv-wheel-chip-hover-name")!.textContent).toBe("Rock");
-  });
-
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {
     const onNodeClick = vi.fn();
     const { container } = render(<GenreTreeWheelRight nodes={NODES} onNodeClick={onNodeClick} />);
@@ -231,18 +225,6 @@ describe("GenreTreeWheelRight", () => {
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
-  it("still routes node actions from the visible subtree through to the forwarded callback", () => {
-    const onPlayPause = vi.fn();
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} onPlayPause={onPlayPause} />);
-
-    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const playButton = container.querySelector('#toolbar-a-child [data-menu-key="play"]') as HTMLButtonElement;
-    fireEvent.click(playButton);
-
-    expect(onPlayPause).toHaveBeenCalledWith("a-child");
-  });
-
   it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
     // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
     // chip should size (and scale the shared range) off that aggregated total, not read as 0.
@@ -313,19 +295,6 @@ describe("GenreTreeWheelRight", () => {
     fireEvent.click(container.querySelector('[aria-label="Fit to frame"]') as HTMLButtonElement);
 
     expect(getScale(transformDiv)).toBe(baseScale);
-  });
-
-  it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} showToolbar={false} />);
-
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
-
-    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
   });
 
   describe("node info panel", () => {

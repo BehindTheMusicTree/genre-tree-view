@@ -522,7 +522,6 @@ describe("renderTree", () => {
       baseCallbacks(),
       "horizontal",
       false,
-      true,
       "child",
     );
 
@@ -597,7 +596,6 @@ describe("renderTree", () => {
       baseCallbacks(),
       "horizontal",
       false,
-      true,
       "child1",
     );
 
@@ -641,7 +639,6 @@ describe("renderTree", () => {
       baseCallbacks(),
       "horizontal",
       false,
-      true,
       "child1",
     );
 
@@ -711,36 +708,6 @@ describe("renderTree", () => {
     expect(svgEl.querySelector("#hover-label-child")).toBeFalsy();
   });
 
-  it("adds the hover-name label on mouseover alongside the toolbar", () => {
-    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
-    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    document.body.appendChild(svgEl);
-    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
-
-    renderTree(
-      d3,
-      svgRef,
-      treeData,
-      svgWidth,
-      svgHeight,
-      null,
-      [],
-      "#4F46E5",
-      baseCallbacks(),
-    );
-
-    const rootForeignObject = svgEl.querySelector(
-      "#group-root foreignObject",
-    ) as SVGForeignObjectElement;
-    rootForeignObject.dispatchEvent(
-      new MouseEvent("mouseover", { bubbles: true }),
-    );
-
-    expect(
-      svgEl.querySelector("#hover-label-root .gtv-hover-label")!.textContent,
-    ).toBe("Root");
-  });
-
   it("adds the reparent-target overlay on mouseenter only for eligible, non-forbidden nodes", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -790,81 +757,6 @@ describe("renderTree", () => {
     expect(
       svgEl.querySelector("#select-as-new-parent-group-child"),
     ).toBeFalsy();
-  });
-
-  it("removes the toolbar on mouseleave after the timeout when no overflow menu is open", () => {
-    vi.useFakeTimers();
-    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
-    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    document.body.appendChild(svgEl);
-    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
-
-    renderTree(
-      d3,
-      svgRef,
-      treeData,
-      svgWidth,
-      svgHeight,
-      null,
-      [],
-      "#4F46E5",
-      baseCallbacks(),
-    );
-
-    const rootForeignObject = svgEl.querySelector(
-      "#group-root foreignObject",
-    ) as SVGForeignObjectElement;
-    rootForeignObject.dispatchEvent(
-      new MouseEvent("mouseover", { bubbles: true }),
-    );
-    expect(svgEl.querySelector("#toolbar-root")).toBeTruthy();
-    expect(svgEl.querySelector("#hover-label-root")).toBeTruthy();
-
-    const rootGroup = svgEl.querySelector("#group-root") as SVGGElement;
-    rootGroup.dispatchEvent(new MouseEvent("mouseleave", { bubbles: false }));
-    vi.advanceTimersByTime(150);
-
-    expect(svgEl.querySelector("#toolbar-root")).toBeFalsy();
-    expect(svgEl.querySelector("#hover-label-root")).toBeFalsy();
-  });
-
-  it("keeps the toolbar and hover-name label mounted on the mouseleave timeout while the overflow menu is open", () => {
-    vi.useFakeTimers();
-    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
-    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    document.body.appendChild(svgEl);
-    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
-
-    renderTree(
-      d3,
-      svgRef,
-      treeData,
-      svgWidth,
-      svgHeight,
-      null,
-      [],
-      "#4F46E5",
-      baseCallbacks(),
-    );
-
-    const rootForeignObject = svgEl.querySelector(
-      "#group-root foreignObject",
-    ) as SVGForeignObjectElement;
-    rootForeignObject.dispatchEvent(
-      new MouseEvent("mouseover", { bubbles: true }),
-    );
-    const kebab = svgEl.querySelector(
-      '#toolbar-root [data-menu-key="__more"]',
-    ) as HTMLButtonElement;
-    kebab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(svgEl.querySelector("#overflow-menu-root")).toBeTruthy();
-
-    const rootGroup = svgEl.querySelector("#group-root") as SVGGElement;
-    rootGroup.dispatchEvent(new MouseEvent("mouseleave", { bubbles: false }));
-    vi.advanceTimersByTime(150);
-
-    expect(svgEl.querySelector("#toolbar-root")).toBeTruthy();
-    expect(svgEl.querySelector("#hover-label-root")).toBeTruthy();
   });
 
   it("also removes a lingering reparent-target overlay on the same mouseleave timeout", () => {
