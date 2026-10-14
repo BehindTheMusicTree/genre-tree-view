@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/re
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
 import { calculateRootAnchorClearance } from "../NodeHelper";
-import { calculateNodeFontSize, getItemCountRange } from "../constants";
+import { getItemCountRange } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -265,39 +265,6 @@ describe("GenreTreeWheel", () => {
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
-  it("still routes node actions from the visible subtree through to the forwarded callback", () => {
-    const onPlayPause = vi.fn();
-    const { container } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
-
-    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const playButton = container.querySelector('#toolbar-a-child [data-menu-key="play"]') as HTMLButtonElement;
-    fireEvent.click(playButton);
-
-    expect(onPlayPause).toHaveBeenCalledWith("a-child");
-  });
-
-  it("renders a toolbar for each root chip and routes its actions through the forwarded callbacks", () => {
-    const onPlayPause = vi.fn();
-    const onAddChild = vi.fn();
-    const { container } = render(
-      <GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} onAddChild={onAddChild} />,
-    );
-
-    const rockAnchor = chipFor(container, "Rock").closest(".gtv-wheel-chip-anchor") as HTMLElement;
-    fireEvent.click(rockAnchor.querySelector('[aria-label="Play"]') as HTMLButtonElement);
-    expect(onPlayPause).toHaveBeenCalledWith("root-a");
-
-    fireEvent.click(rockAnchor.querySelector('[aria-label="Add sub-genre"]') as HTMLButtonElement);
-    expect(onAddChild).toHaveBeenCalledWith("root-a");
-  });
-
-  it("renders a hover-revealed name label inside each root chip", () => {
-    const { container } = render(<GenreTreeWheel nodes={NODES} />);
-
-    expect(chipFor(container, "Rock").querySelector(".gtv-wheel-chip-hover-name")!.textContent).toBe("Rock");
-  });
-
   it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
     // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
     // chip should size (and scale the shared range) off that aggregated total, not read as 0.
@@ -335,17 +302,6 @@ describe("GenreTreeWheel", () => {
     const expectedHalfExtent = calculateRootAnchorClearance(d3, [nodes[0], nodes[1]], 2, rootItemCountRange, "HEIGHT");
 
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-height")).toBe(`${expectedHalfExtent}px`);
-  });
-
-  it("wires the wheel-chip toolbar's font-size to the same value calculateNodeFontSize gives the label, so toolbar icons scale with the node instead of staying a fixed size", () => {
-    const { container } = render(<GenreTreeWheel nodes={NODES} />);
-    const rockChip = chipFor(container, "Rock");
-    const toolbar = rockChip.closest(".gtv-wheel-chip-anchor")!.querySelector(".gtv-wheel-chip-toolbar") as HTMLElement;
-
-    const rootItemCountRange = getItemCountRange([{ itemCount: 8 }, { itemCount: 0 }, { itemCount: 0 }]);
-    const expectedFontSize = calculateNodeFontSize(8, rootItemCountRange);
-
-    expect(toolbar.style.getPropertyValue("--gtv-toolbar-font-size")).toBe(`${expectedFontSize}px`);
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
@@ -525,16 +481,4 @@ describe("GenreTreeWheel", () => {
     });
   });
 
-  it("keeps root chips visible but hides their inner toolbar and suppresses the subtree's hover toolbar when showToolbar is false", () => {
-    const { container } = render(<GenreTreeWheel nodes={NODES} showToolbar={false} />);
-
-    expect(container.querySelectorAll(".gtv-wheel-chip").length).toBeGreaterThan(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-toolbar").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-hover-name").length).toBe(0);
-    expect(container.querySelectorAll(".gtv-wheel-chip-anchor--no-toolbar").length).toBeGreaterThan(0);
-
-    const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    expect(container.querySelector("#toolbar-a-child")).toBeFalsy();
-  });
 });

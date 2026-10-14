@@ -9,10 +9,9 @@ import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 
 export interface NodeToolbarProps {
   node: GenreTreeNode;
-  /** Overrides `node.itemCount` for the play button's enabled check — callers that scale a root
-   * chip off an aggregated subtree total (see WheelCore's `aggregatedRootItemCountById`) pass
-   * that same total here so "Play" reflects whether the subtree has anything playable, not just
-   * the root's own unrolled-up count. */
+  /** Overrides `node.itemCount` for the play button's enabled check — views pass the node's
+   * rolled-up subtree total (`TreeIndex.subtreeItemCountById`) so "Play" reflects whether the
+   * subtree has anything playable, not just the node's own count. */
   itemCount?: number;
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
@@ -25,9 +24,7 @@ export interface NodeToolbarProps {
   className?: string;
 }
 
-/** The same play/add-child/rename/reparent/delete/extra actions `addToolbarActions` renders
- * onto a tree node's SVG card, as a plain React widget — for surfaces outside the SVG tree (the
- * wheel's root chips) that don't carry a mounted node for `addToolbarActions` to attach to. */
+/** The play/add-child/rename/reparent/delete/extra actions for a node, rendered in the info panel. */
 export function NodeToolbar({
   node,
   itemCount = node.itemCount,

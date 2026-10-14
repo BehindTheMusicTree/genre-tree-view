@@ -95,7 +95,7 @@ export function queryTreeContentElements(container: Element | null | undefined):
  * `padding` px of clearance on every side, picking whichever dimension is more constraining.
  * Capped at 1 (never zooms in past the tree's natural size), not just `ZOOM_MAX_SCALE`: content is
  * measured from `TREE_CONTENT_SELECTOR` alone, excluding the ACTIONS_OVERLAY_WIDTH/HEIGHT space
- * the layout reserves for hover toolbars/menus. That reserved space scales together with the tree
+ * the layout reserves for toolbars/menus. That reserved space scales together with the tree
  * under the shared zoom transform, so scaling past 1 would inflate it past the fixed-px `padding`
  * and clip an edge node's toolbar/menu against the viewport. At scale ≤ 1 the layout's own reserved
  * space is never exceeded, so clipping can't happen. This deliberately ignores `ZOOM_MIN_SCALE`:

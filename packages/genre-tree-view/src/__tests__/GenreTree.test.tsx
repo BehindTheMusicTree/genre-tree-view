@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
 import { GenreTree } from "../GenreTree";
 import { getGenreTreeColor, tintSurface } from "../constants";
-import type { GenreTreeAction, GenreTreeNode } from "../types";
+import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
   cleanup();
@@ -65,75 +65,45 @@ describe("GenreTree", () => {
     expect(container.querySelector("#group-child-b")).toBeFalsy();
   });
 
-  describe("play/pause/loading toolbar label", () => {
-    function playButton(container: HTMLElement, nodeId: string) {
-      const nodeGroup = container.querySelector(`#group-${nodeId}`) as SVGGElement;
-      fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-      return container.querySelector(`#toolbar-${nodeId} [data-menu-key="play"]`) as HTMLButtonElement;
-    }
-
-    it("shows Play when the node is not the currently playing node", () => {
-      const { container } = render(<GenreTree nodes={TREE} playingNodeId={null} />);
-      expect(playButton(container, "root").getAttribute("aria-label")).toBe("Play");
-    });
-
-    it("shows Pause when the node is playing", () => {
-      const { container } = render(<GenreTree nodes={TREE} playingNodeId="root" playState="playing" />);
-      expect(playButton(container, "root").getAttribute("aria-label")).toBe("Pause");
-    });
-
-    it("shows Loading... when the node is loading", () => {
-      const { container } = render(<GenreTree nodes={TREE} playingNodeId="root" playState="loading" />);
-      expect(playButton(container, "root").getAttribute("aria-label")).toBe("Loading...");
-    });
-
-    it("disables the play button for an empty node and invokes onPlayPause for a non-empty one", () => {
+  describe("node actions in the info panel", () => {
+    it("renders the node's actions in the info panel once selected, and omits them when showToolbar is false", () => {
       const onPlayPause = vi.fn();
-      const { container } = render(<GenreTree nodes={TREE} onPlayPause={onPlayPause} />);
+      const { container, rerender } = render(<GenreTree nodes={TREE} onPlayPause={onPlayPause} />);
+      fireEvent.click(container.querySelector("#group-root") as SVGGElement);
 
-      const disabledButton = playButton(container, "child-b");
-      expect(disabledButton.disabled).toBe(true);
-      fireEvent.click(disabledButton);
-      expect(onPlayPause).not.toHaveBeenCalled();
-
-      const enabledButton = playButton(container, "root");
-      fireEvent.click(enabledButton);
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      fireEvent.click(panel.getByRole("button", { name: /play/i }));
       expect(onPlayPause).toHaveBeenCalledWith("root");
+
+      rerender(<GenreTree nodes={TREE} onPlayPause={onPlayPause} showToolbar={false} />);
+      expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).queryByRole("button", { name: /play/i })).toBeNull();
     });
 
-    it("shows the node's name as a floating label alongside the toolbar", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
-      playButton(container, "root");
-      expect(container.querySelector("#hover-label-root .gtv-hover-label")!.textContent).toBe("Root");
+    it("enables Play for a parent whose own count is 0 but whose descendants have tracks", () => {
+      const nodes: GenreTreeNode[] = [
+        { id: "root", parentId: null, name: "Root", itemCount: 0 },
+        { id: "mid", parentId: "root", name: "Mid", itemCount: 0 },
+        { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 3 },
+      ];
+      const { container } = render(<GenreTree nodes={nodes} selectedNodeId="mid" />);
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      expect((panel.getByRole("button", { name: /play/i }) as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it("suppresses the hover toolbar and name-label when showToolbar is false", () => {
-      const { container } = render(<GenreTree nodes={TREE} showToolbar={false} />);
-      const nodeGroup = container.querySelector("#group-root") as SVGGElement;
-      fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-
-      expect(container.querySelector("#toolbar-root")).toBeFalsy();
-      expect(container.querySelector("#hover-label-root")).toBeFalsy();
+    it("hides the actions while a reparent is in progress", () => {
+      const { container } = render(<GenreTree nodes={TREE} selectedNodeId="root" reparentingNodeId="child-a" />);
+      const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      expect(panel.queryByRole("button", { name: /play/i })).toBeNull();
     });
-  });
 
-  it("renders a primary-placement additional action inline and invokes onClick with the node", () => {
-    const onClick = vi.fn();
-    const action: GenreTreeAction = {
-      key: "custom",
-      icon: () => null,
-      label: () => "Custom",
-      onClick,
-      placement: "primary",
-    };
-    const { container } = render(<GenreTree nodes={TREE} additionalActions={() => [action]} />);
-
-    const nodeGroup = container.querySelector("#group-root") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    const customButton = container.querySelector('#toolbar-root [data-menu-key="custom"]') as HTMLButtonElement;
-    fireEvent.click(customButton);
-
-    expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root" }));
+    it("closes the overflow menu when the selected node changes", () => {
+      const { container, rerender } = render(<GenreTree nodes={TREE} selectedNodeId="root" />);
+      const panel = () => within(container.querySelector(".gtv-info-panel") as HTMLElement);
+      fireEvent.click(panel().getByRole("button", { name: /more actions/i }));
+      expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).toBe("true");
+      rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" />);
+      expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).not.toBe("true");
+    });
   });
 
   it("fires onNodeClick with the node's data when its body is clicked", () => {
@@ -157,29 +127,6 @@ describe("GenreTree", () => {
     fireEvent.click(rootGroup);
 
     expect(onNodeClick).not.toHaveBeenCalled();
-  });
-
-  it("renders an overflow-placement additional action in the kebab menu and invokes onClick with the node", () => {
-    const onClick = vi.fn();
-    const action: GenreTreeAction = {
-      key: "custom",
-      icon: () => null,
-      label: () => "Custom",
-      onClick,
-    };
-    const { container } = render(<GenreTree nodes={TREE} additionalActions={() => [action]} />);
-
-    const nodeGroup = container.querySelector("#group-root") as SVGGElement;
-    fireEvent.mouseOver(nodeGroup.querySelector("foreignObject") as SVGForeignObjectElement);
-    expect(container.querySelector('#toolbar-root [data-menu-key="custom"]')).toBeFalsy();
-
-    const kebab = container.querySelector('#toolbar-root [data-menu-key="__more"]') as HTMLButtonElement;
-    fireEvent.click(kebab);
-    const customRow = container.querySelector('[data-menu-key="custom"]') as HTMLButtonElement;
-    expect(customRow).toBeTruthy();
-    fireEvent.click(customRow);
-
-    expect(onClick).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: "root" }));
   });
 
   describe("reparenting flow", () => {

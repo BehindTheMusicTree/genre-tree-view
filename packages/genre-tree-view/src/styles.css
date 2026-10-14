@@ -77,67 +77,7 @@
   margin-left: 0.5rem;
 }
 
-.gtv-actions-panel {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .gtv-actions-panel {
-    animation: gtv-fade-in 150ms ease;
-  }
-}
-
-@keyframes gtv-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Small tab showing a node's name, attached flush to the top of its card while the hover toolbar
-   (see .gtv-toolbar) masks the label underneath — keeps the hovered node identifiable while the
-   toolbar covers its own label. Rounded on top only and flush against the card's own top edge (no
-   gap) so it reads as part of the card rather than a separate floating pill; background matches
-   the card's own fill (--gtv-node-fill, the same variable .gtv-toolbar reads) for visual
-   continuity with the surface it's attached to. No own shadow, deliberately: a blurred
-   drop-shadow still spreads toward the edge it's offset away from, so even a negative y-offset
-   bled a soft line onto the card flush below it — the merged shape's own elevation comes from
-   that card's shadow alone. No sizing/position/font-size here: the call site sets width/height
-   and font-size inline (matching the card's own item-count-scaled font size, see
-   calculateNodeFontSize) and fills its foreignObject (see addHoverNameLabel in NodeHelper.tsx).
-   Deliberately not pointer-events:none — see the hover-hit-testing note next to its call site.
-   The wheel chip's own name label is a different mechanism entirely (see .gtv-wheel-chip-hover
-   below): the chip grows to reveal it rather than stacking a second element on top, since two
-   separately composited boxes meeting at a fractional-pixel boundary produced a visible seam no
-   matter how tightly they were aligned. */
-.gtv-hover-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 0.25em 8px 0;
-  line-height: 1;
-  background: var(--gtv-node-fill, #ffffff);
-  border: 1px solid #e4e4e7;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  font-weight: 500;
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* The toolbar's inline icon row and its overflow menu, shown on node hover. The row itself
-   overlays the node's own card in place of its label — sized to the card and backed by the
-   card's own fill (see --gtv-node-fill in tree-renderer.ts) so it masks the label beneath it
-   without stacking a second card on top. Icon color reads --gtv-toolbar-icon-color (defaults to
+/* The toolbar's inline icon row and its overflow menu, shown in the info panel. Icon color reads --gtv-toolbar-icon-color (defaults to
    the same gray as .gtv-node-label) so it matches the label's own text color on a selected
    wheel chip's solid accent fill instead of staying gray against white text. */
 
@@ -455,6 +395,14 @@
 
 .gtv-info-panel-actions {
   padding: 0 14px 10px;
+}
+
+.gtv-info-panel-toolbar {
+  justify-content: flex-start;
+  height: auto;
+  padding: 8px 14px 0;
+  font-size: 16px;
+  background: transparent;
 }
 
 .gtv-info-panel-children {
@@ -831,157 +779,6 @@
   color: #27272a;
 }
 
-/* Mirrors the SVG tree's hover toolbar (see addToolbarActions) for the wheel's root chips, which
-   have no mounted SVG node of their own to hover (GenreTree mounts each selected root with
-   hideRoot, see WheelCore). Overlays the chip inset 1px on every side (mirroring the SVG side's
-   foreignObject inset, see addToolbarActions) so the chip's own border shows fully around it,
-   rather than the chip's own <button>, which can't validly host nested interactive elements) and
-   masks its label via the chip's own
-   fill, forwarded as --gtv-node-fill inline (see .gtv-toolbar). Hidden until the pointer is over
-   the chip or the toolbar itself — :hover bubbles from the open overflow menu too, since it
-   renders as a descendant here rather than being re-parented like the SVG version's.
-   pointer-events stays none on this whole layer (only its buttons opt back in below) so the
-   masked, non-button areas of the overlay still let clicks fall through to the chip's own
-   <button> underneath — otherwise hovering to reveal the toolbar would block selecting the root. */
-.gtv-wheel-chip-toolbar {
-  position: absolute;
-  inset: 1px;
-  z-index: 2;
-  opacity: 0;
-  pointer-events: none;
-  font-size: max(
-    calc(26px / 1.2),
-    var(--gtv-toolbar-font-size, calc(26px / 1.2))
-  );
-}
-
-.gtv-wheel-chip-anchor:hover .gtv-wheel-chip-toolbar {
-  opacity: 1;
-}
-
-/* On GenreTreeWheelRadialPopCore's collapsed center chip, the toolbar overlay would otherwise
-   paint its .gtv-toolbar child's fixed 8px corners past the chip's own circular border on hover —
-   round it to match so the chip still reads as a circle while hovered. */
-.gtv-wheel-chip-toolbar--circle .gtv-toolbar {
-  border-radius: 50%;
-}
-
-.gtv-wheel-chip-toolbar .gtv-toolbar-btn,
-.gtv-wheel-chip-toolbar .gtv-toolbar-overflow {
-  pointer-events: auto;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .gtv-wheel-chip-toolbar {
-    transition: opacity 120ms ease;
-  }
-}
-
-/* Reveals a wheel root chip's name on hover by growing the chip's own box upward (padding-top),
-   not by stacking a second element above it — two independently composited boxes meeting at a
-   fractional-pixel boundary still show a hairline anti-aliased seam between them no matter how
-   tightly they're aligned or overlapped (border-radius and border both stay on this one
-   continuously-painted box instead, so there's no boundary left to seam). margin-top cancels
-   the padding out of .gtv-wheel-chip-anchor's own flow-height (sized only by this in-flow
-   <button>'s margin box, see the comment on .gtv-wheel-chip-anchor) — height grows by
-   --gtv-hover-label-height and shifts up by the same amount, so the anchor's own box, and thus
-   the chip's fixed point on the wheel circle, is unaffected. --gtv-hover-label-height is set
-   inline per chip (see GenreTreeWheelBase.tsx/GenreTreeWheelRadialBase.tsx) from the same
-   dimensions.HEIGHT the SVG-side label uses, so both scale with the node in sync. */
-.gtv-wheel-chip-anchor:hover .gtv-wheel-chip {
-  height: calc(
-    var(--gtv-wheel-chip-base-height) + var(--gtv-hover-label-height, 22px)
-  );
-  padding-top: var(--gtv-hover-label-height, 22px);
-  margin-top: calc(-1 * var(--gtv-hover-label-height, 22px));
-}
-
-/* When showToolbar is false, .gtv-wheel-chip-hover-name is never rendered (see
-   GenreTreeWheelBase.tsx et al.) — without this override the chip would still grow into the
-   headroom above on hover (the rule above is pure :hover, independent of that span's presence),
-   leaving a blank gap. Same specificity as the rule above, so it wins by source order instead of
-   needing !important. */
-.gtv-wheel-chip-anchor--no-toolbar:hover .gtv-wheel-chip {
-  height: var(--gtv-wheel-chip-base-height);
-  padding-top: 0;
-  margin-top: 0;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .gtv-wheel-chip {
-    transition:
-      height 120ms ease,
-      padding-top 120ms ease,
-      margin-top 120ms ease;
-  }
-}
-
-/* The circular center chip (collapsed GenreTreeWheelRadialPopCore pivot) has no headroom to grow
-   into without becoming an ellipse, so it opts out of the grow-on-hover mechanism above (this
-   selector's higher specificity wins over .gtv-wheel-chip-anchor:hover .gtv-wheel-chip) — the
-   circle stays a fixed size on hover, and its hover-name label is repositioned in place instead
-   (see .gtv-wheel-chip--circle .gtv-wheel-chip-hover-name below). */
-.gtv-wheel-chip-anchor:hover .gtv-wheel-chip--circle {
-  height: var(--gtv-wheel-chip-base-height);
-  padding-top: 0;
-  margin-top: 0;
-}
-
-/* The chip's name, revealed in the headroom padding-top opens up above the chip's existing
-   (unmoved — box-sizing: border-box keeps the content-box, and thus the flex-centered dot/label
-   below, fixed in place) content. pointer-events: none so hovering this text hit-tests through to
-   the <button> beneath it rather than to itself — harmless either way for :hover (this text is a
-   descendant of the button, which drives .gtv-wheel-chip-anchor:hover directly), but this also
-   lets a click land here and select the root, same as clicking anywhere else on the chip. */
-.gtv-wheel-chip-hover-name {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--gtv-hover-label-height, 22px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 0 8px;
-  font-weight: 500;
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.gtv-wheel-chip-anchor:hover .gtv-wheel-chip-hover-name {
-  opacity: 1;
-}
-
-/* Inside the fixed-size circle chip, the name can't be revealed in headroom above the chip (none
-   grows in — see .gtv-wheel-chip-anchor:hover .gtv-wheel-chip--circle above), so it sits at a
-   fixed offset from the circle's own top edge instead, above where the toolbar's buttons are
-   centered. z-index lifts it above .gtv-wheel-chip-toolbar's opaque background (z-index: 2), which
-   would otherwise mask it the way it masks the chip's own centered label. */
-.gtv-wheel-chip--circle .gtv-wheel-chip-hover-name {
-  /* A fixed px offset sat right at the circle's own curve, where the chord is narrow and the text
-     reads cramped against the top edge — a percentage instead lands proportionally further down
-     (scaling with centerChipDiameter) into the circle's wider middle, well clear of the toolbar
-     button row still centered at 50%. */
-  top: 25%;
-  height: auto;
-  z-index: 3;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .gtv-wheel-chip-hover-name {
-    transition: opacity 120ms ease;
-  }
-}
-
 .gtv-toolbar-overflow {
   position: relative;
 }
@@ -1321,24 +1118,6 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-/* NodeToolbar fills its node card in the SVG renderers; here it sits inline after the name. */
-.gtv-outline-toolbar .gtv-toolbar {
-  width: auto;
-  height: auto;
-  padding: 0;
-  background: transparent;
-}
-
-.gtv-outline-toolbar {
-  opacity: 0;
-}
-
-.gtv-outline-row:hover .gtv-outline-toolbar,
-.gtv-outline-row:focus-within .gtv-outline-toolbar,
-.gtv-outline-toolbar:has([aria-expanded="true"]) {
-  opacity: 1;
 }
 
 .gtv-outline-skeleton-row {

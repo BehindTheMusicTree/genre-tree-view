@@ -1,12 +1,12 @@
 "use client";
 
+import { useTreeIndex } from "./use-tree-index";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
-import { NodeToolbar } from "./NodeToolbar";
 import { computeAncestorChain, findRootId, groupNodesByRoot } from "./root-grouping";
 import {
   buildWheelSectorGradient,
@@ -106,6 +106,7 @@ export function WheelCore({
       ? "--gtv-wheel-chip-half-width"
       : "--gtv-wheel-chip-half-height";
 
+  const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (nodeId: string) => {
     const rootId = findRootId(nodeId, nodes) ?? nodeId;
@@ -442,14 +443,7 @@ export function WheelCore({
                     { "--gtv-chip-angle": `${angle}deg` } as React.CSSProperties
                   }
                 >
-                  <div
-                    className={[
-                      "gtv-wheel-chip-anchor",
-                      !showToolbar && "gtv-wheel-chip-anchor--no-toolbar",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
+                  <div className="gtv-wheel-chip-anchor">
                     <button
                       type="button"
                       id={`group-${group.root.id}`}
@@ -469,7 +463,6 @@ export function WheelCore({
                           // breaking the hover growth again, same failure mode as before.
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
                           "--gtv-chip-color": chipColor,
-                          "--gtv-hover-label-height": `${dimensions.HEIGHT}px`,
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
@@ -498,48 +491,7 @@ export function WheelCore({
                       >
                         {group.root.name}
                       </span>
-                      {showToolbar && (
-                        <span
-                          className="gtv-wheel-chip-hover-name"
-                          style={{ fontSize }}
-                        >
-                          {group.root.name}
-                        </span>
-                      )}
                     </button>
-                    {/* stopPropagation: keeps toolbar-button clicks from also landing on
-                        panZoom's pointerdown-drag tracking on the container behind it.
-                        --gtv-node-fill: same var .gtv-toolbar reads in the SVG tree, so the
-                        overlay masks the chip's label with the chip's own fill instead of a
-                        hardcoded color. Every chip has the same solid fill now (see
-                        .gtv-wheel-chip in styles.css), so --gtv-toolbar-icon-color is white
-                        unconditionally to stay legible against it. */}
-                    {showToolbar && (
-                      <div
-                        className="gtv-wheel-chip-toolbar"
-                        style={
-                          {
-                            "--gtv-node-fill": chipColor,
-                            "--gtv-toolbar-icon-color": "#ffffff",
-                            "--gtv-toolbar-font-size": `${fontSize}px`,
-                          } as React.CSSProperties
-                        }
-                        onPointerDown={(event) => event.stopPropagation()}
-                      >
-                        <NodeToolbar
-                          node={group.root}
-                          itemCount={aggregatedItemCount}
-                          playingNodeId={playingNodeId}
-                          playState={playState}
-                          onPlayPause={onPlayPause}
-                          onAddChild={onAddChild}
-                          onRenameRequest={onRenameRequest}
-                          onDeleteRequest={onDeleteRequest}
-                          onReparentRequest={onReparentRequest}
-                          additionalActions={additionalActions}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -598,6 +550,21 @@ export function WheelCore({
           }}
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
+          actions={
+            showToolbar && !reparentingNodeId
+              ? {
+                  itemCount: index.subtreeItemCountById.get(panel.node.id),
+                  playingNodeId,
+                  playState,
+                  onPlayPause,
+                  onAddChild,
+                  onRenameRequest,
+                  onDeleteRequest,
+                  onReparentRequest,
+                  additionalActions,
+                }
+              : undefined
+          }
         />
       )}
 
