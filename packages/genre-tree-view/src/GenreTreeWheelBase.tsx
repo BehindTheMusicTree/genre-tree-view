@@ -1,5 +1,6 @@
 "use client";
 
+import { useTreeIndex } from "./use-tree-index";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
@@ -105,6 +106,7 @@ export function WheelCore({
       ? "--gtv-wheel-chip-half-width"
       : "--gtv-wheel-chip-half-height";
 
+  const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (nodeId: string) => {
     const rootId = findRootId(nodeId, nodes) ?? nodeId;
@@ -549,9 +551,9 @@ export function WheelCore({
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
           actions={
-            showToolbar
+            showToolbar && !reparentingNodeId
               ? {
-                  itemCount: aggregatedRootItemCountById.get(panel.node.id),
+                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,

@@ -424,9 +424,9 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
           actions={
-            showToolbar
+            showToolbar && !reparentingNodeId
               ? {
-                  itemCount: model.aggregatedRootItemCountById.get(selectedNode.id),
+                  itemCount: model.index.subtreeItemCountById.get(selectedNode.id),
                   playingNodeId,
                   playState,
                   onPlayPause: callbacks.onPlayPause,

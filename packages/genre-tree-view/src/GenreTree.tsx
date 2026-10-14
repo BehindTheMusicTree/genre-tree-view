@@ -355,8 +355,9 @@ export function GenreTree({
           hideClose={hideInfoPanelClose}
           renderExtraDetails={renderExtraDetails}
           actions={
-            showToolbar
+            showToolbar && !reparentingNodeId
               ? {
+                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,
