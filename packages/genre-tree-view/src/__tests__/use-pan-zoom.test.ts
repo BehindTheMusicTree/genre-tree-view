@@ -801,7 +801,7 @@ describe("usePanZoom", () => {
     const observe = vi.fn();
     const disconnect = vi.fn();
     const originalResizeObserver = global.ResizeObserver;
-    global.ResizeObserver = vi.fn().mockImplementation(function (callback: ResizeObserverCallback) {
+    global.ResizeObserver = vi.fn().mockImplementation(function (callback: NonNullable<typeof resizeCallback>) {
       resizeCallback = callback;
       return { observe, disconnect, unobserve: vi.fn() };
     }) as unknown as typeof ResizeObserver;
