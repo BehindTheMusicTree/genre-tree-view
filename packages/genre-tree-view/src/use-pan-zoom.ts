@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CENTER_ON_ELEMENT_DURATION_MS,
   PAN_MIN_VISIBLE_PX,
+  PAN_ZOOM_SETTLE_MS,
   ZOOM_ANIMATION_DURATION_MS,
   ZOOM_FIT_PADDING,
   ZOOM_MAX_SCALE,
@@ -64,14 +65,67 @@ export interface UsePanZoomResult {
  * vertical-dominant plain wheel is left alone so the page scrolls (a horizontal-dominant one still
  * pans X), one-finger touch scrolls the page vertically (`touchAction: "pan-y"`) instead of
  * panning the tree, and a two-finger touch pinch zooms the tree.
+ *
+ * `stageRef` is the element `transform` is applied to. During a gesture the hook writes the
+ * transform to it directly, once per frame, and commits `panX`/`panY`/`zoomScale` state (and so
+ * re-renders) only when the gesture settles.
  */
 export function usePanZoom(
   viewportRef: React.RefObject<HTMLElement | null>,
   wheelZoom: WheelZoomMode = "always",
+  stageRef: React.RefObject<HTMLElement | null>,
 ): UsePanZoomResult {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [zoomScale, setZoomScale] = useState(1);
+
+  // Source of truth for pan/zoom while a gesture is in flight; the state above only catches up in
+  // commitView, so a burst of wheel/pointer events costs one DOM write per frame, not one React
+  // render per event.
+  const viewRef = useRef({ x: 0, y: 0, k: 1 });
+  const frameIdRef = useRef<number | null>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const writeStage = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const { x, y, k } = viewRef.current;
+    stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    stage.classList.add("gtv-stage--moving");
+  }, [stageRef]);
+
+  const commitView = useCallback(() => {
+    if (settleTimerRef.current !== null) {
+      clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+    if (frameIdRef.current !== null) {
+      cancelAnimationFrame(frameIdRef.current);
+      frameIdRef.current = null;
+    }
+    const { x, y, k } = viewRef.current;
+    const stage = stageRef.current;
+    if (stage) {
+      stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+      stage.classList.remove("gtv-stage--moving");
+    }
+    setPanX(x);
+    setPanY(y);
+    setZoomScale(k);
+  }, [stageRef]);
+
+  // Called after every viewRef mutation from an input event: coalesces the DOM write into one
+  // rAF and (re)arms the idle timer that commits state once input stops.
+  const scheduleFrame = useCallback(() => {
+    if (frameIdRef.current === null) {
+      frameIdRef.current = requestAnimationFrame(() => {
+        frameIdRef.current = null;
+        writeStage();
+      });
+    }
+    if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(commitView, PAN_ZOOM_SETTLE_MS);
+  }, [writeStage, commitView]);
 
   // Floor for manual zoom-out (wheel/pinch/button), relaxed below ZOOM_MIN_SCALE whenever
   // fitToFrame computes a more permissive scale for the current content — so manual zoom-out can
@@ -109,7 +163,7 @@ export function usePanZoom(
     return Math.min(hi, Math.max(lo, pan));
   }, [viewportRef]);
 
-  // Reads/writes zoomScaleRef.current (not the zoomScale/minScale state closures) so a burst of
+  // Reads/writes viewRef.current (not the zoomScale/minScale state closures) so a burst of
   // events firing faster than React can commit a render — a trackpad delivers many wheel ticks
   // per gesture, a touch pinch many pointermoves per frame — each sees the immediately-preceding
   // event's result instead of a stale pre-render scale. Without this, rapid events either collapse
@@ -121,7 +175,8 @@ export function usePanZoom(
       if (!viewport) {
         return;
       }
-      const currentScale = zoomScaleRef.current;
+      const view = viewRef.current;
+      const currentScale = view.k;
       const newScale = computeNewScale(currentScale);
       if (newScale === currentScale) {
         return;
@@ -132,18 +187,14 @@ export function usePanZoom(
       centerAnimationRef.current = null;
 
       const rect = viewport.getBoundingClientRect();
-      setPanX((prevPanX) => {
-        const contentX = (clientX - rect.left - prevPanX) / currentScale;
-        return clientX - rect.left - contentX * newScale;
-      });
-      setPanY((prevPanY) => {
-        const contentY = (clientY - rect.top - prevPanY) / currentScale;
-        return clientY - rect.top - contentY * newScale;
-      });
-      zoomScaleRef.current = newScale;
-      setZoomScale(newScale);
+      const contentX = (clientX - rect.left - view.x) / currentScale;
+      const contentY = (clientY - rect.top - view.y) / currentScale;
+      view.x = clientX - rect.left - contentX * newScale;
+      view.y = clientY - rect.top - contentY * newScale;
+      view.k = newScale;
+      scheduleFrame();
     },
-    [viewportRef],
+    [viewportRef, scheduleFrame],
   );
 
   // Tracks the ctrl+wheel glide animation started by animateZoomTo below — null when no
@@ -179,32 +230,29 @@ export function usePanZoom(
 
     const t = Math.min(1, (performance.now() - anim.startTime) / ZOOM_ANIMATION_DURATION_MS);
     const eased = 1 - Math.pow(1 - t, 3);
-    const currentScale = zoomScaleRef.current;
+    const view = viewRef.current;
+    const currentScale = view.k;
     const frameScale = anim.startScale + (anim.targetScale - anim.startScale) * eased;
 
     // Re-anchored every frame (not just once at the start) using the current frame's interpolated
     // scale, so the same content point stays under the cursor throughout the glide rather than
     // only at the end.
     const rect = viewport.getBoundingClientRect();
-    setPanX((prevPanX) => {
-      const contentX = (anim.clientX - rect.left - prevPanX) / currentScale;
-      return anim.clientX - rect.left - contentX * frameScale;
-    });
-    setPanY((prevPanY) => {
-      const contentY = (anim.clientY - rect.top - prevPanY) / currentScale;
-      return anim.clientY - rect.top - contentY * frameScale;
-    });
-    // eslint-disable-next-line react-hooks/immutability -- see minScaleRef/zoomScaleRef comment in fitToFrame
-    zoomScaleRef.current = frameScale;
-    setZoomScale(frameScale);
+    const contentX = (anim.clientX - rect.left - view.x) / currentScale;
+    const contentY = (anim.clientY - rect.top - view.y) / currentScale;
+    view.x = anim.clientX - rect.left - contentX * frameScale;
+    view.y = anim.clientY - rect.top - contentY * frameScale;
+    view.k = frameScale;
+    writeStage();
 
     if (t < 1) {
       animationFrameIdRef.current = requestAnimationFrame(() => stepZoomAnimationRef.current());
     } else {
       zoomAnimationRef.current = null;
       animationFrameIdRef.current = null;
+      commitView();
     }
-  }, [viewportRef]);
+  }, [viewportRef, writeStage, commitView]);
   useEffect(() => {
     stepZoomAnimationRef.current = stepZoomAnimation;
   }, [stepZoomAnimation]);
@@ -215,7 +263,7 @@ export function usePanZoom(
   const animateZoomTo = useCallback(
     (computeNewScale: (currentScale: number) => number, clientX: number, clientY: number) => {
       const inFlight = zoomAnimationRef.current;
-      const baseScale = inFlight ? inFlight.targetScale : zoomScaleRef.current;
+      const baseScale = inFlight ? inFlight.targetScale : viewRef.current.k;
       const targetScale = computeNewScale(baseScale);
       if (targetScale === baseScale) {
         return;
@@ -223,11 +271,11 @@ export function usePanZoom(
 
       // A physical-wheel zoom mid-glide takes over from centerOnElement's animation immediately,
       // rather than fighting it over the same panX/panY/zoomScale state.
-      // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
+      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
       centerAnimationRef.current = null;
 
       zoomAnimationRef.current = {
-        startScale: zoomScaleRef.current,
+        startScale: viewRef.current.k,
         targetScale,
         startTime: performance.now(),
         clientX,
@@ -264,13 +312,14 @@ export function usePanZoom(
       const dy = (height - previous.height) / 2;
       if (dx === 0 && dy === 0) return;
 
-      const scale = zoomScaleRef.current;
-      setPanX((x) => clampPanAxis(x + dx, scale, "x"));
-      setPanY((y) => clampPanAxis(y + dy, scale, "y"));
+      const view = viewRef.current;
+      view.x = clampPanAxis(view.x + dx, view.k, "x");
+      view.y = clampPanAxis(view.y + dy, view.k, "y");
+      commitView();
     });
     observer.observe(viewport);
     return () => observer.disconnect();
-  }, [viewportRef, clampPanAxis]);
+  }, [viewportRef, clampPanAxis, commitView]);
 
   // Non-passive + attached directly to the DOM node (rather than React's onWheel) because
   // React's wheel handler is passive by default, which silently drops preventDefault() — and
@@ -296,8 +345,9 @@ export function usePanZoom(
         // leave the tree un-pannable sideways and let macOS turn it into back/forward navigation.
         if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
         event.preventDefault();
-        const scale = zoomScaleRef.current;
-        setPanX((x) => clampPanAxis(x - event.deltaX, scale, "x"));
+        const view = viewRef.current;
+        view.x = clampPanAxis(view.x - event.deltaX, view.k, "x");
+        scheduleFrame();
         return;
       }
       event.preventDefault();
@@ -323,7 +373,7 @@ export function usePanZoom(
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis, wheelZoom]);
+  }, [animateZoomTo, zoomAtPoint, viewportRef, clampPanAxis, scheduleFrame, wheelZoom]);
 
   // Under "pan-y" the browser may claim a two-finger pinch whose fingers drift vertically as a page
   // scroll (firing pointercancel and killing the pinch). Cancelling touchmove once a second finger
@@ -353,8 +403,9 @@ export function usePanZoom(
         rect.left + rect.width / 2,
         rect.top + rect.height / 2,
       );
+      commitView();
     },
-    [zoomAtPoint, viewportRef],
+    [zoomAtPoint, viewportRef, commitView],
   );
 
   // Generalizes zoomAtPoint's screen->content conversion from a single point to the union
@@ -372,7 +423,7 @@ export function usePanZoom(
 
       // fitToFrame sets panX/panY/zoomScale directly, so any in-flight centerOnElement glide would
       // otherwise resume overwriting it on its very next frame.
-      // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
+      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
       centerAnimationRef.current = null;
       // computeFitScale subtracts ZOOM_FIT_PADDING*2 from each dimension and deliberately never
       // clamps its lower bound (see zoom-pan.ts) — a viewport too small to hold the padding alone
@@ -386,12 +437,13 @@ export function usePanZoom(
       const contentRight = Math.max(...rects.map((r) => r.right));
       const contentBottom = Math.max(...rects.map((r) => r.bottom));
 
-      const contentWidth = (contentRight - contentLeft) / zoomScale;
-      const contentHeight = (contentBottom - contentTop) / zoomScale;
+      const view = viewRef.current;
+      const contentWidth = (contentRight - contentLeft) / view.k;
+      const contentHeight = (contentBottom - contentTop) / view.k;
       if (contentWidth <= 0 || contentHeight <= 0) return;
 
-      const contentOriginX = (contentLeft - viewportRect.left - panX) / zoomScale;
-      const contentOriginY = (contentTop - viewportRect.top - panY) / zoomScale;
+      const contentOriginX = (contentLeft - viewportRect.left - view.x) / view.k;
+      const contentOriginY = (contentTop - viewportRect.top - view.y) / view.k;
 
       contentBoundsRef.current = {
         originX: contentOriginX,
@@ -408,19 +460,18 @@ export function usePanZoom(
         ZOOM_FIT_PADDING,
       );
 
-      // Keep zoomScaleRef/minScaleRef current immediately so a wheel/pinch event firing right after
+      // Keep viewRef/minScaleRef current immediately so a wheel/pinch event firing right after
       // fitToFrame reads the new scale instead of a stale one from before this render commits.
       const newMinScale = Math.min(ZOOM_MIN_SCALE, fitScale);
       // eslint-disable-next-line react-hooks/immutability -- see comment above
       minScaleRef.current = newMinScale;
       setMinScale(newMinScale);
-      // eslint-disable-next-line react-hooks/immutability -- see comment above
-      zoomScaleRef.current = fitScale;
-      setZoomScale(fitScale);
-      setPanX(viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale);
-      setPanY(viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale);
+      view.k = fitScale;
+      view.x = viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale;
+      view.y = viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale;
+      commitView();
     },
-    [viewportRef, zoomScale, panX, panY],
+    [viewportRef, commitView],
   );
 
   // Tracks the eased "fly to" glide started by centerOnElement below — unlike zoomAnimationRef's
@@ -455,20 +506,21 @@ export function usePanZoom(
     const px = anim.startPanX + (anim.targetPanX - anim.startPanX) * eased;
     const py = anim.startPanY + (anim.targetPanY - anim.startPanY) * eased;
 
-    // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
-    zoomScaleRef.current = scale;
-    setZoomScale(scale);
-    setPanX(px);
-    setPanY(py);
+    const view = viewRef.current;
+    view.k = scale;
+    view.x = px;
+    view.y = py;
+    writeStage();
 
     if (t < 1) {
       centerAnimationFrameIdRef.current = requestAnimationFrame(() => stepCenterAnimationRef.current());
     } else {
-      // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
+      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
       centerAnimationRef.current = null;
       centerAnimationFrameIdRef.current = null;
+      commitView();
     }
-  }, []);
+  }, [writeStage, commitView]);
   useEffect(() => {
     stepCenterAnimationRef.current = stepCenterAnimation;
   }, [stepCenterAnimation]);
@@ -490,15 +542,15 @@ export function usePanZoom(
       if (viewportRect.width <= 0 || viewportRect.height <= 0) return;
 
       const rect = element.getBoundingClientRect();
-      // Reads zoomScaleRef/minScaleRef/panXRef/panYRef (not the zoomScale/minScale/panX/panY state
-      // closures) for the same reason zoomAtPoint does: this is invoked from a D3 click handler
+      // Reads viewRef/minScaleRef (not the zoomScale/minScale/panX/panY state closures) for the same reason zoomAtPoint does: this is invoked from a D3 click handler
       // rebound only when a largely-unrelated effect's deps change, so a state closure here would
       // compute against whatever pan/zoom was current when that effect last ran rather than the
       // live value.
-      const currentScale = zoomScaleRef.current;
+      const view = viewRef.current;
+      const currentScale = view.k;
       const newScale = clampZoomScale(targetScale, minScaleRef.current);
-      const centerX = (rect.left + rect.width / 2 - viewportRect.left - panXRef.current) / currentScale;
-      const centerY = (rect.top + rect.height / 2 - viewportRect.top - panYRef.current) / currentScale;
+      const centerX = (rect.left + rect.width / 2 - viewportRect.left - view.x) / currentScale;
+      const centerY = (rect.top + rect.height / 2 - viewportRect.top - view.y) / currentScale;
       // With an overlay obscuring one side, "centered on screen" means centered in the strip that
       // remains visible beside it, not the viewport's full width — otherwise the element ends up
       // right where the overlay covers it.
@@ -518,10 +570,10 @@ export function usePanZoom(
         animationFrameIdRef.current = null;
       }
 
-      // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
+      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
       centerAnimationRef.current = {
-        startPanX: panXRef.current,
-        startPanY: panYRef.current,
+        startPanX: view.x,
+        startPanY: view.y,
         startScale: currentScale,
         targetPanX,
         targetPanY,
@@ -541,25 +593,11 @@ export function usePanZoom(
 
   // handlePointerDown/handlePointerMove/handlePointerUp are registered as window listeners via
   // referentially-stable wrappers (see stablePointerMove/stablePointerUp below), so they can't just
-  // read zoomScale/minScale directly — that would freeze them at whatever value was current when
-  // the listener was attached. Mirroring them into refs gives the closures a live read instead; every
-  // setZoomScale/setMinScale call site updates its ref in the same spot, so there's no separate
-  // effect racing those writes.
-  const zoomScaleRef = useRef(zoomScale);
+  // read minScale directly — that would freeze it at whatever value was current when the listener
+  // was attached. Mirroring it into a ref gives the closures a live read instead; every
+  // setMinScale call site updates its ref in the same spot, so there's no separate effect racing
+  // those writes.
   const minScaleRef = useRef(minScale);
-  // Live mirrors of panX/panY, kept in sync via effect below — only read at the *start* of
-  // centerOnElement (a discrete click, not a hot path), so a render's worth of lag from the effect
-  // is imperceptible, unlike zoomScaleRef/minScaleRef's manual same-tick updates above.
-  const panXRef = useRef(panX);
-  const panYRef = useRef(panY);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
-    panXRef.current = panX;
-  }, [panX]);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
-    panYRef.current = panY;
-  }, [panY]);
 
   // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
@@ -597,7 +635,7 @@ export function usePanZoom(
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const current = pinchStartRef.current;
         if (!current || current.ids[0] !== idA || current.ids[1] !== idB) {
-          pinchStartRef.current = { ids: [idA, idB], distance, scale: zoomScaleRef.current };
+          pinchStartRef.current = { ids: [idA, idB], distance, scale: viewRef.current.k };
           return;
         }
         if (current.distance <= 0) {
@@ -620,10 +658,12 @@ export function usePanZoom(
       const dx = event.clientX - lastPointRef.current.x;
       const dy = event.clientY - lastPointRef.current.y;
       lastPointRef.current = { x: event.clientX, y: event.clientY };
-      setPanX((x) => clampPanAxis(x + dx, zoomScaleRef.current, "x"));
-      setPanY((y) => clampPanAxis(y + dy, zoomScaleRef.current, "y"));
+      const view = viewRef.current;
+      view.x = clampPanAxis(view.x + dx, view.k, "x");
+      view.y = clampPanAxis(view.y + dy, view.k, "y");
+      scheduleFrame();
     },
-    [zoomAtPoint, clampPanAxis, pinchPointerIds],
+    [zoomAtPoint, clampPanAxis, pinchPointerIds, scheduleFrame],
   );
 
   // handlePointerMove/handlePointerUp are recreated whenever zoomAtPoint (and so zoomScale)
@@ -654,8 +694,9 @@ export function usePanZoom(
       window.removeEventListener("pointermove", stablePointerMove);
       window.removeEventListener("pointerup", stablePointerUp);
       window.removeEventListener("pointercancel", stablePointerUp);
+      commitView();
     }
-  }, [stablePointerMove, stablePointerUp]);
+  }, [stablePointerMove, stablePointerUp, commitView]);
   useEffect(() => {
     handlePointerUpRef.current = handlePointerUp;
   }, [handlePointerUp]);
@@ -682,7 +723,7 @@ export function usePanZoom(
       event.preventDefault();
       // Starting a background drag takes over from any in-flight centerOnElement glide, rather
       // than fighting it over the same panX/panY state.
-      // eslint-disable-next-line react-hooks/immutability -- see zoomScaleRef comment in fitToFrame
+      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
       centerAnimationRef.current = null;
     }
 
@@ -708,6 +749,8 @@ export function usePanZoom(
       pinchStartRef.current = null;
       if (animationFrameIdRef.current !== null) cancelAnimationFrame(animationFrameIdRef.current);
       if (centerAnimationFrameIdRef.current !== null) cancelAnimationFrame(centerAnimationFrameIdRef.current);
+      if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current);
+      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
     };
   }, [stablePointerMove, stablePointerUp]);
 

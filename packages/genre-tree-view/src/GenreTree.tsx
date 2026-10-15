@@ -62,7 +62,8 @@ export function GenreTree({
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
@@ -283,6 +284,7 @@ export function GenreTree({
       {/* transform-origin: 0 0 so panX/panY/zoomScale compose in one consistent coordinate
           system — see use-pan-zoom.ts. */}
       <div
+        ref={stageRef}
         style={{
           position: "absolute",
           top: 0,
