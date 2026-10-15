@@ -7,3 +7,6 @@ allowBuilds:
 
 onlyBuiltDependencies:
   - esbuild
+
+overrides:
+  undici: ^8.10.2

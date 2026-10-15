@@ -51,7 +51,7 @@ import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
   calculateNodeDotRadius,
-  getGenreTreeColor,
+  getGenreNodeColor,
   getItemCountRange,
   hexToRgba,
   INFO_PANEL_WIDTH,
@@ -264,7 +264,7 @@ export function WheelRadialPopCoreCore({
           textColor: TEXT_COLOR,
         };
       }
-      const rootColor = getGenreTreeColor(ringRootById.get(node.id)?.wikidataId);
+      const rootColor = getGenreNodeColor(index, ringRootById.get(node.id)?.id ?? node.id);
       return {
         fill: coreNodeIds.has(node.id)
           ? rootColor
@@ -272,7 +272,7 @@ export function WheelRadialPopCoreCore({
         textColor: ACCENT_TEXT_COLOR,
       };
     },
-    [centerSubtreeNodeIds, coreNodeIds, ringRootById],
+    [centerSubtreeNodeIds, coreNodeIds, ringRootById, index],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -292,7 +292,8 @@ export function WheelRadialPopCoreCore({
     setRotationTopRootId(groups[0]?.root.id ?? null);
   }
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -691,7 +692,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
+          getGenreNodeColor(index, rootId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -770,7 +771,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
+          getGenreNodeColor(index, rootId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -905,17 +906,19 @@ export function WheelRadialPopCoreCore({
       }),
     ]);
     hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
-    // A label-only center's name usually spills past its invisible chip, so the label itself
-    // forwards clicks to the chip.
-    if (!centerHasPopDisc) {
-      originGroup
-        .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
-        .filter((d) => d.id === centerNode.id)
-        .select("text")
-        .style("pointer-events", "all")
-        .style("cursor", "pointer")
-        .on("click", () => centerChipRef.current?.click());
-    }
+    // A root's name usually spills past its chip, so the label itself forwards clicks to the chip.
+    originGroup
+      .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
+      .select("text")
+      .style("pointer-events", "all")
+      .style("cursor", "pointer")
+      .on("click", (_event, d) => {
+        const chip =
+          d.id === centerNode.id
+            ? centerChipRef.current
+            : viewportRef.current?.querySelector<HTMLButtonElement>(`#group-${CSS.escape(d.id)}`);
+        chip?.click();
+      });
   }, [
     centerNode,
     centerHasPopDisc,
@@ -1118,7 +1121,7 @@ export function WheelRadialPopCoreCore({
         start: angle - width / 2,
         clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(
-          getGenreTreeColor(group.root.wikidataId),
+          getGenreNodeColor(index, group.root.id),
           ROOT_SECTOR_FILL_OPACITY,
         ),
       };
@@ -1147,6 +1150,7 @@ export function WheelRadialPopCoreCore({
       onPointerDown={panZoom.handlePointerDown}
     >
       <div
+        ref={stageRef}
         style={{
           position: "absolute",
           top: 0,
@@ -1270,7 +1274,7 @@ export function WheelRadialPopCoreCore({
               const root = index.byId.get(group.root.id)!;
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
-              const chipColor = getGenreTreeColor(group.root.wikidataId);
+              const chipColor = getGenreNodeColor(index, group.root.id);
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;
@@ -1334,9 +1338,7 @@ export function WheelRadialPopCoreCore({
                 "--gtv-region-label-x": `${regionLabel.x}px`,
                 "--gtv-region-label-y": `${regionLabel.y}px`,
                 "--gtv-region-label-size": `${regionLabel.fontSize}px`,
-                "--gtv-region-label-color": getGenreTreeColor(
-                  index.byId.get(regionLabel.rootId)!.wikidataId,
-                ),
+                "--gtv-region-label-color": getGenreNodeColor(index, regionLabel.rootId),
               } as React.CSSProperties
             }
           >

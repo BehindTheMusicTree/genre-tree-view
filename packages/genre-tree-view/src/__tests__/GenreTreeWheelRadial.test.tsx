@@ -466,6 +466,27 @@ describe("GenreTreeWheelRadial", () => {
     expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
+  it("disables the zoom-out button once the minimum scale is reached", () => {
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+    const zoomOutButton = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
+
+    for (let i = 0; i < 30; i++) {
+      fireEvent.click(zoomOutButton);
+    }
+
+    expect(zoomOutButton.disabled).toBe(true);
+    expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
+  });
+
+  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
+    const selector = ".gtv-wheel-floating-controls--horizontal";
+    expect(render(<GenreTreeWheelRadial nodes={NODES_FIVE} />).container.querySelector(selector)).toBeNull();
+    cleanup();
+    expect(
+      render(<GenreTreeWheelRadial nodes={NODES_FIVE} controlsOrientation="horizontal" />).container.querySelector(selector),
+    ).not.toBeNull();
+  });
+
   it("renders an optional center label, and omits it when not provided", () => {
     const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();
@@ -531,6 +552,18 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   describe("node info panel", () => {
+    it("hides the panel actions once a reparent starts with the panel open", () => {
+      const onPlayPause = vi.fn();
+      const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onPlayPause={onPlayPause} />);
+      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
+      const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
+
+      rerender(<GenreTreeWheelRadial nodes={NODES_FIVE} onPlayPause={onPlayPause} reparentingNodeId="root-c" />);
+
+      expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
+    });
+
     it("opens on the left, switches nodes without closing, and closes via its own button", () => {
       const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;

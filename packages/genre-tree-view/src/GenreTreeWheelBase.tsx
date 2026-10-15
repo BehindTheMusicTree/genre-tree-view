@@ -157,7 +157,8 @@ export function WheelCore({
   const viewportRef = useRef<HTMLDivElement>(null);
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
-  const panZoom = usePanZoom(viewportRef, wheelZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
@@ -325,6 +326,7 @@ export function WheelCore({
           point would land at the container's top instead of its bottom. The transform is purely
           visual and doesn't affect this box-model sizing. */}
       <div
+        ref={stageRef}
         style={{
           position: "absolute",
           top: 0,

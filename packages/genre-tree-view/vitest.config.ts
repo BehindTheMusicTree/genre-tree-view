@@ -1,6 +1,8 @@
+import codspeedPlugin from "@codspeed/vitest-plugin";
 import { coverageConfigDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [codspeedPlugin()],
   test: {
     environment: "jsdom",
     globals: false,
@@ -9,7 +11,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: [...coverageConfigDefaults.exclude, "src/index.ts", "src/types.ts"],
+      exclude: [...coverageConfigDefaults.exclude, "src/index.ts", "src/types.ts", "src/__bench__/**"],
       thresholds: { lines: 95, branches: 95, functions: 95, statements: 95 },
     },
   },

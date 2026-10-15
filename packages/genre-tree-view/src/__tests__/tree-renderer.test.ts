@@ -790,6 +790,24 @@ describe("renderTree", () => {
     expect(svgEl.querySelector("#select-as-new-parent-group-root")).toBeFalsy();
   });
 
+  it("cancels a pending mouseleave removal when the pointer re-enters the node", () => {
+    vi.useFakeTimers();
+    const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    document.body.appendChild(svgEl);
+    const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+
+    renderTree(d3, svgRef, treeData, svgWidth, svgHeight, "some-other-node", [], "#4F46E5", baseCallbacks());
+
+    const rootGroup = svgEl.querySelector("#group-root") as SVGGElement;
+    rootGroup.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    rootGroup.dispatchEvent(new MouseEvent("mouseleave", { bubbles: false }));
+    rootGroup.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    vi.advanceTimersByTime(150);
+
+    expect(svgEl.querySelector("#select-as-new-parent-group-root")).toBeTruthy();
+  });
+
   it("fires onNodeClick with the node's data when its group is clicked", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");

@@ -17,12 +17,15 @@
     sans-serif;
 }
 
+/* pointer-events: none so an invisible label can't steal clicks from a visible one it overlaps. */
 .gtv-node-label--hidden {
   opacity: 0;
+  pointer-events: none;
 }
 
 .node:hover .gtv-node-label--hidden {
   opacity: 1;
+  pointer-events: all;
 }
 
 .gtv-node-label--root {
@@ -757,10 +760,11 @@
    rectangular card — width/height are set equal inline (see centerChipDiameter) so this actually
    renders as a circle rather than an ellipse. Same drop-shadow as .gtv-zoom-controls/.gtv-menu-card
    above but with a much wider blur radius, for a consistent elevated-surface look;
-   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. */
+   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. A box-shadow,
+   not a filter: the filter re-ran a 600px blur over the zoomed stage on every frame. */
 .gtv-wheel-chip--circle {
   border-radius: 50%;
-  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
+  box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
 }
 
 /* Focused center with no pop child: only its D3-drawn label shows, so the chip stays as an
@@ -967,7 +971,7 @@
   border-radius: 50%;
   border: 1px solid #e4e4e7;
   background: #ffffff;
-  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
+  box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
   pointer-events: none;
 }
 
@@ -1137,4 +1141,14 @@
   50% {
     opacity: 0.5;
   }
+}
+
+/* Set by usePanZoom on the stage while a gesture is in flight: promotes it to its own compositor
+   layer and stops hit-testing/:hover recalculation under the cursor until the gesture settles. */
+.gtv-stage--moving {
+  will-change: transform;
+}
+
+.gtv-stage--moving * {
+  pointer-events: none;
 }

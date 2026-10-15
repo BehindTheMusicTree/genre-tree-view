@@ -171,6 +171,18 @@ describe("GenreTreeOutline", () => {
     expect(container.querySelector(".gtv-info-panel")).toBeNull();
   });
 
+  it("hides the panel actions once a reparent starts with the panel open", () => {
+    const onPlayPause = vi.fn();
+    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} onPlayPause={onPlayPause} />);
+    fireEvent.click(nameButton(container, "root-a"));
+    const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
+    expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
+
+    rerender(<GenreTreeOutline nodes={NODES} onPlayPause={onPlayPause} reparentingNodeId="b-core" />);
+
+    expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
+  });
+
   it("opens every ancestor section when navigating to a node from the panel", () => {
     const { container } = render(<GenreTreeOutline nodes={NODES} />);
     const panelChip = (name: string) => within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(name);
