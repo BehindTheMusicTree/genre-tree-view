@@ -1,0 +1,30 @@
+name: Bench
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v5.0.0
+        with:
+          node-version: 22.23.2
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: pnpm --filter @behindthemusictree/genre-tree-view bench
+          token: ${{ secrets.CODSPEED_TOKEN }}
