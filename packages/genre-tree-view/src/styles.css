@@ -760,10 +760,11 @@
    rectangular card — width/height are set equal inline (see centerChipDiameter) so this actually
    renders as a circle rather than an ellipse. Same drop-shadow as .gtv-zoom-controls/.gtv-menu-card
    above but with a much wider blur radius, for a consistent elevated-surface look;
-   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. */
+   .gtv-wheel-middle-circle (its expanded-state counterpart) reuses this exact shadow. A box-shadow,
+   not a filter: the filter re-ran a 600px blur over the zoomed stage on every frame. */
 .gtv-wheel-chip--circle {
   border-radius: 50%;
-  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
+  box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
 }
 
 /* Focused center with no pop child: only its D3-drawn label shows, so the chip stays as an
@@ -970,7 +971,7 @@
   border-radius: 50%;
   border: 1px solid #e4e4e7;
   background: #ffffff;
-  filter: drop-shadow(0 2px 600px rgba(255, 255, 255, 0.16));
+  box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
   pointer-events: none;
 }
 
