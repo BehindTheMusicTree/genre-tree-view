@@ -1,3 +1,6 @@
+import { hsl } from "d3";
+import type { TreeIndex } from "./tree-index";
+
 // Visual theme tokens. All render code (tree-renderer.ts, d3-path-helper.ts,
 // NodeHelper.tsx) reads exclusively from this block, so the tree's whole look can be
 // swapped by editing only these values.
@@ -116,6 +119,33 @@ export const FALLBACK_ROOT_COLOR = "#6B7280";
 /** Maps a root node's wikidata id to its fixed color, or FALLBACK_ROOT_COLOR when unmapped/absent. */
 export function getGenreTreeColor(wikidataId: string | null | undefined): string {
   return (wikidataId && ROOT_GENRE_COLORS[wikidataId]) || FALLBACK_ROOT_COLOR;
+}
+
+// A zoomed view's ring roots are descendants of a top-level root, so they take a variation of the
+// color of the sector they were zoomed from: hue spread across +-this many degrees over siblings.
+const CHILD_HUE_SPREAD_DEG = 30;
+const CHILD_LIGHTNESS_STEP = 0.06;
+const CHILD_MIN_LIGHTNESS = 0.25;
+const CHILD_MAX_LIGHTNESS = 0.6;
+
+/** Color of `nodeId`: a top-level root's fixed color, otherwise a variation of its parent's color
+ * (hue spread and alternating lightness by position among its non-pop siblings). A pure function of
+ * the full tree, so a genre keeps its color at every zoom depth. */
+export function getGenreNodeColor(index: Pick<TreeIndex, "byId" | "childrenByParentId">, nodeId: string): string {
+  const node = index.byId.get(nodeId);
+  if (!node) return FALLBACK_ROOT_COLOR;
+  if (node.parentId === null) return getGenreTreeColor(node.wikidataId);
+  const siblings = (index.childrenByParentId.get(node.parentId) ?? []).filter((sibling) => sibling.side !== "pop");
+  const position = Math.max(0, siblings.findIndex((sibling) => sibling.id === nodeId));
+  const base = hsl(getGenreNodeColor(index, node.parentId));
+  const hueOffset =
+    siblings.length > 1 ? -CHILD_HUE_SPREAD_DEG + (2 * CHILD_HUE_SPREAD_DEG * position) / (siblings.length - 1) : 0;
+  const lightness = base.l + (position % 2 === 0 ? -CHILD_LIGHTNESS_STEP : CHILD_LIGHTNESS_STEP);
+  return hsl(
+    base.h + hueOffset,
+    base.s,
+    Math.min(CHILD_MAX_LIGHTNESS, Math.max(CHILD_MIN_LIGHTNESS, lightness)),
+  ).formatHex();
 }
 
 export interface Dimensions {

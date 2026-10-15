@@ -51,7 +51,7 @@ import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
   calculateNodeDotRadius,
-  getGenreTreeColor,
+  getGenreNodeColor,
   getItemCountRange,
   hexToRgba,
   INFO_PANEL_WIDTH,
@@ -264,7 +264,7 @@ export function WheelRadialPopCoreCore({
           textColor: TEXT_COLOR,
         };
       }
-      const rootColor = getGenreTreeColor(ringRootById.get(node.id)?.wikidataId);
+      const rootColor = getGenreNodeColor(index, ringRootById.get(node.id)?.id ?? node.id);
       return {
         fill: coreNodeIds.has(node.id)
           ? rootColor
@@ -272,7 +272,7 @@ export function WheelRadialPopCoreCore({
         textColor: ACCENT_TEXT_COLOR,
       };
     },
-    [centerSubtreeNodeIds, coreNodeIds, ringRootById],
+    [centerSubtreeNodeIds, coreNodeIds, ringRootById, index],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -691,7 +691,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
+          getGenreNodeColor(index, rootId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -770,7 +770,7 @@ export function WheelRadialPopCoreCore({
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
+          getGenreNodeColor(index, rootId),
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -1118,7 +1118,7 @@ export function WheelRadialPopCoreCore({
         start: angle - width / 2,
         clipPath: buildSectorClipPathPolygon(width),
         color: hexToRgba(
-          getGenreTreeColor(group.root.wikidataId),
+          getGenreNodeColor(index, group.root.id),
           ROOT_SECTOR_FILL_OPACITY,
         ),
       };
@@ -1270,7 +1270,7 @@ export function WheelRadialPopCoreCore({
               const root = index.byId.get(group.root.id)!;
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
-              const chipColor = getGenreTreeColor(group.root.wikidataId);
+              const chipColor = getGenreNodeColor(index, group.root.id);
               const aggregatedItemCount = aggregatedRootItemCountById.get(
                 group.root.id,
               )!;
@@ -1334,9 +1334,7 @@ export function WheelRadialPopCoreCore({
                 "--gtv-region-label-x": `${regionLabel.x}px`,
                 "--gtv-region-label-y": `${regionLabel.y}px`,
                 "--gtv-region-label-size": `${regionLabel.fontSize}px`,
-                "--gtv-region-label-color": getGenreTreeColor(
-                  index.byId.get(regionLabel.rootId)!.wikidataId,
-                ),
+                "--gtv-region-label-color": getGenreNodeColor(index, regionLabel.rootId),
               } as React.CSSProperties
             }
           >
