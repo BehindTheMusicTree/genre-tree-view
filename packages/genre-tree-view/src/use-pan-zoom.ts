@@ -114,6 +114,15 @@ export function usePanZoom(
     setZoomScale(k);
   }, [stageRef]);
 
+  // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
+  // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
+  // never reaches JS at all (the browser treats it as native page zoom) — that's handled by the
+  // viewport's touch-action (see `touchAction`; neither "none" nor "pan-y" allows pinch-zoom),
+  // which routes both touch points here as ordinary pointer events instead. Under "pan-y" the
+  // touchmove listener below additionally stops the browser from claiming a vertically-drifting
+  // pinch as a page scroll.
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+
   // Called after every viewRef mutation from an input event: coalesces the DOM write into one
   // rAF and (re)arms the idle timer that commits state once input stops.
   const scheduleFrame = useCallback(() => {
@@ -123,6 +132,9 @@ export function usePanZoom(
         writeStage();
       });
     }
+    // Drag/pinch commit on pointerup: an idle commit mid-drag (a pause while aiming) would re-render,
+    // relayout labels and toggle gtv-stage--moving, restyling every node twice.
+    if (activePointersRef.current.size > 0) return;
     if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
     settleTimerRef.current = setTimeout(commitView, PAN_ZOOM_SETTLE_MS);
   }, [writeStage, commitView]);
@@ -599,14 +611,6 @@ export function usePanZoom(
   // those writes.
   const minScaleRef = useRef(minScale);
 
-  // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
-  // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
-  // never reaches JS at all (the browser treats it as native page zoom) — that's handled by the
-  // viewport's touch-action (see `touchAction`; neither "none" nor "pan-y" allows pinch-zoom),
-  // which routes both touch points here as ordinary pointer events instead. Under "pan-y" the
-  // touchmove listener above additionally stops the browser from claiming a vertically-drifting
-  // pinch as a page scroll.
-  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   // Pointers whose pointerdown landed on a node/toolbar/control, or (in "modifier" mode) any touch
   // pointer: excluded from single-pointer pan (so they don't fight that element's own click/hover
   // handling, or the page's own vertical scroll) but still tracked so a pinch that starts on top of
