@@ -1302,6 +1302,21 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: "a-core" }), expect.anything());
     });
 
+    it("forwards clicks on a ring root's label to its chip", () => {
+      const onNodeClick = vi.fn();
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId={null}
+          onFocusChange={vi.fn()}
+          onNodeClick={onNodeClick}
+        />,
+      );
+      const label = Array.from(container.querySelectorAll(".gtv-root-label text")).find((el) => el.textContent === "Rock")!;
+      fireEvent.click(label);
+      expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: "root-a" }), expect.anything());
+    });
+
     it("hides the info panel when the consumer moves focus away from its node", () => {
       const props = { nodes: NODES_WITH_POP, onFocusChange: vi.fn() };
       const { container, rerender } = render(<GenreTreeWheelRadialPopCore {...props} focusNodeId={null} />);
