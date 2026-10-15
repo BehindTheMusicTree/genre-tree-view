@@ -17,6 +17,20 @@ const settle = () =>
     await new Promise((resolve) => setTimeout(resolve, PAN_ZOOM_SETTLE_MS + 20));
   });
 
+// Resolves after the frame the hook already scheduled, so its stage write has landed.
+const nextFrame = () =>
+  act(async () => {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+
+// Drag/pinch state only commits on pointerup, so mid-gesture assertions read the stage transform.
+const liveView = (stage: HTMLElement) => {
+  if (stage.style.transform === "") return { panX: 0, panY: 0, zoomScale: 1 };
+  const match = /translate\((.+)px, (.+)px\) scale\((.+)\)/.exec(stage.style.transform);
+  if (!match) throw new Error(`unexpected stage transform: "${stage.style.transform}"`);
+  return { panX: Number(match[1]), panY: Number(match[2]), zoomScale: Number(match[3]) };
+};
+
 describe("usePanZoom", () => {
   it("zoomIn/zoomOut/fitToFrame no-op when the viewport ref isn't attached to a DOM node", () => {
     const { result } = renderHook(() => usePanZoom(nullRef(), undefined, noStage));
@@ -303,7 +317,8 @@ describe("usePanZoom", () => {
   ])("wheelZoom $mode: a lone $pointerType drag pans=$pans", async ({ mode, pointerType, pans, prevented }) => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, mode, noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, mode, { current: stage }));
     const preventDefault = vi.fn();
 
     act(() => {
@@ -322,9 +337,9 @@ describe("usePanZoom", () => {
     });
 
     expect(preventDefault).toHaveBeenCalledTimes(prevented ? 1 : 0);
-    await settle();
-    expect(result.current.panX).toBe(pans ? 10 : 0);
-    expect(result.current.panY).toBe(pans ? 30 : 0);
+    await nextFrame();
+    expect(liveView(stage).panX).toBe(pans ? 10 : 0);
+    expect(liveView(stage).panY).toBe(pans ? 30 : 0);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
@@ -336,7 +351,8 @@ describe("usePanZoom", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", { current: stage }));
     const down = (pointerId: number, clientX: number) =>
       result.current.handlePointerDown({
         pointerId,
@@ -361,8 +377,8 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
 
-    await settle();
-    expect(result.current.zoomScale).toBeGreaterThan(1);
+    await nextFrame();
+    expect(liveView(stage).zoomScale).toBeGreaterThan(1);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
@@ -524,7 +540,8 @@ describe("usePanZoom", () => {
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, { current: stage }));
 
     act(() => {
       result.current.handlePointerDown({
@@ -559,9 +576,9 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
-    await settle();
-    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
-    const panXAfterPinch = result.current.panX;
+    await nextFrame();
+    expect(liveView(stage).zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
+    const panXAfterPinch = liveView(stage).panX;
 
     // Lifting one finger drops back to a plain single-pointer drag, anchored at the remaining one
     // (700, 500) — moving it 50px further should pan by exactly that 50px, with no jump.
@@ -571,9 +588,9 @@ describe("usePanZoom", () => {
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
     });
-    await settle();
-    expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
-    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
+    await nextFrame();
+    expect(liveView(stage).panX).toBeCloseTo(panXAfterPinch + 50);
+    expect(liveView(stage).zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -623,7 +640,8 @@ describe("usePanZoom", () => {
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, { current: stage }));
 
     act(() => {
       result.current.handlePointerDown({
@@ -678,8 +696,8 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 575, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 675, clientY: 500 }));
     });
-    await settle();
-    expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
+    await nextFrame();
+    expect(liveView(stage).zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
@@ -696,7 +714,8 @@ describe("usePanZoom", () => {
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, { current: stage }));
 
     act(() => {
       result.current.handlePointerDown({
@@ -739,8 +758,8 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
     });
-    await settle();
-    expect(result.current.zoomScale).toBeCloseTo(1.5 ** ZOOM_PINCH_SCALE_SPEED);
+    await nextFrame();
+    expect(liveView(stage).zoomScale).toBeCloseTo(1.5 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
