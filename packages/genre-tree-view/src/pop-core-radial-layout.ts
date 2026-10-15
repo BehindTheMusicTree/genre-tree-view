@@ -449,7 +449,6 @@ export function renderRootLabels<E extends SVGElement>(
     .attr("class", "gtv-node-label")
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
-    .style("pointer-events", "none")
     .text((d) => d.name);
 }
 

@@ -12,6 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Clicking a node's label in the radial wheels now selects the node; the label was unclickable once it moved away from its dot.
+- Clicking a root's label in the pop-core wheel now selects the root (same as clicking its chip); only the center's label was clickable.
 
 ### Security
 

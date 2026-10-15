@@ -906,17 +906,19 @@ export function WheelRadialPopCoreCore({
       }),
     ]);
     hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
-    // A label-only center's name usually spills past its invisible chip, so the label itself
-    // forwards clicks to the chip.
-    if (!centerHasPopDisc) {
-      originGroup
-        .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
-        .filter((d) => d.id === centerNode.id)
-        .select("text")
-        .style("pointer-events", "all")
-        .style("cursor", "pointer")
-        .on("click", () => centerChipRef.current?.click());
-    }
+    // A root's name usually spills past its chip, so the label itself forwards clicks to the chip.
+    originGroup
+      .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
+      .select("text")
+      .style("pointer-events", "all")
+      .style("cursor", "pointer")
+      .on("click", (_event, d) => {
+        const chip =
+          d.id === centerNode.id
+            ? centerChipRef.current
+            : viewportRef.current?.querySelector<HTMLButtonElement>(`#group-${CSS.escape(d.id)}`);
+        chip?.click();
+      });
   }, [
     centerNode,
     centerHasPopDisc,
