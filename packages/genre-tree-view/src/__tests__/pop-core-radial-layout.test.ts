@@ -571,6 +571,35 @@ describe("renderPopSubtree onNodeClick", () => {
     );
   });
 
+  // The hit area is sized for the label's initial spot; hideCollidingLabels can move the label
+  // elsewhere, so the label itself must stay hit-testable.
+  it("fires onNodeClick when its label is clicked", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+    const onNodeClick = vi.fn();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      { ...noopCallbacks, onNodeClick },
+      getItemCountRange(nodes),
+    );
+
+    const label = svg.select<SVGTextElement>("text.gtv-node-label");
+    expect(label.attr("pointer-events")).toBe("all");
+    label.node()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onNodeClick).toHaveBeenCalledTimes(1);
+    expect(onNodeClick.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ id: "pop-rock" }),
+    );
+  });
+
   it("does not fire onNodeClick while a reparent is in progress", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
