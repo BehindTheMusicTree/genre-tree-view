@@ -197,6 +197,26 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
+  it("leaves the scale alone when a physical wheel tick zooms in past the max", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    for (let i = 0; i < 200 && result.current.canZoomIn; i++) {
+      act(() => result.current.zoomIn());
+    }
+    const maxScale = result.current.zoomScale;
+
+    act(() => {
+      viewport.dispatchEvent(
+        new WheelEvent("wheel", { ctrlKey: true, deltaY: -(WHEEL_TICK_DELTA * 3), clientX: 50, clientY: 50, bubbles: true }),
+      );
+    });
+
+    expect(result.current.zoomScale).toBe(maxScale);
+    document.body.removeChild(viewport);
+  });
+
   it("defaults to wheelZoom \"always\": plain wheel zooms and is preventDefault'ed, touchAction is none", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
@@ -547,6 +567,42 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
+  it("ignores a pinch whose fingers start on the same point", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const down = (pointerId: number) =>
+      result.current.handlePointerDown({
+        pointerId,
+        button: 0,
+        clientX: 500,
+        clientY: 500,
+        target: viewport,
+        preventDefault: () => {},
+      } as unknown as React.PointerEvent);
+
+    act(() => {
+      down(1);
+      down(2);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 500, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
+    });
+    expect(result.current.zoomScale).toBe(1);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
+    });
+    document.body.removeChild(viewport);
+  });
+
   it("recomputes the pinch baseline instead of jumping when a third finger joins mid-pinch", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
@@ -801,7 +857,7 @@ describe("usePanZoom", () => {
     const observe = vi.fn();
     const disconnect = vi.fn();
     const originalResizeObserver = global.ResizeObserver;
-    global.ResizeObserver = vi.fn().mockImplementation((callback) => {
+    global.ResizeObserver = vi.fn().mockImplementation(function (callback) {
       resizeCallback = callback;
       return { observe, disconnect, unobserve: vi.fn() };
     }) as unknown as typeof ResizeObserver;
@@ -829,6 +885,87 @@ describe("usePanZoom", () => {
 
     document.body.removeChild(viewport);
     global.ResizeObserver = originalResizeObserver;
+  });
+
+  it("retargets an in-flight wheel glide and ignores ticks that cannot move the target", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const tick = (deltaY: number) =>
+      viewport.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, deltaY, clientX: 50, clientY: 50, bubbles: true }));
+
+    act(() => {
+      tick(-(WHEEL_TICK_DELTA * 3));
+      tick(-(WHEEL_TICK_DELTA * 3));
+      tick(WHEEL_TICK_DELTA * 1000);
+      tick(WHEEL_TICK_DELTA * 1000);
+    });
+
+    expect(result.current.zoomScale).toBe(1);
+    document.body.removeChild(viewport);
+  });
+
+  it("ignores resize observations with no entries or no size change", () => {
+    let resizeCallback: ((entries: { contentRect: { width: number; height: number } }[]) => void) | null = null;
+    const originalResizeObserver = global.ResizeObserver;
+    global.ResizeObserver = vi.fn().mockImplementation(function (callback) {
+      resizeCallback = callback;
+      return { observe: vi.fn(), disconnect: vi.fn(), unobserve: vi.fn() };
+    }) as unknown as typeof ResizeObserver;
+
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      resizeCallback!([]);
+      resizeCallback!([{ contentRect: { width: 800, height: 600 } }]);
+      resizeCallback!([{ contentRect: { width: 800, height: 600 } }]);
+    });
+
+    expect(result.current.panX).toBe(0);
+    expect(result.current.panY).toBe(0);
+    document.body.removeChild(viewport);
+    global.ResizeObserver = originalResizeObserver;
+  });
+
+  it("centerOnElement centers within the strip beside a right-obscuring overlay and cancels an in-flight wheel glide", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      viewport.dispatchEvent(
+        new WheelEvent("wheel", { ctrlKey: true, deltaY: -(WHEEL_TICK_DELTA * 3), clientX: 50, clientY: 50, bubbles: true }),
+      );
+      result.current.centerOnElement(element, 2, { width: 300, side: "right" });
+    });
+
+    await waitFor(() => expect(result.current.zoomScale).toBe(2));
+    expect(result.current.panX + 140 * 2).toBeCloseTo(450);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
+  it("ignores window pointer moves from pointers that never went down", () => {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 99, clientX: 10, clientY: 10 }));
+    });
+
+    expect(result.current.panX).toBe(0);
+    document.body.removeChild(viewport);
   });
 
   it("removes its window pointer listeners on unmount even mid-gesture", () => {

@@ -78,6 +78,13 @@ describe("roundedRectPath", () => {
     const d = roundedRectPath(0, 0, 100, 50, { tl: 0, tr: 0, br: 8, bl: 8 });
     expect(d.match(/A /g)).toHaveLength(2);
   });
+
+  it("emits an arc for a single non-zero corner", () => {
+    for (const corner of ["tl", "tr", "br", "bl"] as const) {
+      const d = roundedRectPath(0, 0, 100, 50, { tl: 0, tr: 0, br: 0, bl: 0, [corner]: 8 });
+      expect(d.match(/A /g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("openBottomBorderPath", () => {

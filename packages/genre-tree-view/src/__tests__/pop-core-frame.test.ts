@@ -49,6 +49,13 @@ describe("resolvePopCoreFrame", () => {
     expect(frame.ringNodes).toEqual([{ ...NODES[1], parentId: null }]);
   });
 
+  it("centers a childless focus node as a label-only disc with an empty ring", () => {
+    const frame = resolvePopCoreFrame(NODES, "hardcore");
+    expect(frame.center.id).toBe("hardcore");
+    expect(frame.centerHasPopDisc).toBe(false);
+    expect(frame.ringNodes).toEqual([]);
+  });
+
   it("resolves a nested focus against that node's own children", () => {
     const frame = resolvePopCoreFrame(NODES, "punk");
     expect(frame.center).toMatchObject({ id: "pop-punk", parentId: null });

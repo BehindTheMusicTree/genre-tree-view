@@ -605,6 +605,23 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onReparent).toHaveBeenCalledWith("a-pop-child", "a-pop");
   });
 
+  it("keeps the reparent-target overlay when the pointer re-enters before the removal delay", () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} reparentingNodeId="a-pop-child" />);
+      const popGroup = popSectorForRoot(container, "root-a")?.querySelector("#group-a-pop") as SVGGElement;
+
+      fireEvent.mouseEnter(popGroup);
+      fireEvent.mouseLeave(popGroup);
+      fireEvent.mouseEnter(popGroup);
+      vi.advanceTimersByTime(200);
+
+      expect(container.querySelector("#select-as-new-parent-group-a-pop")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("adds the reparent-target overlay to eligible nodes in a core sector and forwards the selection", () => {
     const onReparent = vi.fn();
     const { container } = render(
@@ -749,6 +766,17 @@ describe("GenreTreeWheelRadialPopCore", () => {
       const button = within(container).getByRole("button", { name });
       expect(button.closest(".gtv-wheel-floating-controls")).not.toBeNull();
     }
+  });
+
+  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
+    const selector = ".gtv-wheel-floating-controls--horizontal";
+    expect(render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />).container.querySelector(selector)).toBeNull();
+    cleanup();
+    expect(
+      render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} controlsOrientation="horizontal" />).container.querySelector(
+        selector,
+      ),
+    ).not.toBeNull();
   });
 
   it("disables the zoom-in button once the maximum scale is reached", () => {
@@ -951,6 +979,33 @@ describe("GenreTreeWheelRadialPopCore", () => {
       rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} />);
       expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
+      rectSpy.mockRestore();
+    });
+
+    it("hides the panel actions while a reparent is in progress", () => {
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} selectedNodeId={null} onPlayPause={vi.fn()} />,
+      );
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: Element,
+      ) {
+        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
+        return makeRect(400, 0, 10, 10);
+      });
+
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          selectedNodeId="c-child"
+          reparentingNodeId="a-core"
+          onPlayPause={vi.fn()}
+        />,
+      );
+
+      const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
+      expect(panel).toBeTruthy();
+      expect(within(panel).queryByRole("button", { name: /play/i })).toBeNull();
       rectSpy.mockRestore();
     });
 
