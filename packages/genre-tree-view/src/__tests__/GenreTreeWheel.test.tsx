@@ -98,6 +98,27 @@ describe("GenreTreeWheel", () => {
     expect(onNodeClick.mock.calls[0][0]).toEqual(expect.objectContaining({ id: "a-child" }));
   });
 
+  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
+    const selector = ".gtv-wheel-floating-controls--horizontal";
+    expect(render(<GenreTreeWheel nodes={NODES} />).container.querySelector(selector)).toBeNull();
+    cleanup();
+    expect(
+      render(<GenreTreeWheel nodes={NODES} controlsOrientation="horizontal" />).container.querySelector(selector),
+    ).not.toBeNull();
+  });
+
+  it("hides the panel actions once a reparent starts with the panel open", () => {
+    const onPlayPause = vi.fn();
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
+    fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
+    const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
+    expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
+
+    rerender(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} reparentingNodeId="b-child" />);
+
+    expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
+  });
+
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
     render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);

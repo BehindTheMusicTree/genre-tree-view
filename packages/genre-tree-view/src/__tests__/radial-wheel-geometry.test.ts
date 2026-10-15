@@ -422,6 +422,12 @@ describe("findSectorAtAngle", () => {
   });
 });
 
+describe("calculateWheelRadiusForAngles degenerate gaps", () => {
+  it("returns the base radius when two chips share an angle", () => {
+    expect(calculateWheelRadiusForAngles([10, 10], 100, 300)).toBe(300);
+  });
+});
+
 describe("pickEmptyLabelSpot", () => {
   const area = { x0: 0, y0: 0, x1: 100, y1: 100 };
 
@@ -434,5 +440,14 @@ describe("pickEmptyLabelSpot", () => {
 
   it("returns null when every spot is blocked", () => {
     expect(pickEmptyLabelSpot(area, 20, 10, [area])).toBeNull();
+  });
+
+  it("returns null when the label is larger than the area", () => {
+    expect(pickEmptyLabelSpot(area, 200, 10, [])).toBeNull();
+    expect(pickEmptyLabelSpot(area, 20, 200, [])).toBeNull();
+  });
+
+  it("accepts any free spot when no preference is given", () => {
+    expect(pickEmptyLabelSpot(area, 20, 10, [])).not.toBeNull();
   });
 });

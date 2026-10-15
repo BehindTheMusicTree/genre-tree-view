@@ -79,6 +79,21 @@ describe("GenreTree", () => {
       expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).queryByRole("button", { name: /play/i })).toBeNull();
     });
 
+    it("lists ancestors above the parent in the info panel, with and without hideRoot", () => {
+      const nodes: GenreTreeNode[] = [
+        { id: "root", parentId: null, name: "Root", itemCount: 1 },
+        { id: "mid", parentId: "root", name: "Mid", itemCount: 1 },
+        { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 1 },
+      ];
+      for (const hideRoot of [false, true]) {
+        const { container, unmount } = render(<GenreTree nodes={nodes} selectedNodeId="leaf" hideRoot={hideRoot} />);
+        const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
+        expect(panel.getByText("Root")).toBeTruthy();
+        expect(panel.getByText("Mid")).toBeTruthy();
+        unmount();
+      }
+    });
+
     it("enables Play for a parent whose own count is 0 but whose descendants have tracks", () => {
       const nodes: GenreTreeNode[] = [
         { id: "root", parentId: null, name: "Root", itemCount: 0 },
@@ -553,6 +568,14 @@ describe("GenreTree", () => {
         expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
 
         rectSpy.mockRestore();
+      });
+
+      it("ignores a selectedNodeId that matches no node", () => {
+        const { container, rerender } = render(<GenreTree nodes={TREE} selectedNodeId={null} />);
+
+        rerender(<GenreTree nodes={TREE} selectedNodeId="missing" />);
+
+        expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
       });
 
       it("leaves the panel to its ancestor when selectedNodeId is set on a non-interactive tree", () => {
