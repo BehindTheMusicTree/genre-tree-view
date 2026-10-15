@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
-import { PAN_MIN_VISIBLE_PX, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
+import { PAN_MIN_VISIBLE_PX, PAN_ZOOM_SETTLE_MS, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
 import { computeFitScale } from "../zoom-pan";
 
 const WHEEL_TICK_DELTA = 4.000244140625;
@@ -10,9 +10,16 @@ function nullRef() {
   return { current: null };
 }
 
+const noStage = { current: null };
+
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, PAN_ZOOM_SETTLE_MS + 20));
+  });
+
 describe("usePanZoom", () => {
   it("zoomIn/zoomOut/fitToFrame no-op when the viewport ref isn't attached to a DOM node", () => {
-    const { result } = renderHook(() => usePanZoom(nullRef()));
+    const { result } = renderHook(() => usePanZoom(nullRef(), undefined, noStage));
 
     act(() => {
       result.current.zoomIn();
@@ -28,7 +35,7 @@ describe("usePanZoom", () => {
   it("fitToFrame no-ops when given no elements", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([null, undefined]);
@@ -46,7 +53,7 @@ describe("usePanZoom", () => {
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 500, bottom: 500, width: 500, height: 500 }) as DOMRect;
     content.getBoundingClientRect = () => ({ left: 10, top: 10, right: 10, bottom: 10, width: 0, height: 0 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -67,7 +74,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: collapsedSize, bottom: collapsedSize, width: collapsedSize, height: collapsedSize }) as DOMRect;
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 500, bottom: 500, width: 500, height: 500 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -91,7 +98,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -132,7 +139,7 @@ describe("usePanZoom", () => {
     const expectedFitScale = computeFitScale(100000, 100000, 100, 100, ZOOM_FIT_PADDING);
     expect(expectedFitScale).toBeLessThan(ZOOM_MIN_SCALE);
 
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -156,11 +163,11 @@ describe("usePanZoom", () => {
     document.body.removeChild(content);
   });
 
-  it("applies a trackpad-classified ctrl+wheel event to the zoom scale instantly, with no animation delay", () => {
+  it("applies a trackpad-classified ctrl+wheel event to the zoom scale instantly, with no animation delay", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       // abs(deltaY) < 4 is unambiguously "trackpad" regardless of event timing (see
@@ -169,6 +176,7 @@ describe("usePanZoom", () => {
     });
 
     // No waitFor/rAF flush needed: the scale must already reflect the event synchronously.
+    await settle();
     expect(result.current.zoomScale).toBeGreaterThan(1);
 
     document.body.removeChild(viewport);
@@ -178,7 +186,7 @@ describe("usePanZoom", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     const baseScale = result.current.zoomScale;
 
     act(() => {
@@ -201,7 +209,7 @@ describe("usePanZoom", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     for (let i = 0; i < 200 && result.current.canZoomIn; i++) {
       act(() => result.current.zoomIn());
     }
@@ -217,11 +225,11 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("defaults to wheelZoom \"always\": plain wheel zooms and is preventDefault'ed, touchAction is none", () => {
+  it("defaults to wheelZoom \"always\": plain wheel zooms and is preventDefault'ed, touchAction is none", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     const event = new WheelEvent("wheel", { deltaY: -2, clientX: 50, clientY: 50, bubbles: true, cancelable: true });
 
     act(() => {
@@ -229,6 +237,7 @@ describe("usePanZoom", () => {
     });
 
     expect(event.defaultPrevented).toBe(true);
+    await settle();
     expect(result.current.zoomScale).toBeGreaterThan(1);
     expect(result.current.touchAction).toBe("none");
     document.body.removeChild(viewport);
@@ -237,7 +246,7 @@ describe("usePanZoom", () => {
   it("wheelZoom \"modifier\" leaves a plain wheel to the page: no pan/zoom, no preventDefault, touchAction pan-y", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
     const event = new WheelEvent("wheel", { deltaY: 40, bubbles: true, cancelable: true });
 
     act(() => {
@@ -251,11 +260,11 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it.each([{ ctrlKey: true }, { metaKey: true }])("wheelZoom \"modifier\" zooms on %o + wheel", (modifier) => {
+  it.each([{ ctrlKey: true }, { metaKey: true }])("wheelZoom \"modifier\" zooms on %o + wheel", async (modifier) => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
     const event = new WheelEvent("wheel", { ...modifier, deltaY: -2, clientX: 50, clientY: 50, bubbles: true, cancelable: true });
 
     act(() => {
@@ -263,14 +272,15 @@ describe("usePanZoom", () => {
     });
 
     expect(event.defaultPrevented).toBe(true);
+    await settle();
     expect(result.current.zoomScale).toBeGreaterThan(1);
     document.body.removeChild(viewport);
   });
 
-  it("wheelZoom \"modifier\" pans X on a horizontal-dominant plain wheel and preventDefaults it", () => {
+  it("wheelZoom \"modifier\" pans X on a horizontal-dominant plain wheel and preventDefaults it", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
     const event = new WheelEvent("wheel", { deltaX: 30, deltaY: 10, bubbles: true, cancelable: true });
 
     act(() => {
@@ -278,6 +288,7 @@ describe("usePanZoom", () => {
     });
 
     expect(event.defaultPrevented).toBe(true);
+    await settle();
     expect(result.current.panX).toBe(-30);
     expect(result.current.panY).toBe(0);
     expect(result.current.zoomScale).toBe(1);
@@ -289,10 +300,10 @@ describe("usePanZoom", () => {
     { mode: "modifier" as const, pointerType: "mouse", pans: true, prevented: true },
     { mode: "modifier" as const, pointerType: "pen", pans: true, prevented: true },
     { mode: "always" as const, pointerType: "touch", pans: true, prevented: true },
-  ])("wheelZoom $mode: a lone $pointerType drag pans=$pans", ({ mode, pointerType, pans, prevented }) => {
+  ])("wheelZoom $mode: a lone $pointerType drag pans=$pans", async ({ mode, pointerType, pans, prevented }) => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, mode));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, mode, noStage));
     const preventDefault = vi.fn();
 
     act(() => {
@@ -311,6 +322,7 @@ describe("usePanZoom", () => {
     });
 
     expect(preventDefault).toHaveBeenCalledTimes(prevented ? 1 : 0);
+    await settle();
     expect(result.current.panX).toBe(pans ? 10 : 0);
     expect(result.current.panY).toBe(pans ? 30 : 0);
 
@@ -320,11 +332,11 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("wheelZoom \"modifier\": two lone touch pointers still pinch-zoom", () => {
+  it("wheelZoom \"modifier\": two lone touch pointers still pinch-zoom", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
     const down = (pointerId: number, clientX: number) =>
       result.current.handlePointerDown({
         pointerId,
@@ -349,6 +361,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
 
+    await settle();
     expect(result.current.zoomScale).toBeGreaterThan(1);
 
     act(() => {
@@ -365,7 +378,7 @@ describe("usePanZoom", () => {
   ])("wheelZoom $mode: a $touches-finger touchmove defaultPrevented=$prevented", ({ mode, touches, prevented }) => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    renderHook(() => usePanZoom({ current: viewport }, mode));
+    renderHook(() => usePanZoom({ current: viewport }, mode, noStage));
     const event = new Event("touchmove", { bubbles: true, cancelable: true });
     Object.defineProperty(event, "touches", { value: { length: touches } });
 
@@ -391,7 +404,7 @@ describe("usePanZoom", () => {
     Object.defineProperty(viewport, "clientHeight", { value: 750, configurable: true });
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier"));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, "modifier", noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -436,7 +449,7 @@ describe("usePanZoom", () => {
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
 
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       panelChild.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true }));
@@ -460,7 +473,7 @@ describe("usePanZoom", () => {
     Object.defineProperty(viewport, "clientHeight", { value: 750, configurable: true });
     content.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 3000, bottom: 4000, width: 3000, height: 4000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.fitToFrame([content]);
@@ -506,12 +519,12 @@ describe("usePanZoom", () => {
     document.body.removeChild(content);
   });
 
-  it("two-finger touch pinch zooms in around the fingers' midpoint", () => {
+  it("two-finger touch pinch zooms in around the fingers' midpoint", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.handlePointerDown({
@@ -546,6 +559,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 700, clientY: 500 }));
     });
+    await settle();
     expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
     const panXAfterPinch = result.current.panX;
 
@@ -557,6 +571,7 @@ describe("usePanZoom", () => {
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 500 }));
     });
+    await settle();
     expect(result.current.panX).toBeCloseTo(panXAfterPinch + 50);
     expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
@@ -572,7 +587,7 @@ describe("usePanZoom", () => {
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     const down = (pointerId: number) =>
       result.current.handlePointerDown({
         pointerId,
@@ -603,12 +618,12 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("recomputes the pinch baseline instead of jumping when a third finger joins mid-pinch", () => {
+  it("recomputes the pinch baseline instead of jumping when a third finger joins mid-pinch", async () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.handlePointerDown({
@@ -663,6 +678,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 575, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 3, clientX: 675, clientY: 500 }));
     });
+    await settle();
     expect(result.current.zoomScale).toBeCloseTo(2 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
@@ -672,7 +688,7 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("still tracks a pinch that starts with a finger on a node, without panning on that finger alone", () => {
+  it("still tracks a pinch that starts with a finger on a node, without panning on that finger alone", async () => {
     const viewport = document.createElement("div");
     const node = document.createElement("g");
     node.setAttribute("class", "node");
@@ -680,7 +696,7 @@ describe("usePanZoom", () => {
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () =>
       ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.handlePointerDown({
@@ -723,6 +739,7 @@ describe("usePanZoom", () => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 500 }));
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 500, clientY: 500 }));
     });
+    await settle();
     expect(result.current.zoomScale).toBeCloseTo(1.5 ** ZOOM_PINCH_SCALE_SPEED);
 
     act(() => {
@@ -733,7 +750,7 @@ describe("usePanZoom", () => {
   });
 
   it("centerOnElement no-ops when the viewport ref isn't attached to a DOM node", () => {
-    const { result } = renderHook(() => usePanZoom(nullRef()));
+    const { result } = renderHook(() => usePanZoom(nullRef(), undefined, noStage));
 
     act(() => {
       result.current.centerOnElement(document.createElement("div"), 1);
@@ -747,7 +764,7 @@ describe("usePanZoom", () => {
   it("centerOnElement no-ops when given no element", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.centerOnElement(null, 1);
@@ -765,7 +782,7 @@ describe("usePanZoom", () => {
     document.body.appendChild(element);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }) as DOMRect;
     element.getBoundingClientRect = () => ({ left: 10, top: 10, right: 30, bottom: 30, width: 20, height: 20 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.centerOnElement(element, 1);
@@ -787,7 +804,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     const baseScale = result.current.zoomScale;
 
     act(() => {
@@ -815,7 +832,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.centerOnElement(element, 999);
@@ -836,7 +853,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.centerOnElement(element, 2, { width: 300, side: "left" });
@@ -864,7 +881,7 @@ describe("usePanZoom", () => {
 
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     expect(observe).toHaveBeenCalledWith(viewport);
 
@@ -891,7 +908,7 @@ describe("usePanZoom", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
     viewport.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
     const tick = (deltaY: number) =>
       viewport.dispatchEvent(new WheelEvent("wheel", { ctrlKey: true, deltaY, clientX: 50, clientY: 50, bubbles: true }));
 
@@ -916,7 +933,7 @@ describe("usePanZoom", () => {
 
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       resizeCallback!([]);
@@ -939,7 +956,7 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       viewport.dispatchEvent(
@@ -958,7 +975,7 @@ describe("usePanZoom", () => {
   it("ignores window pointer moves from pointers that never went down", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 99, clientX: 10, clientY: 10 }));
@@ -971,7 +988,7 @@ describe("usePanZoom", () => {
   it("removes its window pointer listeners on unmount even mid-gesture", () => {
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }));
+    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
 
     act(() => {
       result.current.handlePointerDown({

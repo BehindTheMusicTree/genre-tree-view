@@ -292,7 +292,8 @@ export function WheelRadialPopCoreCore({
     setRotationTopRootId(groups[0]?.root.id ?? null);
   }
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -1147,6 +1148,7 @@ export function WheelRadialPopCoreCore({
       onPointerDown={panZoom.handlePointerDown}
     >
       <div
+        ref={stageRef}
         style={{
           position: "absolute",
           top: 0,

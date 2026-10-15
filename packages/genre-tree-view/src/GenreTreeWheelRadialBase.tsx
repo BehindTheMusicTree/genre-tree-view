@@ -130,7 +130,8 @@ export function WheelRadialCore({
     groups[0]?.root.id ?? null,
   );
   const viewportRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
@@ -531,6 +532,7 @@ export function WheelRadialCore({
       {/* height: 100% (not just width) so this is the containing block the radial stage's own
           top/left: 50% measure against — see the equivalent comment on GenreTreeWheelBase. */}
       <div
+        ref={stageRef}
         style={{
           position: "absolute",
           top: 0,

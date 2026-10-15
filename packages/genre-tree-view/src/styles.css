@@ -1138,3 +1138,13 @@
     opacity: 0.5;
   }
 }
+
+/* Set by usePanZoom on the stage while a gesture is in flight: promotes it to its own compositor
+   layer and stops hit-testing/:hover recalculation under the cursor until the gesture settles. */
+.gtv-stage--moving {
+  will-change: transform;
+}
+
+.gtv-stage--moving * {
+  pointer-events: none;
+}

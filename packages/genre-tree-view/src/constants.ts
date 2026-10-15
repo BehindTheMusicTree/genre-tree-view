@@ -386,6 +386,10 @@ export const CENTER_ON_ELEMENT_DURATION_MS = 450;
 // closer, so the user can never lose it entirely and have no visible edge to drag back from.
 export const PAN_MIN_VISIBLE_PX = 80;
 
+// Idle time after the last wheel/drag/pinch event before usePanZoom commits its imperatively
+// tracked pan/zoom into React state (re-rendering and re-running the zoom-dependent label effects).
+export const PAN_ZOOM_SETTLE_MS = 100;
+
 // Fixed width (px) of the node info panel (see InfoPanel.tsx) — also the collision threshold
 // resolveInfoPanelSide compares a clicked node's screen rect against, so the panel never renders
 // directly on top of the node that opened it.
