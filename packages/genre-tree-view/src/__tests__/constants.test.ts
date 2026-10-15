@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getGenreTreeColor,
+  getGenreNodeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
   calculateLabelFontSizeAtZoom,
@@ -171,5 +172,37 @@ describe("calculateRootLabelFontSize", () => {
   it("floors a root label at ROOT_LABEL_MIN_SCREEN_PX on screen", () => {
     expect(calculateRootLabelFontSize(14, ZOOM_MIN_SCALE) * ZOOM_MIN_SCALE).toBeCloseTo(ROOT_LABEL_MIN_SCREEN_PX);
     expect(calculateRootLabelFontSize(14, 3)).toBe(14);
+  });
+});
+
+describe("getGenreNodeColor", () => {
+  const node = (id: string, parentId: string | null, wikidataId: string | null = null) => ({
+    id,
+    parentId,
+    wikidataId,
+    name: id,
+  });
+  const nodes = [node("root", null, "Q9778"), node("a", "root"), node("b", "root"), node("c", "root"), node("a1", "a")];
+  const childrenByParentId = new Map<string, ReturnType<typeof node>[]>();
+  nodes.forEach((n) => {
+    if (n.parentId) childrenByParentId.set(n.parentId, [...(childrenByParentId.get(n.parentId) ?? []), n]);
+  });
+  const index = {
+    byId: new Map(nodes.map((n) => [n.id, n])),
+    childrenByParentId,
+  } as unknown as Parameters<typeof getGenreNodeColor>[0];
+
+  it("keeps a top-level root's fixed color", () => {
+    expect(getGenreNodeColor(index, "root")).toBe(getGenreTreeColor("Q9778"));
+  });
+
+  it("gives siblings distinct variations of the parent color, and their children variations of those", () => {
+    const [a, b, c] = ["a", "b", "c"].map((id) => getGenreNodeColor(index, id));
+    expect(new Set([a, b, c, getGenreTreeColor("Q9778")]).size).toBe(4);
+    expect(getGenreNodeColor(index, "a1")).not.toBe(a);
+  });
+
+  it("falls back for an unknown node", () => {
+    expect(getGenreNodeColor(index, "missing")).toBe(FALLBACK_ROOT_COLOR);
   });
 });

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Zoomed pop-core views color each ring root as a variation of the sector it was zoomed from, instead of gray.
+
 ### Fixed
 
 - Clicking a node's label in the radial wheels now selects the node; the label was unclickable once it moved away from its dot.
