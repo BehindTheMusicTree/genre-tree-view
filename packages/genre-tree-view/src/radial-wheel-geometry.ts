@@ -210,21 +210,57 @@ export interface LabelCullItem {
 
 const boxesOverlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
+const GRID_CELL = 64;
+
+/** Uniform-grid index over boxes: `some` only visits boxes sharing a cell with the query box. */
+function createBoxGrid<T>() {
+  const cells = new Map<string, { box: Box; value: T }[]>();
+  const cellRange = (box: Box) => ({
+    cx0: Math.floor(box.x0 / GRID_CELL),
+    cx1: Math.floor(box.x1 / GRID_CELL),
+    cy0: Math.floor(box.y0 / GRID_CELL),
+    cy1: Math.floor(box.y1 / GRID_CELL),
+  });
+  return {
+    insert(box: Box, value: T) {
+      const { cx0, cx1, cy0, cy1 } = cellRange(box);
+      for (let cx = cx0; cx <= cx1; cx++) {
+        for (let cy = cy0; cy <= cy1; cy++) {
+          const key = `${cx},${cy}`;
+          const bucket = cells.get(key);
+          if (bucket) bucket.push({ box, value });
+          else cells.set(key, [{ box, value }]);
+        }
+      }
+    },
+    some(box: Box, predicate: (value: T) => boolean) {
+      const { cx0, cx1, cy0, cy1 } = cellRange(box);
+      for (let cx = cx0; cx <= cx1; cx++) {
+        for (let cy = cy0; cy <= cy1; cy++) {
+          if (cells.get(`${cx},${cy}`)?.some((entry) => boxesOverlap(box, entry.box) && predicate(entry.value))) {
+            return true;
+          }
+        }
+      }
+      return false;
+    },
+  };
+}
+
 /** Index of each item's chosen label candidate, or -1 when it must be hidden: greedily, by
  * descending priority, takes each item's first candidate that overlaps no already-placed label and
  * no other node's dot. */
-// ponytail: O(n²) pairwise scan, add a grid index if a wheel ever gets big enough to show in profiles.
 export function placeLabels(items: LabelCullItem[]): Map<string, number> {
   const placement = new Map<string, number>();
-  const kept: Box[] = [];
+  const keptGrid = createBoxGrid<true>();
+  const dotGrid = createBoxGrid<string>();
+  for (const item of items) dotGrid.insert(item.dot, item.id);
   for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
     const index = item.labels.findIndex(
-      (label) =>
-        !kept.some((box) => boxesOverlap(label, box)) &&
-        !items.some((other) => other.id !== item.id && boxesOverlap(label, other.dot)),
+      (label) => !keptGrid.some(label, () => true) && !dotGrid.some(label, (id) => id !== item.id),
     );
     placement.set(item.id, index);
-    if (index >= 0) kept.push(item.labels[index]);
+    if (index >= 0) keptGrid.insert(item.labels[index], true);
   }
   return placement;
 }

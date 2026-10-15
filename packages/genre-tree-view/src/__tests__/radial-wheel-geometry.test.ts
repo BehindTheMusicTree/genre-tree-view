@@ -451,3 +451,43 @@ describe("pickEmptyLabelSpot", () => {
     expect(pickEmptyLabelSpot(area, 20, 10, [])).not.toBeNull();
   });
 });
+
+describe("placeLabels grid index", () => {
+  type Item = Parameters<typeof placeLabels>[0][number];
+  type Box = Item["dot"];
+  const overlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const naive = (items: Item[]) => {
+    const placement = new Map<string, number>();
+    const kept: Box[] = [];
+    for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
+      const index = item.labels.findIndex(
+        (label) =>
+          !kept.some((box) => overlap(label, box)) &&
+          !items.some((other) => other.id !== item.id && overlap(label, other.dot)),
+      );
+      placement.set(item.id, index);
+      if (index >= 0) kept.push(item.labels[index]);
+    }
+    return placement;
+  };
+
+  it("matches a naive pairwise scan on dense random layouts, including negative coordinates", () => {
+    let seed = 7;
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const items: Item[] = Array.from({ length: 300 }, (_, i) => {
+      const x = rand() * 1200 - 600;
+      const y = rand() * 1200 - 600;
+      return {
+        id: `n${i}`,
+        priority: Math.floor(rand() * 20),
+        dot: { x0: x - 4, x1: x + 4, y0: y - 4, y1: y + 4 },
+        labels: [0, 1, 2].map(() => {
+          const lx = x + rand() * 160 - 80;
+          const ly = y + rand() * 40 - 20;
+          return { x0: lx, x1: lx + 20 + rand() * 120, y0: ly, y1: ly + 14 };
+        }),
+      };
+    });
+    expect([...placeLabels(items)]).toEqual([...naive(items)]);
+  });
+});
