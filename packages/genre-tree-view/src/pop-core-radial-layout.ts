@@ -693,7 +693,9 @@ export function renderPopSubtree(
     })
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
-    .style("pointer-events", "none")
+    // Opts back in past .gtv-wheel-pop-layer's inherited pointer-events: none — the hit area is
+    // sized for the label's initial spot, and hideCollidingLabels may move the label elsewhere.
+    .attr("pointer-events", "all")
     .text((d) => d.data.name);
 
   nodes.each(function (d: D3Node) {

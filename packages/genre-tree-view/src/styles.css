@@ -17,12 +17,15 @@
     sans-serif;
 }
 
+/* pointer-events: none so an invisible label can't steal clicks from a visible one it overlaps. */
 .gtv-node-label--hidden {
   opacity: 0;
+  pointer-events: none;
 }
 
 .node:hover .gtv-node-label--hidden {
   opacity: 1;
+  pointer-events: all;
 }
 
 .gtv-node-label--root {

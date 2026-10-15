@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Clicking a node's label in the radial wheels now selects the node; the label was unclickable once it moved away from its dot.
+
 ### Security
 
 - Override `undici` to `^8.10.2` (transitive via jsdom) to fix Dependabot alerts.
