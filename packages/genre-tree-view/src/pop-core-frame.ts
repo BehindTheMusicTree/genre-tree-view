@@ -26,22 +26,13 @@ function collectSubtree(root: GenreTreeNode, childrenByParentId: Map<string, Gen
 }
 
 /**
- * Whether `id` can be the pop-core wheel's focus: a non-pop node with children and at most one pop
- * child, reachable through the zoom buttons — a top-level root other than Mainstream Pop, or a
- * non-pop child of a zoomable node.
+ * Whether `id` can be the pop-core wheel's focus: a known node with children and at most one pop
+ * child (`resolvePopCoreFrame` can't center more than one pop disc).
  */
 export function isZoomableNode(nodes: readonly GenreTreeNode[], id: string): boolean {
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-  let current = byId.get(id);
-  while (current) {
-    const { id: currentId, parentId } = current;
-    if (current.side === "pop") return false;
-    const children = nodes.filter((node) => node.parentId === currentId);
-    if (children.length === 0 || children.filter((child) => child.side === "pop").length > 1) return false;
-    if (parentId === null) return current.name !== CENTER_NODE_NAME;
-    current = byId.get(parentId);
-  }
-  return false;
+  if (!nodes.some((node) => node.id === id)) return false;
+  const children = nodes.filter((node) => node.parentId === id);
+  return children.length > 0 && children.filter((child) => child.side === "pop").length <= 1;
 }
 
 /**

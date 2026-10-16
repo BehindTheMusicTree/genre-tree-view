@@ -81,36 +81,33 @@ describe("isZoomableNode", () => {
     expect(isZoomableNode(NODES, "punk")).toBe(true);
   });
 
-  it("rejects pop-side nodes and their descendants", () => {
-    expect(isZoomableNode(NODES, "pop-rock")).toBe(false);
+  it("accepts pop-side nodes and their descendants that have children", () => {
+    expect(isZoomableNode(NODES, "pop-rock")).toBe(true);
     expect(isZoomableNode([...NODES, { id: "yacht", parentId: "soft-rock", name: "Yacht Rock", itemCount: 0 }], "soft-rock")).toBe(
-      false,
+      true,
     );
   });
 
-  it("rejects Mainstream Pop and its descendants", () => {
+  it("accepts Mainstream Pop and its descendants that have children", () => {
     const nodes = [...NODES, { id: "teen-pop", parentId: "dance-pop", name: "Teen Pop", itemCount: 0 }];
-    expect(isZoomableNode(nodes, "pop")).toBe(false);
-    expect(isZoomableNode(nodes, "dance-pop")).toBe(false);
+    expect(isZoomableNode(nodes, "pop")).toBe(true);
+    expect(isZoomableNode(nodes, "dance-pop")).toBe(true);
   });
 
-  it("rejects a node with more than one pop child, and anything below it", () => {
+  it("rejects a node with more than one pop child, but not its other children", () => {
     const nodes = [
       ...NODES,
       { id: "power-pop", parentId: "rock", name: "Power Pop", itemCount: 0, side: "pop" as const },
     ];
     expect(isZoomableNode(nodes, "rock")).toBe(false);
-    expect(isZoomableNode(nodes, "punk")).toBe(false);
+    expect(isZoomableNode(nodes, "punk")).toBe(true);
   });
 
   it("rejects a node without children", () => {
     expect(isZoomableNode(NODES, "metal")).toBe(false);
   });
 
-  it("rejects an unknown id or a dangling parent", () => {
+  it("rejects an unknown id", () => {
     expect(isZoomableNode(NODES, "nope")).toBe(false);
-    expect(
-      isZoomableNode([{ id: "orphan", parentId: "gone", name: "Orphan", itemCount: 0 }, { id: "kid", parentId: "orphan", name: "Kid", itemCount: 0 }], "orphan"),
-    ).toBe(false);
   });
 });
