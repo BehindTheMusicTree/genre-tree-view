@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Pop-core wheel: Previous now follows the view actually displayed (including focus changed by the consumer), skips deleted or no-longer-zoomable entries, and stays available on the unfocused wheel so Root view can be undone.
+
 ## [2.2.0] - 2026-10-16
 
 ### Added

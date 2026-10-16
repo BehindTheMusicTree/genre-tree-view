@@ -44,6 +44,7 @@ import {
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
+import { useFocusHistory } from "./use-focus-history";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
@@ -88,8 +89,8 @@ export type PopCoreFocusProps =
        * `onFocusChange(null, "rejected")` once. */
       focusNodeId: string | null;
       /** Fired with the node to focus and why: any zoomable node from its info panel's "Zoom in"
-       * (`"zoom-in"`), the view zoomed from last (`"previous"`, tracked in memory only, so hidden
-       * after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
+       * (`"zoom-in"`), the last view displayed, whatever changed it (`"previous"`, tracked in memory only, so
+       * hidden after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
        * the selection's top-level root — or null when that root is Mainstream Pop or the selection
        * is itself a root — when `selectedNodeId` lies outside the zoom (`"search"`), and null when
        * `focusNodeId` isn't zoomable (`"rejected"`). Omit both props to hide the zoom-in and back
@@ -180,12 +181,7 @@ export function WheelRadialPopCoreCore({
     [nodes, requestedFocusNodeId],
   );
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
-  const [focusHistory, setFocusHistory] = useState<(string | null)[]>([]);
-  const changeFocus = (id: string | null, reason: Exclude<FocusChangeReason, "previous" | "rejected">) => {
-    if (id !== focusNodeId) setFocusHistory((history) => [...history, focusNodeId]);
-    onFocusChange?.(id, reason);
-  };
-  if (isFocusRejected && focusHistory.length > 0) setFocusHistory([]);
+  const { previous, markPreviousRequested } = useFocusHistory(focusNodeId, (id) => isZoomableNode(nodes, id));
   useEffect(() => {
     if (isFocusRejected) onFocusChange?.(null, "rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
@@ -1093,8 +1089,7 @@ export function WheelRadialPopCoreCore({
       // holds its whole subtree (the whole tree for Mainstream Pop's lineage or a root itself);
       // this effect re-runs once the new frame is drawn.
       const [root] = index.ancestorsOf(selectedNodeId);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- the history push belongs with the refocus it records
-      changeFocus(root && root.name !== CENTER_NODE_NAME && isZoomableNode(nodes, root.id) ? root.id : null, "search");
+      onFocusChange(root && root.name !== CENTER_NODE_NAME && isZoomableNode(nodes, root.id) ? root.id : null, "search");
       return;
     }
     const element = viewportRef.current?.querySelector(
@@ -1416,50 +1411,52 @@ export function WheelRadialPopCoreCore({
             onFocusChange && panel.node.id !== focusNodeId && isZoomableNode(nodes, panel.node.id)
               ? () => {
                   closeNodeInfo();
-                  changeFocus(panel.node.id, "zoom-in");
+                  onFocusChange(panel.node.id, "zoom-in");
                 }
               : undefined
           }
         />
       )}
 
-      {onFocusChange && focusNodeId !== null && (
+      {onFocusChange && (focusNodeId !== null || previous !== undefined) && (
         <div className="gtv-wheel-back-controls">
-          {focusHistory.length > 0 && (
+          {previous !== undefined && (
             <button
               type="button"
               className="gtv-wheel-back-btn"
               onClick={() => {
                 closeNodeInfo();
-                setFocusHistory((history) => history.slice(0, -1));
-                onFocusChange(focusHistory[focusHistory.length - 1], "previous");
+                markPreviousRequested(previous);
+                onFocusChange(previous, "previous");
               }}
             >
-              ↶ {index.byId.get(focusHistory[focusHistory.length - 1] ?? "")?.name ?? "All genres"}
+              ↶ {(previous !== null && index.byId.get(previous)?.name) || "All genres"}
             </button>
           )}
-          {focusParent && (
+          {focusNodeId !== null && focusParent && (
             <button
               type="button"
               className="gtv-wheel-back-btn"
               onClick={() => {
                 closeNodeInfo();
-                changeFocus(focusParent.id, "back");
+                onFocusChange(focusParent.id, "back");
               }}
             >
               ← {focusParent.name}
             </button>
           )}
-          <button
-            type="button"
-            className="gtv-wheel-back-btn"
-            onClick={() => {
-              closeNodeInfo();
-              changeFocus(null, "root");
-            }}
-          >
-            ⌂ All genres
-          </button>
+          {focusNodeId !== null && (
+            <button
+              type="button"
+              className="gtv-wheel-back-btn"
+              onClick={() => {
+                closeNodeInfo();
+                onFocusChange(null, "root");
+              }}
+            >
+              ⌂ All genres
+            </button>
+          )}
         </div>
       )}
 
