@@ -238,6 +238,8 @@
   top: 12px;
   left: 12px;
   z-index: 10;
+  display: flex;
+  gap: 6px;
 }
 
 .gtv-wheel-back-btn {

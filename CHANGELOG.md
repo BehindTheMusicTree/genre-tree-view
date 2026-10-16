@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Pop-core wheel: "Zoom in" on any node with children (any ring depth, Mainstream Pop disc and pop-side nodes), not just the current frame's ring roots.
+- Pop-core wheel back controls: Previous (last view zoomed from), Parent and Root view (`FocusChangeReason` gains `"previous"` and `"root"`; `"back"` still means parent).
+
+### Changed
+
+- Pop-core wheel: a search result outside the current view refocuses on its top-level root (whole tree for Mainstream Pop or a root itself) instead of the nearest zoomable ancestor.
+
 ## [2.1.0] - 2026-10-15
 
 ### Changed

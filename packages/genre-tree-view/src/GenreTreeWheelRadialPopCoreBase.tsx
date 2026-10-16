@@ -51,6 +51,7 @@ import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
   calculateNodeDotRadius,
+  CENTER_NODE_NAME,
   getGenreNodeColor,
   getItemCountRange,
   hexToRgba,
@@ -72,10 +73,10 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-/** Why `onFocusChange` fired: the info panel's "Zoom in" button, the back button, a
- * `selectedNodeId` outside the current zoom (e.g. a search result), or a `focusNodeId` that isn't
- * zoomable (see `isZoomableNode`). */
-export type FocusChangeReason = "zoom-in" | "back" | "search" | "rejected";
+/** Why `onFocusChange` fired: the info panel's "Zoom in" button, the previous / parent ("back") /
+ * root-view buttons, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
+ * `focusNodeId` that isn't zoomable (see `isZoomableNode`). */
+export type FocusChangeReason = "zoom-in" | "previous" | "back" | "root" | "search" | "rejected";
 
 /** Focus is controlled-only: pass both props or neither, since the wheel never moves its own focus. */
 export type PopCoreFocusProps =
@@ -86,11 +87,13 @@ export type PopCoreFocusProps =
        * isn't zoomable (see `isZoomableNode`) renders the whole tree and fires
        * `onFocusChange(null, "rejected")` once. */
       focusNodeId: string | null;
-      /** Fired with the node to focus and why: a zoomable ring root from its info panel's "Zoom in"
-       * (`"zoom-in"`), the focus node's parent or null for the whole tree from the back button
-       * (`"back"`), the nearest zoomable ancestor or null when `selectedNodeId` lies outside the
-       * zoom (`"search"`), and null when `focusNodeId` isn't zoomable (`"rejected"`). Omit both
-       * props to hide the zoom-in and back controls and never refocus on an outside selection. */
+      /** Fired with the node to focus and why: any zoomable node from its info panel's "Zoom in"
+       * (`"zoom-in"`), the view zoomed from last (`"previous"`, tracked in memory only, so hidden
+       * after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
+       * the selection's top-level root — or null when that root is Mainstream Pop or the selection
+       * is itself a root — when `selectedNodeId` lies outside the zoom (`"search"`), and null when
+       * `focusNodeId` isn't zoomable (`"rejected"`). Omit both props to hide the zoom-in and back
+       * controls and never refocus on an outside selection. */
       onFocusChange: (id: string | null, reason: FocusChangeReason) => void;
     };
 
@@ -177,6 +180,12 @@ export function WheelRadialPopCoreCore({
     [nodes, requestedFocusNodeId],
   );
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
+  const [focusHistory, setFocusHistory] = useState<(string | null)[]>([]);
+  const changeFocus = (id: string | null, reason: Exclude<FocusChangeReason, "previous" | "rejected">) => {
+    setFocusHistory((history) => [...history, focusNodeId]);
+    onFocusChange?.(id, reason);
+  };
+  if (isFocusRejected && focusHistory.length > 0) setFocusHistory([]);
   useEffect(() => {
     if (isFocusRejected) onFocusChange?.(null, "rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
@@ -188,6 +197,7 @@ export function WheelRadialPopCoreCore({
   // The frame rewrites a focused view's center/ring roots to parentId: null for layout only —
   // anything handed to the consumer or the info panel gets the original node instead.
   const centerNode = index.byId.get(layoutCenterNode.id)!;
+  const focusParent = index.byId.get(index.byId.get(focusNodeId ?? "")?.parentId ?? "");
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
@@ -1077,10 +1087,12 @@ export function WheelRadialPopCoreCore({
       !centerSubtreeNodeIds.has(selectedNodeId) &&
       !ringRootById.has(selectedNodeId)
     ) {
-      // Outside the current zoom (e.g. a search result): refocus on the nearest zoomable ancestor,
-      // whose frame holds its whole subtree; this effect re-runs once the new frame is drawn.
-      const ancestor = index.ancestorsOf(selectedNodeId).reverse().find((node) => isZoomableNode(nodes, node.id));
-      onFocusChange(ancestor?.id ?? null, "search");
+      // Outside the current zoom (e.g. a search result): refocus on its top-level root, whose frame
+      // holds its whole subtree (the whole tree for Mainstream Pop's lineage or a root itself);
+      // this effect re-runs once the new frame is drawn.
+      const [root] = index.ancestorsOf(selectedNodeId);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the history push belongs with the refocus it records
+      changeFocus(root && root.name !== CENTER_NODE_NAME && isZoomableNode(nodes, root.id) ? root.id : null, "search");
       return;
     }
     const element = viewportRef.current?.querySelector(
@@ -1399,12 +1411,10 @@ export function WheelRadialPopCoreCore({
           }
           renderExtraDetails={renderExtraDetails}
           onZoomIn={
-            onFocusChange &&
-            groups.some((group) => group.root.id === panel.node.id) &&
-            isZoomableNode(nodes, panel.node.id)
+            onFocusChange && panel.node.id !== focusNodeId && isZoomableNode(nodes, panel.node.id)
               ? () => {
                   closeNodeInfo();
-                  onFocusChange(panel.node.id, "zoom-in");
+                  changeFocus(panel.node.id, "zoom-in");
                 }
               : undefined
           }
@@ -1413,21 +1423,41 @@ export function WheelRadialPopCoreCore({
 
       {onFocusChange && focusNodeId !== null && (
         <div className="gtv-wheel-back-controls">
-          {(() => {
-            const parent = index.byId.get(index.byId.get(focusNodeId)?.parentId ?? "");
-            return (
-              <button
-                type="button"
-                className="gtv-wheel-back-btn"
-                onClick={() => {
-                  closeNodeInfo();
-                  onFocusChange(parent?.id ?? null, "back");
-                }}
-              >
-                ← {parent?.name ?? "All genres"}
-              </button>
-            );
-          })()}
+          {focusHistory.length > 0 && (
+            <button
+              type="button"
+              className="gtv-wheel-back-btn"
+              onClick={() => {
+                closeNodeInfo();
+                setFocusHistory((history) => history.slice(0, -1));
+                onFocusChange(focusHistory[focusHistory.length - 1], "previous");
+              }}
+            >
+              ↶ {index.byId.get(focusHistory[focusHistory.length - 1] ?? "")?.name ?? "All genres"}
+            </button>
+          )}
+          {focusParent && (
+            <button
+              type="button"
+              className="gtv-wheel-back-btn"
+              onClick={() => {
+                closeNodeInfo();
+                changeFocus(focusParent.id, "back");
+              }}
+            >
+              ← {focusParent.name}
+            </button>
+          )}
+          <button
+            type="button"
+            className="gtv-wheel-back-btn"
+            onClick={() => {
+              closeNodeInfo();
+              changeFocus(null, "root");
+            }}
+          >
+            ⌂ All genres
+          </button>
         </div>
       )}
 
