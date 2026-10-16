@@ -1377,6 +1377,17 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(queryByRole("button", { name: "⌂ All genres" })).toBeNull();
     });
 
+    it("hides the parent button when the parent can't be a focus", () => {
+      const nodes: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "a-pop-2", parentId: "root-a", name: "Power Pop", itemCount: 1, side: "pop" },
+      ];
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="a-core" onFocusChange={vi.fn()} />);
+      expect(Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent)).toEqual([
+        "⌂ All genres",
+      ]);
+    });
+
     it("hides previous after a reload-style direct focus and clears history on rejection", () => {
       const onFocusChange = vi.fn();
       const { container, rerender, getByRole } = render(

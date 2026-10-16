@@ -182,7 +182,7 @@ export function WheelRadialPopCoreCore({
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
   const [focusHistory, setFocusHistory] = useState<(string | null)[]>([]);
   const changeFocus = (id: string | null, reason: Exclude<FocusChangeReason, "previous" | "rejected">) => {
-    setFocusHistory((history) => [...history, focusNodeId]);
+    if (id !== focusNodeId) setFocusHistory((history) => [...history, focusNodeId]);
     onFocusChange?.(id, reason);
   };
   if (isFocusRejected && focusHistory.length > 0) setFocusHistory([]);
@@ -197,7 +197,9 @@ export function WheelRadialPopCoreCore({
   // The frame rewrites a focused view's center/ring roots to parentId: null for layout only —
   // anything handed to the consumer or the info panel gets the original node instead.
   const centerNode = index.byId.get(layoutCenterNode.id)!;
-  const focusParent = index.byId.get(index.byId.get(focusNodeId ?? "")?.parentId ?? "");
+  // A parent with several pop children can't be a focus, so Root view is the only way up from there.
+  const focusParentCandidate = index.byId.get(index.byId.get(focusNodeId ?? "")?.parentId ?? "");
+  const focusParent = focusParentCandidate && isZoomableNode(nodes, focusParentCandidate.id) ? focusParentCandidate : undefined;
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
