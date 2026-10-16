@@ -85,13 +85,24 @@ export function usePanZoom(
   const viewRef = useRef({ x: 0, y: 0, k: 1 });
   const frameIdRef = useRef<number | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stageAnimationRef = useRef<Animation | null>(null);
 
   const writeStage = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const { x, y, k } = viewRef.current;
-    stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    const transform = `translate(${x}px, ${y}px) scale(${k})`;
     stage.classList.add("gtv-stage--moving");
+    // Mid-gesture frames go through a held Web Animation rather than style.transform: Chrome
+    // re-layerizes every paint chunk of the stage (~8ms per frame on the full pop/core tree) on an
+    // inline transform change, but applies an animation's value on the compositor directly.
+    if (typeof stage.animate !== "function") {
+      stage.style.transform = transform;
+      return;
+    }
+    const keyframes = [{ transform }, { transform }];
+    if (stageAnimationRef.current) (stageAnimationRef.current.effect as KeyframeEffect).setKeyframes(keyframes);
+    else stageAnimationRef.current = stage.animate(keyframes, { duration: Infinity, fill: "forwards" });
   }, [stageRef]);
 
   const commitView = useCallback(() => {
@@ -109,6 +120,8 @@ export function usePanZoom(
       stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
       stage.classList.remove("gtv-stage--moving");
     }
+    stageAnimationRef.current?.cancel();
+    stageAnimationRef.current = null;
     setPanX(x);
     setPanY(y);
     setZoomScale(k);

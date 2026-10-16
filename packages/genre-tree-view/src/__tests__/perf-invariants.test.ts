@@ -131,6 +131,33 @@ describe("pan/zoom performance invariants", () => {
     cleanup();
   });
 
+  it("drives mid-gesture frames through one held animation instead of style.transform", () => {
+    const { viewport, stage, result, transformWrites, cleanup } = setup();
+    const setKeyframes = vi.fn();
+    const cancel = vi.fn();
+    const animate = vi.fn(() => ({ effect: { setKeyframes }, cancel }) as unknown as Animation);
+    stage.animate = animate;
+    act(() => down(result, viewport));
+
+    for (const clientX of [110, 120]) {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX, clientY: 100 }));
+      frames.splice(0).forEach((cb) => cb(0));
+    }
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(setKeyframes).toHaveBeenCalledWith([
+      { transform: "translate(20px, 0px) scale(1)" },
+      { transform: "translate(20px, 0px) scale(1)" },
+    ]);
+    expect(transformWrites).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(stage.style.transform).toBe("translate(20px, 0px) scale(1)");
+    cleanup();
+  });
+
   it("marks the stage as moving during a gesture and clears it when the gesture settles", () => {
     const { viewport, stage, result, cleanup } = setup();
     act(() => down(result, viewport));
