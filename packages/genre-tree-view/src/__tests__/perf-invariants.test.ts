@@ -80,6 +80,27 @@ describe("pan/zoom performance invariants", () => {
     cleanup();
   });
 
+  it("does not commit when the pointer pauses mid-drag, only on pointerup", () => {
+    const { viewport, stage, result, getRenders, cleanup } = setup();
+    act(() => down(result, viewport));
+    const rendersBeforeDrag = getRenders();
+
+    window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 110, clientY: 100 }));
+    act(() => {
+      frames.splice(0).forEach((cb) => cb(0));
+      vi.advanceTimersByTime(PAN_ZOOM_SETTLE_MS * 5);
+    });
+    expect(getRenders()).toBe(rendersBeforeDrag);
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(true);
+
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    expect(result.current.panX).toBe(10);
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(false);
+    cleanup();
+  });
+
   it("does not re-render during a trackpad wheel burst, and commits once after it goes idle", () => {
     const { viewport, result, getRenders, cleanup } = setup();
     const rendersBefore = getRenders();
