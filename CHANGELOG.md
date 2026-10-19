@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Expanded InfoPanel now sits above the wheel's zoom/Back controls.
+- Expanded InfoPanel Escape ignores `defaultPrevented` events and contenteditable targets, and only yields to modal dialogs (`aria-modal="true"`, `alertdialog`, open `<dialog>`).
+- Title slot editor in edit mode is no longer clipped (overflow visible, wrapping).
+- Expanded layout is a single column without `renderExtraDetails`, and its narrow breakpoint follows the tree container width (container query) instead of the viewport.
+
 ## [2.3.0] - 2026-10-19
 
 ### Added
