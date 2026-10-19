@@ -355,8 +355,8 @@
   border-right: 1px solid #e4e4e7;
 }
 
-/* Sized by the tree container (container-type on .gtv-wheel-container / .gtv-outline), not the
-   viewport. */
+/* Sized by the tree container (container-type on .gtv-wheel-container / .gtv-outline and
+   GenreTree's own viewport), not the browser viewport. */
 .gtv-info-panel--expanded-solo .gtv-info-panel-body {
   grid-template-columns: minmax(0, 1fr);
 }
