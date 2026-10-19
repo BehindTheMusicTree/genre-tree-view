@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { InfoPanel } from "../InfoPanel";
+import type { InfoPanelProps } from "../InfoPanel";
 import type { InfoPanelChild } from "../InfoPanel";
 import type { GenreTreeNode } from "../types";
 
@@ -405,5 +406,176 @@ describe("InfoPanel", () => {
     );
 
     expect(container.querySelector('[data-testid="extra-details"]')).toBeNull();
+  });
+
+  describe("edit mode", () => {
+    function renderPanel(props: Partial<InfoPanelProps> = {}) {
+      return render(
+        <InfoPanel
+          node={FULL_NODE}
+          fill="#4F46E5"
+          textColor="#FFFFFF"
+          parentNode={PARENT_NODE}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={vi.fn()}
+          onSelectNode={vi.fn()}
+          renderTitleEditor={(node) => <input aria-label="Genre name" defaultValue={node.name} />}
+          renderParentsEditor={() => <p>Parents editor</p>}
+          renderDangerZone={() => <p>Danger zone</p>}
+          {...props}
+        />,
+      );
+    }
+
+    it("has no Edit button without onEditModeChange", () => {
+      renderPanel();
+      expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    });
+
+    it("has no Edit button when readOnly", () => {
+      renderPanel({ onEditModeChange: vi.fn(), readOnly: true, editMode: true });
+      expect(screen.queryByRole("button", { name: /edit|done/i })).toBeNull();
+      expect(screen.queryByText("Danger zone")).toBeNull();
+    });
+
+    it("toggles via an aria-pressed Edit/Done button", () => {
+      const onEditModeChange = vi.fn();
+      const { rerender } = renderPanel({ onEditModeChange });
+      const edit = screen.getByRole("button", { name: "Edit" });
+      expect(edit.getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(edit);
+      expect(onEditModeChange).toHaveBeenCalledWith(true);
+
+      rerender(
+        <InfoPanel
+          node={FULL_NODE}
+          fill="#4F46E5"
+          textColor="#FFFFFF"
+          parentNode={PARENT_NODE}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={vi.fn()}
+          onSelectNode={vi.fn()}
+          editMode
+          onEditModeChange={onEditModeChange}
+        />,
+      );
+      const done = screen.getByRole("button", { name: "Done" });
+      expect(done.getAttribute("aria-pressed")).toBe("true");
+      fireEvent.click(done);
+      expect(onEditModeChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it("renders the slots only in edit mode", () => {
+      renderPanel();
+      expect(screen.getByText("Rock")).toBeTruthy();
+      expect(screen.getByText("Music")).toBeTruthy();
+      expect(screen.queryByLabelText("Genre name")).toBeNull();
+      expect(screen.queryByText("Parents editor")).toBeNull();
+      expect(screen.queryByText("Danger zone")).toBeNull();
+    });
+
+    it("replaces the title and Parent section and adds the danger zone in edit mode", () => {
+      renderPanel({ editMode: true });
+      expect(screen.getByLabelText("Genre name")).toBeTruthy();
+      expect(screen.queryByText("Music")).toBeNull();
+      expect(screen.getByText("Parents editor")).toBeTruthy();
+      expect(screen.getByText("Danger zone")).toBeTruthy();
+    });
+
+    it("keeps the danger zone in the panel when expanded", () => {
+      renderPanel({ editMode: true, expanded: true });
+      expect(screen.getByText("Danger zone")).toBeTruthy();
+    });
+  });
+
+  describe("expanded mode", () => {
+    function renderPanel(props: Partial<InfoPanelProps> = {}) {
+      return render(
+        <InfoPanel
+          node={FULL_NODE}
+          fill="#4F46E5"
+          textColor="#FFFFFF"
+          parentNode={null}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={vi.fn()}
+          onSelectNode={vi.fn()}
+          {...props}
+        />,
+      );
+    }
+
+    it("has no expand button without onExpandedChange", () => {
+      renderPanel({ expanded: true });
+      expect(screen.queryByRole("button", { name: /expand panel|collapse panel/i })).toBeNull();
+    });
+
+    it("toggles via Expand panel / Collapse panel", () => {
+      const onExpandedChange = vi.fn();
+      const { rerender } = renderPanel({ onExpandedChange });
+      fireEvent.click(screen.getByRole("button", { name: "Expand panel" }));
+      expect(onExpandedChange).toHaveBeenCalledWith(true);
+
+      rerender(
+        <InfoPanel
+          node={FULL_NODE}
+          fill="#4F46E5"
+          textColor="#FFFFFF"
+          parentNode={null}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={vi.fn()}
+          onSelectNode={vi.fn()}
+          expanded
+          onExpandedChange={onExpandedChange}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Collapse panel" }));
+      expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it("collapses on Escape", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({ expanded: true, onExpandedChange });
+      fireEvent.keyDown(document, { key: "Enter" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).toHaveBeenCalledWith(false);
+    });
+
+    it("ignores Escape while not expanded", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({ onExpandedChange });
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("ignores Escape while an input has focus", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({
+        expanded: true,
+        onExpandedChange,
+        renderExtraDetails: () => <input aria-label="Search" />,
+      });
+      fireEvent.keyDown(screen.getByLabelText("Search"), { key: "Escape" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("ignores Escape while a dialog is open", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({
+        expanded: true,
+        onExpandedChange,
+        renderExtraDetails: () => <div role="dialog" aria-label="Confirm" />,
+      });
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
   });
 });

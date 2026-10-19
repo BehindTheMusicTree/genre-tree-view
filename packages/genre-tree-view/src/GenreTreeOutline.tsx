@@ -273,6 +273,14 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     selectedNodeId,
     renderExtraDetails,
     hideInfoPanelClose = false,
+    readOnly,
+    editMode,
+    onEditModeChange,
+    renderTitleEditor,
+    renderParentsEditor,
+    renderDangerZone,
+    expanded,
+    onExpandedChange,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const index = useTreeIndex(nodes);
@@ -422,6 +430,14 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           }}
           onSelectNode={(id) => selectNodeRef.current(id)}
           hideClose={hideInfoPanelClose}
+          readOnly={readOnly}
+          editMode={editMode}
+          onEditModeChange={onEditModeChange}
+          renderTitleEditor={renderTitleEditor}
+          renderParentsEditor={renderParentsEditor}
+          renderDangerZone={renderDangerZone}
+          expanded={expanded}
+          onExpandedChange={onExpandedChange}
           renderExtraDetails={renderExtraDetails}
           actions={
             showToolbar && !reparentingNodeId

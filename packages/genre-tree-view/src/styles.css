@@ -325,6 +325,51 @@
   right: 12px;
 }
 
+/* Fills the tree container (still absolute, not fixed/Fullscreen API, so the host page's nav and
+   player stay visible); the header stays on top while the body splits into two independently
+   scrolling columns. */
+.gtv-info-panel--expanded {
+  inset: 12px;
+  top: var(--gtv-info-panel-top, 12px);
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gtv-info-panel--expanded .gtv-info-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.gtv-info-panel--expanded .gtv-info-panel-main,
+.gtv-info-panel--expanded .gtv-info-panel-extra {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.gtv-info-panel--expanded .gtv-info-panel-main {
+  border-right: 1px solid #e4e4e7;
+}
+
+@media (max-width: 767px) {
+  .gtv-info-panel--expanded .gtv-info-panel-body {
+    display: block;
+    overflow-y: auto;
+  }
+
+  .gtv-info-panel--expanded .gtv-info-panel-main,
+  .gtv-info-panel--expanded .gtv-info-panel-extra {
+    overflow-y: visible;
+  }
+
+  .gtv-info-panel--expanded .gtv-info-panel-main {
+    border-right: none;
+  }
+}
+
 .gtv-info-panel-header {
   display: flex;
   align-items: center;
@@ -345,6 +390,8 @@
 }
 
 .gtv-info-panel-title {
+  flex: 1;
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
   overflow: hidden;
@@ -371,6 +418,25 @@
    background now varies with the clicked node's fill (light tint or solid saturated color), and
    this reads as a hover on either. */
 .gtv-info-panel-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.gtv-info-panel-edit {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.gtv-info-panel-edit:hover,
+.gtv-info-panel-edit[aria-pressed="true"] {
   background-color: rgba(0, 0, 0, 0.1);
 }
 

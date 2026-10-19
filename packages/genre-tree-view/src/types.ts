@@ -155,4 +155,27 @@ export interface GenreTreeProps {
   /** Hides the info panel header's close button — for a consumer that closes the panel itself
    * (by clearing `selectedNodeId`), e.g. from its own search bar. Defaults to false. */
   hideInfoPanelClose?: boolean;
+  /** Hides the info panel's Edit/Done toggle even when `onEditModeChange` is set, and keeps the
+   * edit-mode slots below inactive. Defaults to false. */
+  readOnly?: boolean;
+  /** Whether the info panel is in edit mode (controlled) — only then are `renderTitleEditor`,
+   * `renderParentsEditor` and `renderDangerZone` rendered. Defaults to false. */
+  editMode?: boolean;
+  /** When set (and `readOnly` is false), the info panel header shows an Edit/Done toggle firing
+   * this with the requested mode. */
+  onEditModeChange?: (on: boolean) => void;
+  /** Edit mode only: replaces the info panel header's title, e.g. with an inline rename field. */
+  renderTitleEditor?: (node: GenreTreeNode) => ReactNode;
+  /** Edit mode only: replaces the info panel's Parent section. */
+  renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
+  /** Edit mode only: rendered at the bottom of the info panel. */
+  renderDangerZone?: (node: GenreTreeNode) => ReactNode;
+  /** Whether the info panel fills the tree container (controlled), splitting into a left column
+   * (fields, lists, toolbar, danger zone) and a right one (`renderExtraDetails`). Selecting
+   * another node from the panel keeps it expanded. Defaults to false. */
+  expanded?: boolean;
+  /** When set, the info panel header shows an expand/collapse toggle firing this with the
+   * requested state, and Escape fires it with `false` while expanded (unless focus is in an
+   * input/textarea/select or a dialog is open). */
+  onExpandedChange?: (on: boolean) => void;
 }
