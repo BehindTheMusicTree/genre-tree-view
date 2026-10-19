@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { MdClose } from "react-icons/md";
+import { ReactNode, useEffect } from "react";
+import { MdClose, MdCloseFullscreen, MdOpenInFull } from "react-icons/md";
 
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
@@ -41,6 +41,28 @@ export interface InfoPanelProps {
   /** When set, renders the node's play/add-child/rename/reparent/delete actions below the
    * header. Omitted when the toolbar is disabled (see GenreTreeProps.showToolbar). */
   actions?: Omit<NodeToolbarProps, "node" | "className">;
+  /** See GenreTreeProps.readOnly. */
+  readOnly?: boolean;
+  /** See GenreTreeProps.editMode. */
+  editMode?: boolean;
+  /** See GenreTreeProps.onEditModeChange. */
+  onEditModeChange?: (on: boolean) => void;
+  /** See GenreTreeProps.renderTitleEditor. */
+  renderTitleEditor?: (node: GenreTreeNode) => ReactNode;
+  /** See GenreTreeProps.renderParentsEditor. */
+  renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
+  /** See GenreTreeProps.renderDangerZone. */
+  renderDangerZone?: (node: GenreTreeNode) => ReactNode;
+  /** See GenreTreeProps.expanded. */
+  expanded?: boolean;
+  /** See GenreTreeProps.onExpandedChange. */
+  onExpandedChange?: (on: boolean) => void;
+}
+
+function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
+  const target = event.target;
+  if (target instanceof Element && target.closest("input, textarea, select")) return true;
+  return document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]') !== null;
 }
 
 /** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
@@ -61,16 +83,72 @@ export function InfoPanel({
   hideClose = false,
   onZoomIn,
   actions,
+  readOnly = false,
+  editMode = false,
+  onEditModeChange,
+  renderTitleEditor,
+  renderParentsEditor,
+  renderDangerZone,
+  expanded = false,
+  onExpandedChange,
 }: InfoPanelProps) {
+  const editing = editMode && !readOnly;
+
+  useEffect(() => {
+    if (!expanded || !onExpandedChange) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || isEscapeOwnedElsewhere(event)) return;
+      onExpandedChange(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [expanded, onExpandedChange]);
+
+  const dangerZone = editing && renderDangerZone && (
+    <div className="gtv-info-panel-danger-zone">{renderDangerZone(node)}</div>
+  );
+
   return (
-    <div className={`gtv-info-panel gtv-info-panel--${side}`}>
+    <div
+      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}`}
+    >
       <div
         className="gtv-info-panel-header"
         style={{ background: fill, color: textColor }}
       >
-        <span className="gtv-info-panel-title" style={{ color: textColor }}>
-          {node.name}
-        </span>
+        {editing && renderTitleEditor ? (
+          <div className="gtv-info-panel-title">{renderTitleEditor(node)}</div>
+        ) : (
+          <span className="gtv-info-panel-title" style={{ color: textColor }}>
+            {node.name}
+          </span>
+        )}
+        {onEditModeChange && !readOnly && (
+          <button
+            type="button"
+            className="gtv-info-panel-edit"
+            style={{ color: textColor }}
+            onClick={() => onEditModeChange(!editMode)}
+            aria-pressed={editMode}
+          >
+            {editMode ? "Done" : "Edit"}
+          </button>
+        )}
+        {onExpandedChange && (
+          <button
+            type="button"
+            className="gtv-info-panel-close"
+            style={{ color: textColor }}
+            onClick={() => onExpandedChange(!expanded)}
+            aria-label={expanded ? "Collapse panel" : "Expand panel"}
+          >
+            {expanded ? (
+              <MdCloseFullscreen className="gtv-icon" size={16} />
+            ) : (
+              <MdOpenInFull className="gtv-icon" size={16} />
+            )}
+          </button>
+        )}
         {!hideClose && (
           <button
             type="button"
@@ -83,81 +161,91 @@ export function InfoPanel({
           </button>
         )}
       </div>
-      {actions && <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} />}
-      <dl className="gtv-info-panel-fields">
-        <dt>Song count</dt>
-        <dd>{node.itemCount}</dd>
-        <dt>Side</dt>
-        <dd>{node.side ?? "core"}</dd>
-      </dl>
-      {onZoomIn && (
-        <div className="gtv-info-panel-actions">
-          <button type="button" className="gtv-info-panel-child" onClick={onZoomIn}>
-            Zoom in
-          </button>
-        </div>
-      )}
-      {ancestorNodes.length > 0 && (
-        <div className="gtv-info-panel-children">
-          <span className="gtv-info-panel-children-title">Ancestors</span>
-          <ul className="gtv-info-panel-children-list">
-            {ancestorNodes.map(({ node: ancestor, fill, textColor }) => (
-              <li key={ancestor.id}>
-                <button
-                  type="button"
-                  className="gtv-info-panel-child"
-                  style={{ background: fill, color: textColor }}
-                  onClick={() => onSelectNode(ancestor.id)}
-                >
-                  {ancestor.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {parentNode && (
-        <div className="gtv-info-panel-children">
-          <span className="gtv-info-panel-children-title">Parent</span>
-          <ul className="gtv-info-panel-children-list">
-            <li>
-              <button
-                type="button"
-                className="gtv-info-panel-child"
-                style={{
-                  background: parentNode.fill,
-                  color: parentNode.textColor,
-                }}
-                onClick={() => onSelectNode(parentNode.node.id)}
-              >
-                {parentNode.node.name}
+      <div className="gtv-info-panel-body">
+        <div className="gtv-info-panel-main">
+          {actions && <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} />}
+          <dl className="gtv-info-panel-fields">
+            <dt>Song count</dt>
+            <dd>{node.itemCount}</dd>
+            <dt>Side</dt>
+            <dd>{node.side ?? "core"}</dd>
+          </dl>
+          {onZoomIn && (
+            <div className="gtv-info-panel-actions">
+              <button type="button" className="gtv-info-panel-child" onClick={onZoomIn}>
+                Zoom in
               </button>
-            </li>
-          </ul>
+            </div>
+          )}
+          {ancestorNodes.length > 0 && (
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">Ancestors</span>
+              <ul className="gtv-info-panel-children-list">
+                {ancestorNodes.map(({ node: ancestor, fill, textColor }) => (
+                  <li key={ancestor.id}>
+                    <button
+                      type="button"
+                      className="gtv-info-panel-child"
+                      style={{ background: fill, color: textColor }}
+                      onClick={() => onSelectNode(ancestor.id)}
+                    >
+                      {ancestor.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {editing && renderParentsEditor ? (
+            renderParentsEditor(node)
+          ) : parentNode && (
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">Parent</span>
+              <ul className="gtv-info-panel-children-list">
+                <li>
+                  <button
+                    type="button"
+                    className="gtv-info-panel-child"
+                    style={{
+                      background: parentNode.fill,
+                      color: parentNode.textColor,
+                    }}
+                    onClick={() => onSelectNode(parentNode.node.id)}
+                  >
+                    {parentNode.node.name}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+          <div className="gtv-info-panel-children">
+            <span className="gtv-info-panel-children-title">
+              Children ({childNodes.length})
+            </span>
+            {childNodes.length > 0 && (
+              <ul className="gtv-info-panel-children-list">
+                {childNodes.map(({ node: child, fill, textColor }) => (
+                  <li key={child.id}>
+                    <button
+                      type="button"
+                      className="gtv-info-panel-child"
+                      style={{ background: fill, color: textColor }}
+                      onClick={() => onSelectNode(child.id)}
+                    >
+                      {child.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {expanded && dangerZone}
         </div>
-      )}
-      <div className="gtv-info-panel-children">
-        <span className="gtv-info-panel-children-title">
-          Children ({childNodes.length})
-        </span>
-        {childNodes.length > 0 && (
-          <ul className="gtv-info-panel-children-list">
-            {childNodes.map(({ node: child, fill, textColor }) => (
-              <li key={child.id}>
-                <button
-                  type="button"
-                  className="gtv-info-panel-child"
-                  style={{ background: fill, color: textColor }}
-                  onClick={() => onSelectNode(child.id)}
-                >
-                  {child.name}
-                </button>
-              </li>
-            ))}
-          </ul>
+        {renderExtraDetails && (
+          <div className="gtv-info-panel-extra">{renderExtraDetails(node)}</div>
         )}
       </div>
-      {renderExtraDetails?.(node)}
+      {!expanded && dangerZone}
     </div>
   );
 }

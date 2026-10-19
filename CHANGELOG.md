@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- InfoPanel edit mode: `editMode`/`onEditModeChange` (Edit/Done toggle, hidden when `readOnly`) and slots `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, rendered only in edit mode.
+- InfoPanel expanded mode: `expanded`/`onExpandedChange` (expand/collapse button, Escape collapses) fills the tree container with a two-column layout (single column under 768px).
+
 ## [2.2.1] - 2026-10-16
 
 ### Fixed
