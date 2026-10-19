@@ -117,6 +117,14 @@ export function WheelRadialCore({
   renderExtraDetails,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
+  readOnly,
+  editMode,
+  onEditModeChange,
+  renderTitleEditor,
+  renderParentsEditor,
+  renderDangerZone,
+  expanded,
+  onExpandedChange,
   wheelZoom,
   controlsOrientation = "vertical",
   selectedNodeId,
@@ -711,6 +719,14 @@ export function WheelRadialCore({
             );
           }}
           hideClose={hideInfoPanelClose}
+          readOnly={readOnly}
+          editMode={editMode}
+          onEditModeChange={onEditModeChange}
+          renderTitleEditor={renderTitleEditor}
+          renderParentsEditor={renderParentsEditor}
+          renderDangerZone={renderDangerZone}
+          expanded={expanded}
+          onExpandedChange={onExpandedChange}
           renderExtraDetails={renderExtraDetails}
           actions={
             showToolbar && !reparentingNodeId
