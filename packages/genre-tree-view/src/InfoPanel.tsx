@@ -60,9 +60,12 @@ export interface InfoPanelProps {
 }
 
 function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
+  if (event.defaultPrevented) return true;
   const target = event.target;
-  if (target instanceof Element && target.closest("input, textarea, select")) return true;
-  return document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]') !== null;
+  if (target instanceof Element && target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")) {
+    return true;
+  }
+  return document.querySelector('dialog[open], [role="dialog"][aria-modal="true"], [role="alertdialog"]') !== null;
 }
 
 /** Displays a clicked node's own fields, its parent, and its direct children — no fetching, no
@@ -110,14 +113,14 @@ export function InfoPanel({
 
   return (
     <div
-      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}`}
+      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !renderExtraDetails ? " gtv-info-panel--expanded-solo" : ""}`}
     >
       <div
         className="gtv-info-panel-header"
         style={{ background: fill, color: textColor }}
       >
         {editing && renderTitleEditor ? (
-          <div className="gtv-info-panel-title">{renderTitleEditor(node)}</div>
+          <div className="gtv-info-panel-title gtv-info-panel-title--editor">{renderTitleEditor(node)}</div>
         ) : (
           <span className="gtv-info-panel-title" style={{ color: textColor }}>
             {node.name}

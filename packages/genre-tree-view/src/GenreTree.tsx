@@ -270,6 +270,7 @@ export function GenreTree({
         {
           position: "relative",
           overflow: "hidden",
+          containerType: "inline-size",
           width: "100%",
           height: "100%",
           // Everything inside this div (the tree stage, the info panel, the floating zoom controls)
