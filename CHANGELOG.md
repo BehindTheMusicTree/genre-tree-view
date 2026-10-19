@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-19
+
 ### Added
 
 - InfoPanel edit mode: `editMode`/`onEditModeChange` (Edit/Done toggle, hidden when `readOnly`) and slots `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, rendered only in edit mode.
