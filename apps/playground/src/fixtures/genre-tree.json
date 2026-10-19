@@ -2478,6 +2478,13 @@
     "wikidataId": "Q11346971"
   },
   {
+    "id": "diy-folk-punk",
+    "parentId": "folk-punk",
+    "name": "Diy folk punk",
+    "itemCount": 0,
+    "wikidataId": "Q141773810"
+  },
+  {
     "id": "cowpunk",
     "parentId": "punk-music",
     "name": "Cowpunk",
@@ -11981,6 +11988,13 @@
     "name": "Doo-wop",
     "itemCount": 0,
     "wikidataId": "Q546359"
+  },
+  {
+    "id": "boogaloo",
+    "parentId": "rhythm-and-blues",
+    "name": "Boogaloo",
+    "itemCount": 0,
+    "wikidataId": "Q892958"
   },
   {
     "id": "ska",
