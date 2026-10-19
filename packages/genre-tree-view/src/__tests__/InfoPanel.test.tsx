@@ -429,6 +429,13 @@ describe("InfoPanel", () => {
       );
     }
 
+    it("marks the title slot as an overflow-visible editor area in edit mode", () => {
+      renderPanel({ editMode: true });
+      expect(screen.getByLabelText("Genre name").parentElement?.classList.contains("gtv-info-panel-title--editor")).toBe(
+        true,
+      );
+    });
+
     it("has no Edit button without onEditModeChange", () => {
       renderPanel();
       expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
@@ -572,10 +579,62 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <div role="dialog" aria-label="Confirm" />,
+        renderExtraDetails: () => <div role="dialog" aria-modal="true" aria-label="Confirm" />,
       });
       fireEvent.keyDown(document, { key: "Escape" });
       expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("ignores Escape while an alertdialog is open", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({
+        expanded: true,
+        onExpandedChange,
+        renderExtraDetails: () => <div role="alertdialog" aria-label="Confirm" />,
+      });
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("still collapses on Escape when only a non-modal dialog exists", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({
+        expanded: true,
+        onExpandedChange,
+        renderExtraDetails: () => <div role="dialog" aria-label="Popover" />,
+      });
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).toHaveBeenCalledWith(false);
+    });
+
+    it("ignores an Escape whose default was prevented", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({ expanded: true, onExpandedChange });
+      const event = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+      event.preventDefault();
+      document.dispatchEvent(event);
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("ignores Escape from a contenteditable target", () => {
+      const onExpandedChange = vi.fn();
+      renderPanel({
+        expanded: true,
+        onExpandedChange,
+        renderExtraDetails: () => <div contentEditable suppressContentEditableWarning aria-label="Rich" role="textbox" />,
+      });
+      fireEvent.keyDown(screen.getByRole("textbox", { name: "Rich" }), { key: "Escape" });
+      expect(onExpandedChange).not.toHaveBeenCalled();
+    });
+
+    it("uses a single column without renderExtraDetails", () => {
+      const { container } = renderPanel({ expanded: true });
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(true);
+    });
+
+    it("keeps two columns with renderExtraDetails", () => {
+      const { container } = renderPanel({ expanded: true, renderExtraDetails: () => <p>Extra</p> });
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(false);
     });
   });
 });

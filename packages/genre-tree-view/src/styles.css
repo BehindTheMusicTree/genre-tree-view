@@ -335,6 +335,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 20;
 }
 
 .gtv-info-panel--expanded .gtv-info-panel-body {
@@ -354,7 +355,17 @@
   border-right: 1px solid #e4e4e7;
 }
 
-@media (max-width: 767px) {
+/* Sized by the tree container (container-type on .gtv-wheel-container / .gtv-outline), not the
+   viewport. */
+.gtv-info-panel--expanded-solo .gtv-info-panel-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gtv-info-panel--expanded-solo .gtv-info-panel-main {
+  border-right: none;
+}
+
+@container (max-width: 767px) {
   .gtv-info-panel--expanded .gtv-info-panel-body {
     display: block;
     overflow-y: auto;
@@ -397,6 +408,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.gtv-info-panel-title--editor {
+  overflow: visible;
+  white-space: normal;
 }
 
 .gtv-info-panel-close {
@@ -531,6 +547,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  container-type: inline-size;
   cursor: grab;
   /* Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes it as
      native page zoom before usePanZoom's pointer handlers see either touch point. */
@@ -1063,6 +1080,7 @@
   position: relative;
   width: 100%;
   height: 100%;
+  container-type: inline-size;
   color: #18181b;
   font-size: 14px;
 }
