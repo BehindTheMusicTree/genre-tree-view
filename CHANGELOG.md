@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-20
+
 ### Added
 
 - `overlayPanel` prop (`{ title, content, onClose }`) on every renderer: consumer content shown over the tree at the expanded info panel's exact size, independent of node selection; its ✕ and Escape fire `onClose`. New `GenreTreeOverlayPanel` type.
