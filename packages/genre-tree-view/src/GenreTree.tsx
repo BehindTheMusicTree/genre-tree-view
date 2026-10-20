@@ -26,6 +26,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { useTreeIndex } from "./use-tree-index";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { OverlayPanel } from "./OverlayPanel";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -64,6 +65,7 @@ export function GenreTree({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
 }: GenreTreeProps) {
@@ -390,6 +392,7 @@ export function GenreTree({
           }
         />
       )}
+      {overlayPanel && <OverlayPanel {...overlayPanel} />}
       <div
         className={[
           "gtv-wheel-floating-controls",

@@ -62,7 +62,7 @@ export interface InfoPanelProps {
   onExpandedChange?: (on: boolean) => void;
 }
 
-function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
+export function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
   if (event.defaultPrevented) return true;
   const target = event.target;
   if (target instanceof Element && target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")) {

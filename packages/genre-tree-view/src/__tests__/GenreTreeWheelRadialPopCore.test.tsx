@@ -1510,4 +1510,11 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(container.querySelector(".gtv-info-panel")).toBeNull();
     });
   });
+  it("renders overlayPanel with no node selected", () => {
+    const { getByText } = render(
+      <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
+    );
+    expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
+    expect(getByText("Overlay body")).toBeTruthy();
+  });
 });

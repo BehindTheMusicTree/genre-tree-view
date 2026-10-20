@@ -48,6 +48,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { useFocusHistory } from "./use-focus-history";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -174,6 +175,7 @@ export function WheelRadialPopCoreCore({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
   allowWheelRotation = true,
@@ -1452,6 +1454,7 @@ export function WheelRadialPopCoreCore({
           }
         />
       )}
+      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       {onFocusChange && focusNodeId !== null && (
         <div className="gtv-wheel-back-controls">

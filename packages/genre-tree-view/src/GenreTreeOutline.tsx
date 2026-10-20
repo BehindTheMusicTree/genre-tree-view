@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { OverlayPanel } from "./OverlayPanel";
 import { PopCoreSplit, splitRootGroupBySide } from "./pop-core-split";
 import { groupNodesByRoot } from "./root-grouping";
 import { TreeIndex } from "./tree-index";
@@ -281,6 +282,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     renderDangerZone,
     expanded,
     onExpandedChange,
+    overlayPanel,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const index = useTreeIndex(nodes);
@@ -456,6 +458,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           }
         />
       )}
+      {overlayPanel && <OverlayPanel {...overlayPanel} />}
     </div>
   );
 }
