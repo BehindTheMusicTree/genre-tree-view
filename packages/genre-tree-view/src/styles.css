@@ -543,6 +543,32 @@
   margin-top: 10px;
 }
 
+.gtv-info-panel-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: #71717a;
+  cursor: pointer;
+}
+
+.gtv-info-panel-section-toggle .gtv-info-panel-children-title {
+  margin-top: 0;
+}
+
+.gtv-info-panel-section-chevron {
+  transition: transform 150ms;
+}
+
+.gtv-info-panel-section-toggle[aria-expanded="false"] .gtv-info-panel-section-chevron {
+  transform: rotate(-90deg);
+}
+
 .gtv-info-panel-children-list {
   display: flex;
   flex-wrap: wrap;
@@ -579,7 +605,12 @@
   display: flex;
   align-items: center;
   margin-top: 0;
-  padding: 40px 0 0;
+  padding: 0;
+}
+
+/* Room for the parent's label, which sits above its dot. */
+.gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent) {
+  padding-top: 26px;
 }
 
 .gtv-info-panel-mini-tree-parent,
@@ -625,6 +656,14 @@
 
 .gtv-info-panel-mini-tree-node:not(:last-child)::after {
   width: 12px;
+}
+
+.gtv-info-panel-mini-tree-node.gtv-info-panel-mini-tree-node--leaf:not(:last-child) {
+  padding-right: 0;
+}
+
+.gtv-info-panel-mini-tree-node.gtv-info-panel-mini-tree-node--leaf:not(:last-child)::after {
+  content: none;
 }
 
 .gtv-info-panel-mini-tree-parent {
