@@ -398,33 +398,25 @@ export function WheelRadialPopCoreCore({
     0,
   );
 
-  // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
-  // against) reflects the full subtree total instead, mirroring the tree's own rollup.
-  const aggregatedRootItemCountById = useMemo(
-    () =>
-      new Map(
-        groups.map((group) => [
-          group.root.id,
-          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
-        ]),
-      ),
+  const rootItemCountById = useMemo(
+    () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
     [groups],
   );
 
   // Pop-subtree node cards scale against the whole tree's item counts, not just their own subtree's
   // — a pop chain's few nodes can have a narrow itemCount spread that would otherwise get stretched
   // across the full size range and render wildly inconsistent card sizes next to core siblings.
-  // Root aggregates included so root circles and node dots share one track-count scale.
+  // Root counts included so root circles and node dots share one track-count scale.
   const wheelItemCountRange = useMemo(
     () =>
       getItemCountRange([
         ...nodes,
-        ...[...aggregatedRootItemCountById.values()].map((itemCount) => ({ itemCount })),
+        ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
       ]),
-    [nodes, aggregatedRootItemCountById],
+    [nodes, rootItemCountById],
   );
 
-  const centerNodeColor = "#ffffff";
+  const centerNodeColor = centerHasPopDisc ? "#ffffff" : getGenreNodeColor(index, centerNode.id);
   const centerChipDiameter = 2 * calculateNodeDotRadius(centerNode.itemCount, wheelItemCountRange);
 
   const branchHierarchiesByRootId = useMemo(
@@ -513,7 +505,7 @@ export function WheelRadialPopCoreCore({
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
           const chipWidth =
-            2 * calculateNodeDotRadius(aggregatedRootItemCountById.get(group.root.id)!, wheelItemCountRange);
+            2 * calculateNodeDotRadius(rootItemCountById.get(group.root.id)!, wheelItemCountRange);
           return [
             group.root.id,
             {
@@ -538,7 +530,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, aggregatedRootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -939,7 +931,7 @@ export function WheelRadialPopCoreCore({
         alwaysShown: true,
       },
       ...groups.map((group) => {
-        const itemCount = aggregatedRootItemCountById.get(group.root.id)!;
+        const itemCount = rootItemCountById.get(group.root.id)!;
         const { x, y } = getRadialPointOnCircle(rootAngleByRootId.get(group.root.id) ?? 0, coreRootCircleRadius);
         return {
           id: group.root.id,
@@ -971,7 +963,7 @@ export function WheelRadialPopCoreCore({
     centerHasPopDisc,
     centerChipDiameter,
     groups,
-    aggregatedRootItemCountById,
+    rootItemCountById,
     index.byId,
     popHierarchyByRootId,
     coreHierarchyByRootId,
@@ -1270,7 +1262,7 @@ export function WheelRadialPopCoreCore({
                 type="button"
                 className={[
                   "gtv-wheel-chip",
-                  centerHasPopDisc ? "gtv-wheel-chip--center" : "gtv-wheel-chip--label-only",
+                  centerHasPopDisc && "gtv-wheel-chip--center",
                   "gtv-wheel-chip--circle",
                 ]
                   .filter(Boolean)
@@ -1324,10 +1316,10 @@ export function WheelRadialPopCoreCore({
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const chipColor = getGenreNodeColor(index, group.root.id);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(
+              const rootItemCount = rootItemCountById.get(
                 group.root.id,
               )!;
-              const diameter = 2 * calculateNodeDotRadius(aggregatedItemCount, wheelItemCountRange);
+              const diameter = 2 * calculateNodeDotRadius(rootItemCount, wheelItemCountRange);
               return (
                 <div
                   key={group.root.id}
