@@ -147,7 +147,7 @@ pnpm workspace with two members:
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
 - **Node info panel**: clicking any node opens a read-only panel showing that node's song count
-  and side, its parent and ancestors above the parent (root-first), and its direct children, each
+  and side, its ancestors root-first (including the parent), and its direct children, each
   as clickable chips styled with that node's own fill/text color — internal presentational chrome,
   like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
   the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of

@@ -1080,7 +1080,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
       const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
 
-      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
         "Punk",
       );
       fireEvent.click(parentChip);
@@ -1194,7 +1194,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(chipFor(container, "Hardcore")).toBeDefined();
 
       fireEvent.click(chipFor(container, "Hardcore"));
-      expect(panelOf(container).getByText("Punk")).toBeDefined();
+      expect(within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText("Punk")).toBeDefined();
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
 
       const centerAnchor = within(container.querySelector(".gtv-wheel-center-node") as HTMLElement);

@@ -639,7 +639,7 @@ describe("GenreTreeWheelRadial", () => {
 
       const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
 
-      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
         "Rock",
       );
       fireEvent.click(parentChip);

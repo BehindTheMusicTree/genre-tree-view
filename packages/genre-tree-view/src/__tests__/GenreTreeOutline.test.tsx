@@ -185,7 +185,7 @@ describe("GenreTreeOutline", () => {
 
   it("opens every ancestor section when navigating to a node from the panel", () => {
     const { container } = render(<GenreTreeOutline nodes={NODES} />);
-    const panelChip = (name: string) => within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(name);
+    const panelChip = (name: string) => within(container.querySelector(".gtv-info-panel-mini-tree") as HTMLElement).getByText(name);
     fireEvent.click(nameButton(container, "root-a"));
     fireEvent.click(panelChip("Pop Rock"));
     const popSection = itemOf(container, "a-pop").parentElement!.closest("details")!;
