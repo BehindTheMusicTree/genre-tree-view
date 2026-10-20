@@ -802,6 +802,7 @@ export function hideCollidingLabels<E extends SVGElement>(
       dot: { x0: d.x - d.radius, x1: d.x + d.radius, y0: d.y - d.radius, y1: d.y + d.radius },
       // Ring roots outrank every dot label (ranks are <= 1), bigger roots first.
       priority: d.alwaysShown ? Infinity : 1 + calculateLabelRank(d.itemCount, itemCountRange, 1),
+      forced: d.alwaysShown,
     })),
     ...nodes.nodes().map((element) => {
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();

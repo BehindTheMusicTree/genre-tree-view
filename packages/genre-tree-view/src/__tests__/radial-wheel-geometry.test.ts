@@ -382,6 +382,16 @@ describe("placeLabels", () => {
     expect(placement.get("low")).toBe(-1);
   });
 
+  it("lets a forced label with every spot blocked still hide the labels it overlaps", () => {
+    const placement = placeLabels([
+      { id: "forced", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: Infinity, forced: true },
+      { id: "dotOwner", labels: [], dot: box(10, 0, 20, 10), priority: 0 },
+      { id: "low", labels: [box(20, 0, 70, 10)], dot: farDot(1), priority: 1 },
+    ]);
+    expect(placement.get("forced")).toBe(0);
+    expect(placement.get("low")).toBe(-1);
+  });
+
   it("keeps both labels when they are disjoint", () => {
     const placement = placeLabels([
       { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },

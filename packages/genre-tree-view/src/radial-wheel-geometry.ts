@@ -206,6 +206,8 @@ export interface LabelCullItem {
   labels: Box[];
   dot: Box;
   priority: number;
+  /** Drawn even when no candidate is free: falls back to the first one and still blocks later labels. */
+  forced?: boolean;
 }
 
 const boxesOverlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
@@ -249,16 +251,17 @@ function createBoxGrid<T>() {
 
 /** Index of each item's chosen label candidate, or -1 when it must be hidden: greedily, by
  * descending priority, takes each item's first candidate that overlaps no already-placed label and
- * no other node's dot. */
+ * no other node's dot (a `forced` item falls back to its first candidate instead of hiding). */
 export function placeLabels(items: LabelCullItem[]): Map<string, number> {
   const placement = new Map<string, number>();
   const keptGrid = createBoxGrid<true>();
   const dotGrid = createBoxGrid<string>();
   for (const item of items) dotGrid.insert(item.dot, item.id);
   for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
-    const index = item.labels.findIndex(
+    let index = item.labels.findIndex(
       (label) => !keptGrid.some(label, () => true) && !dotGrid.some(label, (id) => id !== item.id),
     );
+    if (index < 0 && item.forced && item.labels.length > 0) index = 0;
     placement.set(item.id, index);
     if (index >= 0) keptGrid.insert(item.labels[index], true);
   }

@@ -16,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Pop-core wheel: ring-root labels that can't fit without overlapping (e.g. the 58 children of a focused "Electronic dance music") now hide like dot labels instead of stacking; the center label stays shown.
+- Pop-core wheel: the center label now blocks neighboring labels even when it can't fit without overlapping a dot, so they no longer draw over it.
 - Pop-core wheel: double-clicking a node label or chip to zoom in works again — a single click now waits 250 ms for a second click before centering/opening the panel, so the recentre glide no longer moves the target between the two clicks.
 
 ## [2.3.1] - 2026-10-19
