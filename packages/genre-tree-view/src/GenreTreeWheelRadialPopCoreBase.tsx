@@ -920,6 +920,7 @@ export function WheelRadialPopCoreCore({
         y: 0,
         radius: centerChipDiameter / 2,
         itemCount: centerNode.itemCount,
+        alwaysShown: true,
       },
       ...groups.map((group) => {
         const itemCount = aggregatedRootItemCountById.get(group.root.id)!;

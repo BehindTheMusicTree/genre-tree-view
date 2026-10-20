@@ -9,6 +9,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Pop-core wheel: double-clicking a node, ring chip, center chip or root label focuses its own tree (`onFocusChange(id, "zoom-in")`), same as the info panel's Zoom in.
 
+### Fixed
+
+- Pop-core wheel: ring-root labels that can't fit without overlapping (e.g. the 58 children of a focused "Electronic dance music") now hide like dot labels instead of stacking; the center label stays shown.
+
 ## [2.3.1] - 2026-10-19
 
 ### Fixed
