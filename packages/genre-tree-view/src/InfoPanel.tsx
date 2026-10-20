@@ -256,9 +256,6 @@ export function InfoPanel({
           )}
           {editing && renderParentsEditor && renderParentsEditor(node)}
           <div className="gtv-info-panel-children">
-            <span className="gtv-info-panel-children-title">
-              Children ({childNodes.length})
-            </span>
             <div className="gtv-info-panel-mini-tree">
               {shownParent && (
                 <div className="gtv-info-panel-mini-tree-parent">
@@ -280,22 +277,25 @@ export function InfoPanel({
                   {miniNodeContent(node, fill)}
                 </span>
               </div>
-              {childNodes.length > 0 && (
-                <ul className="gtv-info-panel-children-list">
-                  {sortedChildNodes.map(({ node: child, fill }) => (
-                    <li key={child.id}>
-                      <button
-                        type="button"
-                        className="gtv-info-panel-child"
-                        title={child.name}
-                        onClick={() => onSelectNode(child.id)}
-                      >
-                        {miniNodeContent(child, fill)}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <div className="gtv-info-panel-mini-tree-children">
+                <span className="gtv-info-panel-children-title">Children ({childNodes.length})</span>
+                {childNodes.length > 0 && (
+                  <ul className="gtv-info-panel-children-list">
+                    {sortedChildNodes.map(({ node: child, fill }) => (
+                      <li key={child.id}>
+                        <button
+                          type="button"
+                          className="gtv-info-panel-child"
+                          title={child.name}
+                          onClick={() => onSelectNode(child.id)}
+                        >
+                          {miniNodeContent(child, fill)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
           {expanded && dangerZone}
