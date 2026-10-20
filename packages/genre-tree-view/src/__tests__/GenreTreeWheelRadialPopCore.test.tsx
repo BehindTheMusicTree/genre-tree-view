@@ -1318,6 +1318,39 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onFocusChange).toHaveBeenLastCalledWith("a-pop", "zoom-in");
     });
 
+    it("zooms in on double-click of a ring chip, its label, or a deep node", () => {
+      const onFocusChange = vi.fn();
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />,
+      );
+      fireEvent.doubleClick(chipFor(container, "Rock"));
+      expect(onFocusChange).toHaveBeenLastCalledWith("root-a", "zoom-in");
+
+      const rockLabel = Array.from(container.querySelectorAll("g.gtv-root-label text")).find(
+        (text) => text.textContent === "Rock",
+      )!;
+      onFocusChange.mockClear();
+      fireEvent.doubleClick(rockLabel);
+      expect(onFocusChange).toHaveBeenLastCalledWith("root-a", "zoom-in");
+
+      fireEvent.doubleClick(container.querySelector("#group-a-core") as Element);
+      expect(onFocusChange).toHaveBeenLastCalledWith("a-core", "zoom-in");
+
+      onFocusChange.mockClear();
+      fireEvent.doubleClick(chipFor(container, "Mainstream Pop"));
+      expect(onFocusChange).not.toHaveBeenCalled();
+
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" onFocusChange={onFocusChange} />);
+      fireEvent.doubleClick(container.querySelector(".gtv-wheel-chip--center") as Element);
+      expect(onFocusChange).toHaveBeenLastCalledWith("a-pop", "zoom-in");
+    });
+
+    it("ignores double-click without focus props", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      fireEvent.doubleClick(chipFor(container, "Rock"));
+      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+    });
+
     it("zooms into a Mainstream Pop disc node with children", () => {
       const nodes: GenreTreeNode[] = [
         ...NODES_WITH_POP,

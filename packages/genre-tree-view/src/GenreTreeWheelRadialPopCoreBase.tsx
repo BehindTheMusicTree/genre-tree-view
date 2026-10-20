@@ -74,7 +74,7 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-/** Why `onFocusChange` fired: the info panel's "Zoom in" button, the previous / parent ("back") /
+/** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the previous / parent ("back") /
  * root-view buttons, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
  * `focusNodeId` that isn't zoomable (see `isZoomableNode`). */
 export type FocusChangeReason = "zoom-in" | "previous" | "back" | "root" | "search" | "rejected";
@@ -89,7 +89,7 @@ export type PopCoreFocusProps =
        * `onFocusChange(null, "rejected")` once. */
       focusNodeId: string | null;
       /** Fired with the node to focus and why: any zoomable node from its info panel's "Zoom in"
-       * (`"zoom-in"`), the last view displayed, whatever changed it (`"previous"`, tracked in memory only, so
+       * or a double-click on it or its label (`"zoom-in"`), the last view displayed, whatever changed it (`"previous"`, tracked in memory only, so
        * hidden after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
        * the selection's top-level root — or null when that root is Mainstream Pop or the selection
        * is itself a root — when `selectedNodeId` lies outside the zoom (`"search"`), and null when
@@ -330,6 +330,16 @@ export function WheelRadialPopCoreCore({
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
     showNodeInfoRef.current = showNodeInfo;
+  });
+  // Double-click mirrors the info panel's "Zoom in" button.
+  const focusOnNode = (id: string) => {
+    if (!onFocusChange || reparentingNodeId || id === focusNodeId || !isZoomableNode(nodes, id)) return;
+    closeNodeInfo();
+    onFocusChange(id, "zoom-in");
+  };
+  const focusOnNodeRef = useRef(focusOnNode);
+  useEffect(() => {
+    focusOnNodeRef.current = focusOnNode;
   });
   // Read via a ref so a consumer's fresh closure each render doesn't re-mount the D3 tree.
   const onNodeHoverRef = useRef(onNodeHover);
@@ -735,6 +745,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
             onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
@@ -814,6 +825,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
             onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
@@ -879,6 +891,7 @@ export function WheelRadialPopCoreCore({
             );
             onNodeClick?.(data, event);
           },
+          onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
           onNodeHover: (data) => onNodeHoverRef.current?.(data),
           additionalActions,
           playingNodeId,
@@ -934,7 +947,8 @@ export function WheelRadialPopCoreCore({
             ? centerChipRef.current
             : viewportRef.current?.querySelector<HTMLButtonElement>(`#group-${CSS.escape(d.id)}`);
         chip?.click();
-      });
+      })
+      .on("dblclick", (_event, d) => focusOnNodeRef.current(d.id));
   }, [
     centerNode,
     centerHasPopDisc,
@@ -1266,6 +1280,7 @@ export function WheelRadialPopCoreCore({
                     onNodeClick?.(centerNode, event.nativeEvent);
                   }
                 }}
+                onDoubleClick={() => focusOnNode(centerNode.id)}
                 aria-label={centerNode.name}
               >
                 {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
@@ -1334,6 +1349,7 @@ export function WheelRadialPopCoreCore({
                           onNodeClick?.(root, event.nativeEvent);
                         }
                       }}
+                      onDoubleClick={() => focusOnNode(group.root.id)}
                     >
                       {PER_TREE_ACCENT_DOT && (
                         <span className="gtv-wheel-chip-dot" />

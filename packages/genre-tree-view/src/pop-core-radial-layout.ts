@@ -460,6 +460,7 @@ export interface RenderPopSubtreeCallbacks {
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
   onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
+  onNodeDoubleClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
@@ -513,7 +514,7 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     selectedNodeId = null,
   } = options;
-  const { onReparentTargetSelect, onNodeClick, onNodeHover } = callbacks;
+  const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
   // A node is "related" to the selected node when it's the selected node's own parent or one of
@@ -744,6 +745,8 @@ export function renderPopSubtree(
       if (reparentingNodeId) return;
       onNodeClick?.(d.data, event);
     });
+
+    group.on("dblclick", () => onNodeDoubleClick?.(d.data));
   });
 }
 
