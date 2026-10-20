@@ -282,4 +282,11 @@ describe("GenreTreeOutline", () => {
     fireEvent.click(nameButton(container, "root-b"));
     expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Hardcore");
   });
+  it("renders overlayPanel with no node selected", () => {
+    const { getByText } = render(
+      <GenreTreeOutline nodes={NODES} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
+    );
+    expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
+    expect(getByText("Overlay body")).toBeTruthy();
+  });
 });

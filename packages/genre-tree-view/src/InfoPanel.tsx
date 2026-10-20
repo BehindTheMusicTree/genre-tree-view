@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { MdClose, MdCloseFullscreen, MdOpenInFull } from "react-icons/md";
+import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
 
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
@@ -32,6 +32,9 @@ export interface InfoPanelProps {
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
    * navigates the panel (and the tree's own selection/centering) to it. */
   onSelectNode: (nodeId: string) => void;
+  /** Reselects the previously selected node; the button is hidden when omitted. */
+  onPrevious?: () => void;
+  previousLabel?: string;
   /** See GenreTreeProps.hideInfoPanelClose. */
   hideClose?: boolean;
   /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
@@ -59,7 +62,7 @@ export interface InfoPanelProps {
   onExpandedChange?: (on: boolean) => void;
 }
 
-function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
+export function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
   if (event.defaultPrevented) return true;
   const target = event.target;
   if (target instanceof Element && target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")) {
@@ -82,6 +85,8 @@ export function InfoPanel({
   side,
   onClose,
   onSelectNode,
+  onPrevious,
+  previousLabel,
   renderExtraDetails,
   hideClose = false,
   onZoomIn,
@@ -119,12 +124,36 @@ export function InfoPanel({
         className="gtv-info-panel-header"
         style={{ background: fill, color: textColor }}
       >
+        {onPrevious && (
+          <button
+            type="button"
+            className="gtv-info-panel-previous"
+            style={{ color: textColor }}
+            onClick={onPrevious}
+            aria-label={previousLabel ? `Previous: ${previousLabel}` : "Previous"}
+            title={previousLabel}
+          >
+            <MdArrowBack className="gtv-icon" size={16} />
+          </button>
+        )}
         {editing && renderTitleEditor ? (
           <div className="gtv-info-panel-title gtv-info-panel-title--editor">{renderTitleEditor(node)}</div>
         ) : (
           <span className="gtv-info-panel-title" style={{ color: textColor }}>
             {node.name}
           </span>
+        )}
+        {onZoomIn && (
+          <button
+            type="button"
+            className="gtv-info-panel-zoom-in"
+            style={{ color: textColor }}
+            onClick={onZoomIn}
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <MdZoomIn className="gtv-icon" size={16} />
+          </button>
         )}
         {onEditModeChange && !readOnly && (
           <button
@@ -173,13 +202,6 @@ export function InfoPanel({
             <dt>Side</dt>
             <dd>{node.side ?? "core"}</dd>
           </dl>
-          {onZoomIn && (
-            <div className="gtv-info-panel-actions">
-              <button type="button" className="gtv-info-panel-child" onClick={onZoomIn}>
-                Zoom in
-              </button>
-            </div>
-          )}
           {ancestorNodes.length > 0 && (
             <div className="gtv-info-panel-children">
               <span className="gtv-info-panel-children-title">Ancestors</span>

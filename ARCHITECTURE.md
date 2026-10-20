@@ -125,10 +125,9 @@ pnpm workspace with two members:
     ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
     rule for which nodes may be that focus (any node with children and at most one pop child).
     `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel and,
-    Previous / Parent / Root view back buttons (Parent and Root only while focused); Previous walks
-    the in-memory stack kept by `use-focus-history.ts`'s `useFocusHistory`, which observes the
-    effective `focusNodeId` (so consumer-driven changes count too) and skips entries that are no
-    longer zoomable (not persisted, so hidden after a URL-driven reload). A selection outside the current frame refocuses on its top-level root (the whole tree
+    a Home / Parent (icon-only, while focused) bar plus a breadcrumb of every zoomable ancestor view. The info
+    panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
+    `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
     for Mainstream Pop's lineage or a root itself).
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and
@@ -172,6 +171,9 @@ pnpm workspace with two members:
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
+  `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
+  `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
+  identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
@@ -202,7 +204,7 @@ pnpm workspace with two members:
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`, `ControlsOrientation`.
+  `WheelZoomMode`, `ControlsOrientation`, `GenreTreeOverlayPanel`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

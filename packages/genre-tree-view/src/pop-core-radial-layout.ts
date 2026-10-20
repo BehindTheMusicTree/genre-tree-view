@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 
+import { createDeferredClick } from "./defer-click";
 import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 import {
   addReparentTargetOverlay,
@@ -431,6 +432,8 @@ export interface RootLabelDatum {
   y: number;
   radius: number;
   itemCount: number;
+  /** Named even when no candidate spot is free (the wheel's center); other roots hide like dot labels. */
+  alwaysShown?: boolean;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -459,7 +462,8 @@ export interface RenderPopSubtreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
-  onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
+  onNodeClick?: (node: GenreTreeNode, event: MouseEvent, element: Element) => void;
+  onNodeDoubleClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   playingNodeId?: string | null;
@@ -513,7 +517,7 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     selectedNodeId = null,
   } = options;
-  const { onReparentTargetSelect, onNodeClick, onNodeHover } = callbacks;
+  const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
   const isSelected = (d: D3Node) => d.data.id === selectedNodeId;
   // A node is "related" to the selected node when it's the selected node's own parent or one of
@@ -740,9 +744,16 @@ export function renderPopSubtree(
     // on the card body itself (the reparent-target overlay doesn't stopPropagation, but its click
     // only exists while reparentingNodeId is set, which the guard below already suppresses).
     // See tree-renderer.ts's identical handler.
-    group.on("click", function (event: MouseEvent) {
+    const deferredClick = createDeferredClick();
+    group.on("click", (event: MouseEvent) => {
       if (reparentingNodeId) return;
-      onNodeClick?.(d.data, event);
+      const element = event.currentTarget as Element;
+      deferredClick.schedule(() => onNodeClick?.(d.data, event, element));
+    });
+
+    group.on("dblclick", () => {
+      deferredClick.cancel();
+      onNodeDoubleClick?.(d.data);
     });
   });
 }
@@ -789,7 +800,9 @@ export function hideCollidingLabels<E extends SVGElement>(
       id: `root:${d.id}`,
       labels: rootGeometryById.get(d.id)!.candidates.map((candidate) => offset(candidate.box, d.x, d.y)),
       dot: { x0: d.x - d.radius, x1: d.x + d.radius, y0: d.y - d.radius, y1: d.y + d.radius },
-      priority: Infinity,
+      // Ring roots outrank every dot label (ranks are <= 1), bigger roots first.
+      priority: d.alwaysShown ? Infinity : 1 + calculateLabelRank(d.itemCount, itemCountRange, 1),
+      forced: d.alwaysShown,
     })),
     ...nodes.nodes().map((element) => {
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
@@ -806,17 +819,18 @@ export function hideCollidingLabels<E extends SVGElement>(
       };
     }),
   ]);
-  // Roots are always named, even when no candidate is free.
   roots.each(function (d) {
     const { candidates, fontSize } = rootGeometryById.get(d.id)!;
-    const candidate = candidates[Math.max(placement.get(`root:${d.id}`) ?? 0, 0)];
+    const index = placement.get(`root:${d.id}`)!;
+    const candidate = candidates[Math.max(index, 0)];
     d3Lib
       .select(this)
       .select(".gtv-node-label")
       .attr("x", candidate.x)
       .attr("y", candidate.y)
       .attr("text-anchor", candidate.anchor)
-      .style("font-size", `${fontSize}px`);
+      .style("font-size", `${fontSize}px`)
+      .classed("gtv-node-label--hidden", index < 0 && !d.alwaysShown);
   });
   nodes.each(function (d) {
     const { candidates, fontSize } = geometryById.get(d.data.id)!;

@@ -411,6 +411,8 @@ export const REGION_LABEL_MAX_PX = 48;
 // not just a scale change, and should read as one deliberate "fly to" (Google Maps' own
 // click-to-center glide) rather than an instant jump.
 export const CENTER_ON_ELEMENT_DURATION_MS = 450;
+// How long a single click waits for a second one before acting (see defer-click.ts).
+export const DOUBLE_CLICK_DELAY_MS = 250;
 // Minimum content (px) usePanZoom's pan clamp always keeps on-screen along each axis — dragging
 // or wheel-panning can bring the tree to this close to sliding fully out of the viewport, but no
 // closer, so the user can never lose it entirely and have no visible edge to drag back from.

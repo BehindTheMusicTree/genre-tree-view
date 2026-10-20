@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MdArrowUpward, MdFitScreen, MdHome, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
+import { createDeferredClick } from "./defer-click";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { useTreeIndex } from "./use-tree-index";
@@ -47,6 +48,7 @@ import { useNodeInfoPanel } from "./use-node-info-panel";
 import { useFocusHistory } from "./use-focus-history";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -74,10 +76,10 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-/** Why `onFocusChange` fired: the info panel's "Zoom in" button, the previous / parent ("back") /
- * root-view buttons, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
+/** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
+ * root-view buttons and breadcrumb, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
  * `focusNodeId` that isn't zoomable (see `isZoomableNode`). */
-export type FocusChangeReason = "zoom-in" | "previous" | "back" | "root" | "search" | "rejected";
+export type FocusChangeReason = "zoom-in" | /** @deprecated no longer emitted */ "previous" | "back" | "root" | "search" | "rejected";
 
 /** Focus is controlled-only: pass both props or neither, since the wheel never moves its own focus. */
 export type PopCoreFocusProps =
@@ -89,8 +91,7 @@ export type PopCoreFocusProps =
        * `onFocusChange(null, "rejected")` once. */
       focusNodeId: string | null;
       /** Fired with the node to focus and why: any zoomable node from its info panel's "Zoom in"
-       * (`"zoom-in"`), the last view displayed, whatever changed it (`"previous"`, tracked in memory only, so
-       * hidden after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
+       * or a double-click on it or its label (`"zoom-in"`), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
        * the selection's top-level root — or null when that root is Mainstream Pop or the selection
        * is itself a root — when `selectedNodeId` lies outside the zoom (`"search"`), and null when
        * `focusNodeId` isn't zoomable (`"rejected"`). Omit both props to hide the zoom-in and back
@@ -174,6 +175,7 @@ export function WheelRadialPopCoreCore({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
   allowWheelRotation = true,
@@ -189,7 +191,6 @@ export function WheelRadialPopCoreCore({
     [nodes, requestedFocusNodeId],
   );
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
-  const { previous, markPreviousRequested } = useFocusHistory(focusNodeId, (id) => isZoomableNode(nodes, id));
   useEffect(() => {
     if (isFocusRejected) onFocusChange?.(null, "rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
@@ -320,6 +321,20 @@ export function WheelRadialPopCoreCore({
     openPanel && (centerSubtreeNodeIds.has(openPanel.node.id) || ringRootById.has(openPanel.node.id))
       ? openPanel
       : null;
+  const { previous: previousSelectedId, markPreviousRequested } = useFocusHistory(
+    panel?.node.id ?? null,
+    (id) => centerSubtreeNodeIds.has(id) || ringRootById.has(id),
+  );
+  const selectNodeFromPanel = (id: string) => {
+    const targetNode = index.byId.get(id)!;
+    const element = viewportRef.current!.querySelector(`#group-${CSS.escape(id)}`);
+    panZoom.centerOnElement(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfo(targetNode, element ?? viewportRef.current, viewportRef.current);
+  };
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -330,6 +345,22 @@ export function WheelRadialPopCoreCore({
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
     showNodeInfoRef.current = showNodeInfo;
+  });
+  // Double-click mirrors the info panel's "Zoom in" button.
+  const chipClickRef = useRef(createDeferredClick());
+  useEffect(() => {
+    const deferred = chipClickRef.current;
+    return deferred.cancel;
+  }, []);
+  const focusOnNode = (id: string) => {
+    chipClickRef.current.cancel();
+    if (!onFocusChange || reparentingNodeId || id === focusNodeId || !isZoomableNode(nodes, id)) return;
+    closeNodeInfo();
+    onFocusChange(id, "zoom-in");
+  };
+  const focusOnNodeRef = useRef(focusOnNode);
+  useEffect(() => {
+    focusOnNodeRef.current = focusOnNode;
   });
   // Read via a ref so a consumer's fresh closure each render doesn't re-mount the D3 tree.
   const onNodeHoverRef = useRef(onNodeHover);
@@ -369,33 +400,25 @@ export function WheelRadialPopCoreCore({
     0,
   );
 
-  // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
-  // against) reflects the full subtree total instead, mirroring the tree's own rollup.
-  const aggregatedRootItemCountById = useMemo(
-    () =>
-      new Map(
-        groups.map((group) => [
-          group.root.id,
-          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
-        ]),
-      ),
+  const rootItemCountById = useMemo(
+    () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
     [groups],
   );
 
   // Pop-subtree node cards scale against the whole tree's item counts, not just their own subtree's
   // — a pop chain's few nodes can have a narrow itemCount spread that would otherwise get stretched
   // across the full size range and render wildly inconsistent card sizes next to core siblings.
-  // Root aggregates included so root circles and node dots share one track-count scale.
+  // Root counts included so root circles and node dots share one track-count scale.
   const wheelItemCountRange = useMemo(
     () =>
       getItemCountRange([
         ...nodes,
-        ...[...aggregatedRootItemCountById.values()].map((itemCount) => ({ itemCount })),
+        ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
       ]),
-    [nodes, aggregatedRootItemCountById],
+    [nodes, rootItemCountById],
   );
 
-  const centerNodeColor = "#ffffff";
+  const centerNodeColor = centerHasPopDisc ? "#ffffff" : getGenreNodeColor(index, centerNode.id);
   const centerChipDiameter = 2 * calculateNodeDotRadius(centerNode.itemCount, wheelItemCountRange);
 
   const branchHierarchiesByRootId = useMemo(
@@ -484,7 +507,7 @@ export function WheelRadialPopCoreCore({
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
           const chipWidth =
-            2 * calculateNodeDotRadius(aggregatedRootItemCountById.get(group.root.id)!, wheelItemCountRange);
+            2 * calculateNodeDotRadius(rootItemCountById.get(group.root.id)!, wheelItemCountRange);
           return [
             group.root.id,
             {
@@ -509,7 +532,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, aggregatedRootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -721,8 +744,7 @@ export function WheelRadialPopCoreCore({
               if (reparentingNodeId)
                 void onReparent?.(reparentingNodeId, newParentId);
             },
-            onNodeClick: (data, event) => {
-              const clickedElement = event.currentTarget as Element | null;
+            onNodeClick: (data, event, clickedElement) => {
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
@@ -735,6 +757,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
             onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
@@ -800,8 +823,7 @@ export function WheelRadialPopCoreCore({
               if (reparentingNodeId)
                 void onReparent?.(reparentingNodeId, newParentId);
             },
-            onNodeClick: (data, event) => {
-              const clickedElement = event.currentTarget as Element | null;
+            onNodeClick: (data, event, clickedElement) => {
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
@@ -814,6 +836,7 @@ export function WheelRadialPopCoreCore({
               );
               onNodeClick?.(data, event);
             },
+            onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
             onNodeHover: (data) => onNodeHoverRef.current?.(data),
             additionalActions,
             playingNodeId,
@@ -865,8 +888,7 @@ export function WheelRadialPopCoreCore({
             if (reparentingNodeId)
               void onReparent?.(reparentingNodeId, newParentId);
           },
-          onNodeClick: (data, event) => {
-            const clickedElement = event.currentTarget as Element | null;
+          onNodeClick: (data, event, clickedElement) => {
             centerOnElementRef.current(
               clickedElement,
               ZOOM_FOCUS_SCALE,
@@ -879,6 +901,7 @@ export function WheelRadialPopCoreCore({
             );
             onNodeClick?.(data, event);
           },
+          onNodeDoubleClick: (data) => focusOnNodeRef.current(data.id),
           onNodeHover: (data) => onNodeHoverRef.current?.(data),
           additionalActions,
           playingNodeId,
@@ -907,9 +930,10 @@ export function WheelRadialPopCoreCore({
         y: 0,
         radius: centerChipDiameter / 2,
         itemCount: centerNode.itemCount,
+        alwaysShown: true,
       },
       ...groups.map((group) => {
-        const itemCount = aggregatedRootItemCountById.get(group.root.id)!;
+        const itemCount = rootItemCountById.get(group.root.id)!;
         const { x, y } = getRadialPointOnCircle(rootAngleByRootId.get(group.root.id) ?? 0, coreRootCircleRadius);
         return {
           id: group.root.id,
@@ -934,13 +958,14 @@ export function WheelRadialPopCoreCore({
             ? centerChipRef.current
             : viewportRef.current?.querySelector<HTMLButtonElement>(`#group-${CSS.escape(d.id)}`);
         chip?.click();
-      });
+      })
+      .on("dblclick", (_event, d) => focusOnNodeRef.current(d.id));
   }, [
     centerNode,
     centerHasPopDisc,
     centerChipDiameter,
     groups,
-    aggregatedRootItemCountById,
+    rootItemCountById,
     index.byId,
     popHierarchyByRootId,
     coreHierarchyByRootId,
@@ -1239,7 +1264,7 @@ export function WheelRadialPopCoreCore({
                 type="button"
                 className={[
                   "gtv-wheel-chip",
-                  centerHasPopDisc ? "gtv-wheel-chip--center" : "gtv-wheel-chip--label-only",
+                  centerHasPopDisc && "gtv-wheel-chip--center",
                   "gtv-wheel-chip--circle",
                 ]
                   .filter(Boolean)
@@ -1252,20 +1277,21 @@ export function WheelRadialPopCoreCore({
                   } as React.CSSProperties
                 }
                 onClick={(event) => {
-                  panZoom.centerOnElement(
-                    event.currentTarget,
-                    ZOOM_FOCUS_SCALE,
-                    resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
-                  );
-                  if (!reparentingNodeId) {
-                    showNodeInfo(
-                      centerNode,
-                      event.currentTarget,
-                      viewportRef.current,
+                  const chip = event.currentTarget;
+                  const nativeEvent = event.nativeEvent;
+                  chipClickRef.current.schedule(() => {
+                    panZoom.centerOnElement(
+                      chip,
+                      ZOOM_FOCUS_SCALE,
+                      resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                     );
-                    onNodeClick?.(centerNode, event.nativeEvent);
-                  }
+                    if (!reparentingNodeId) {
+                      showNodeInfo(centerNode, chip, viewportRef.current);
+                      onNodeClick?.(centerNode, nativeEvent);
+                    }
+                  });
                 }}
+                onDoubleClick={() => focusOnNode(centerNode.id)}
                 aria-label={centerNode.name}
               >
                 {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
@@ -1292,10 +1318,10 @@ export function WheelRadialPopCoreCore({
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const chipColor = getGenreNodeColor(index, group.root.id);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(
+              const rootItemCount = rootItemCountById.get(
                 group.root.id,
               )!;
-              const diameter = 2 * calculateNodeDotRadius(aggregatedItemCount, wheelItemCountRange);
+              const diameter = 2 * calculateNodeDotRadius(rootItemCount, wheelItemCountRange);
               return (
                 <div
                   key={group.root.id}
@@ -1319,21 +1345,22 @@ export function WheelRadialPopCoreCore({
                       aria-label={group.root.name}
                       onPointerEnter={() => onNodeHover?.(root)}
                       onClick={(event) => {
-                        panZoom.centerOnElement(
-                          event.currentTarget,
-                          ZOOM_FOCUS_SCALE,
-                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
-                        );
-                        handleChipClick(group.root.id);
-                        if (!reparentingNodeId) {
-                          showNodeInfo(
-                            root,
-                            event.currentTarget,
-                            viewportRef.current,
+                        const chip = event.currentTarget;
+                        const nativeEvent = event.nativeEvent;
+                        chipClickRef.current.schedule(() => {
+                          panZoom.centerOnElement(
+                            chip,
+                            ZOOM_FOCUS_SCALE,
+                            resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                           );
-                          onNodeClick?.(root, event.nativeEvent);
-                        }
+                          handleChipClick(group.root.id);
+                          if (!reparentingNodeId) {
+                            showNodeInfo(root, chip, viewportRef.current);
+                            onNodeClick?.(root, nativeEvent);
+                          }
+                        });
                       }}
+                      onDoubleClick={() => focusOnNode(group.root.id)}
                     >
                       {PER_TREE_ACCENT_DOT && (
                         <span className="gtv-wheel-chip-dot" />
@@ -1382,22 +1409,16 @@ export function WheelRadialPopCoreCore({
           )}
           side={panel.side}
           onClose={closeNodeInfo}
-          onSelectNode={(id) => {
-            const targetNode = index.byId.get(id)!;
-            const element = viewportRef.current!.querySelector(
-              `#group-${CSS.escape(id)}`,
-            );
-            panZoom.centerOnElement(
-              element,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfo(
-              targetNode,
-              element ?? viewportRef.current,
-              viewportRef.current,
-            );
-          }}
+          onSelectNode={selectNodeFromPanel}
+          onPrevious={
+            typeof previousSelectedId === "string"
+              ? () => {
+                  markPreviousRequested(previousSelectedId);
+                  selectNodeFromPanel(previousSelectedId);
+                }
+              : undefined
+          }
+          previousLabel={typeof previousSelectedId === "string" ? index.byId.get(previousSelectedId)?.name : undefined}
           hideClose={hideInfoPanelClose}
           readOnly={readOnly}
           editMode={editMode}
@@ -1433,46 +1454,57 @@ export function WheelRadialPopCoreCore({
           }
         />
       )}
+      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
-      {onFocusChange && (focusNodeId !== null || previous !== undefined) && (
+      {onFocusChange && focusNodeId !== null && (
         <div className="gtv-wheel-back-controls">
-          {previous !== undefined && (
+          <button
+            type="button"
+            className="gtv-wheel-back-btn"
+            aria-label="All genres"
+            onClick={() => {
+              closeNodeInfo();
+              onFocusChange(null, "root");
+            }}
+          >
+            <MdHome className="gtv-icon" size={16} />
+          </button>
+          {focusParent && (
             <button
               type="button"
               className="gtv-wheel-back-btn"
-              onClick={() => {
-                closeNodeInfo();
-                markPreviousRequested(previous);
-                onFocusChange(previous, "previous");
-              }}
-            >
-              ↶ {(previous !== null && index.byId.get(previous)?.name) || "All genres"}
-            </button>
-          )}
-          {focusNodeId !== null && focusParent && (
-            <button
-              type="button"
-              className="gtv-wheel-back-btn"
+              aria-label="Parent view"
               onClick={() => {
                 closeNodeInfo();
                 onFocusChange(focusParent.id, "back");
               }}
             >
-              ← {focusParent.name}
+              <MdArrowUpward className="gtv-icon" size={16} />
             </button>
           )}
-          {focusNodeId !== null && (
-            <button
-              type="button"
-              className="gtv-wheel-back-btn"
-              onClick={() => {
-                closeNodeInfo();
-                onFocusChange(null, "root");
-              }}
-            >
-              ⌂ All genres
-            </button>
-          )}
+          <nav className="gtv-wheel-breadcrumb" aria-label="Breadcrumb">
+            {index
+              .ancestorsOf(focusNodeId)
+              .filter((ancestor) => isZoomableNode(nodes, ancestor.id))
+              .map((ancestor) => (
+                <Fragment key={ancestor.id}>
+                  <button
+                    type="button"
+                    className="gtv-wheel-breadcrumb-crumb"
+                    onClick={() => {
+                      closeNodeInfo();
+                      onFocusChange(ancestor.id, "back");
+                    }}
+                  >
+                    {ancestor.name}
+                  </button>
+                  <span aria-hidden="true">›</span>
+                </Fragment>
+              ))}
+            <span className="gtv-wheel-breadcrumb-current" aria-current="page">
+              {index.byId.get(focusNodeId)?.name}
+            </span>
+          </nav>
         </div>
       )}
 
