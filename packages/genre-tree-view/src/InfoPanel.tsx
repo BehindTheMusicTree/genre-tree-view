@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull } from "react-icons/md";
+import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
 
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
@@ -143,6 +143,18 @@ export function InfoPanel({
             {node.name}
           </span>
         )}
+        {onZoomIn && (
+          <button
+            type="button"
+            className="gtv-info-panel-zoom-in"
+            style={{ color: textColor }}
+            onClick={onZoomIn}
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <MdZoomIn className="gtv-icon" size={16} />
+          </button>
+        )}
         {onEditModeChange && !readOnly && (
           <button
             type="button"
@@ -190,13 +202,6 @@ export function InfoPanel({
             <dt>Side</dt>
             <dd>{node.side ?? "core"}</dd>
           </dl>
-          {onZoomIn && (
-            <div className="gtv-info-panel-actions">
-              <button type="button" className="gtv-info-panel-child" onClick={onZoomIn}>
-                Zoom in
-              </button>
-            </div>
-          )}
           {ancestorNodes.length > 0 && (
             <div className="gtv-info-panel-children">
               <span className="gtv-info-panel-children-title">Ancestors</span>
