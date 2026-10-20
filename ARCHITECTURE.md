@@ -125,10 +125,9 @@ pnpm workspace with two members:
     ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
     rule for which nodes may be that focus (any node with children and at most one pop child).
     `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel and,
-    Previous / Parent / Root view back buttons (Parent and Root only while focused); Previous walks
-    the in-memory stack kept by `use-focus-history.ts`'s `useFocusHistory`, which observes the
-    effective `focusNodeId` (so consumer-driven changes count too) and skips entries that are no
-    longer zoomable (not persisted, so hidden after a URL-driven reload). A selection outside the current frame refocuses on its top-level root (the whole tree
+    a Home / Parent (icon-only, while focused) bar plus a breadcrumb of every zoomable ancestor view. The info
+    panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
+    `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
     for Mainstream Pop's lineage or a root itself).
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and

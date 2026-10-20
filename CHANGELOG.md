@@ -9,9 +9,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Pop-core wheel: double-clicking a node, ring chip, center chip or root label focuses its own tree (`onFocusChange(id, "zoom-in")`), same as the info panel's Zoom in.
 
+### Changed
+
+- Pop-core wheel: the top-left bar is now an icon-only Home button, an icon-only Parent-view button and a breadcrumb of every parent view; the Previous button moved to the info panel header and walks previously selected nodes instead of views. `FocusChangeReason` `"previous"` is deprecated and no longer emitted.
+
 ### Fixed
 
 - Pop-core wheel: ring-root labels that can't fit without overlapping (e.g. the 58 children of a focused "Electronic dance music") now hide like dot labels instead of stacking; the center label stays shown.
+- Pop-core wheel: double-clicking a node label or chip to zoom in works again — a single click now waits 250 ms for a second click before centering/opening the panel, so the recentre glide no longer moves the target between the two clicks.
 
 ## [2.3.1] - 2026-10-19
 

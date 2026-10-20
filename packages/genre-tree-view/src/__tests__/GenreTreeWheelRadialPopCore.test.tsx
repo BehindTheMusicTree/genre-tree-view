@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../defer-click", () => ({
+  createDeferredClick: () => ({ schedule: (action: () => void) => action(), cancel: () => {} }),
+}));
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { useState } from "react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
@@ -1137,11 +1141,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onRootSelect).toHaveBeenLastCalledWith("a-core");
       expect(chipFor(container, "Rock")).toBeUndefined();
 
-      expect(Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent)).toEqual([
-        "↶ All genres",
-        "⌂ All genres",
-      ]);
-      fireEvent.click(getByRole("button", { name: "⌂ All genres" }));
+      fireEvent.click(getByRole("button", { name: "All genres" }));
       expect(onFocusChange).toHaveBeenCalledWith(null, "root");
     });
 
@@ -1161,7 +1161,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       fireEvent.click(centerAnchor.getByRole("button", { name: "Punk" }));
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
 
-      fireEvent.click(getByRole("button", { name: "← Rock" }));
+      fireEvent.click(getByRole("button", { name: "Parent view" }));
       expect(onFocusChange).toHaveBeenCalledWith("root-a", "back");
     });
 
@@ -1369,47 +1369,21 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
     });
 
-    it("tracks previous views: previous, parent and root buttons", () => {
-      function Harness({ onChange }: { onChange: (id: string | null, reason: string) => void }) {
-        const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
-        return (
-          <GenreTreeWheelRadialPopCore
-            nodes={NODES_WITH_POP}
-            focusNodeId={focusNodeId}
-            onFocusChange={(id, reason) => {
-              onChange(id, reason);
-              setFocusNodeId(id);
-            }}
-          />
-        );
-      }
-      const onChange = vi.fn();
-      const { container, getByRole, queryByRole } = render(<Harness onChange={onChange} />);
-      const labels = () => Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent);
+    it("shows home, parent and a breadcrumb of the parent views, and hides the bar at the root view", () => {
+      const onFocusChange = vi.fn();
+      const { container, getByRole, queryByRole, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />,
+      );
+      expect(getByRole("button", { name: "All genres" })).toBeTruthy();
+      expect(getByRole("button", { name: "Parent view" })).toBeTruthy();
+      const crumbs = within(container.querySelector(".gtv-wheel-breadcrumb") as HTMLElement);
+      expect(container.querySelector(".gtv-wheel-breadcrumb-current")?.textContent).toBe("Punk");
+      fireEvent.click(crumbs.getByRole("button", { name: "Rock" }));
+      expect(onFocusChange).toHaveBeenLastCalledWith("root-a", "back");
 
-      fireEvent.click(chipFor(container, "Rock"));
-      fireEvent.click(container.querySelector("#group-a-core") as Element);
-      fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
-      expect(labels()).toEqual(["↶ All genres", "← Rock", "⌂ All genres"]);
-
-      fireEvent.click(getByRole("button", { name: "← Rock" }));
-      expect(onChange).toHaveBeenLastCalledWith("root-a", "back");
-      expect(labels()).toEqual(["↶ Punk", "⌂ All genres"]);
-
-      fireEvent.click(getByRole("button", { name: "↶ Punk" }));
-      expect(onChange).toHaveBeenLastCalledWith("a-core", "previous");
-      expect(labels()).toEqual(["↶ All genres", "← Rock", "⌂ All genres"]);
-
-      fireEvent.click(getByRole("button", { name: "↶ All genres" }));
-      expect(onChange).toHaveBeenLastCalledWith(null, "previous");
-      expect(labels()).toEqual([]);
-
-      fireEvent.click(chipFor(container, "Jazz"));
-      fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
-      fireEvent.click(getByRole("button", { name: "⌂ All genres" }));
-      expect(onChange).toHaveBeenLastCalledWith(null, "root");
-      expect(queryByRole("button", { name: "⌂ All genres" })).toBeNull();
-      expect(labels()).toEqual(["↶ Jazz"]);
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />);
+      expect(queryByRole("button", { name: "All genres" })).toBeNull();
+      expect(container.querySelector(".gtv-wheel-breadcrumb")).toBeNull();
     });
 
     it("hides the parent button when the parent can't be a focus", () => {
@@ -1417,49 +1391,23 @@ describe("GenreTreeWheelRadialPopCore", () => {
         ...NODES_WITH_POP,
         { id: "a-pop-2", parentId: "root-a", name: "Power Pop", itemCount: 1, side: "pop" },
       ];
-      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="a-core" onFocusChange={vi.fn()} />);
-      expect(Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent)).toEqual([
-        "⌂ All genres",
-      ]);
+      const { container, queryByRole } = render(
+        <GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="a-core" onFocusChange={vi.fn()} />,
+      );
+      expect(queryByRole("button", { name: "Parent view" })).toBeNull();
+      expect(container.querySelectorAll(".gtv-wheel-breadcrumb-crumb").length).toBe(0);
     });
 
-    it("hides previous after a reload-style direct focus and shows a consumer-driven change", () => {
-      const onFocusChange = vi.fn();
-      const labels = (container: HTMLElement) =>
-        Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent);
-      const { container, rerender } = render(
-        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />,
-      );
-      expect(labels(container)).toEqual(["← Rock", "⌂ All genres"]);
+    it("offers the previously selected node in the panel header, not view changes", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+      fireEvent.click(chipFor(container, "Jazz"));
+      expect(container.querySelector(".gtv-info-panel-previous")).toBeNull();
 
-      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" onFocusChange={onFocusChange} />);
-      expect(labels(container)).toEqual(["↶ Punk", "⌂ All genres"]);
-    });
-
-    it("shows previous on the unfocused wheel after Root", () => {
-      const onFocusChange = vi.fn();
-      const { container, rerender, getByRole } = render(
-        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" onFocusChange={onFocusChange} />,
-      );
-      fireEvent.click(getByRole("button", { name: "⌂ All genres" }));
-      expect(onFocusChange).toHaveBeenLastCalledWith(null, "root");
-      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />);
-      expect(Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent)).toEqual([
-        "↶ Rock",
-      ]);
-    });
-
-    it("hides previous when its only entry was deleted", () => {
-      const onFocusChange = vi.fn();
-      const { container, rerender } = render(
-        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />,
-      );
-      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-b" onFocusChange={onFocusChange} />);
-      const withoutPunk = NODES_WITH_POP.filter((node) => node.id !== "a-core" && node.id !== "a-core-child");
-      rerender(<GenreTreeWheelRadialPopCore nodes={withoutPunk} focusNodeId="root-b" onFocusChange={onFocusChange} />);
-      expect(Array.from(container.querySelectorAll(".gtv-wheel-back-btn")).map((el) => el.textContent)).toEqual([
-        "⌂ All genres",
-      ]);
+      fireEvent.click(chipFor(container, "Rock"));
+      const back = container.querySelector(".gtv-info-panel-previous") as HTMLButtonElement;
+      expect(back.getAttribute("aria-label")).toBe("Previous: Jazz");
+      fireEvent.click(back);
+      expect(panelOf(container).getByText("Jazz")).toBeTruthy();
     });
 
     it("keeps a search selection outside the zoom when another node's panel is open", () => {
