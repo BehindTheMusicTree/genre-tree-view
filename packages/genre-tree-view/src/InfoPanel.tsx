@@ -32,8 +32,7 @@ export interface InfoPanelProps {
    * none. */
   parentNode: InfoPanelChild | null;
   childNodes: InfoPanelChild[];
-  /** `node`'s ancestors above its immediate parent, root-first — the Parent section already
-   * shows the immediate parent, so this covers grandparent and up. Empty when there are none. */
+  /** `node`'s ancestors root-first, including its immediate parent. Empty for a root. */
   ancestorNodes: InfoPanelChild[];
   side: "left" | "right";
   onClose: () => void;

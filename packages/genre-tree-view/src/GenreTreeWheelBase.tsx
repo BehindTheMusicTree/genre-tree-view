@@ -535,7 +535,7 @@ export function WheelCore({
               // visible node — including every child listed here — gets a solid rootColor fill.
               return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
             })}
-          ancestorNodes={computeAncestorChain(nodes, panel.node.parentId).map(
+          ancestorNodes={computeAncestorChain(nodes, panel.node.id).map(
             (n): InfoPanelChild => ({
               node: n,
               fill: rootColorOf(n.id),

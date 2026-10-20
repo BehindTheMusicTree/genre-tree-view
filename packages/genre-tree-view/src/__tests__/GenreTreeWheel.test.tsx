@@ -107,6 +107,15 @@ describe("GenreTreeWheel", () => {
     ).not.toBeNull();
   });
 
+  it("lists the wheel node's ancestors up to and including its parent in the info panel", () => {
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
+    fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
+    const section = within(container.querySelector(".gtv-info-panel") as HTMLElement)
+      .getByText("Ancestors")
+      .closest(".gtv-info-panel-children") as HTMLElement;
+    expect(Array.from(section.querySelectorAll("li")).map((li) => li.textContent)).toEqual(["Rock"]);
+  });
+
   it("hides the panel actions once a reparent starts with the panel open", () => {
     const onPlayPause = vi.fn();
     const { container, rerender } = render(<GenreTreeWheel nodes={NODES} onPlayPause={onPlayPause} />);
@@ -460,7 +469,7 @@ describe("GenreTreeWheel", () => {
 
       const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
 
-      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
         "Rock",
       );
       fireEvent.click(parentChip);
@@ -486,7 +495,7 @@ describe("GenreTreeWheel", () => {
         /gtv-node--dimmed/,
       );
 
-      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
         "Rock",
       );
       fireEvent.click(parentChip);

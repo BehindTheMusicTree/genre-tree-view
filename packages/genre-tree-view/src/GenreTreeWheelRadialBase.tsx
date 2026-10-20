@@ -695,7 +695,7 @@ export function WheelRadialCore({
           childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
             (n) => ({ node: n, fill: rootColorOf(n), textColor: ACCENT_TEXT_COLOR }),
           )}
-          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
+          ancestorNodes={index.ancestorsOf(panel.node.id).map(
             (n): InfoPanelChild => ({
               node: n,
               fill: rootColorOf(n),

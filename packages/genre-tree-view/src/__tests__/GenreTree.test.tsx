@@ -79,18 +79,23 @@ describe("GenreTree", () => {
       expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).queryByRole("button", { name: /play/i })).toBeNull();
     });
 
-    it("lists ancestors above the parent in the info panel, with and without hideRoot", () => {
+    it("lists every ancestor up to and including the parent in the info panel, with and without hideRoot", () => {
       const nodes: GenreTreeNode[] = [
         { id: "root", parentId: null, name: "Root", itemCount: 1 },
         { id: "mid", parentId: "root", name: "Mid", itemCount: 1 },
         { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 1 },
       ];
       for (const hideRoot of [false, true]) {
-        const { container, unmount } = render(<GenreTree nodes={nodes} selectedNodeId="leaf" hideRoot={hideRoot} />);
-        const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
-        expect(panel.getByText("Root")).toBeTruthy();
-        expect(panel.getByText("Mid")).toBeTruthy();
-        unmount();
+        for (const [selectedNodeId, expected] of [["leaf", ["Root", "Mid"]], ["mid", ["Root"]]] as const) {
+          const { container, unmount } = render(
+            <GenreTree nodes={nodes} selectedNodeId={selectedNodeId} hideRoot={hideRoot} />,
+          );
+          const section = within(container.querySelector(".gtv-info-panel") as HTMLElement)
+            .getByText("Ancestors")
+            .closest(".gtv-info-panel-children") as HTMLElement;
+          expect(Array.from(section.querySelectorAll("li")).map((li) => li.textContent)).toEqual(expected);
+          unmount();
+        }
       }
     });
 
@@ -453,7 +458,7 @@ describe("GenreTree", () => {
         fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
 
         const solidRootColor = getGenreTreeColor("root");
-        const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+        const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
           "Root",
         );
         const childChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
@@ -517,7 +522,7 @@ describe("GenreTree", () => {
         const qsSpy = vi.spyOn(svg, "querySelector").mockReturnValueOnce(null);
 
         const parentChip = within(
-          container.querySelector(".gtv-info-panel") as HTMLElement,
+          container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement,
         ).getByText("Root");
         fireEvent.click(parentChip);
         expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
@@ -553,7 +558,7 @@ describe("GenreTree", () => {
         fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
         expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "child-a" }));
 
-        fireEvent.click(within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText("Root"));
+        fireEvent.click(within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText("Root"));
         expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "root" }));
 
         fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);

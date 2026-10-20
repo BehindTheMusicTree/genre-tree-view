@@ -338,7 +338,7 @@ export function GenreTree({
                 : tintSurface(resolvedRootColor),
               textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
             }))}
-          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
+          ancestorNodes={index.ancestorsOf(panel.node.id).map(
             (n): InfoPanelChild => ({
               node: n,
               // Same fill/textColor expression as parentNode/childNodes above, including for
