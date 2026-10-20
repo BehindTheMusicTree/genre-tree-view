@@ -431,6 +431,8 @@ export interface RootLabelDatum {
   y: number;
   radius: number;
   itemCount: number;
+  /** Named even when no candidate spot is free (the wheel's center); other roots hide like dot labels. */
+  alwaysShown?: boolean;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -792,7 +794,8 @@ export function hideCollidingLabels<E extends SVGElement>(
       id: `root:${d.id}`,
       labels: rootGeometryById.get(d.id)!.candidates.map((candidate) => offset(candidate.box, d.x, d.y)),
       dot: { x0: d.x - d.radius, x1: d.x + d.radius, y0: d.y - d.radius, y1: d.y + d.radius },
-      priority: Infinity,
+      // Ring roots outrank every dot label (ranks are <= 1), bigger roots first.
+      priority: d.alwaysShown ? Infinity : 1 + calculateLabelRank(d.itemCount, itemCountRange, 1),
     })),
     ...nodes.nodes().map((element) => {
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
@@ -809,17 +812,18 @@ export function hideCollidingLabels<E extends SVGElement>(
       };
     }),
   ]);
-  // Roots are always named, even when no candidate is free.
   roots.each(function (d) {
     const { candidates, fontSize } = rootGeometryById.get(d.id)!;
-    const candidate = candidates[Math.max(placement.get(`root:${d.id}`) ?? 0, 0)];
+    const index = placement.get(`root:${d.id}`)!;
+    const candidate = candidates[Math.max(index, 0)];
     d3Lib
       .select(this)
       .select(".gtv-node-label")
       .attr("x", candidate.x)
       .attr("y", candidate.y)
       .attr("text-anchor", candidate.anchor)
-      .style("font-size", `${fontSize}px`);
+      .style("font-size", `${fontSize}px`)
+      .classed("gtv-node-label--hidden", index < 0 && !d.alwaysShown);
   });
   nodes.each(function (d) {
     const { candidates, fontSize } = geometryById.get(d.data.id)!;

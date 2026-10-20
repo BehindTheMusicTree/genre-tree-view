@@ -901,6 +901,35 @@ describe("renderPopSubtree dot + label nodes", () => {
     expect(svg.select("#group-dub .gtv-node-label").attr("text-anchor")).not.toBe("start");
   });
 
+  it("hides crowded ring-root labels but never the center's", () => {
+    const nodes: GenreTreeNode[] = [{ id: "hub", parentId: null, name: "Hub", itemCount: 1 }];
+    const range = getItemCountRange([
+      ...nodes,
+      { id: "big", parentId: null, name: "Big", itemCount: 1000 },
+    ]);
+    const svg = createSvg();
+    renderRootLabels(svg, [
+      { id: "center", name: "Center label", x: 0, y: 0, radius: 10, itemCount: 1, alwaysShown: true },
+      { id: "big", name: "Big root", x: 5, y: 0, radius: 10, itemCount: 1000 },
+      ...Array.from({ length: 20 }, (_, i) => ({
+        id: `r${i}`,
+        name: `Root ${i}`,
+        x: 10 + i,
+        y: 0,
+        radius: 2,
+        itemCount: 1,
+      })),
+    ]);
+
+    hideCollidingLabels(d3, svg, range, 1);
+
+    const hidden = (id: string) =>
+      svg.selectAll<SVGGElement, { id: string }>("g.gtv-root-label").filter((d) => d.id === id).select(".gtv-node-label").classed("gtv-node-label--hidden");
+    expect(hidden("center")).toBe(false);
+    expect(hidden("big")).toBe(false);
+    expect(svg.selectAll(".gtv-root-label .gtv-node-label--hidden").size()).toBeGreaterThan(0);
+  });
+
   it("keeps every dot of a 17-child branch inside its measured wedge", () => {
     const siblings: GenreTreeNode[] = [
       { id: "reggae", parentId: null, name: "Reggae", itemCount: 1 },
