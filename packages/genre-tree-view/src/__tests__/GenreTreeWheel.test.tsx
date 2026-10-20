@@ -502,4 +502,11 @@ describe("GenreTreeWheel", () => {
     });
   });
 
+  it("renders overlayPanel with no node selected", () => {
+    const { getByText } = render(
+      <GenreTreeWheel nodes={NODES} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
+    );
+    expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
+    expect(getByText("Overlay body")).toBeTruthy();
+  });
 });

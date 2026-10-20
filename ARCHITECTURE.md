@@ -171,6 +171,9 @@ pnpm workspace with two members:
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
+  `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
+  `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
+  identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
@@ -201,7 +204,7 @@ pnpm workspace with two members:
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`, `ControlsOrientation`.
+  `WheelZoomMode`, `ControlsOrientation`, `GenreTreeOverlayPanel`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

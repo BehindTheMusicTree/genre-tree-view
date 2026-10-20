@@ -20,6 +20,7 @@ import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
+import { OverlayPanel } from "./OverlayPanel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -94,6 +95,7 @@ export function WheelCore({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
   selectedNodeId,
@@ -585,6 +587,7 @@ export function WheelCore({
           }
         />
       )}
+      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       <div
         className={[

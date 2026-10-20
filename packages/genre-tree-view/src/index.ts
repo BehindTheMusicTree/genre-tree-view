@@ -20,6 +20,7 @@ export type {
   GenreTreeAction,
   WheelZoomMode,
   ControlsOrientation,
+  GenreTreeOverlayPanel,
 } from "./types";
 export type { GenreTreeViewSkeletonProps } from "./GenreTreeViewSkeleton";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";

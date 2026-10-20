@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `overlayPanel` prop (`{ title, content, onClose }`) on every renderer: consumer content shown over the tree at the expanded info panel's exact size, independent of node selection; its ✕ and Escape fire `onClose`. New `GenreTreeOverlayPanel` type.
 - Pop-core wheel: double-clicking a node, ring chip, center chip or root label focuses its own tree (`onFocusChange(id, "zoom-in")`), same as the info panel's Zoom in.
 
 ### Changed
