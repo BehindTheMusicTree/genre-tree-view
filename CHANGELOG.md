@@ -16,6 +16,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Pop-core wheel: root chips are sized by their own `itemCount` (already a subtree rollup) instead of re-summing their subtree, so a focused center and a same-count ring root render at the same size.
+- Pop-core wheel: a focused node with no pop child now shows a visible, clickable center chip (genre color, sized by item count) instead of a bare label.
 - Pop-core wheel: ring-root labels that can't fit without overlapping (e.g. the 58 children of a focused "Electronic dance music") now hide like dot labels instead of stacking; the center label stays shown.
 - Pop-core wheel: the center label now blocks neighboring labels even when it can't fit without overlapping a dot, so they no longer draw over it.
 - Pop-core wheel: double-clicking a node label or chip to zoom in works again — a single click now waits 250 ms for a second click before centering/opening the panel, so the recentre glide no longer moves the target between the two clicks.
