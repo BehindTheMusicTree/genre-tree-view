@@ -867,6 +867,20 @@ describe("renderPopSubtree dot + label nodes", () => {
     expect(svg.select("text.gtv-node-label").text()).toBe("Pop Rock");
   });
 
+  it("fills each node from nodeFillOf instead of the sector-wide color when given", () => {
+    const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000);
+    const svg = createSvg();
+    const fills: Record<string, string> = { "pop-rock": "#111111", "arena-rock": "#222222" };
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      nodeFillOf: (node) => fills[node.id],
+    });
+
+    for (const [id, fill] of Object.entries(fills)) {
+      expect(svg.select(`#group-${id} .gtv-node-dot`).attr("fill")).toBe(fill);
+      expect(svg.select<SVGGElement>(`#group-${id}`).style("--gtv-node-fill")).toBe(fill);
+    }
+  });
+
   it("anchors labels right of the dot on the right half and left of it on the left half", () => {
     const range = getItemCountRange(nodes);
     const right = createSvg();

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeWheelRadialPopCore`: the info panel stays open when you click "Zoom in", and a genre keeps the same color in every zoom frame instead of being repainted with its sector's color.
+
 ## [2.5.0] - 2026-10-20
 
 ### Added

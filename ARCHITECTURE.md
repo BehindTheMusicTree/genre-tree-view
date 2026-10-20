@@ -119,12 +119,14 @@ pnpm workspace with two members:
     `overflow: hidden` to clip them at the real frame edge under any pan/zoom instead of computing
     a rectangle intersection.
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
-    wheel radius, rotation easing/timing) consumed by all renderers.
+    wheel radius, rotation easing/timing) consumed by all renderers. `getGenreNodeStyle` gives every
+    pop-core node (chip, dot, info-panel header) a fill/text color that depends only on the full tree,
+    so a genre keeps its color in every zoom frame.
   - `pop-core-frame.ts` — `resolvePopCoreFrame` picks the pop-core wheel's center node (the
     "Mainstream Pop" root, or a focused node's single pop child / the focused node itself) and its
     ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
     rule for which nodes may be that focus (any node with children and at most one pop child).
-    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel and,
+    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel (which stays open on the zoomed node) and,
     a Home / Parent (icon-only, while focused) bar plus a breadcrumb of every zoomable ancestor view. The info
     panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
     `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
