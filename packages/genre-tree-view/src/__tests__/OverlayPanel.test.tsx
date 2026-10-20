@@ -13,6 +13,11 @@ describe("OverlayPanel", () => {
     expect(screen.getByText("Hello")).toBeTruthy();
   });
 
+  it("carries the overlay class that lets the host reserve room on the right", () => {
+    const { container } = render(<OverlayPanel title="About" content="x" onClose={() => {}} />);
+    expect(container.firstElementChild?.classList.contains("gtv-info-panel--overlay")).toBe(true);
+  });
+
   it("calls onClose from the close button", () => {
     const onClose = vi.fn();
     render(<OverlayPanel title="About" content="x" onClose={onClose} />);

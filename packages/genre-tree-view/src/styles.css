@@ -402,6 +402,12 @@
   border-right: none;
 }
 
+/* A host that keeps its own panel on the right sets --gtv-overlay-panel-right to that panel's width so
+   the overlay stops where it starts. */
+.gtv-info-panel--overlay {
+  right: var(--gtv-overlay-panel-right, 12px);
+}
+
 @container (max-width: 767px) {
   .gtv-info-panel--expanded .gtv-info-panel-body {
     display: block;
