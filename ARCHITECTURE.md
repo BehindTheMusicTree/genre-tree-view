@@ -174,6 +174,8 @@ pnpm workspace with two members:
   `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
   `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
   identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`.
+  A host that keeps its own panel on the right sets `--gtv-overlay-panel-right` (a length with a unit, default
+  `12px`) so the overlay stops where that panel starts.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via

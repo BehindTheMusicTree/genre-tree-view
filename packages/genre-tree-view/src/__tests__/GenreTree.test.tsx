@@ -461,8 +461,9 @@ describe("GenreTree", () => {
         );
         const probe = document.createElement("div");
         probe.style.backgroundColor = solidRootColor;
-        expect(parentChip.style.backgroundColor).toBe(probe.style.backgroundColor);
-        expect(childChip.style.backgroundColor).toBe(probe.style.backgroundColor);
+        const dot = (label: HTMLElement) => label.previousElementSibling as HTMLElement;
+        expect(dot(parentChip).style.backgroundColor).toBe(probe.style.backgroundColor);
+        expect(dot(childChip).style.backgroundColor).toBe(probe.style.backgroundColor);
 
         rectSpy.mockRestore();
       });

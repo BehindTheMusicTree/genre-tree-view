@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-20
+
+### Added
+
+- `overlayPanel` honours the `--gtv-overlay-panel-right` CSS variable (default `12px`): a host sets it to the width of a panel it keeps on the right so the overlay stops where that panel starts.
+
+### Changed
+
+- Info panel: parent and children now render as a mini tree (parent ← node → children) with circular nodes sized by item count, curved branches, and the largest child first.
+- Info panel: the mini tree sits in a collapsible "Family" section (open by default) toggled by a chevron at the right edge; the children count now reads "n child" / "n children", and a node without children no longer draws an outgoing branch.
+
 ## [2.4.0] - 2026-10-20
 
 ### Added
