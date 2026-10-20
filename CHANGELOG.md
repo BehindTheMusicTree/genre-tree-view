@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Pop-core wheel: double-clicking a node, ring chip, center chip or root label focuses its own tree (`onFocusChange(id, "zoom-in")`), same as the info panel's Zoom in.
+
 ## [2.3.1] - 2026-10-19
 
 ### Fixed
