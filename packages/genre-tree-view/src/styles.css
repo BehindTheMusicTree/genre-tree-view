@@ -889,14 +889,6 @@
   box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
 }
 
-/* Focused center with no pop child: only its D3-drawn label shows, so the chip stays as an
-   invisible hit area over it to keep the node selectable. */
-.gtv-wheel-chip--label-only {
-  border-color: transparent;
-  background: transparent;
-  filter: none;
-}
-
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
    text and light border used for colored chips would be invisible / too subtle here. */
 .gtv-wheel-chip--center {

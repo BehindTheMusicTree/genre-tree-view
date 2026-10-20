@@ -1196,7 +1196,22 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(onSelectedNodeChange).toHaveBeenLastCalledWith(popRock);
     });
 
-    it("keeps a label-only center selectable without drawing the pop disc", () => {
+    it("sizes ring chips by their own itemCount, not their subtree's sum", () => {
+      const { container } = render(
+        <GenreTreeWheelRadialPopCore
+          nodes={[
+            CENTER_NODE,
+            { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
+            { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 5 },
+            { id: "root-b", parentId: null, name: "Blues", itemCount: 5 },
+            { id: "b-child", parentId: "root-b", name: "Delta", itemCount: 0 },
+          ]}
+        />,
+      );
+      expect(chipFor(container, "Rock").style.width).toBe(chipFor(container, "Blues").style.width);
+    });
+
+    it("renders a visible, selectable center chip without drawing the pop disc", () => {
       const onNodeClick = vi.fn();
       const onAddChild = vi.fn();
       const { container } = render(
@@ -1209,6 +1224,8 @@ describe("GenreTreeWheelRadialPopCore", () => {
         />,
       );
       expect(container.querySelector(".gtv-wheel-chip--center")).toBeNull();
+      const centerChip = container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip") as HTMLElement;
+      expect(centerChip.style.getPropertyValue("--gtv-chip-color")).not.toBe("#ffffff");
 
       const centerAnchor = within(container.querySelector(".gtv-wheel-center-node") as HTMLElement);
       fireEvent.click(centerAnchor.getByRole("button", { name: "Punk" }));
