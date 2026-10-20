@@ -453,7 +453,8 @@
 }
 
 .gtv-info-panel-close,
-.gtv-info-panel-previous {
+.gtv-info-panel-previous,
+.gtv-info-panel-zoom-in {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -472,7 +473,8 @@
    background now varies with the clicked node's fill (light tint or solid saturated color), and
    this reads as a hover on either. */
 .gtv-info-panel-close:hover,
-.gtv-info-panel-previous:hover {
+.gtv-info-panel-previous:hover,
+.gtv-info-panel-zoom-in:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -517,10 +519,6 @@
   font-size: 13px;
   color: #18181b;
   word-break: break-word;
-}
-
-.gtv-info-panel-actions {
-  padding: 0 14px 10px;
 }
 
 .gtv-info-panel-toolbar {
