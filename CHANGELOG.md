@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Info panel: parent and children now render as a mini tree (parent ← node → children) with circular nodes sized by item count, curved branches, and the largest child first.
+
 ## [2.4.0] - 2026-10-20
 
 ### Added

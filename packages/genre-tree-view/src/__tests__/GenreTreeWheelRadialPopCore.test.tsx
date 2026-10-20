@@ -1424,7 +1424,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       const back = container.querySelector(".gtv-info-panel-previous") as HTMLButtonElement;
       expect(back.getAttribute("aria-label")).toBe("Previous: Jazz");
       fireEvent.click(back);
-      expect(panelOf(container).getByText("Jazz")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Jazz");
     });
 
     it("keeps a search selection outside the zoom when another node's panel is open", () => {
@@ -1445,10 +1445,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
       }
       const { container } = render(<Harness />);
       fireEvent.click(chipFor(container, "Punk"));
-      expect(panelOf(container).getByText("Punk")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
 
       act(() => select("b-child"));
-      expect(panelOf(container).getByText("Techno")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Techno");
     });
 
     it("forwards clicks on a label-only center's label to its chip", () => {
@@ -1496,7 +1496,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       const { container, rerender } = render(
         <GenreTreeWheelRadialPopCore {...props} focusNodeId={null} selectedNodeId="root-a" />,
       );
-      expect(panelOf(container).getByText("Rock")).toBeTruthy();
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Rock");
 
       rerender(<GenreTreeWheelRadialPopCore {...props} focusNodeId="root-b" selectedNodeId="a-core" />);
       expect(container.querySelector(".gtv-info-panel")).toBeNull();

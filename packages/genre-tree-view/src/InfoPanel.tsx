@@ -1,8 +1,16 @@
 import { ReactNode, useEffect } from "react";
 import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
 
+import { getItemCountRange, logarithmicPosition } from "./constants";
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
+
+// Same log-scaled position as a tree card (scaled across the mini tree's own nodes), mapped onto
+// a range that stays legible in the 280px panel instead of the tree's 35-120px card heights.
+const MINI_NODE_MIN_DIAMETER = 14;
+const MINI_NODE_MAX_DIAMETER = 32;
+const MINI_NODE_MIN_FONT_SIZE = 10;
+const MINI_NODE_MAX_FONT_SIZE = 14;
 
 /** A direct child of the panel's node, styled to match exactly how that child renders as its own
  * `gtv-node-rect` out in the tree (solid vs. tinted fill, light vs. dark text) — computed by the
@@ -101,6 +109,31 @@ export function InfoPanel({
   onExpandedChange,
 }: InfoPanelProps) {
   const editing = editMode && !readOnly;
+  const shownParent = editing && renderParentsEditor ? null : parentNode;
+  const miniTreeRange = getItemCountRange([
+    ...(shownParent ? [shownParent.node] : []),
+    node,
+    ...childNodes.map((child) => child.node),
+  ]);
+  const miniNodeSize = ({ itemCount }: GenreTreeNode) => {
+    const t = logarithmicPosition(itemCount, miniTreeRange);
+    return {
+      diameter: MINI_NODE_MIN_DIAMETER + t * (MINI_NODE_MAX_DIAMETER - MINI_NODE_MIN_DIAMETER),
+      fontSize: MINI_NODE_MIN_FONT_SIZE + t * (MINI_NODE_MAX_FONT_SIZE - MINI_NODE_MIN_FONT_SIZE),
+    };
+  };
+  const miniNodeContent = (target: GenreTreeNode, background: string) => {
+    const { diameter, fontSize } = miniNodeSize(target);
+    return (
+      <>
+        <span className="gtv-info-panel-mini-dot" style={{ background, width: diameter, height: diameter }} />
+        <span className="gtv-info-panel-mini-label" style={{ fontSize }}>
+          {target.name}
+        </span>
+      </>
+    );
+  };
+  const sortedChildNodes = [...childNodes].sort((a, b) => b.node.itemCount - a.node.itemCount);
 
   useEffect(() => {
     if (!expanded || !onExpandedChange) return;
@@ -221,48 +254,49 @@ export function InfoPanel({
               </ul>
             </div>
           )}
-          {editing && renderParentsEditor ? (
-            renderParentsEditor(node)
-          ) : parentNode && (
-            <div className="gtv-info-panel-children">
-              <span className="gtv-info-panel-children-title">Parent</span>
-              <ul className="gtv-info-panel-children-list">
-                <li>
+          {editing && renderParentsEditor && renderParentsEditor(node)}
+          <div className="gtv-info-panel-children">
+            <div className="gtv-info-panel-mini-tree">
+              {shownParent && (
+                <div className="gtv-info-panel-mini-tree-parent">
                   <button
                     type="button"
                     className="gtv-info-panel-child"
-                    style={{
-                      background: parentNode.fill,
-                      color: parentNode.textColor,
-                    }}
-                    onClick={() => onSelectNode(parentNode.node.id)}
+                    title={shownParent.node.name}
+                    onClick={() => onSelectNode(shownParent.node.id)}
                   >
-                    {parentNode.node.name}
+                    {miniNodeContent(shownParent.node, shownParent.fill)}
                   </button>
-                </li>
-              </ul>
+                </div>
+              )}
+              <div className="gtv-info-panel-mini-tree-node">
+                <span
+                  className="gtv-info-panel-child gtv-info-panel-mini-tree-current"
+                  title={node.name}
+                >
+                  {miniNodeContent(node, fill)}
+                </span>
+              </div>
+              <div className="gtv-info-panel-mini-tree-children">
+                <span className="gtv-info-panel-children-title">Children ({childNodes.length})</span>
+                {childNodes.length > 0 && (
+                  <ul className="gtv-info-panel-children-list">
+                    {sortedChildNodes.map(({ node: child, fill }) => (
+                      <li key={child.id}>
+                        <button
+                          type="button"
+                          className="gtv-info-panel-child"
+                          title={child.name}
+                          onClick={() => onSelectNode(child.id)}
+                        >
+                          {miniNodeContent(child, fill)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-          )}
-          <div className="gtv-info-panel-children">
-            <span className="gtv-info-panel-children-title">
-              Children ({childNodes.length})
-            </span>
-            {childNodes.length > 0 && (
-              <ul className="gtv-info-panel-children-list">
-                {childNodes.map(({ node: child, fill, textColor }) => (
-                  <li key={child.id}>
-                    <button
-                      type="button"
-                      className="gtv-info-panel-child"
-                      style={{ background: fill, color: textColor }}
-                      onClick={() => onSelectNode(child.id)}
-                    >
-                      {child.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
           {expanded && dangerZone}
         </div>
