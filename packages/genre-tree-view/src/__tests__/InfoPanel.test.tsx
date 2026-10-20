@@ -231,12 +231,31 @@ describe("InfoPanel", () => {
 
     expect(getByText("Children (2)")).toBeTruthy();
     const altRock = getByText("Alt Rock");
-    expect(altRock.classList.contains("gtv-info-panel-child")).toBe(true);
-    expect(altRock.style.backgroundColor).toBe("rgb(79, 70, 229)");
-    expect(altRock.style.color).toBe("rgb(255, 255, 255)");
+    expect(altRock.closest(".gtv-info-panel-child")).toBeTruthy();
+    expect((altRock.previousElementSibling as HTMLElement).style.backgroundColor).toBe("rgb(79, 70, 229)");
     const indieRock = getByText("Indie Rock");
-    expect(indieRock.style.backgroundColor).toBe("rgb(241, 240, 253)");
-    expect(indieRock.style.color).toBe("rgb(24, 24, 27)");
+    expect((indieRock.previousElementSibling as HTMLElement).style.backgroundColor).toBe("rgb(241, 240, 253)");
+  });
+
+  it("lists the largest child first", () => {
+    const { container } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={null}
+        childNodes={[...CHILD_NODES].reverse()}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    const names = Array.from(container.querySelectorAll(".gtv-info-panel-children-list .gtv-info-panel-mini-label")).map(
+      (label) => label.textContent,
+    );
+    expect(names).toEqual(["Alt Rock", "Indie Rock"]);
   });
 
   it("renders the parent as a chip styled with its own fill and text color", () => {
@@ -254,11 +273,9 @@ describe("InfoPanel", () => {
       />,
     );
 
-    expect(getByText("Parent")).toBeTruthy();
     const parentChip = getByText("Music");
-    expect(parentChip.classList.contains("gtv-info-panel-child")).toBe(true);
-    expect(parentChip.style.backgroundColor).toBe("rgb(17, 24, 39)");
-    expect(parentChip.style.color).toBe("rgb(255, 255, 255)");
+    expect(parentChip.closest(".gtv-info-panel-child")).toBeTruthy();
+    expect((parentChip.previousElementSibling as HTMLElement).style.backgroundColor).toBe("rgb(17, 24, 39)");
   });
 
   it("fires onSelectNode with the parent's id when the parent chip is clicked", () => {
@@ -301,6 +318,33 @@ describe("InfoPanel", () => {
     fireEvent.click(getByText("Indie Rock"));
     expect(onSelectNode).toHaveBeenCalledTimes(1);
     expect(onSelectNode).toHaveBeenCalledWith("root-a-2");
+  });
+
+  it("renders the current node as a non-clickable card between parent and children, sized by item count", () => {
+    const { container, getByText } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={PARENT_NODE}
+        childNodes={CHILD_NODES}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    const current = container.querySelector(".gtv-info-panel-mini-tree-current") as HTMLElement;
+    expect(current.tagName).toBe("SPAN");
+    expect(current.textContent).toBe("Rock");
+    const height = (el: HTMLElement) =>
+      parseFloat((el.parentElement!.querySelector(".gtv-info-panel-mini-dot") as HTMLElement).style.height);
+    expect(height(getByText("Music"))).toBe(32);
+    expect(height(getByText("Indie Rock"))).toBe(14);
+    expect(height(getByText("Alt Rock"))).toBeGreaterThan(height(getByText("Indie Rock")));
+    expect(height(current)).toBeGreaterThan(height(getByText("Alt Rock")));
+    expect(height(current)).toBeLessThan(height(getByText("Music")));
   });
 
   it("omits the ancestors section when there are no ancestors", () => {
@@ -478,7 +522,7 @@ describe("InfoPanel", () => {
 
     it("renders the slots only in edit mode", () => {
       renderPanel();
-      expect(screen.getByText("Rock")).toBeTruthy();
+      expect(screen.getAllByText("Rock").length).toBeGreaterThan(0);
       expect(screen.getByText("Music")).toBeTruthy();
       expect(screen.queryByLabelText("Genre name")).toBeNull();
       expect(screen.queryByText("Parents editor")).toBeNull();

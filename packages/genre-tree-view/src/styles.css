@@ -575,6 +575,198 @@
   opacity: 0.85;
 }
 
+.gtv-info-panel-mini-tree {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 40px 0 0;
+}
+
+.gtv-info-panel-mini-tree-parent,
+.gtv-info-panel-mini-tree-node {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 30%;
+  display: flex;
+}
+
+.gtv-info-panel-mini-tree-node {
+  max-width: none;
+}
+
+.gtv-info-panel-mini-tree-node .gtv-info-panel-mini-label {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  margin-top: 2px;
+  text-align: right;
+}
+
+.gtv-info-panel-mini-tree-parent,
+.gtv-info-panel-mini-tree-node:not(:last-child) {
+  padding-right: 40px;
+}
+
+.gtv-info-panel-mini-tree-parent::after,
+.gtv-info-panel-mini-tree-node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 40px;
+  border-top: 1.5px solid #d4d4d8;
+}
+
+.gtv-info-panel-mini-tree-node:not(:last-child) {
+  padding-right: 12px;
+}
+
+.gtv-info-panel-mini-tree-node:not(:last-child)::after {
+  width: 12px;
+}
+
+.gtv-info-panel-mini-tree-parent {
+  margin-bottom: 36px;
+}
+
+.gtv-info-panel-mini-tree-parent::before,
+.gtv-info-panel-mini-tree-parent::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 9px;
+  box-sizing: border-box;
+  left: auto;
+  right: auto;
+  border: 0 solid #d4d4d8;
+}
+
+.gtv-info-panel-mini-tree-parent::before {
+  left: calc(100% - 40px);
+  top: 50%;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+  border-top-right-radius: 8px;
+}
+
+.gtv-info-panel-mini-tree-parent::after {
+  left: calc(100% - 20px);
+  top: calc(50% + 9px);
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+  border-bottom-left-radius: 8px;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-child {
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: visible;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-sizing: border-box;
+}
+
+.gtv-info-panel-mini-dot {
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid #e4e4e7;
+  box-sizing: border-box;
+}
+
+.gtv-info-panel-mini-tree-parent .gtv-info-panel-mini-label {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 2px;
+}
+
+.gtv-info-panel-mini-tree-current .gtv-info-panel-mini-dot {
+  border-width: 2px;
+}
+
+.gtv-info-panel-mini-label {
+  max-width: 96px;
+  text-align: left;
+  color: #3f3f46;
+  width: max-content;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.gtv-info-panel-mini-tree-current {
+  cursor: default;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li {
+  position: relative;
+  max-width: 100%;
+  padding: 10px 0 10px 12px;
+  box-sizing: border-box;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  border-top: 1.5px solid #d4d4d8;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-left: 1.5px solid #d4d4d8;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:first-child::after,
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:last-child::after {
+  width: 12px;
+  box-sizing: border-box;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:first-child::after {
+  top: 50%;
+  border-top: 1.5px solid #d4d4d8;
+  border-top-left-radius: 8px;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:last-child::after {
+  bottom: 50%;
+  border-bottom: 1.5px solid #d4d4d8;
+  border-bottom-left-radius: 8px;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:first-child:not(:only-child)::before,
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:last-child:not(:only-child)::before {
+  display: none;
+}
+
+.gtv-info-panel-mini-tree .gtv-info-panel-children-list li:only-child::after {
+  display: none;
+}
+
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
    container, its full circle always on screen. Only the selected root's subtree is mounted,
    growing upward from the wheel's top-center anchor. */

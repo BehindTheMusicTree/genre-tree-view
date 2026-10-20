@@ -224,7 +224,7 @@ export function getItemCountRange(nodes: Array<{ itemCount: number }>): ItemCoun
  * nearly every node down near the minimum and let only the very largest stand out, so position
  * is computed on a log scale instead — equal *ratios* of item count grow a node by roughly
  * equal amounts, not equal absolute differences. log1p (not log) so an itemCount of 0 is finite. */
-function logarithmicPosition(itemCount: number, range: ItemCountRange): number {
+export function logarithmicPosition(itemCount: number, range: ItemCountRange): number {
   const { min, max } = range;
   const logMin = Math.log1p(Math.max(min, 0));
   const logMax = Math.log1p(Math.max(max, 0));

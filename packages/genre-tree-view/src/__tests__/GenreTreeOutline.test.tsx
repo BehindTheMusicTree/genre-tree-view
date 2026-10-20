@@ -214,7 +214,8 @@ describe("GenreTreeOutline", () => {
     expandAll(container);
     fireEvent.click(nameButton(container, "root-a"));
     const chipColor = (name: string) =>
-      (within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(name) as HTMLElement).style.background;
+      ((within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(name) as HTMLElement)
+        .previousElementSibling as HTMLElement).style.background;
     expect(chipColor("Punk")).not.toBe(chipColor("Pop Rock"));
 
     fireEvent.click(nameButton(container, "pop-child"));
