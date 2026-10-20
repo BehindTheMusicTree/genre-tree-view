@@ -11,6 +11,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Pop-core wheel: the info panel's Zoom in is now an icon button in the header, next to the title, instead of a text button in the body.
 - Pop-core wheel: the top-left bar is now an icon-only Home button, an icon-only Parent-view button and a breadcrumb of every parent view; the Previous button moved to the info panel header and walks previously selected nodes instead of views. `FocusChangeReason` `"previous"` is deprecated and no longer emitted.
 
 ### Fixed
