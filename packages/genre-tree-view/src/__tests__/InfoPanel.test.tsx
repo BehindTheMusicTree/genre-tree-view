@@ -189,8 +189,54 @@ describe("InfoPanel", () => {
       />,
     );
 
-    expect(getByText("Children (0)")).toBeTruthy();
+    expect(getByText("0 child")).toBeTruthy();
     expect(container.querySelector(".gtv-info-panel-children-list")).toBeNull();
+  });
+
+  it("collapses and re-expands the Family section from its chevron toggle", () => {
+    const { container, getByRole } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+    const toggle = getByRole("button", { name: "Family" });
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector(".gtv-info-panel-mini-tree")).not.toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector(".gtv-info-panel-mini-tree")).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector(".gtv-info-panel-mini-tree")).not.toBeNull();
+  });
+
+  it("marks the current node as a leaf (no outgoing branch) when it has no children", () => {
+    const { container } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector(".gtv-info-panel-mini-tree-node--leaf")).not.toBeNull();
   });
 
   it("omits the parent section when there is no parent", () => {
@@ -211,7 +257,7 @@ describe("InfoPanel", () => {
     expect(queryByText("Parent")).toBeNull();
     expect(
       container.querySelectorAll(".gtv-info-panel-children-title"),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
   });
 
   it("lists each child's name as a chip styled with its own fill and text color", () => {
@@ -229,7 +275,7 @@ describe("InfoPanel", () => {
       />,
     );
 
-    expect(getByText("Children (2)")).toBeTruthy();
+    expect(getByText("2 children")).toBeTruthy();
     const altRock = getByText("Alt Rock");
     expect(altRock.closest(".gtv-info-panel-child")).toBeTruthy();
     expect((altRock.previousElementSibling as HTMLElement).style.backgroundColor).toBe("rgb(79, 70, 229)");
