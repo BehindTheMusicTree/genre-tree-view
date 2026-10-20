@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MdArrowUpward, MdFitScreen, MdHome, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
+import { createDeferredClick } from "./defer-click";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { useTreeIndex } from "./use-tree-index";
@@ -74,10 +75,10 @@ import {
   ZOOM_FOCUS_SCALE,
 } from "./constants";
 
-/** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the previous / parent ("back") /
- * root-view buttons, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
+/** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
+ * root-view buttons and breadcrumb, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
  * `focusNodeId` that isn't zoomable (see `isZoomableNode`). */
-export type FocusChangeReason = "zoom-in" | "previous" | "back" | "root" | "search" | "rejected";
+export type FocusChangeReason = "zoom-in" | /** @deprecated no longer emitted */ "previous" | "back" | "root" | "search" | "rejected";
 
 /** Focus is controlled-only: pass both props or neither, since the wheel never moves its own focus. */
 export type PopCoreFocusProps =
@@ -89,8 +90,7 @@ export type PopCoreFocusProps =
        * `onFocusChange(null, "rejected")` once. */
       focusNodeId: string | null;
       /** Fired with the node to focus and why: any zoomable node from its info panel's "Zoom in"
-       * or a double-click on it or its label (`"zoom-in"`), the last view displayed, whatever changed it (`"previous"`, tracked in memory only, so
-       * hidden after a reload), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
+       * or a double-click on it or its label (`"zoom-in"`), the focus node's parent (`"back"`), null for the whole tree (`"root"`),
        * the selection's top-level root — or null when that root is Mainstream Pop or the selection
        * is itself a root — when `selectedNodeId` lies outside the zoom (`"search"`), and null when
        * `focusNodeId` isn't zoomable (`"rejected"`). Omit both props to hide the zoom-in and back
@@ -189,7 +189,6 @@ export function WheelRadialPopCoreCore({
     [nodes, requestedFocusNodeId],
   );
   const isFocusRejected = requestedFocusNodeId !== null && focusNodeId === null;
-  const { previous, markPreviousRequested } = useFocusHistory(focusNodeId, (id) => isZoomableNode(nodes, id));
   useEffect(() => {
     if (isFocusRejected) onFocusChange?.(null, "rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- report each rejected id once, not on every new callback identity
@@ -320,6 +319,20 @@ export function WheelRadialPopCoreCore({
     openPanel && (centerSubtreeNodeIds.has(openPanel.node.id) || ringRootById.has(openPanel.node.id))
       ? openPanel
       : null;
+  const { previous: previousSelectedId, markPreviousRequested } = useFocusHistory(
+    panel?.node.id ?? null,
+    (id) => centerSubtreeNodeIds.has(id) || ringRootById.has(id),
+  );
+  const selectNodeFromPanel = (id: string) => {
+    const targetNode = index.byId.get(id)!;
+    const element = viewportRef.current!.querySelector(`#group-${CSS.escape(id)}`);
+    panZoom.centerOnElement(
+      element,
+      ZOOM_FOCUS_SCALE,
+      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+    );
+    showNodeInfo(targetNode, element ?? viewportRef.current, viewportRef.current);
+  };
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -332,7 +345,13 @@ export function WheelRadialPopCoreCore({
     showNodeInfoRef.current = showNodeInfo;
   });
   // Double-click mirrors the info panel's "Zoom in" button.
+  const chipClickRef = useRef(createDeferredClick());
+  useEffect(() => {
+    const deferred = chipClickRef.current;
+    return deferred.cancel;
+  }, []);
   const focusOnNode = (id: string) => {
+    chipClickRef.current.cancel();
     if (!onFocusChange || reparentingNodeId || id === focusNodeId || !isZoomableNode(nodes, id)) return;
     closeNodeInfo();
     onFocusChange(id, "zoom-in");
@@ -731,8 +750,7 @@ export function WheelRadialPopCoreCore({
               if (reparentingNodeId)
                 void onReparent?.(reparentingNodeId, newParentId);
             },
-            onNodeClick: (data, event) => {
-              const clickedElement = event.currentTarget as Element | null;
+            onNodeClick: (data, event, clickedElement) => {
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
@@ -811,8 +829,7 @@ export function WheelRadialPopCoreCore({
               if (reparentingNodeId)
                 void onReparent?.(reparentingNodeId, newParentId);
             },
-            onNodeClick: (data, event) => {
-              const clickedElement = event.currentTarget as Element | null;
+            onNodeClick: (data, event, clickedElement) => {
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
@@ -877,8 +894,7 @@ export function WheelRadialPopCoreCore({
             if (reparentingNodeId)
               void onReparent?.(reparentingNodeId, newParentId);
           },
-          onNodeClick: (data, event) => {
-            const clickedElement = event.currentTarget as Element | null;
+          onNodeClick: (data, event, clickedElement) => {
             centerOnElementRef.current(
               clickedElement,
               ZOOM_FOCUS_SCALE,
@@ -1267,19 +1283,19 @@ export function WheelRadialPopCoreCore({
                   } as React.CSSProperties
                 }
                 onClick={(event) => {
-                  panZoom.centerOnElement(
-                    event.currentTarget,
-                    ZOOM_FOCUS_SCALE,
-                    resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
-                  );
-                  if (!reparentingNodeId) {
-                    showNodeInfo(
-                      centerNode,
-                      event.currentTarget,
-                      viewportRef.current,
+                  const chip = event.currentTarget;
+                  const nativeEvent = event.nativeEvent;
+                  chipClickRef.current.schedule(() => {
+                    panZoom.centerOnElement(
+                      chip,
+                      ZOOM_FOCUS_SCALE,
+                      resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                     );
-                    onNodeClick?.(centerNode, event.nativeEvent);
-                  }
+                    if (!reparentingNodeId) {
+                      showNodeInfo(centerNode, chip, viewportRef.current);
+                      onNodeClick?.(centerNode, nativeEvent);
+                    }
+                  });
                 }}
                 onDoubleClick={() => focusOnNode(centerNode.id)}
                 aria-label={centerNode.name}
@@ -1335,20 +1351,20 @@ export function WheelRadialPopCoreCore({
                       aria-label={group.root.name}
                       onPointerEnter={() => onNodeHover?.(root)}
                       onClick={(event) => {
-                        panZoom.centerOnElement(
-                          event.currentTarget,
-                          ZOOM_FOCUS_SCALE,
-                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
-                        );
-                        handleChipClick(group.root.id);
-                        if (!reparentingNodeId) {
-                          showNodeInfo(
-                            root,
-                            event.currentTarget,
-                            viewportRef.current,
+                        const chip = event.currentTarget;
+                        const nativeEvent = event.nativeEvent;
+                        chipClickRef.current.schedule(() => {
+                          panZoom.centerOnElement(
+                            chip,
+                            ZOOM_FOCUS_SCALE,
+                            resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                           );
-                          onNodeClick?.(root, event.nativeEvent);
-                        }
+                          handleChipClick(group.root.id);
+                          if (!reparentingNodeId) {
+                            showNodeInfo(root, chip, viewportRef.current);
+                            onNodeClick?.(root, nativeEvent);
+                          }
+                        });
                       }}
                       onDoubleClick={() => focusOnNode(group.root.id)}
                     >
@@ -1399,22 +1415,16 @@ export function WheelRadialPopCoreCore({
           )}
           side={panel.side}
           onClose={closeNodeInfo}
-          onSelectNode={(id) => {
-            const targetNode = index.byId.get(id)!;
-            const element = viewportRef.current!.querySelector(
-              `#group-${CSS.escape(id)}`,
-            );
-            panZoom.centerOnElement(
-              element,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfo(
-              targetNode,
-              element ?? viewportRef.current,
-              viewportRef.current,
-            );
-          }}
+          onSelectNode={selectNodeFromPanel}
+          onPrevious={
+            typeof previousSelectedId === "string"
+              ? () => {
+                  markPreviousRequested(previousSelectedId);
+                  selectNodeFromPanel(previousSelectedId);
+                }
+              : undefined
+          }
+          previousLabel={typeof previousSelectedId === "string" ? index.byId.get(previousSelectedId)?.name : undefined}
           hideClose={hideInfoPanelClose}
           readOnly={readOnly}
           editMode={editMode}
@@ -1451,45 +1461,55 @@ export function WheelRadialPopCoreCore({
         />
       )}
 
-      {onFocusChange && (focusNodeId !== null || previous !== undefined) && (
+      {onFocusChange && focusNodeId !== null && (
         <div className="gtv-wheel-back-controls">
-          {previous !== undefined && (
+          <button
+            type="button"
+            className="gtv-wheel-back-btn"
+            aria-label="All genres"
+            onClick={() => {
+              closeNodeInfo();
+              onFocusChange(null, "root");
+            }}
+          >
+            <MdHome className="gtv-icon" size={16} />
+          </button>
+          {focusParent && (
             <button
               type="button"
               className="gtv-wheel-back-btn"
-              onClick={() => {
-                closeNodeInfo();
-                markPreviousRequested(previous);
-                onFocusChange(previous, "previous");
-              }}
-            >
-              ↶ {(previous !== null && index.byId.get(previous)?.name) || "All genres"}
-            </button>
-          )}
-          {focusNodeId !== null && focusParent && (
-            <button
-              type="button"
-              className="gtv-wheel-back-btn"
+              aria-label="Parent view"
               onClick={() => {
                 closeNodeInfo();
                 onFocusChange(focusParent.id, "back");
               }}
             >
-              ← {focusParent.name}
+              <MdArrowUpward className="gtv-icon" size={16} />
             </button>
           )}
-          {focusNodeId !== null && (
-            <button
-              type="button"
-              className="gtv-wheel-back-btn"
-              onClick={() => {
-                closeNodeInfo();
-                onFocusChange(null, "root");
-              }}
-            >
-              ⌂ All genres
-            </button>
-          )}
+          <nav className="gtv-wheel-breadcrumb" aria-label="Breadcrumb">
+            {index
+              .ancestorsOf(focusNodeId)
+              .filter((ancestor) => isZoomableNode(nodes, ancestor.id))
+              .map((ancestor) => (
+                <Fragment key={ancestor.id}>
+                  <button
+                    type="button"
+                    className="gtv-wheel-breadcrumb-crumb"
+                    onClick={() => {
+                      closeNodeInfo();
+                      onFocusChange(ancestor.id, "back");
+                    }}
+                  >
+                    {ancestor.name}
+                  </button>
+                  <span aria-hidden="true">›</span>
+                </Fragment>
+              ))}
+            <span className="gtv-wheel-breadcrumb-current" aria-current="page">
+              {index.byId.get(focusNodeId)?.name}
+            </span>
+          </nav>
         </div>
       )}
 

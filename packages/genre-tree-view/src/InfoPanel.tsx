@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { MdClose, MdCloseFullscreen, MdOpenInFull } from "react-icons/md";
+import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull } from "react-icons/md";
 
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
@@ -32,6 +32,9 @@ export interface InfoPanelProps {
   /** Fired when the parent chip or a child chip is clicked, with that node's id — the caller
    * navigates the panel (and the tree's own selection/centering) to it. */
   onSelectNode: (nodeId: string) => void;
+  /** Reselects the previously selected node; the button is hidden when omitted. */
+  onPrevious?: () => void;
+  previousLabel?: string;
   /** See GenreTreeProps.hideInfoPanelClose. */
   hideClose?: boolean;
   /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
@@ -82,6 +85,8 @@ export function InfoPanel({
   side,
   onClose,
   onSelectNode,
+  onPrevious,
+  previousLabel,
   renderExtraDetails,
   hideClose = false,
   onZoomIn,
@@ -119,6 +124,18 @@ export function InfoPanel({
         className="gtv-info-panel-header"
         style={{ background: fill, color: textColor }}
       >
+        {onPrevious && (
+          <button
+            type="button"
+            className="gtv-info-panel-previous"
+            style={{ color: textColor }}
+            onClick={onPrevious}
+            aria-label={previousLabel ? `Previous: ${previousLabel}` : "Previous"}
+            title={previousLabel}
+          >
+            <MdArrowBack className="gtv-icon" size={16} />
+          </button>
+        )}
         {editing && renderTitleEditor ? (
           <div className="gtv-info-panel-title gtv-info-panel-title--editor">{renderTitleEditor(node)}</div>
         ) : (

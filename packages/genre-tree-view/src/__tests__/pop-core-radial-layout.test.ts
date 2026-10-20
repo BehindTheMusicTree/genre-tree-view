@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildPopHierarchy,
   calculateMainstreamPopOuterCircleRadius,
@@ -32,6 +32,7 @@ import {
   tintSurface,
   NODE_MAX_BORDER_WIDTH,
   SELECTED_BORDER_WIDTH_RATIO,
+  DOUBLE_CLICK_DELAY_MS,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
@@ -541,6 +542,14 @@ describe("renderPopSubtree link rendering", () => {
 });
 
 describe("renderPopSubtree onNodeClick", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const nodes: GenreTreeNode[] = [
     { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
   ];
@@ -564,6 +573,7 @@ describe("renderPopSubtree onNodeClick", () => {
 
     const group = svg.select<SVGGElement>("g.node").node()!;
     group.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    vi.advanceTimersByTime(DOUBLE_CLICK_DELAY_MS);
 
     expect(onNodeClick).toHaveBeenCalledTimes(1);
     expect(onNodeClick.mock.calls[0][0]).toEqual(
@@ -593,11 +603,41 @@ describe("renderPopSubtree onNodeClick", () => {
     const label = svg.select<SVGTextElement>("text.gtv-node-label");
     expect(label.attr("pointer-events")).toBe("all");
     label.node()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    vi.advanceTimersByTime(DOUBLE_CLICK_DELAY_MS);
 
     expect(onNodeClick).toHaveBeenCalledTimes(1);
     expect(onNodeClick.mock.calls[0][0]).toEqual(
       expect.objectContaining({ id: "pop-rock" }),
     );
+  });
+
+  // A click's pan/zoom glide would otherwise move the label before the second click lands.
+  it("skips the click action when a double-click follows it", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+    const onNodeClick = vi.fn();
+    const onNodeDoubleClick = vi.fn();
+
+    renderPopSubtree(
+      d3,
+      svg,
+      laidOut,
+      "#123456",
+      null,
+      [],
+      { ...noopCallbacks, onNodeClick, onNodeDoubleClick },
+      getItemCountRange(nodes),
+    );
+
+    const label = svg.select<SVGTextElement>("text.gtv-node-label").node()!;
+    label.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    label.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    label.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    vi.advanceTimersByTime(DOUBLE_CLICK_DELAY_MS);
+
+    expect(onNodeClick).not.toHaveBeenCalled();
+    expect(onNodeDoubleClick).toHaveBeenCalledTimes(1);
   });
 
   it("does not fire onNodeClick while a reparent is in progress", () => {

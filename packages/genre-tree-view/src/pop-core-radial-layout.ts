@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 
+import { createDeferredClick } from "./defer-click";
 import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 import {
   addReparentTargetOverlay,
@@ -461,7 +462,7 @@ export interface RenderPopSubtreeCallbacks {
   onDeleteRequest?: (node: GenreTreeNode) => void;
   onReparentRequest?: (node: GenreTreeNode) => void;
   onReparentTargetSelect: (newParentId: string) => void;
-  onNodeClick?: (node: GenreTreeNode, event: MouseEvent) => void;
+  onNodeClick?: (node: GenreTreeNode, event: MouseEvent, element: Element) => void;
   onNodeDoubleClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
@@ -743,12 +744,17 @@ export function renderPopSubtree(
     // on the card body itself (the reparent-target overlay doesn't stopPropagation, but its click
     // only exists while reparentingNodeId is set, which the guard below already suppresses).
     // See tree-renderer.ts's identical handler.
-    group.on("click", function (event: MouseEvent) {
+    const deferredClick = createDeferredClick();
+    group.on("click", (event: MouseEvent) => {
       if (reparentingNodeId) return;
-      onNodeClick?.(d.data, event);
+      const element = event.currentTarget as Element;
+      deferredClick.schedule(() => onNodeClick?.(d.data, event, element));
     });
 
-    group.on("dblclick", () => onNodeDoubleClick?.(d.data));
+    group.on("dblclick", () => {
+      deferredClick.cancel();
+      onNodeDoubleClick?.(d.data);
+    });
   });
 }
 
