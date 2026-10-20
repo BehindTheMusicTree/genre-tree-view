@@ -17,7 +17,7 @@ export function OverlayPanel({ title, content, onClose }: GenreTreeOverlayPanel)
   }, [onClose]);
 
   return (
-    <div className="gtv-info-panel gtv-info-panel--right gtv-info-panel--expanded gtv-info-panel--expanded-solo">
+    <div className="gtv-info-panel gtv-info-panel--right gtv-info-panel--expanded gtv-info-panel--expanded-solo gtv-info-panel--overlay">
       <div className="gtv-info-panel-header">
         <span className="gtv-info-panel-title">{title}</span>
         <button type="button" className="gtv-info-panel-close" onClick={onClose} aria-label="Close">
