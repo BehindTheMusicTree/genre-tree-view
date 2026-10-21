@@ -508,6 +508,9 @@ export function renderPopSubtree(
     // The node whose info panel is currently open (see use-node-info-panel.ts) — gets a heavier
     // accent-colored border while every other node in the subtree dims.
     selectedNodeId?: string | null;
+    // Per-node fill overriding the sector-wide one derived from rootColor, for a caller whose node
+    // colors must not depend on which sector they happen to render in.
+    nodeFillOf?: (node: GenreTreeNode) => string;
   } = {},
 ): void {
   const {
@@ -516,6 +519,7 @@ export function renderPopSubtree(
     rootLinkOrigin,
     isMainstreamSector = false,
     selectedNodeId = null,
+    nodeFillOf,
   } = options;
   const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -525,9 +529,10 @@ export function renderPopSubtree(
   const isRelatedNode = (d: D3Node) =>
     d.parent?.data.id === selectedNodeId ||
     (d.children ?? []).some((c) => c.data.id === selectedNodeId);
-  const nodeFill = isCoreSector
+  const sectorFill = isCoreSector
     ? rootColor
     : tintSurface(rootColor, POP_SECTOR_TINT_RATIO);
+  const nodeFill = (d: D3Node) => nodeFillOf?.(d.data) ?? sectorFill;
   // The center's white rootColor would tint its links and dot borders to white, invisible on the
   // white wheel.
   const linkColor = isMainstreamSector

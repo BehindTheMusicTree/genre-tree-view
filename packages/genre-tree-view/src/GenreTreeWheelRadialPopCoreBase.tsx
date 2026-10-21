@@ -52,24 +52,22 @@ import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
-  ACCENT_TEXT_COLOR,
   calculateNodeDotRadius,
   CENTER_NODE_NAME,
   getGenreNodeColor,
+  getGenreNodeStyle,
   getItemCountRange,
   hexToRgba,
   INFO_PANEL_WIDTH,
+  isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
   PER_TREE_ACCENT_DOT,
-  POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
   REGION_LABEL_TARGET_PX,
-  TEXT_COLOR,
-  tintSurface,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -257,39 +255,10 @@ export function WheelRadialPopCoreCore({
     () => new Map(groups.flatMap((group) => group.nodes.map((node) => [node.id, group.root]))),
     [groups],
   );
-  const coreNodeIds = useMemo(
-    () =>
-      new Set(
-        [...splitByRootId.values()].flatMap((split) =>
-          split.coreNodes.map((node) => node.id),
-        ),
-      ),
-    [splitByRootId],
-  );
-
-  // Mirrors renderPopSubtree's nodeFill/text-color rules (pop-core-radial-layout.ts) for whichever
-  // sector a given node actually renders in here: the center "Mainstream Pop" subtree (tinted,
-  // dark text), a ring root's core branch (solid, light text), or its pop branch (tinted, light
-  // text) — used to style InfoPanel's child chips the same way their real chip renders.
+  // Every chip, dot and InfoPanel header takes this, so a genre looks the same in every zoom frame.
   const getNodeVisualStyle = useCallback(
-    (node: GenreTreeNode): { fill: string; textColor: string } => {
-      if (centerSubtreeNodeIds.has(node.id)) {
-        // Matches centerNodeColor below — the fixed white rootColor renderPopSubtree uses for the
-        // center "Mainstream Pop" subtree.
-        return {
-          fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO),
-          textColor: TEXT_COLOR,
-        };
-      }
-      const rootColor = getGenreNodeColor(index, ringRootById.get(node.id)?.id ?? node.id);
-      return {
-        fill: coreNodeIds.has(node.id)
-          ? rootColor
-          : tintSurface(rootColor, POP_SECTOR_TINT_RATIO),
-        textColor: ACCENT_TEXT_COLOR,
-      };
-    },
-    [centerSubtreeNodeIds, coreNodeIds, ringRootById, index],
+    (node: GenreTreeNode) => getGenreNodeStyle(index, node.id),
+    [index],
   );
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -317,13 +286,13 @@ export function WheelRadialPopCoreCore({
   const { panel: openPanel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Derived per frame, not closed by an effect: a focus change can leave the open (or selected)
   // node outside the drawn subtree, and nothing orders such an effect against the selection one.
-  const panel =
-    openPanel && (centerSubtreeNodeIds.has(openPanel.node.id) || ringRootById.has(openPanel.node.id))
-      ? openPanel
-      : null;
+  // The focus node itself counts: when it has a pop child that child is the drawn center, so the
+  // node zoomed into from its panel isn't drawn but its panel should stay open.
+  const isInFrame = (id: string) => id === focusNodeId || centerSubtreeNodeIds.has(id) || ringRootById.has(id);
+  const panel = openPanel && isInFrame(openPanel.node.id) ? openPanel : null;
   const { previous: previousSelectedId, markPreviousRequested } = useFocusHistory(
     panel?.node.id ?? null,
-    (id) => centerSubtreeNodeIds.has(id) || ringRootById.has(id),
+    isInFrame,
   );
   const selectNodeFromPanel = (id: string) => {
     const targetNode = index.byId.get(id)!;
@@ -418,7 +387,8 @@ export function WheelRadialPopCoreCore({
     [nodes, rootItemCountById],
   );
 
-  const centerNodeColor = centerHasPopDisc ? "#ffffff" : getGenreNodeColor(index, centerNode.id);
+  const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
+  const centerNodeColor = isCenterMainstream ? "#ffffff" : getGenreNodeStyle(index, centerNode.id).fill;
   const centerChipDiameter = 2 * calculateNodeDotRadius(centerNode.itemCount, wheelItemCountRange);
 
   const branchHierarchiesByRootId = useMemo(
@@ -767,6 +737,7 @@ export function WheelRadialPopCoreCore({
           {
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
           },
         );
       });
@@ -847,6 +818,7 @@ export function WheelRadialPopCoreCore({
             isCoreSector: true,
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
           },
         );
       });
@@ -910,8 +882,9 @@ export function WheelRadialPopCoreCore({
         wheelItemCountRange,
         {
           skipRootNode: true,
-          isMainstreamSector: true,
+          isMainstreamSector: isCenterMainstream,
           selectedNodeId: panel?.node.id ?? null,
+          nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
         },
       );
     }
@@ -966,7 +939,7 @@ export function WheelRadialPopCoreCore({
     centerChipDiameter,
     groups,
     rootItemCountById,
-    index.byId,
+    index,
     popHierarchyByRootId,
     coreHierarchyByRootId,
     coreRootCircleRadius,
@@ -986,6 +959,7 @@ export function WheelRadialPopCoreCore({
     additionalActions,
     centerSubtreeHierarchy,
     centerNodeColor,
+    isCenterMainstream,
     wheelItemCountRange,
     panel?.node.id,
   ]);
@@ -1317,7 +1291,7 @@ export function WheelRadialPopCoreCore({
               const root = index.byId.get(group.root.id)!;
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
-              const chipColor = getGenreNodeColor(index, group.root.id);
+              const chipColor = getGenreNodeStyle(index, group.root.id).fill;
               const rootItemCount = rootItemCountById.get(
                 group.root.id,
               )!;
@@ -1404,7 +1378,7 @@ export function WheelRadialPopCoreCore({
           childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
             (n) => ({ node: n, ...getNodeVisualStyle(n) }),
           )}
-          ancestorNodes={index.ancestorsOf(panel.node.id).slice(0, -1).map(
+          ancestorNodes={index.ancestorsOf(panel.node.id).map(
             (n): InfoPanelChild => ({ node: n, ...getNodeVisualStyle(n) }),
           )}
           side={panel.side}
@@ -1446,10 +1420,7 @@ export function WheelRadialPopCoreCore({
           renderExtraDetails={renderExtraDetails}
           onZoomIn={
             onFocusChange && panel.node.id !== focusNodeId && isZoomableNode(nodes, panel.node.id)
-              ? () => {
-                  closeNodeInfo();
-                  onFocusChange(panel.node.id, "zoom-in");
-                }
+              ? () => onFocusChange(panel.node.id, "zoom-in")
               : undefined
           }
         />

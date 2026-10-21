@@ -119,12 +119,14 @@ pnpm workspace with two members:
     `overflow: hidden` to clip them at the real frame edge under any pan/zoom instead of computing
     a rectangle intersection.
   - `constants.ts` — shared sizing/color constants (node dimensions, font sizing by item count,
-    wheel radius, rotation easing/timing) consumed by all renderers.
+    wheel radius, rotation easing/timing) consumed by all renderers. `getGenreNodeStyle` gives every
+    pop-core node (chip, dot, info-panel header) a fill/text color that depends only on the full tree,
+    so a genre keeps its color in every zoom frame.
   - `pop-core-frame.ts` — `resolvePopCoreFrame` picks the pop-core wheel's center node (the
     "Mainstream Pop" root, or a focused node's single pop child / the focused node itself) and its
     ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
     rule for which nodes may be that focus (any node with children and at most one pop child).
-    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel and,
+    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel (which stays open on the zoomed node) and,
     a Home / Parent (icon-only, while focused) bar plus a breadcrumb of every zoomable ancestor view. The info
     panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
     `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
@@ -145,8 +147,8 @@ pnpm workspace with two members:
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
 - **Node info panel**: clicking any node opens a read-only panel showing that node's song count
-  and side, its parent and ancestors above the parent (root-first), and its direct children, each
-  as clickable chips styled with that node's own fill/text color — internal presentational chrome,
+  and side, its ancestors root-first (including the parent) as a vertical chain, and its direct
+  children, each as a clickable circle node filled with that node's own color — internal presentational chrome,
   like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
   the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of
   the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); clicking a node or
@@ -167,7 +169,9 @@ pnpm workspace with two members:
   its store's `selectedId`. The panel's top offset is the `--gtv-info-panel-top` CSS variable
   (default `12px`). Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
-  pan/zoom-transformed content so it never scales or pans with the tree. `GenreTreeProps.renderExtraDetails`
+  pan/zoom-transformed content so it never scales or pans with the tree. Its Ancestors and Family
+  sections each wrap `InfoPanelSection.tsx`, which owns the section's chevron collapse toggle.
+  `GenreTreeProps.renderExtraDetails`
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
@@ -175,7 +179,10 @@ pnpm workspace with two members:
   `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
   identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`.
   A host that keeps its own panel on the right sets `--gtv-overlay-panel-right` (a length with a unit, default
-  `12px`) so the overlay stops where that panel starts.
+  `12px`) so the overlay stops where that panel starts. A host that floats its own control over the panels'
+  top edge (e.g. a search bar) sets `--gtv-info-panel-header-inset` (default `0px`) to that control's height plus
+  its margins: every panel header's fill extends behind the control and its content starts below it, and
+  `GenreTreeOutline`'s list is pushed down by the same amount.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via

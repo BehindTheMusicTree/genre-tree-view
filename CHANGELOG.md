@@ -5,6 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-10-21
+
+### Added
+
+- `--gtv-info-panel-header-inset` CSS variable (default `0px`): a host that floats a control (e.g. a search bar) over the panels' top edge sets it to that control's height plus its margins, so the info/overlay panel header's fill extends behind the control and `GenreTreeOutline`'s list starts below it.
+
+### Changed
+
+- Info panel: the "Ancestors" section now lists the full path from the root down to and including the immediate parent, so it also shows for a root's direct children.
+- Info panel: ancestors render as circle nodes in a vertical root-first chain, matching the "Family" section, instead of colored chips, and the section collapses from a chevron toggle like "Family".
+
+### Fixed
+
+- `GenreTreeWheelRadialPopCore`: the info panel stays open when you click "Zoom in", and a genre keeps the same color in every zoom frame instead of being repainted with its sector's color.
+
 ## [2.5.0] - 2026-10-20
 
 ### Added

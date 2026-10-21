@@ -1080,7 +1080,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
       const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
 
-      const parentChip = within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText(
+      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
         "Punk",
       );
       fireEvent.click(parentChip);
@@ -1094,6 +1094,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
   describe("focus", () => {
     const panelOf = (container: HTMLElement) => within(container.querySelector(".gtv-info-panel") as HTMLElement);
+    const panelHeaderStyle = (container: HTMLElement) => {
+      const { background, color } = (container.querySelector(".gtv-info-panel-header") as HTMLElement).style;
+      return { background, color };
+    };
 
     it("shows no zoom-in action or back button without focus props", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
@@ -1115,7 +1119,43 @@ describe("GenreTreeWheelRadialPopCore", () => {
       fireEvent.click(chipFor(container, "Rock"));
       fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
       expect(onFocusChange).toHaveBeenCalledWith("root-a", "zoom-in");
-      expect(container.querySelector(".gtv-info-panel")).toBeNull();
+      expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+    });
+
+    it("keeps the info panel open on the zoomed node, even when its pop child replaces it as the center", () => {
+      const onFocusChange = vi.fn();
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />,
+      );
+      fireEvent.click(chipFor(container, "Rock"));
+      const headerStyle = panelHeaderStyle(container);
+      fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="root-a" onFocusChange={onFocusChange} />);
+      expect(chipFor(container, "Rock")).toBeUndefined();
+      expect(panelOf(container).getAllByText("Rock").length).toBeGreaterThan(0);
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+      expect(panelHeaderStyle(container)).toEqual(headerStyle);
+    });
+
+    it("keeps the info panel open when zooming into a node without a pop child", () => {
+      const onFocusChange = vi.fn();
+      const { container, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />,
+      );
+      fireEvent.click(chipFor(container, "Rock"));
+      fireEvent.click(container.querySelector("#group-a-core") as Element);
+      const headerStyle = panelHeaderStyle(container);
+      const dotFill = container.querySelector("#group-a-core .gtv-node-dot")!.getAttribute("fill");
+      fireEvent.click(panelOf(container).getByRole("button", { name: "Zoom in" }));
+      rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />);
+      expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+      expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
+      expect(panelHeaderStyle(container)).toEqual(headerStyle);
+      expect(
+        (container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip") as HTMLElement).style.getPropertyValue(
+          "--gtv-chip-color",
+        ),
+      ).toBe(dotFill);
     });
 
     it("centers the focus node's pop child as the disc, rings its other children, and backs out to all genres", () => {
@@ -1154,7 +1194,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(chipFor(container, "Hardcore")).toBeDefined();
 
       fireEvent.click(chipFor(container, "Hardcore"));
-      expect(panelOf(container).getByText("Punk")).toBeDefined();
+      expect(within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText("Punk")).toBeDefined();
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
 
       const centerAnchor = within(container.querySelector(".gtv-wheel-center-node") as HTMLElement);

@@ -29,7 +29,14 @@ import {
   MAX_NODE_WIDTH,
   MIN_NODE_HEIGHT,
   MAX_NODE_HEIGHT,
+  getGenreNodeStyle,
+  CENTER_NODE_NAME,
+  tintSurface,
+  POP_SECTOR_TINT_RATIO,
+  TEXT_COLOR,
+  ACCENT_TEXT_COLOR,
 } from "../constants";
+import { buildTreeIndex } from "../tree-index";
 
 describe("getGenreTreeColor", () => {
   it("returns the fixed color mapped to a root's wikidata id", () => {
@@ -204,5 +211,39 @@ describe("getGenreNodeColor", () => {
 
   it("falls back for an unknown node", () => {
     expect(getGenreNodeColor(index, "missing")).toBe(FALLBACK_ROOT_COLOR);
+  });
+});
+
+describe("getGenreNodeStyle", () => {
+  const index = buildTreeIndex([
+    { id: "rock", parentId: null, name: "Rock", itemCount: 1, wikidataId: "Q11399" },
+    { id: "hard-rock", parentId: "rock", name: "Hard Rock", itemCount: 1 },
+    { id: "pop-rock", parentId: "rock", name: "Pop Rock", itemCount: 1, side: "pop" },
+    { id: "power-pop", parentId: "pop-rock", name: "Power Pop", itemCount: 1 },
+    { id: "pop", parentId: null, name: CENTER_NODE_NAME, itemCount: 1 },
+    { id: "dance-pop", parentId: "pop", name: "Dance Pop", itemCount: 1 },
+  ]);
+  const mainstreamStyle = { fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO), textColor: TEXT_COLOR };
+
+  it("paints a top-level root and its core descendants their own solid genre color", () => {
+    expect(getGenreNodeStyle(index, "rock")).toEqual({ fill: getGenreTreeColor("Q11399"), textColor: ACCENT_TEXT_COLOR });
+    expect(getGenreNodeStyle(index, "hard-rock")).toEqual({
+      fill: getGenreNodeColor(index, "hard-rock"),
+      textColor: ACCENT_TEXT_COLOR,
+    });
+  });
+
+  it("tints a pop branch and everything below it", () => {
+    for (const id of ["pop-rock", "power-pop"]) {
+      expect(getGenreNodeStyle(index, id)).toEqual({
+        fill: tintSurface(getGenreNodeColor(index, id), POP_SECTOR_TINT_RATIO),
+        textColor: ACCENT_TEXT_COLOR,
+      });
+    }
+  });
+
+  it("paints the Mainstream Pop lineage a white tint with dark text", () => {
+    expect(getGenreNodeStyle(index, "pop")).toEqual(mainstreamStyle);
+    expect(getGenreNodeStyle(index, "dance-pop")).toEqual(mainstreamStyle);
   });
 });

@@ -148,6 +148,28 @@ export function getGenreNodeColor(index: Pick<TreeIndex, "byId" | "childrenByPar
   ).formatHex();
 }
 
+type GenreStyleIndex = Pick<TreeIndex, "byId" | "childrenByParentId" | "ancestorsOf">;
+
+/** Whether `nodeId` is the center "Mainstream Pop" root or one of its descendants. */
+export function isMainstreamPopLineage(index: GenreStyleIndex, nodeId: string): boolean {
+  const topRoot = index.ancestorsOf(nodeId)[0] ?? index.byId.get(nodeId);
+  return topRoot?.name === CENTER_NODE_NAME;
+}
+
+/** Fill/text color of `nodeId` in the pop-core wheel: the Mainstream Pop lineage is a white tint
+ * with dark text; any other genre is its own `getGenreNodeColor`, tinted when it sits on a pop
+ * branch. Like `getGenreNodeColor`, independent of the zoom frame the node renders in. */
+export function getGenreNodeStyle(index: GenreStyleIndex, nodeId: string): { fill: string; textColor: string } {
+  if (isMainstreamPopLineage(index, nodeId)) {
+    return { fill: tintSurface("#ffffff", POP_SECTOR_TINT_RATIO), textColor: TEXT_COLOR };
+  }
+  const node = index.byId.get(nodeId);
+  const lineageBelowTopRoot = node ? [...index.ancestorsOf(nodeId), node].slice(1) : [];
+  const isPop = lineageBelowTopRoot.some((n) => n.side === "pop");
+  const color = getGenreNodeColor(index, nodeId);
+  return { fill: isPop ? tintSurface(color, POP_SECTOR_TINT_RATIO) : color, textColor: ACCENT_TEXT_COLOR };
+}
+
 export interface Dimensions {
   WIDTH: number;
   HEIGHT: number;

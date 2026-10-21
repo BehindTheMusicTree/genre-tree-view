@@ -411,8 +411,8 @@ describe("InfoPanel", () => {
     expect(queryByText("Ancestors")).toBeNull();
   });
 
-  it("lists each ancestor's name, root-first, as a chip styled with its own fill and text color", () => {
-    const { getByText } = render(
+  it("lists each ancestor root-first as a circle node filled with its own color and log-sized by its song count", () => {
+    const { container, getByText } = render(
       <InfoPanel
         node={FULL_NODE}
         fill="#4F46E5"
@@ -427,11 +427,43 @@ describe("InfoPanel", () => {
     );
 
     expect(getByText("Ancestors")).toBeTruthy();
-    const music = getByText("Music");
-    expect(music.classList.contains("gtv-info-panel-child")).toBe(true);
-    expect(music.style.backgroundColor).toBe("rgb(17, 24, 39)");
-    const genres = getByText("Genres");
-    expect(genres.style.backgroundColor).toBe("rgb(79, 70, 229)");
+    const items = container.querySelectorAll<HTMLElement>(".gtv-info-panel-ancestors-list li");
+    expect(Array.from(items, (item) => item.textContent)).toEqual(["Music", "Genres"]);
+    const [musicDot, genresDot] = Array.from(items, (item) =>
+      item.querySelector<HTMLElement>(".gtv-info-panel-child .gtv-info-panel-mini-dot"),
+    );
+    expect(musicDot?.style.backgroundColor).toBe("rgb(17, 24, 39)");
+    expect(genresDot?.style.backgroundColor).toBe("rgb(79, 70, 229)");
+    expect(parseFloat(musicDot?.style.width ?? "")).toBeGreaterThan(parseFloat(genresDot?.style.width ?? ""));
+  });
+
+  it("collapses and re-expands the Ancestors section from its chevron toggle", () => {
+    const { container, getByRole } = render(
+      <InfoPanel
+        node={FULL_NODE}
+        fill="#4F46E5"
+        textColor="#FFFFFF"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={ANCESTOR_NODES}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+      />,
+    );
+    const toggle = getByRole("button", { name: "Ancestors" });
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector(".gtv-info-panel-ancestors-list")).not.toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector(".gtv-info-panel-ancestors-list")).toBeNull();
+    expect(container.querySelector(".gtv-info-panel-mini-tree")).not.toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector(".gtv-info-panel-ancestors-list")).not.toBeNull();
   });
 
   it("fires onSelectNode with an ancestor's id when an ancestor chip is clicked", () => {
