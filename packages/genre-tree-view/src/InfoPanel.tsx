@@ -1,7 +1,8 @@
-import { ReactNode, useEffect, useState } from "react";
-import { MdArrowBack, MdClose, MdCloseFullscreen, MdExpandMore, MdOpenInFull, MdZoomIn } from "react-icons/md";
+import { ReactNode, useEffect } from "react";
+import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
 
-import { getItemCountRange, logarithmicPosition } from "./constants";
+import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
+import { InfoPanelSection } from "./InfoPanelSection";
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
 
@@ -107,7 +108,6 @@ export function InfoPanel({
   expanded = false,
   onExpandedChange,
 }: InfoPanelProps) {
-  const [familyOpen, setFamilyOpen] = useState(true);
   const editing = editMode && !readOnly;
   const shownParent = editing && renderParentsEditor ? null : parentNode;
   const miniTreeRange = getItemCountRange([
@@ -115,15 +115,16 @@ export function InfoPanel({
     node,
     ...childNodes.map((child) => child.node),
   ]);
-  const miniNodeSize = ({ itemCount }: GenreTreeNode) => {
-    const t = logarithmicPosition(itemCount, miniTreeRange);
+  const ancestorRange = getItemCountRange(ancestorNodes.map((ancestor) => ancestor.node));
+  const miniNodeSize = ({ itemCount }: GenreTreeNode, range: ItemCountRange) => {
+    const t = logarithmicPosition(itemCount, range);
     return {
       diameter: MINI_NODE_MIN_DIAMETER + t * (MINI_NODE_MAX_DIAMETER - MINI_NODE_MIN_DIAMETER),
       fontSize: MINI_NODE_MIN_FONT_SIZE + t * (MINI_NODE_MAX_FONT_SIZE - MINI_NODE_MIN_FONT_SIZE),
     };
   };
-  const miniNodeContent = (target: GenreTreeNode, background: string) => {
-    const { diameter, fontSize } = miniNodeSize(target);
+  const miniNodeContent = (target: GenreTreeNode, background: string, range: ItemCountRange) => {
+    const { diameter, fontSize } = miniNodeSize(target, range);
     return (
       <>
         <span className="gtv-info-panel-mini-dot" style={{ background, width: diameter, height: diameter }} />
@@ -236,81 +237,69 @@ export function InfoPanel({
             <dd>{node.side ?? "core"}</dd>
           </dl>
           {ancestorNodes.length > 0 && (
-            <div className="gtv-info-panel-children">
-              <span className="gtv-info-panel-children-title">Ancestors</span>
-              <ul className="gtv-info-panel-children-list">
-                {ancestorNodes.map(({ node: ancestor, fill, textColor }) => (
+            <InfoPanelSection title="Ancestors">
+              <ul className="gtv-info-panel-children-list gtv-info-panel-ancestors-list">
+                {ancestorNodes.map(({ node: ancestor, fill }) => (
                   <li key={ancestor.id}>
                     <button
                       type="button"
                       className="gtv-info-panel-child"
-                      style={{ background: fill, color: textColor }}
+                      title={ancestor.name}
                       onClick={() => onSelectNode(ancestor.id)}
                     >
-                      {ancestor.name}
+                      {miniNodeContent(ancestor, fill, ancestorRange)}
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
+            </InfoPanelSection>
           )}
           {editing && renderParentsEditor && renderParentsEditor(node)}
-          <div className="gtv-info-panel-children">
-            <button
-              type="button"
-              className="gtv-info-panel-section-toggle"
-              aria-expanded={familyOpen}
-              onClick={() => setFamilyOpen((open) => !open)}
-            >
-              <span className="gtv-info-panel-children-title">Family</span>
-              <MdExpandMore className="gtv-icon gtv-info-panel-section-chevron" size={16} />
-            </button>
-            {familyOpen && (
-              <div className="gtv-info-panel-mini-tree">
-                {shownParent && (
-                  <div className="gtv-info-panel-mini-tree-parent">
-                    <button
-                      type="button"
-                      className="gtv-info-panel-child"
-                      title={shownParent.node.name}
-                      onClick={() => onSelectNode(shownParent.node.id)}
-                    >
-                      {miniNodeContent(shownParent.node, shownParent.fill)}
-                    </button>
-                  </div>
-                )}
-                <div
-                    className={`gtv-info-panel-mini-tree-node${childNodes.length === 0 ? " gtv-info-panel-mini-tree-node--leaf" : ""}`}
+          <InfoPanelSection title="Family">
+            <div className="gtv-info-panel-mini-tree">
+              {shownParent && (
+                <div className="gtv-info-panel-mini-tree-parent">
+                  <button
+                    type="button"
+                    className="gtv-info-panel-child"
+                    title={shownParent.node.name}
+                    onClick={() => onSelectNode(shownParent.node.id)}
                   >
-                  <span
-                    className="gtv-info-panel-child gtv-info-panel-mini-tree-current"
-                    title={node.name}
-                  >
-                    {miniNodeContent(node, fill)}
-                  </span>
+                    {miniNodeContent(shownParent.node, shownParent.fill, miniTreeRange)}
+                  </button>
                 </div>
-                <div className="gtv-info-panel-mini-tree-children">
-                  <span className="gtv-info-panel-children-title">{childNodes.length} {childNodes.length <= 1 ? "child" : "children"}</span>
-                  {childNodes.length > 0 && (
-                    <ul className="gtv-info-panel-children-list">
-                      {sortedChildNodes.map(({ node: child, fill }) => (
-                        <li key={child.id}>
-                          <button
-                            type="button"
-                            className="gtv-info-panel-child"
-                            title={child.name}
-                            onClick={() => onSelectNode(child.id)}
-                          >
-                            {miniNodeContent(child, fill)}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+              )}
+              <div
+                  className={`gtv-info-panel-mini-tree-node${childNodes.length === 0 ? " gtv-info-panel-mini-tree-node--leaf" : ""}`}
+                >
+                <span
+                  className="gtv-info-panel-child gtv-info-panel-mini-tree-current"
+                  title={node.name}
+                >
+                  {miniNodeContent(node, fill, miniTreeRange)}
+                </span>
               </div>
-            )}
-          </div>
+              <div className="gtv-info-panel-mini-tree-children">
+                <span className="gtv-info-panel-children-title">{childNodes.length} {childNodes.length <= 1 ? "child" : "children"}</span>
+                {childNodes.length > 0 && (
+                  <ul className="gtv-info-panel-children-list">
+                    {sortedChildNodes.map(({ node: child, fill }) => (
+                      <li key={child.id}>
+                        <button
+                          type="button"
+                          className="gtv-info-panel-child"
+                          title={child.name}
+                          onClick={() => onSelectNode(child.id)}
+                        >
+                          {miniNodeContent(child, fill, miniTreeRange)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </InfoPanelSection>
           {expanded && dangerZone}
         </div>
         {renderExtraDetails && (

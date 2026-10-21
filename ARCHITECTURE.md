@@ -147,8 +147,8 @@ pnpm workspace with two members:
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
 - **Node info panel**: clicking any node opens a read-only panel showing that node's song count
-  and side, its ancestors root-first (including the parent), and its direct children, each
-  as clickable chips styled with that node's own fill/text color — internal presentational chrome,
+  and side, its ancestors root-first (including the parent) as a vertical chain, and its direct
+  children, each as a clickable circle node filled with that node's own color — internal presentational chrome,
   like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
   the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of
   the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); clicking a node or
@@ -169,7 +169,9 @@ pnpm workspace with two members:
   its store's `selectedId`. The panel's top offset is the `--gtv-info-panel-top` CSS variable
   (default `12px`). Rendered by
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
-  pan/zoom-transformed content so it never scales or pans with the tree. `GenreTreeProps.renderExtraDetails`
+  pan/zoom-transformed content so it never scales or pans with the tree. Its Ancestors and Family
+  sections each wrap `InfoPanelSection.tsx`, which owns the section's chevron collapse toggle.
+  `GenreTreeProps.renderExtraDetails`
   (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
   extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.

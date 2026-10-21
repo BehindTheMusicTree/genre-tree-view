@@ -704,7 +704,8 @@
   border-bottom-left-radius: 8px;
 }
 
-.gtv-info-panel-mini-tree .gtv-info-panel-child {
+.gtv-info-panel-mini-tree .gtv-info-panel-child,
+.gtv-info-panel-ancestors-list .gtv-info-panel-child {
   display: flex;
   align-items: center;
   position: relative;
@@ -826,6 +827,46 @@
 
 .gtv-info-panel-mini-tree .gtv-info-panel-children-list li:only-child::after {
   display: none;
+}
+
+/* Ancestors as a root-first vertical chain. Dots sit centered in a fixed column as wide as the
+   largest one (MINI_NODE_MAX_DIAMETER) so the connector stays straight whatever each dot's size. */
+.gtv-info-panel-ancestors-list {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.gtv-info-panel-ancestors-list li {
+  position: relative;
+  max-width: 100%;
+  padding: 3px 0;
+}
+
+.gtv-info-panel-ancestors-list li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  height: 100%;
+  border-left: 1.5px solid #d4d4d8;
+  transform: translateX(-50%);
+}
+
+.gtv-info-panel-ancestors-list .gtv-info-panel-child {
+  display: grid;
+  grid-template-columns: 32px auto;
+}
+
+.gtv-info-panel-ancestors-list .gtv-info-panel-mini-dot {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+}
+
+.gtv-info-panel-ancestors-list .gtv-info-panel-mini-label {
+  max-width: none;
 }
 
 /* GenreTreeWheel — root genres distributed around a wheel anchored to the bottom of the
