@@ -155,6 +155,10 @@ export interface GenreTreeProps {
   /** Hides the info panel header's close button — for a consumer that closes the panel itself
    * (by clearing `selectedNodeId`), e.g. from its own search bar. Defaults to false. */
   hideInfoPanelClose?: boolean;
+  /** Hides the info panel header's node name — for a consumer that already shows it, e.g. in its own
+   * search bar floated over the header (see `--gtv-info-panel-header-inset`). The title editor still
+   * shows in edit mode. Defaults to false. */
+  hideInfoPanelTitle?: boolean;
   /** Hides the info panel's Edit/Done toggle even when `onEditModeChange` is set, and keeps the
    * edit-mode slots below inactive. Defaults to false. */
   readOnly?: boolean;
