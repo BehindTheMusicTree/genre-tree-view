@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-10-21
+
+### Changed
+
+- `GenreTreeWheelRadialPopCore`: the zoom navigation is one breadcrumb centred at the top of the wheel (bottom-left in containers under 768px) instead of a top-left bar, so it no longer sits under a host's search bar or the info panel. Home is the trail's first crumb, the Parent button is gone (the last crumb does its job), and a trail with more than three ancestor views collapses its middle behind a "…" button that expands it.
+
 ## [2.6.0] - 2026-10-21
 
 ### Added
