@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Info panel: the "Ancestors" section now lists the full path from the root down to and including the immediate parent, so it also shows for a root's direct children.
+- Info panel: ancestors render as circle nodes in a vertical root-first chain, matching the "Family" section, instead of colored chips, and the section collapses from a chevron toggle like "Family".
 
 ### Fixed
 
