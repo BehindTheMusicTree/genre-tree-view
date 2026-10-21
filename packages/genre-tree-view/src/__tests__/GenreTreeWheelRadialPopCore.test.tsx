@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("../defer-click", () => ({
   createDeferredClick: () => ({ schedule: (action: () => void) => action(), cancel: () => {} }),
 }));
-import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { GenreTreeWheelRadialPopCore } from "../GenreTreeWheelRadialPopCore";
 import * as d3 from "d3";
@@ -1103,7 +1103,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
       fireEvent.click(chipFor(container, "Rock"));
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
-      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+      expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
     });
 
     it("offers zoom-in on a ring root with children, but not on a childless center", () => {
@@ -1111,7 +1111,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       const { container } = render(
         <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />,
       );
-      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+      expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
 
       fireEvent.click(chipFor(container, "Mainstream Pop"));
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
@@ -1201,7 +1201,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
       fireEvent.click(centerAnchor.getByRole("button", { name: "Punk" }));
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
 
-      fireEvent.click(getByRole("button", { name: "Parent view" }));
+      fireEvent.click(within(getByRole("navigation", { name: "Breadcrumb" })).getByRole("button", { name: "Rock" }));
       expect(onFocusChange).toHaveBeenCalledWith("root-a", "back");
     });
 
@@ -1405,7 +1405,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     it("ignores double-click without focus props", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
       fireEvent.doubleClick(chipFor(container, "Rock"));
-      expect(container.querySelector(".gtv-wheel-back-btn")).toBeNull();
+      expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
     });
 
     it("zooms into a Mainstream Pop disc node with children", () => {
@@ -1426,33 +1426,65 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(panelOf(container).queryByRole("button", { name: "Zoom in" })).toBeNull();
     });
 
-    it("shows home, parent and a breadcrumb of the parent views, and hides the bar at the root view", () => {
+    it("shows a breadcrumb of home and the parent views, and hides it at the root view", () => {
       const onFocusChange = vi.fn();
-      const { container, getByRole, queryByRole, rerender } = render(
+      const { getByRole, queryByRole, rerender } = render(
         <GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId="a-core" onFocusChange={onFocusChange} />,
       );
-      expect(getByRole("button", { name: "All genres" })).toBeTruthy();
-      expect(getByRole("button", { name: "Parent view" })).toBeTruthy();
-      const crumbs = within(container.querySelector(".gtv-wheel-breadcrumb") as HTMLElement);
-      expect(container.querySelector(".gtv-wheel-breadcrumb-current")?.textContent).toBe("Punk");
+      const crumbs = within(getByRole("navigation", { name: "Breadcrumb" }));
+      expect(crumbs.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent)).toEqual([
+        "All genres",
+        "Rock",
+      ]);
+      expect(crumbs.getByText("Punk").getAttribute("aria-current")).toBe("page");
       fireEvent.click(crumbs.getByRole("button", { name: "Rock" }));
       expect(onFocusChange).toHaveBeenLastCalledWith("root-a", "back");
+      fireEvent.click(crumbs.getByRole("button", { name: "All genres" }));
+      expect(onFocusChange).toHaveBeenLastCalledWith(null, "root");
 
       rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />);
-      expect(queryByRole("button", { name: "All genres" })).toBeNull();
-      expect(container.querySelector(".gtv-wheel-breadcrumb")).toBeNull();
+      expect(queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
     });
 
-    it("hides the parent button when the parent can't be a focus", () => {
+    it("leaves out ancestors that can't be a focus", () => {
       const nodes: GenreTreeNode[] = [
         ...NODES_WITH_POP,
         { id: "a-pop-2", parentId: "root-a", name: "Power Pop", itemCount: 1, side: "pop" },
       ];
-      const { container, queryByRole } = render(
+      const { getByRole } = render(
         <GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="a-core" onFocusChange={vi.fn()} />,
       );
-      expect(queryByRole("button", { name: "Parent view" })).toBeNull();
-      expect(container.querySelectorAll(".gtv-wheel-breadcrumb-crumb").length).toBe(0);
+      const crumbs = within(getByRole("navigation", { name: "Breadcrumb" }));
+      expect(crumbs.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(["All genres"]);
+    });
+
+    it("collapses a long trail behind a button that expands it until the focus changes", () => {
+      const nodes: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "d1", parentId: "a-core-child", name: "Crust", itemCount: 1 },
+        { id: "d2", parentId: "d1", name: "D-beat", itemCount: 1 },
+        { id: "d3", parentId: "d2", name: "Stenchcore", itemCount: 1 },
+        { id: "d4", parentId: "d3", name: "Neocrust", itemCount: 1 },
+      ];
+      const { getByRole, rerender } = render(
+        <GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="d2" onFocusChange={vi.fn()} />,
+      );
+      const crumbs = () => within(getByRole("navigation", { name: "Breadcrumb" }));
+      expect(crumbs().queryByRole("button", { name: "Rock" })).toBeNull();
+      expect(crumbs().queryByRole("button", { name: "Punk" })).toBeNull();
+      expect(crumbs().getByRole("button", { name: "Hardcore" })).toBeDefined();
+      expect(crumbs().getByRole("button", { name: "Crust" })).toBeDefined();
+
+      const showFullPath = crumbs().getByRole("button", { name: "Show full path" });
+      expect(showFullPath.getAttribute("aria-expanded")).toBe("false");
+      fireEvent.click(showFullPath);
+      expect(crumbs().queryByRole("button", { name: "Show full path" })).toBeNull();
+      expect(crumbs().getByRole("button", { name: "Rock" })).toBeDefined();
+      expect(crumbs().getByRole("button", { name: "Punk" })).toBeDefined();
+
+      rerender(<GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="d3" onFocusChange={vi.fn()} />);
+      expect(crumbs().getByRole("button", { name: "Show full path" })).toBeDefined();
+      expect(crumbs().queryByRole("button", { name: "Rock" })).toBeNull();
     });
 
     it("offers the previously selected node in the panel header, not view changes", () => {
