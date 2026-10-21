@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-10-21
+
 ### Added
 
 - `hideInfoPanelTitle` prop on every renderer: hides the info panel header's node name for a host that already shows it, e.g. in a search bar floated over the header. The title editor still shows in edit mode.
