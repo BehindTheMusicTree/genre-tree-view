@@ -87,6 +87,7 @@ export function WheelCore({
   renderExtraDetails,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
+  hideInfoPanelTitle = false,
   readOnly,
   editMode,
   onEditModeChange,
@@ -561,6 +562,7 @@ export function WheelCore({
             );
           }}
           hideClose={hideInfoPanelClose}
+          hideTitle={hideInfoPanelTitle}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

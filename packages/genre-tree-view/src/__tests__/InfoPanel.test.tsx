@@ -155,6 +155,25 @@ describe("InfoPanel", () => {
     expect(queryByLabelText("Close")).toBeNull();
   });
 
+  it("hides the header title when hideTitle is set", () => {
+    const { container } = render(
+      <InfoPanel
+        node={MINIMAL_NODE}
+        fill="#F1F0FD"
+        textColor="#18181B"
+        parentNode={null}
+        childNodes={[]}
+        ancestorNodes={[]}
+        side="left"
+        onClose={vi.fn()}
+        onSelectNode={vi.fn()}
+        hideTitle
+      />,
+    );
+
+    expect(container.querySelector(".gtv-info-panel-title")?.classList.contains("gtv-info-panel-title--hidden")).toBe(true);
+  });
+
   it("applies the left modifier class when side is left", () => {
     const { container } = render(
       <InfoPanel
@@ -550,6 +569,13 @@ describe("InfoPanel", () => {
         />,
       );
     }
+
+    it("still shows the title editor in edit mode when hideTitle is set", () => {
+      renderPanel({ editMode: true, hideTitle: true });
+      expect(screen.getByLabelText("Genre name").parentElement?.classList.contains("gtv-info-panel-title--hidden")).toBe(
+        false,
+      );
+    });
 
     it("marks the title slot as an overflow-visible editor area in edit mode", () => {
       renderPanel({ editMode: true });

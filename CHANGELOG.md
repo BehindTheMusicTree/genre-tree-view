@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `hideInfoPanelTitle` prop on every renderer: hides the info panel header's node name for a host that already shows it, e.g. in a search bar floated over the header. The title editor still shows in edit mode.
+
+### Changed
+
+- Info panel: the colored header scrolls with the panel content instead of staying pinned at the top.
+- Pop-subtree wheels (`GenreTreeWheelRadial`, `GenreTreeWheelRadialPopCore`): a hovered node's label turns its node's color.
+
 ## [2.7.0] - 2026-10-21
 
 ### Changed

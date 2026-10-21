@@ -57,6 +57,7 @@ export function GenreTree({
   renderExtraDetails,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
+  hideInfoPanelTitle = false,
   readOnly,
   editMode,
   onEditModeChange,
@@ -366,6 +367,7 @@ export function GenreTree({
             );
           }}
           hideClose={hideInfoPanelClose}
+          hideTitle={hideInfoPanelTitle}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

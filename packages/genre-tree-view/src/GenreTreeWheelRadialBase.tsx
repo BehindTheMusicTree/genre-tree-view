@@ -118,6 +118,7 @@ export function WheelRadialCore({
   renderExtraDetails,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
+  hideInfoPanelTitle = false,
   readOnly,
   editMode,
   onEditModeChange,
@@ -721,6 +722,7 @@ export function WheelRadialCore({
             );
           }}
           hideClose={hideInfoPanelClose}
+          hideTitle={hideInfoPanelTitle}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

@@ -569,6 +569,9 @@ describe("GenreTree", () => {
         expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
         expect(container.querySelector(".gtv-info-panel-close")).toBeNull();
 
+        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelTitle />);
+        expect(container.querySelector(".gtv-info-panel-title--hidden")?.textContent).toBe("Child A");
+
         rerender(<GenreTree nodes={TREE} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
         expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
