@@ -526,7 +526,7 @@ function createNodeCallbacks(
           {trackCount === 0 ? (
             <div style={{ color: "#71717a" }}>No tracks yet.</div>
           ) : (
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {Array.from({ length: trackCount }, (_, i) => (
                 <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
               ))}
