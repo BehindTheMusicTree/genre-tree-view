@@ -2228,7 +2228,7 @@
   {
     "id": "neo-kraut-rock",
     "parentId": "krautrock",
-    "name": "Neo-kraut rock",
+    "name": "Neo-Kraut Rock",
     "itemCount": 0,
     "wikidataId": "Q141112373"
   },
@@ -2476,6 +2476,13 @@
     "name": "Rustic stomp",
     "itemCount": 0,
     "wikidataId": "Q11346971"
+  },
+  {
+    "id": "diy-folk-punk",
+    "parentId": "folk-punk",
+    "name": "Diy folk punk",
+    "itemCount": 0,
+    "wikidataId": "Q141773810"
   },
   {
     "id": "cowpunk",
