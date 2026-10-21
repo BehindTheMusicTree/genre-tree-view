@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MdArrowUpward, MdFitScreen, MdHome, MdZoomIn, MdZoomOut } from "react-icons/md";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -46,6 +46,7 @@ import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { useFocusHistory } from "./use-focus-history";
+import { WheelBreadcrumb } from "./WheelBreadcrumb";
 import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
 import { InfoPanel, InfoPanelChild } from "./InfoPanel";
 import { OverlayPanel } from "./OverlayPanel";
@@ -201,8 +202,6 @@ export function WheelRadialPopCoreCore({
   // anything handed to the consumer or the info panel gets the original node instead.
   const centerNode = index.byId.get(layoutCenterNode.id)!;
   // A parent with several pop children can't be a focus, so Root view is the only way up from there.
-  const focusParentCandidate = index.byId.get(index.byId.get(focusNodeId ?? "")?.parentId ?? "");
-  const focusParent = focusParentCandidate && isZoomableNode(nodes, focusParentCandidate.id) ? focusParentCandidate : undefined;
 
   const centerSubtreeNodeIds = useMemo(
     () => new Set(centerSubtreeNodes.map((node) => node.id)),
@@ -1428,55 +1427,19 @@ export function WheelRadialPopCoreCore({
       {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       {onFocusChange && focusNodeId !== null && (
-        <div className="gtv-wheel-back-controls">
-          <button
-            type="button"
-            className="gtv-wheel-back-btn"
-            aria-label="All genres"
-            onClick={() => {
-              closeNodeInfo();
-              onFocusChange(null, "root");
-            }}
-          >
-            <MdHome className="gtv-icon" size={16} />
-          </button>
-          {focusParent && (
-            <button
-              type="button"
-              className="gtv-wheel-back-btn"
-              aria-label="Parent view"
-              onClick={() => {
-                closeNodeInfo();
-                onFocusChange(focusParent.id, "back");
-              }}
-            >
-              <MdArrowUpward className="gtv-icon" size={16} />
-            </button>
-          )}
-          <nav className="gtv-wheel-breadcrumb" aria-label="Breadcrumb">
-            {index
-              .ancestorsOf(focusNodeId)
-              .filter((ancestor) => isZoomableNode(nodes, ancestor.id))
-              .map((ancestor) => (
-                <Fragment key={ancestor.id}>
-                  <button
-                    type="button"
-                    className="gtv-wheel-breadcrumb-crumb"
-                    onClick={() => {
-                      closeNodeInfo();
-                      onFocusChange(ancestor.id, "back");
-                    }}
-                  >
-                    {ancestor.name}
-                  </button>
-                  <span aria-hidden="true">›</span>
-                </Fragment>
-              ))}
-            <span className="gtv-wheel-breadcrumb-current" aria-current="page">
-              {index.byId.get(focusNodeId)?.name}
-            </span>
-          </nav>
-        </div>
+        <WheelBreadcrumb
+          key={focusNodeId}
+          ancestors={index.ancestorsOf(focusNodeId).filter((ancestor) => isZoomableNode(nodes, ancestor.id))}
+          currentName={index.byId.get(focusNodeId)?.name}
+          onHome={() => {
+            closeNodeInfo();
+            onFocusChange(null, "root");
+          }}
+          onAncestor={(id) => {
+            closeNodeInfo();
+            onFocusChange(id, "back");
+          }}
+        />
       )}
 
       <div

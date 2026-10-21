@@ -233,21 +233,21 @@
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
 }
 
-.gtv-wheel-back-controls {
+/* Top-centre: the top corners belong to the host (search + panel on the left, app chrome on the
+   right), and the trail sits right above the wheel it describes. */
+.gtv-wheel-breadcrumb {
   position: absolute;
   top: 12px;
-  left: 12px;
+  left: 50%;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gtv-wheel-breadcrumb {
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 4px;
-  min-width: 0;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
   padding: 4px 10px;
   font-size: 12px;
   color: #52525b;
@@ -270,26 +270,28 @@
   text-decoration: underline;
 }
 
+.gtv-wheel-breadcrumb-home {
+  display: flex;
+  align-items: center;
+}
+
 .gtv-wheel-breadcrumb-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 600;
   color: #18181b;
 }
 
-.gtv-wheel-back-btn {
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  color: #18181b;
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
-  cursor: pointer;
-}
-
-.gtv-wheel-back-btn:hover {
-  background-color: #f4f4f5;
+/* Narrow hosts float their own controls over the top edge, so the trail moves to the bottom-left,
+   clear of the bottom-right zoom controls and within thumb reach. */
+@container (max-width: 767px) {
+  .gtv-wheel-breadcrumb {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    transform: none;
+    max-width: calc(100% - 152px);
+  }
 }
 
 .gtv-wheel-floating-controls--horizontal,
@@ -348,10 +350,6 @@
   border-radius: 8px;
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
   cursor: default;
-}
-
-*:has(> .gtv-wheel-back-controls) > .gtv-info-panel {
-  top: var(--gtv-info-panel-top, 54px);
 }
 
 .gtv-info-panel--left {
