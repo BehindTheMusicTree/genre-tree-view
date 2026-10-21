@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `--gtv-info-panel-header-inset` CSS variable (default `0px`): a host that floats a control (e.g. a search bar) over the panels' top edge sets it to that control's height plus its margins, so the info/overlay panel header's fill extends behind the control and `GenreTreeOutline`'s list starts below it.
+
 ### Changed
 
 - Info panel: the "Ancestors" section now lists the full path from the root down to and including the immediate parent, so it also shows for a root's direct children.
