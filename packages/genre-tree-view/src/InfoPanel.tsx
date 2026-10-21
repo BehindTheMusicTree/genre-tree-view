@@ -45,6 +45,8 @@ export interface InfoPanelProps {
   previousLabel?: string;
   /** See GenreTreeProps.hideInfoPanelClose. */
   hideClose?: boolean;
+  /** See GenreTreeProps.hideInfoPanelTitle. */
+  hideTitle?: boolean;
   /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** When set, shows a "Zoom in" action that fires it. */
@@ -97,6 +99,7 @@ export function InfoPanel({
   previousLabel,
   renderExtraDetails,
   hideClose = false,
+  hideTitle = false,
   onZoomIn,
   actions,
   readOnly = false,
@@ -173,7 +176,10 @@ export function InfoPanel({
         {editing && renderTitleEditor ? (
           <div className="gtv-info-panel-title gtv-info-panel-title--editor">{renderTitleEditor(node)}</div>
         ) : (
-          <span className="gtv-info-panel-title" style={{ color: textColor }}>
+          <span
+            className={`gtv-info-panel-title${hideTitle ? " gtv-info-panel-title--hidden" : ""}`}
+            style={{ color: textColor }}
+          >
             {node.name}
           </span>
         )}
