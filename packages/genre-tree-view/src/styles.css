@@ -39,6 +39,10 @@
   letter-spacing: 0.02em;
 }
 
+.gtv-node-label--umbrella {
+  font-style: italic;
+}
+
 .gtv-node--forbidden {
   opacity: 0.45;
 }
@@ -1513,6 +1517,21 @@
 
 .gtv-outline-name--root {
   font-weight: 600;
+}
+
+.gtv-outline-name--umbrella {
+  font-style: italic;
+}
+
+.gtv-info-panel-umbrella-badge {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px dashed currentColor;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+  vertical-align: middle;
 }
 
 .gtv-outline-name--reparent-target {

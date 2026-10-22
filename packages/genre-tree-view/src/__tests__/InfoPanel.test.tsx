@@ -96,6 +96,23 @@ describe("InfoPanel", () => {
     expect(header.style.color).toBe("rgb(255, 255, 255)");
   });
 
+  it("shows the umbrella badge only for an umbrella node", () => {
+    const props = {
+      fill: "#F1F0FD",
+      textColor: "#18181B",
+      parentNode: null,
+      childNodes: [],
+      ancestorNodes: [],
+      side: "left" as const,
+      onClose: vi.fn(),
+      onSelectNode: vi.fn(),
+    };
+    const { queryByText, rerender } = render(<InfoPanel node={{ ...MINIMAL_NODE, umbrella: true }} {...props} />);
+    expect(queryByText("umbrella")).toBeTruthy();
+    rerender(<InfoPanel node={MINIMAL_NODE} {...props} />);
+    expect(queryByText("umbrella")).toBeNull();
+  });
+
   it("falls back to defaults for a minimal node (no actionable or side)", () => {
     const { getByText } = render(
       <InfoPanel

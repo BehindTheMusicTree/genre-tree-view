@@ -106,6 +106,14 @@ describe("GenreTreeOutline", () => {
     expect(container.querySelectorAll("details[open]")).toHaveLength(1);
   });
 
+  it("marks an umbrella node's name and leaves others unmarked", () => {
+    const nodes = NODES.map((n) => (n.id === "a-core" ? { ...n, umbrella: true } : n));
+    const { container } = render(<GenreTreeOutline nodes={nodes} />);
+    expandAll(container);
+    expect(nameButton(container, "a-core").classList.contains("gtv-outline-name--umbrella")).toBe(true);
+    expect(nameButton(container, "a-pop").classList.contains("gtv-outline-name--umbrella")).toBe(false);
+  });
+
   it("renders no detached section when no root is detached", () => {
     const { container } = render(<GenreTreeOutline nodes={NODES} />);
     expect(container.querySelector(".gtv-outline-list--detached")).toBeNull();

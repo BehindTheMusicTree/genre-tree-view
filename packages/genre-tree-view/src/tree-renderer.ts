@@ -561,7 +561,8 @@ export function renderTree(
     )
     .html((d) => {
       const rootClass =
-        d.depth === 0 || isSubtreeCore(d) ? " gtv-node-label--root" : "";
+        (d.depth === 0 || isSubtreeCore(d) ? " gtv-node-label--root" : "") +
+        (d.data.umbrella ? " gtv-node-label--umbrella" : "");
       const color = isForbidden(d)
         ? TEXT_MUTED_COLOR
         : isSubtreeCore(d)

@@ -182,6 +182,7 @@ function OutlineNodeView({
         className={[
           "gtv-outline-name",
           isRoot && "gtv-outline-name--root",
+          node.umbrella && "gtv-outline-name--umbrella",
           reparentStatus === "target" && "gtv-outline-name--reparent-target",
         ]
           .filter(Boolean)
