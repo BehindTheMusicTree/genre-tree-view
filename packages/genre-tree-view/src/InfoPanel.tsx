@@ -181,6 +181,7 @@ export function InfoPanel({
             style={{ color: textColor }}
           >
             {node.name}
+            {node.umbrella && <span className="gtv-info-panel-umbrella-badge">umbrella</span>}
           </span>
         )}
         {onZoomIn && (

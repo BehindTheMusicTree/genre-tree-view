@@ -17,6 +17,9 @@ export interface GenreTreeNode {
   /** Stable genre key (a wikidata QID or a synthetic "LOCAL:" key). Read on root nodes only, to
    * pick the root's fixed color (see getGenreTreeColor). */
   wikidataId?: string | null;
+  /** A grouping node that no item is filed under directly. Read by InfoPanel (badge), GenreTreeOutline
+   * and the stacked/wheel node labels (italic); the pop-core labels ignore it. */
+  umbrella?: boolean;
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";
