@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-10-22
+
 ### Added
 
 - `umbrella` node field: grouping nodes no item is filed under directly show an "umbrella" badge in the info panel and an italic name in the outline and stacked/wheel labels.
