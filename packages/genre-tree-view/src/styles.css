@@ -629,6 +629,17 @@
   padding-top: 26px;
 }
 
+/* No parent: size the children to their content and center the node + children as a group,
+   rather than letting the children stretch and pin the node (and its overhanging label) to the
+   panel's left edge. */
+.gtv-info-panel-mini-tree:not(:has(> .gtv-info-panel-mini-tree-parent)) {
+  justify-content: center;
+}
+
+.gtv-info-panel-mini-tree:not(:has(> .gtv-info-panel-mini-tree-parent)) > .gtv-info-panel-mini-tree-children {
+  flex: 0 1 auto;
+}
+
 .gtv-info-panel-mini-tree-parent,
 .gtv-info-panel-mini-tree-node {
   position: relative;
