@@ -50,12 +50,12 @@ const makeRect = (left: number, top: number, width: number, height: number): DOM
 
 describe("GenreTreeWheelRight", () => {
   it("hugs the left edge via the gtv-wheel-container--left modifier class", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-container")!.className).toContain("gtv-wheel-container--left");
   });
 
   it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
     expect(chipFor(container, "Rock")).toBeTruthy();
     expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--selected");
@@ -73,7 +73,7 @@ describe("GenreTreeWheelRight", () => {
 
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} onNodeClick={onNodeClick} />);
 
     fireEvent.click(chipFor(container, "Electronic"));
 
@@ -83,13 +83,13 @@ describe("GenreTreeWheelRight", () => {
 
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
-    render(<GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} />);
+    render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} />);
     expect(onRootSelect).toHaveBeenCalledWith("root-a");
   });
 
   it("swaps the visible subtree and fires onRootSelect when a different chip is clicked", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} />);
 
     fireEvent.click(chipFor(container, "Electronic"));
 
@@ -103,7 +103,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("updates the wheel's rotation custom property after a click", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
     // The default selection (chip 0, raw angle 0) starts pre-rotated to 90deg so it lands at the
     // anchor (local angle 90 — see GenreTreeWheelBase's landingAngle comment) without a click.
@@ -118,7 +118,7 @@ describe("GenreTreeWheelRight", () => {
   it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
     const onRootSelect = vi.fn();
     const { container } = render(
-      <GenreTreeWheelRight nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+      <GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
     );
     const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
     const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
@@ -131,19 +131,19 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("sets the tree anchor's chip clearance via --gtv-wheel-chip-half-width, not --gtv-wheel-chip-half-height", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-width")).not.toBe("");
     expect(stage.style.getPropertyValue("--gtv-wheel-chip-half-height")).toBe("");
   });
 
   it("falls back to the first remaining root when the selected root disappears from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container, rerender } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     fireEvent.click(chipFor(container, "Jazz"));
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
 
     const withoutRootC = NODES.filter((n) => n.id !== "root-c");
-    rerender(<GenreTreeWheelRight nodes={withoutRootC} />);
+    rerender(<GenreTreeWheelRight itemCountLabel="Track count" nodes={withoutRootC} />);
 
     expect(chipFor(container, "Jazz")).toBeUndefined();
     expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
@@ -151,21 +151,21 @@ describe("GenreTreeWheelRight", () => {
 
   it("renders no chips and mounts no subtree when nodes is empty", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheelRight nodes={[]} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={[]} onRootSelect={onRootSelect} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(container.querySelectorAll("g.node").length).toBe(0);
     expect(onRootSelect).not.toHaveBeenCalled();
   });
 
   it("falls back to no selection when every root is removed from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheelRight nodes={NODES} />);
-    rerender(<GenreTreeWheelRight nodes={[]} />);
+    const { container, rerender } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
+    rerender(<GenreTreeWheelRight itemCountLabel="Track count" nodes={[]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(container.querySelectorAll("g.node").length).toBe(0);
   });
 
   it("ctrl+wheel scales the shared stage that anchors both the tree and the wheel", async () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
@@ -176,7 +176,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("drag-panning the container moves the shared stage that both the tree and wheel sit inside", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
@@ -191,7 +191,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("does not start a pan drag from a pointerdown on a wheel chip", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const chip = chipFor(container, "Electronic");
 
@@ -203,7 +203,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("zoom-in button scales the shared stage, keeping the tree and wheel visually linked", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -213,15 +213,15 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("draws the wheel's circle outline", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
   });
 
   it("renders an optional center label, and omits it when not provided", () => {
-    const { container, rerender } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container, rerender } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();
 
-    rerender(<GenreTreeWheelRight nodes={NODES} centerLabel="TheMusicTree" />);
+    rerender(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} centerLabel="TheMusicTree" />);
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
@@ -233,7 +233,7 @@ describe("GenreTreeWheelRight", () => {
       { id: "empty-child", parentId: "root-empty", name: "Filled", itemCount: 9 },
       { id: "root-flat", parentId: null, name: "Flat", itemCount: 0 },
     ];
-    const { container } = render(<GenreTreeWheelRight nodes={nodesWithZeroRoot} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={nodesWithZeroRoot} />);
 
     const emptyChip = chipFor(container, "Empty");
     const flatChip = chipFor(container, "Flat");
@@ -255,7 +255,7 @@ describe("GenreTreeWheelRight", () => {
       { id: "root-b", parentId: null, name: "Big", itemCount: 500 },
       { id: "b-child", parentId: "root-b", name: "BigChild", itemCount: 500 },
     ];
-    const { container } = render(<GenreTreeWheelRight nodes={nodes} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={nodes} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
 
     const rootItemCountRange = getItemCountRange([{ itemCount: 2 }, { itemCount: 1000 }]);
@@ -265,7 +265,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
     const transformDiv = getTransformDiv(container);
@@ -288,7 +288,7 @@ describe("GenreTreeWheelRight", () => {
   });
 
   it("fit-to-frame is a no-op when no target element is measurable", () => {
-    const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -299,7 +299,7 @@ describe("GenreTreeWheelRight", () => {
 
   describe("node info panel", () => {
     it("opens on the left, switches nodes without closing, and closes via its own button", () => {
-      const { container } = render(<GenreTreeWheelRight nodes={NODES} />);
+      const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={NODES} />);
       const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
       const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
       const chip = chipFor(container, "Electronic");

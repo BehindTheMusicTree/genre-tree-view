@@ -84,6 +84,8 @@ export type ControlsOrientation = "horizontal" | "vertical";
 
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
+  /** Label for the info panel's `itemCount` row (e.g. "Song count"); the library can't know what unit is counted. */
+  itemCountLabel: string;
   className?: string;
   rootColor?: string;
   orientation?: TreeOrientation;
