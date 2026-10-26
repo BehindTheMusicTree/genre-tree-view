@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** `itemCountLabel` is now a required prop on every renderer; the info panel shows it as the label of the item count row instead of the hardcoded "Song count".
 - The info panel no longer shows the node's "Side" field, and its "Song count" now appears after the Family section.
 
 ### Fixed
