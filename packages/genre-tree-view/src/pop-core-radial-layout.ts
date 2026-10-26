@@ -23,6 +23,7 @@ import {
   calculateLinkWidth,
   calculateNodeBorderWidth,
   calculateNodeDotRadius,
+  calculateSelectedNodeBorderWidth,
   calculateLabelFontSizeAtZoom,
   calculateLabelRank,
   calculateNodeFontSize,
@@ -676,7 +677,9 @@ export function renderPopSubtree(
           : SURFACE_BORDER_COLOR,
     )
     .attr("stroke-width", (d) =>
-      calculateNodeBorderWidth(d.data.itemCount, itemCountRange, isSelected(d)),
+      isSelected(d)
+        ? calculateSelectedNodeBorderWidth(calculateNodeDotRadius(d.data.itemCount, itemCountRange))
+        : calculateNodeBorderWidth(d.data.itemCount, itemCountRange),
     )
     .style("pointer-events", "none");
 

@@ -276,6 +276,13 @@ export function calculateNodeBorderWidth(itemCount: number, range: ItemCountRang
   return selected ? width * SELECTED_BORDER_WIDTH_RATIO : width;
 }
 
+export const SELECTED_BORDER_TO_RADIUS_RATIO = 0.2;
+
+/** Selected-node border of a dot or chip, proportional to its radius. */
+export function calculateSelectedNodeBorderWidth(radius: number): number {
+  return radius * SELECTED_BORDER_TO_RADIUS_RATIO;
+}
+
 export const LINK_TO_NODE_HEIGHT_RATIO = 1 / 6;
 
 /** Stroke width of the link leading to a node: a fixed fraction of that node's rendered height,
