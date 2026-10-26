@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-26
+
 ### Changed
 
 - Styles read `--gtv-surface`, `--gtv-surface-muted`, `--gtv-border`, `--gtv-border-strong`, `--gtv-text` and `--gtv-text-muted`, falling back to the matching `@behindthemusictree/brand` tokens and then to the previous zinc values, so a host theme (including dark) can restyle the tree and info panel.
