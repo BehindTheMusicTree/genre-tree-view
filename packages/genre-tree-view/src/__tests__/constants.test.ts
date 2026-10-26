@@ -4,6 +4,8 @@ import {
   getGenreNodeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
+  calculateSelectedNodeBorderWidth,
+  SELECTED_BORDER_TO_RADIUS_RATIO,
   calculateLabelFontSizeAtZoom,
   calculateNodeFontSize,
   isLabelRankedForZoom,
@@ -83,6 +85,13 @@ describe("calculateNodeBorderWidth", () => {
     expect(calculateNodeBorderWidth(500, range)).toBeGreaterThan(NODE_MIN_BORDER_WIDTH);
     expect(calculateNodeBorderWidth(500, range)).toBeLessThan(NODE_MAX_BORDER_WIDTH);
     expect(calculateNodeBorderWidth(10, range, true)).toBe(NODE_MIN_BORDER_WIDTH * SELECTED_BORDER_WIDTH_RATIO);
+  });
+});
+
+describe("calculateSelectedNodeBorderWidth", () => {
+  it("is proportional to the radius", () => {
+    expect(calculateSelectedNodeBorderWidth(50)).toBe(50 * SELECTED_BORDER_TO_RADIUS_RATIO);
+    expect(calculateSelectedNodeBorderWidth(10)).toBe(2 * SELECTED_BORDER_TO_RADIUS_RATIO * 5);
   });
 });
 

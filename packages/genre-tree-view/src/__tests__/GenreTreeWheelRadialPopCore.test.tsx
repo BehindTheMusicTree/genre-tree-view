@@ -475,6 +475,21 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(onRootSelect).toHaveBeenLastCalledWith("root-c");
   });
 
+  it("gives the selected root and center chips an accent border proportional to their size", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />);
+    const jazz = chipFor(container, "Jazz");
+    expect(jazz.style.borderColor).toBe("");
+
+    fireEvent.click(jazz);
+    expect(jazz.style.borderColor).not.toBe("");
+    expect(parseFloat(jazz.style.borderWidth)).toBeCloseTo((parseFloat(jazz.style.width) / 2) * 0.2);
+
+    const center = container.querySelector(".gtv-wheel-chip--center") as HTMLButtonElement;
+    fireEvent.click(center);
+    expect(parseFloat(center.style.borderWidth)).toBeCloseTo((parseFloat(center.style.width) / 2) * 0.2);
+    expect(jazz.style.borderColor).toBe("");
+  });
+
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {
     const onNodeClick = vi.fn();
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} onNodeClick={onNodeClick} />);

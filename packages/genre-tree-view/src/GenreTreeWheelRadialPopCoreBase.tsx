@@ -53,7 +53,9 @@ import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
+  ACCENT_COLOR,
   calculateNodeDotRadius,
+  calculateSelectedNodeBorderWidth,
   CENTER_NODE_NAME,
   getGenreNodeColor,
   getGenreNodeStyle,
@@ -1248,6 +1250,10 @@ export function WheelRadialPopCoreCore({
                     width: centerChipDiameter,
                     "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
                     "--gtv-chip-color": centerNodeColor,
+                    ...(panel?.node.id === centerNode.id && {
+                      borderColor: ACCENT_COLOR,
+                      borderWidth: calculateSelectedNodeBorderWidth(centerChipDiameter / 2),
+                    }),
                   } as React.CSSProperties
                 }
                 onClick={(event) => {
@@ -1314,6 +1320,10 @@ export function WheelRadialPopCoreCore({
                           width: diameter,
                           "--gtv-wheel-chip-base-height": `${diameter}px`,
                           "--gtv-chip-color": chipColor,
+                          ...(panel?.node.id === group.root.id && {
+                            borderColor: ACCENT_COLOR,
+                            borderWidth: calculateSelectedNodeBorderWidth(diameter / 2),
+                          }),
                         } as React.CSSProperties
                       }
                       aria-label={group.root.name}
