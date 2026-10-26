@@ -147,7 +147,7 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
-- **Node info panel**: clicking any node opens a read-only panel showing that node's song count
+- **Node info panel**: clicking any node opens a read-only panel showing that node's item count
   and side, its ancestors root-first (including the parent) as a vertical chain, and its direct
   children, each as a clickable circle node filled with that node's own color — internal presentational chrome,
   like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
