@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The info panel no longer shows the node's "Side" field, and its "Song count" now appears after the Family section.
+
 ### Fixed
 
 - The pop-core wheel's root and center chips no longer show a small white dot.

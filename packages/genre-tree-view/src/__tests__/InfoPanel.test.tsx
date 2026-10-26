@@ -87,7 +87,6 @@ describe("InfoPanel", () => {
       container.querySelectorAll(".gtv-info-panel-title")[0].textContent,
     ).toBe("Rock");
     expect(getByText("5")).toBeTruthy();
-    expect(getByText("pop")).toBeTruthy();
 
     const header = container.querySelector(
       ".gtv-info-panel-header",
@@ -113,8 +112,8 @@ describe("InfoPanel", () => {
     expect(queryByText("umbrella")).toBeNull();
   });
 
-  it("falls back to defaults for a minimal node (no actionable or side)", () => {
-    const { getByText } = render(
+  it("omits the Side field", () => {
+    const { queryByText } = render(
       <InfoPanel
         node={MINIMAL_NODE}
         fill="#F1F0FD"
@@ -128,7 +127,7 @@ describe("InfoPanel", () => {
       />,
     );
 
-    expect(getByText("core")).toBeTruthy();
+    expect(queryByText("Side")).toBeNull();
   });
 
   it("fires onClose when the close button is clicked", () => {

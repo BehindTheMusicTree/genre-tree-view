@@ -237,12 +237,6 @@ export function InfoPanel({
       <div className="gtv-info-panel-body">
         <div className="gtv-info-panel-main">
           {actions && <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} />}
-          <dl className="gtv-info-panel-fields">
-            <dt>Song count</dt>
-            <dd>{node.itemCount}</dd>
-            <dt>Side</dt>
-            <dd>{node.side ?? "core"}</dd>
-          </dl>
           {ancestorNodes.length > 0 && (
             <InfoPanelSection title="Ancestors">
               <ul className="gtv-info-panel-children-list gtv-info-panel-ancestors-list">
@@ -307,6 +301,10 @@ export function InfoPanel({
               </div>
             </div>
           </InfoPanelSection>
+          <dl className="gtv-info-panel-fields">
+            <dt>Song count</dt>
+            <dd>{node.itemCount}</dd>
+          </dl>
           {expanded && dangerZone}
         </div>
         {renderExtraDetails && (
