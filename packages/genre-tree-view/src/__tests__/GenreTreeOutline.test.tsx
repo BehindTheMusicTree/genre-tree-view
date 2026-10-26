@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 const NODES: GenreTreeNode[] = [
-  { id: "root-a", parentId: null, name: "Rock", itemCount: 1, wikidataId: "LOCAL:blues-rock" },
+  { id: "root-a", parentId: null, name: "Rock", itemCount: 5, wikidataId: "LOCAL:blues-rock" },
   { id: "a-core", parentId: "root-a", name: "Punk", itemCount: 3 },
   { id: "a-core-child", parentId: "a-core", name: "Hardcore", itemCount: 1 },
   { id: "a-pop", parentId: "root-a", name: "Pop Rock", itemCount: 2, side: "pop" },
@@ -138,10 +138,10 @@ describe("GenreTreeOutline", () => {
     expect(details.every((d) => !d.open)).toBe(true);
   });
 
-  it("shows each root's aggregated item count", () => {
+  it("shows each node's itemCount as given, without rolling descendants up", () => {
     const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expandAll(container);
-    expect(itemOf(container, "root-a").querySelector(".gtv-outline-count")!.textContent).toBe("7");
+    expect(itemOf(container, "root-a").querySelector(".gtv-outline-count")!.textContent).toBe("5");
     expect(itemOf(container, "a-core").querySelector(".gtv-outline-count")!.textContent).toBe("3");
   });
 

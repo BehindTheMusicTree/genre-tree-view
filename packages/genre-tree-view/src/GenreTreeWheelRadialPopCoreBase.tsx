@@ -1411,7 +1411,6 @@ export function WheelRadialPopCoreCore({
           actions={
             showToolbar && !reparentingNodeId
               ? {
-                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,

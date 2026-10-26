@@ -17,12 +17,16 @@ import { GenreTree, type GenreTreeNode } from "@behindthemusictree/genre-tree-vi
 import "@behindthemusictree/genre-tree-view/styles.css";
 
 const nodes: GenreTreeNode[] = [
-  { id: "root", parentId: null, name: "Rock", itemCount: 0, actionable: false },
+  { id: "root", parentId: null, name: "Rock", itemCount: 5, actionable: false },
   { id: "punk", parentId: "root", name: "Punk", itemCount: 5 },
 ];
 
 <GenreTree nodes={nodes} onPlayPause={(id) => play(id)} />;
 ```
+
+`itemCount` is a **subtree total**: the node's own items plus all its descendants'. A parent must
+already include its children's counts (above, Rock holds Punk's 5); the library displays and sizes
+by the value as given and never sums descendants itself.
 
 The component is purely presentational: it takes a flat `GenreTreeNode[]` and callback props
 (`onPlayPause`, `onAddChild`, `onRenameRequest`, `onDeleteRequest`, `onReparentRequest`,

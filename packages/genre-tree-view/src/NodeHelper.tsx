@@ -15,38 +15,21 @@ import {
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
-/** Builds the hierarchical tree structure from a flat node list. A node's itemCount must be
- * at least the sum of its children's — some inputs report only a node's own count, leaving
- * its ancestors under-reporting the subtree's true total — so counts are rolled up bottom-up
- * before the returned hierarchy is built. Rolled up onto clones, not the input nodes/array
- * themselves, since callers (e.g. a useMemo depending on `nodes`) own that data and re-run
- * this on every render — mutating it in place would compound the rollup across renders. */
+/** Builds the hierarchical tree structure from a flat node list. Each node's `itemCount` is
+ * already its subtree total (see `GenreTreeNode.itemCount`), so it is used as-is, never summed. */
 export function buildTreeHierarchyStructure(d3Lib: typeof import("d3"), nodes: GenreTreeNode[]) {
-  const rawRoot = d3Lib
-    .stratify<GenreTreeNode>()
-    .id((d) => d.id)
-    .parentId((d) => d.parentId)(nodes);
-
-  rawRoot.sum((d) => d.itemCount);
-  const aggregatedItemCountById = new Map(rawRoot.descendants().map((d) => [d.data.id, d.value!]));
-
-  const aggregatedNodes = nodes.map((node) => ({
-    ...node,
-    itemCount: aggregatedItemCountById.get(node.id)!,
-  }));
-
   return d3Lib
     .stratify<GenreTreeNode>()
     .id((d) => d.id)
-    .parentId((d) => d.parentId)(aggregatedNodes);
+    .parentId((d) => d.parentId)(nodes);
 }
 
-/** A subtree's rolled-up root count is the sum of the whole subtree, so it's always that
+/** A subtree root's count is the total of the whole subtree, so it's always that
  * subtree's own local maximum — meaning tree-renderer always sizes a hidden root against its own
  * subtree's item-count range, never the range a caller might be using to compare that root
  * against sibling roots elsewhere (e.g. a wheel's cross-root chip-sizing scale). Callers that need
  * to predict a hidden root's rendered width/height — to reserve matching clearance for it — must
- * mirror this same rollup + local-range computation rather than reusing their own cross-root
+ * mirror this same local-range computation rather than reusing their own cross-root
  * scale. */
 export function calculateLocalRootDimensions(d3Lib: typeof import("d3"), nodes: GenreTreeNode[]): Dimensions {
   const root = buildTreeHierarchyStructure(d3Lib, nodes);
@@ -65,12 +48,12 @@ export function calculateLocalRootDimensions(d3Lib: typeof import("d3"), nodes: 
 export function calculateRootAnchorClearance(
   d3Lib: typeof import("d3"),
   nodes: GenreTreeNode[],
-  aggregatedItemCount: number,
+  rootItemCount: number,
   rootItemCountRange: ItemCountRange,
   axis: keyof Dimensions,
 ): number {
   const localExtent = calculateLocalRootDimensions(d3Lib, nodes)[axis];
-  const displayExtent = calculateNodeDimensions(aggregatedItemCount, rootItemCountRange)[axis];
+  const displayExtent = calculateNodeDimensions(rootItemCount, rootItemCountRange)[axis];
   return (localExtent + displayExtent) / 2;
 }
 

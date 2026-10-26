@@ -23,7 +23,20 @@ function demoItemCount(seed: number): number {
   return MIN_DEMO_ITEM_COUNT + ((seed * 9973) % (MAX_DEMO_ITEM_COUNT - MIN_DEMO_ITEM_COUNT + 1));
 }
 
-const initialNodes: GenreTreeNode[] = [
+/** Turns nodes carrying only their own counts into the subtree totals `GenreTreeNode.itemCount`
+ * requires: each node's count plus all its descendants'. */
+function withSubtreeTotals(ownCountNodes: GenreTreeNode[]): GenreTreeNode[] {
+  const totalById = new Map(ownCountNodes.map((n) => [n.id, n.itemCount]));
+  const parentById = new Map(ownCountNodes.map((n) => [n.id, n.parentId]));
+  for (const node of ownCountNodes) {
+    for (let id = parentById.get(node.id); id; id = parentById.get(id)) {
+      totalById.set(id, totalById.get(id)! + node.itemCount);
+    }
+  }
+  return ownCountNodes.map((n) => ({ ...n, itemCount: totalById.get(n.id)! }));
+}
+
+const initialOwnCountNodes: GenreTreeNode[] = [
   { id: "root-a", parentId: null, name: "Rock", itemCount: 0, actionable: false },
   { id: "a-punk", parentId: "root-a", name: "Punk", itemCount: 340 },
   { id: "a-post-punk", parentId: "a-punk", name: "Post-Punk", itemCount: 95 },
@@ -63,7 +76,8 @@ function buildDeepBranch(
   return nodes;
 }
 
-initialNodes.push(...buildDeepBranch("a-post-punk", "pp-depth3", 3, 6, { next: 0 }));
+initialOwnCountNodes.push(...buildDeepBranch("a-post-punk", "pp-depth3", 3, 6, { next: 0 }));
+const initialNodes = withSubtreeTotals(initialOwnCountNodes);
 
 interface LargeRootDef {
   name: string;
@@ -406,7 +420,7 @@ function buildLargeRootGroup(root: LargeRootDef, rootIndex: number): GenreTreeNo
   return nodes;
 }
 
-const largeWheelNodes: GenreTreeNode[] = [
+const largeWheelNodes: GenreTreeNode[] = withSubtreeTotals([
   ...LARGE_ROOTS.flatMap((root, index) => buildLargeRootGroup(root, index)),
   // Required by GenreTreeWheelRadialPopCore: a root named "Mainstream Pop", rendered at the
   // wheel's pivot point instead of a plain center label. Its own subtree (below) is hidden until
@@ -425,7 +439,7 @@ const largeWheelNodes: GenreTreeNode[] = [
   { id: "pop-radio-top40-viral", parentId: "pop-radio-top40", name: "Viral 40", itemCount: 150 },
   { id: "pop-radio-top40-tiktok", parentId: "pop-radio-top40-viral", name: "TikTok Hits", itemCount: 100 },
   { id: "pop-radio-top40-trending", parentId: "pop-radio-top40-tiktok", name: "Trending Now", itemCount: 60 },
-];
+]);
 
 // The pop/core wheel demo (only) shows the real Gold-exported canonical genre tree, refreshed by
 // music-tree-pipelines' sync_to_genre_tree_view (see infrastructure repo). GenreTreeWheelRadialPopCore
@@ -506,9 +520,12 @@ function createNodeCallbacks(
           input.onchange = () => {
             const files = Array.from(input.files ?? []);
             if (files.length === 0) return;
-            setNodes((prev) =>
-              prev.map((n) => (n.id === node.id ? { ...n, itemCount: n.itemCount + files.length } : n)),
-            );
+            setNodes((prev) => {
+              const parentById = new Map(prev.map((n) => [n.id, n.parentId]));
+              const affectedIds = new Set<string>();
+              for (let id: string | null | undefined = node.id; id; id = parentById.get(id)) affectedIds.add(id);
+              return prev.map((n) => (affectedIds.has(n.id) ? { ...n, itemCount: n.itemCount + files.length } : n));
+            });
             appendLog(`uploaded ${files.length} file(s) to ${node.id}`);
           };
           input.click();

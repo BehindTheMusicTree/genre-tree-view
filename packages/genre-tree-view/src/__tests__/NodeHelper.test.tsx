@@ -34,20 +34,16 @@ describe("buildTreeHierarchyStructure", () => {
     expect(root.children?.[0].data.id).toBe("child");
   });
 
-  it("rolls up itemCount bottom-up so a node's count is at least the sum of its children's", () => {
+  it("keeps each node's itemCount as given, without rolling descendants up", () => {
     const nodes: GenreTreeNode[] = [
-      { id: "root", parentId: null, name: "Root", itemCount: 1 },
-      { id: "child", parentId: "root", name: "Child", itemCount: 2 },
-      { id: "grandchild-a", parentId: "child", name: "Grandchild A", itemCount: 3 },
-      { id: "grandchild-b", parentId: "child", name: "Grandchild B", itemCount: 4 },
+      { id: "root", parentId: null, name: "Root", itemCount: 9 },
+      { id: "child", parentId: "root", name: "Child", itemCount: 7 },
+      { id: "grandchild", parentId: "child", name: "Grandchild", itemCount: 3 },
     ];
     const root = buildTreeHierarchyStructure(d3, nodes);
     const byId = new Map(root.descendants().map((d) => [d.data.id, d.data.itemCount]));
 
-    expect(byId.get("grandchild-a")).toBe(3);
-    expect(byId.get("grandchild-b")).toBe(4);
-    expect(byId.get("child")).toBe(2 + 3 + 4);
-    expect(byId.get("root")).toBe(1 + 2 + 3 + 4);
+    expect([byId.get("root"), byId.get("child"), byId.get("grandchild")]).toEqual([9, 7, 3]);
   });
 
   it("does not mutate the original nodes array/objects passed in", () => {

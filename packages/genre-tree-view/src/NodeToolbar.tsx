@@ -9,10 +9,6 @@ import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 
 export interface NodeToolbarProps {
   node: GenreTreeNode;
-  /** Overrides `node.itemCount` for the play button's enabled check — views pass the node's
-   * rolled-up subtree total (`TreeIndex.subtreeItemCountById`) so "Play" reflects whether the
-   * subtree has anything playable, not just the node's own count. */
-  itemCount?: number;
   playingNodeId?: string | null;
   playState?: GenreTreePlayState;
   onPlayPause?: (nodeId: string) => void;
@@ -27,7 +23,6 @@ export interface NodeToolbarProps {
 /** The play/add-child/rename/reparent/delete/extra actions for a node, rendered in the info panel. */
 export function NodeToolbar({
   node,
-  itemCount = node.itemCount,
   playingNodeId,
   playState,
   onPlayPause,
@@ -43,7 +38,7 @@ export function NodeToolbar({
   const extraActions = additionalActions?.(node) ?? [];
   const primaryExtraActions = extraActions.filter((a) => a.placement === "primary");
   const overflowExtraActions = extraActions.filter((a) => a.placement !== "primary");
-  const isPlayable = itemCount > 0;
+  const isPlayable = node.itemCount > 0;
   const isThisPlaying = playingNodeId === node.id;
   const playLabel = isThisPlaying && playState === "playing" ? "Pause" : isThisPlaying && playState === "loading" ? "Loading..." : "Play";
   const playIcon =

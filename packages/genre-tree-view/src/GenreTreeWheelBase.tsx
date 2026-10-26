@@ -1,6 +1,5 @@
 "use client";
 
-import { useTreeIndex } from "./use-tree-index";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
@@ -118,7 +117,6 @@ export function WheelCore({
       ? "--gtv-wheel-chip-half-width"
       : "--gtv-wheel-chip-half-height";
 
-  const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (nodeId: string) => {
     const rootId = findRootId(nodeId, nodes) ?? nodeId;
@@ -136,17 +134,8 @@ export function WheelCore({
   );
   const wheelViewportHeight = wheelRadius * 2 + MAX_NODE_HEIGHT / 2;
 
-  // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
-  // against) reflects the full subtree total instead, mirroring the tree's own rollup in
-  // buildTreeHierarchyStructure. `group.nodes` already holds the root plus every descendant.
-  const aggregatedRootItemCountById = useMemo(
-    () =>
-      new Map(
-        groups.map((group) => [
-          group.root.id,
-          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
-        ]),
-      ),
+  const rootItemCountById = useMemo(
+    () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
     [groups],
   );
   const [selectedRootId, setSelectedRootId] = useState<string | null>(
@@ -221,10 +210,10 @@ export function WheelCore({
     () =>
       getItemCountRange(
         groups.map((group) => ({
-          itemCount: aggregatedRootItemCountById.get(group.root.id)!,
+          itemCount: rootItemCountById.get(group.root.id)!,
         })),
       ),
-    [groups, aggregatedRootItemCountById],
+    [groups, rootItemCountById],
   );
 
   // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
@@ -240,7 +229,7 @@ export function WheelCore({
     ? calculateRootAnchorClearance(
         d3,
         selectedGroup.nodes,
-        aggregatedRootItemCountById.get(selectedGroup.root.id)!,
+        rootItemCountById.get(selectedGroup.root.id)!,
         rootItemCountRange,
         direction === "left" ? "WIDTH" : "HEIGHT",
       )
@@ -439,15 +428,13 @@ export function WheelCore({
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;
               const chipColor = getGenreTreeColor(group.root.wikidataId);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(
-                group.root.id,
-              )!;
+              const rootItemCount = rootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(
-                aggregatedItemCount,
+                rootItemCount,
                 rootItemCountRange,
               );
               const fontSize = calculateNodeFontSize(
-                aggregatedItemCount,
+                rootItemCount,
                 rootItemCountRange,
               );
               return (
@@ -578,7 +565,6 @@ export function WheelCore({
           actions={
             showToolbar && !reparentingNodeId
               ? {
-                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,

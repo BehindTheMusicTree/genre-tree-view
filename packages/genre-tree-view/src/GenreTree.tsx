@@ -382,7 +382,6 @@ export function GenreTree({
           actions={
             showToolbar && !reparentingNodeId
               ? {
-                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,

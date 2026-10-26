@@ -203,16 +203,8 @@ export function WheelRadialCore({
   }
   const continuousAngleByRootId = angleMemo.angles;
 
-  // A root's own itemCount can under-report its subtree — chip size (and the range it's scaled
-  // against) reflects the full subtree total instead, mirroring the tree's own rollup.
-  const aggregatedRootItemCountById = useMemo(
-    () =>
-      new Map(
-        groups.map((group) => [
-          group.root.id,
-          group.nodes.reduce((sum, node) => sum + node.itemCount, 0),
-        ]),
-      ),
+  const rootItemCountById = useMemo(
+    () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
     [groups],
   );
 
@@ -220,10 +212,10 @@ export function WheelRadialCore({
     () =>
       getItemCountRange(
         groups.map((group) => ({
-          itemCount: aggregatedRootItemCountById.get(group.root.id)!,
+          itemCount: rootItemCountById.get(group.root.id)!,
         })),
       ),
-    [groups, aggregatedRootItemCountById],
+    [groups, rootItemCountById],
   );
 
   // Node cards scale against the whole tree's item counts, not just their own subtree's — a
@@ -606,15 +598,13 @@ export function WheelRadialCore({
               const angle =
                 continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
               const chipColor = getGenreTreeColor(group.root.wikidataId);
-              const aggregatedItemCount = aggregatedRootItemCountById.get(
-                group.root.id,
-              )!;
+              const rootItemCount = rootItemCountById.get(group.root.id)!;
               const dimensions = calculateNodeDimensions(
-                aggregatedItemCount,
+                rootItemCount,
                 rootItemCountRange,
               );
               const fontSize = calculateNodeFontSize(
-                aggregatedItemCount,
+                rootItemCount,
                 rootItemCountRange,
               );
               return (
@@ -737,7 +727,6 @@ export function WheelRadialCore({
           actions={
             showToolbar && !reparentingNodeId
               ? {
-                  itemCount: index.subtreeItemCountById.get(panel.node.id),
                   playingNodeId,
                   playState,
                   onPlayPause,
