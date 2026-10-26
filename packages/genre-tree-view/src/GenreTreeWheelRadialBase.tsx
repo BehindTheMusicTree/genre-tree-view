@@ -119,6 +119,7 @@ export function WheelRadialCore({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
+  itemCountLabel,
   readOnly,
   editMode,
   onEditModeChange,
@@ -723,6 +724,7 @@ export function WheelRadialCore({
           }}
           hideClose={hideInfoPanelClose}
           hideTitle={hideInfoPanelTitle}
+          itemCountLabel={itemCountLabel}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

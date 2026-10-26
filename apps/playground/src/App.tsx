@@ -662,6 +662,7 @@ export function App() {
           }}
         >
           <GenreTreeWheel
+            itemCountLabel="Track count"
             nodes={wheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
@@ -683,6 +684,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRight
+            itemCountLabel="Track count"
             nodes={wheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
@@ -704,6 +706,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadial
+            itemCountLabel="Track count"
             nodes={plainRadialWheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
@@ -724,6 +727,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadialPopCore
+            itemCountLabel="Track count"
             nodes={popCoreNodes}
             {...popCoreCallbacks}
             showToolbar={showToolbar}
@@ -745,7 +749,7 @@ export function App() {
             marginBottom: 32,
           }}
         >
-          <GenreTreeOutline nodes={popCoreNodes} {...popCoreCallbacks} showToolbar={showToolbar} />
+          <GenreTreeOutline itemCountLabel="Track count" nodes={popCoreNodes} {...popCoreCallbacks} showToolbar={showToolbar} />
         </div>
       )}
 
@@ -761,7 +765,7 @@ export function App() {
                 background: "#f4f4f5",
               }}
             >
-              <GenreTree nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} />
+              <GenreTree itemCountLabel="Track count" nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} />
             </div>
           ))}
         </div>

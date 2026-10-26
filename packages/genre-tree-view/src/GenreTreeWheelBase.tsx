@@ -88,6 +88,7 @@ export function WheelCore({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
+  itemCountLabel,
   readOnly,
   editMode,
   onEditModeChange,
@@ -361,6 +362,7 @@ export function WheelCore({
               <GenreTree
                 key={selectedGroup.root.id}
                 nodes={selectedGroup.nodes}
+                itemCountLabel={itemCountLabel}
                 orientation={treeOrientation}
                 hideRoot
                 interactive={false}
@@ -563,6 +565,7 @@ export function WheelCore({
           }}
           hideClose={hideInfoPanelClose}
           hideTitle={hideInfoPanelTitle}
+          itemCountLabel={itemCountLabel}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

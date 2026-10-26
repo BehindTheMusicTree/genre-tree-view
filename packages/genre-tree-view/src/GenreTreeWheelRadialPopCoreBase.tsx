@@ -168,6 +168,7 @@ export function WheelRadialPopCoreCore({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
+  itemCountLabel,
   readOnly,
   editMode,
   onEditModeChange,
@@ -1398,6 +1399,7 @@ export function WheelRadialPopCoreCore({
           previousLabel={typeof previousSelectedId === "string" ? index.byId.get(previousSelectedId)?.name : undefined}
           hideClose={hideInfoPanelClose}
           hideTitle={hideInfoPanelTitle}
+          itemCountLabel={itemCountLabel}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

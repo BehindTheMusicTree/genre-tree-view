@@ -71,6 +71,7 @@ describe("InfoPanel", () => {
   it("renders all fields for a fully-populated node", () => {
     const { container, getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -86,6 +87,7 @@ describe("InfoPanel", () => {
     expect(
       container.querySelectorAll(".gtv-info-panel-title")[0].textContent,
     ).toBe("Rock");
+    expect(getByText("Track count")).toBeTruthy();
     expect(getByText("5")).toBeTruthy();
 
     const header = container.querySelector(
@@ -106,15 +108,16 @@ describe("InfoPanel", () => {
       onClose: vi.fn(),
       onSelectNode: vi.fn(),
     };
-    const { queryByText, rerender } = render(<InfoPanel node={{ ...MINIMAL_NODE, umbrella: true }} {...props} />);
+    const { queryByText, rerender } = render(<InfoPanel itemCountLabel="Track count" node={{ ...MINIMAL_NODE, umbrella: true }} {...props} />);
     expect(queryByText("umbrella")).toBeTruthy();
-    rerender(<InfoPanel node={MINIMAL_NODE} {...props} />);
+    rerender(<InfoPanel itemCountLabel="Track count" node={MINIMAL_NODE} {...props} />);
     expect(queryByText("umbrella")).toBeNull();
   });
 
   it("omits the Side field", () => {
     const { queryByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -134,6 +137,7 @@ describe("InfoPanel", () => {
     const onClose = vi.fn();
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -155,6 +159,7 @@ describe("InfoPanel", () => {
   it("omits the close button when hideClose is set", () => {
     const { queryByLabelText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -174,6 +179,7 @@ describe("InfoPanel", () => {
   it("hides the header title when hideTitle is set", () => {
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -193,6 +199,7 @@ describe("InfoPanel", () => {
   it("applies the left modifier class when side is left", () => {
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -212,6 +219,7 @@ describe("InfoPanel", () => {
   it("shows a zero count and no list when the node has no children", () => {
     const { getByText, container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -231,6 +239,7 @@ describe("InfoPanel", () => {
   it("collapses and re-expands the Family section from its chevron toggle", () => {
     const { container, getByRole } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -259,6 +268,7 @@ describe("InfoPanel", () => {
   it("marks the current node as a leaf (no outgoing branch) when it has no children", () => {
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -277,6 +287,7 @@ describe("InfoPanel", () => {
   it("omits the parent section when there is no parent", () => {
     const { container, queryByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -298,6 +309,7 @@ describe("InfoPanel", () => {
   it("lists each child's name as a chip styled with its own fill and text color", () => {
     const { getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -321,6 +333,7 @@ describe("InfoPanel", () => {
   it("lists the largest child first", () => {
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -342,6 +355,7 @@ describe("InfoPanel", () => {
   it("renders the parent as a chip styled with its own fill and text color", () => {
     const { getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -363,6 +377,7 @@ describe("InfoPanel", () => {
     const onSelectNode = vi.fn();
     const { getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -384,6 +399,7 @@ describe("InfoPanel", () => {
     const onSelectNode = vi.fn();
     const { getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -404,6 +420,7 @@ describe("InfoPanel", () => {
   it("renders the current node as a non-clickable card between parent and children, sized by item count", () => {
     const { container, getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -431,6 +448,7 @@ describe("InfoPanel", () => {
   it("omits the ancestors section when there are no ancestors", () => {
     const { queryByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -449,6 +467,7 @@ describe("InfoPanel", () => {
   it("lists each ancestor root-first as a circle node filled with its own color and log-sized by its song count", () => {
     const { container, getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -475,6 +494,7 @@ describe("InfoPanel", () => {
   it("collapses and re-expands the Ancestors section from its chevron toggle", () => {
     const { container, getByRole } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -505,6 +525,7 @@ describe("InfoPanel", () => {
     const onSelectNode = vi.fn();
     const { getByText } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -528,6 +549,7 @@ describe("InfoPanel", () => {
     ));
     const { getByTestId } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={FULL_NODE}
         fill="#4F46E5"
         textColor="#FFFFFF"
@@ -550,6 +572,7 @@ describe("InfoPanel", () => {
   it("omits any extra section when renderExtraDetails is not passed", () => {
     const { container } = render(
       <InfoPanel
+        itemCountLabel="Track count"
         node={MINIMAL_NODE}
         fill="#F1F0FD"
         textColor="#18181B"
@@ -569,6 +592,7 @@ describe("InfoPanel", () => {
     function renderPanel(props: Partial<InfoPanelProps> = {}) {
       return render(
         <InfoPanel
+          itemCountLabel="Track count"
           node={FULL_NODE}
           fill="#4F46E5"
           textColor="#FFFFFF"
@@ -621,6 +645,7 @@ describe("InfoPanel", () => {
 
       rerender(
         <InfoPanel
+          itemCountLabel="Track count"
           node={FULL_NODE}
           fill="#4F46E5"
           textColor="#FFFFFF"
@@ -667,6 +692,7 @@ describe("InfoPanel", () => {
     function renderPanel(props: Partial<InfoPanelProps> = {}) {
       return render(
         <InfoPanel
+          itemCountLabel="Track count"
           node={FULL_NODE}
           fill="#4F46E5"
           textColor="#FFFFFF"
@@ -694,6 +720,7 @@ describe("InfoPanel", () => {
 
       rerender(
         <InfoPanel
+          itemCountLabel="Track count"
           node={FULL_NODE}
           fill="#4F46E5"
           textColor="#FFFFFF"
