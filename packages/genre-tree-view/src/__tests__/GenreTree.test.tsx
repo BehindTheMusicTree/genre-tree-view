@@ -16,36 +16,36 @@ const TREE: GenreTreeNode[] = [
 
 describe("GenreTree", () => {
   it("renders one group per node and one link per edge", () => {
-    const { container } = render(<GenreTree nodes={TREE} />);
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
     expect(container.querySelectorAll("g.node").length).toBe(3);
     expect(container.querySelectorAll("path.gtv-link").length).toBe(2);
   });
 
   it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
     const selector = ".gtv-wheel-floating-controls--horizontal";
-    expect(render(<GenreTree nodes={TREE} />).container.querySelector(selector)).toBeNull();
+    expect(render(<GenreTree itemCountLabel="Track count" nodes={TREE} />).container.querySelector(selector)).toBeNull();
     cleanup();
     expect(
-      render(<GenreTree nodes={TREE} controlsOrientation="horizontal" />).container.querySelector(selector),
+      render(<GenreTree itemCountLabel="Track count" nodes={TREE} controlsOrientation="horizontal" />).container.querySelector(selector),
     ).not.toBeNull();
   });
 
   it("uses the deterministic root-seeded color when rootColor is not provided", () => {
-    const { container } = render(<GenreTree nodes={TREE} />);
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
     const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;
     expect(rect.getAttribute("fill")).toBe(tintSurface(getGenreTreeColor("root")));
   });
 
   it("uses the explicit rootColor prop when provided", () => {
-    const { container } = render(<GenreTree nodes={TREE} rootColor="#123456" />);
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} rootColor="#123456" />);
     const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;
     expect(rect.getAttribute("fill")).toBe(tintSurface("#123456"));
   });
 
   it("renders no shadow filter for either instance while ELEVATION is disabled", () => {
     const otherTree: GenreTreeNode[] = [{ id: "other-root", parentId: null, name: "Other", itemCount: 1 }];
-    const first = render(<GenreTree nodes={TREE} />);
-    const second = render(<GenreTree nodes={otherTree} />);
+    const first = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
+    const second = render(<GenreTree itemCountLabel="Track count" nodes={otherTree} />);
 
     expect(first.container.querySelector("filter#gtv-card-shadow-root")).toBeFalsy();
     expect(second.container.querySelector("filter#gtv-card-shadow-other-root")).toBeFalsy();
@@ -55,11 +55,11 @@ describe("GenreTree", () => {
   });
 
   it("re-renders stale groups away when the nodes prop changes", () => {
-    const { container, rerender } = render(<GenreTree nodes={TREE} />);
+    const { container, rerender } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
     expect(container.querySelector("#group-child-b")).toBeTruthy();
 
     const trimmedTree: GenreTreeNode[] = [{ id: "root", parentId: null, name: "Root", itemCount: 5 }];
-    rerender(<GenreTree nodes={trimmedTree} />);
+    rerender(<GenreTree itemCountLabel="Track count" nodes={trimmedTree} />);
 
     expect(container.querySelectorAll("g.node").length).toBe(1);
     expect(container.querySelector("#group-child-b")).toBeFalsy();
@@ -68,14 +68,14 @@ describe("GenreTree", () => {
   describe("node actions in the info panel", () => {
     it("renders the node's actions in the info panel once selected, and omits them when showToolbar is false", () => {
       const onPlayPause = vi.fn();
-      const { container, rerender } = render(<GenreTree nodes={TREE} onPlayPause={onPlayPause} />);
+      const { container, rerender } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} onPlayPause={onPlayPause} />);
       fireEvent.click(container.querySelector("#group-root") as SVGGElement);
 
       const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
       fireEvent.click(panel.getByRole("button", { name: /play/i }));
       expect(onPlayPause).toHaveBeenCalledWith("root");
 
-      rerender(<GenreTree nodes={TREE} onPlayPause={onPlayPause} showToolbar={false} />);
+      rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} onPlayPause={onPlayPause} showToolbar={false} />);
       expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).queryByRole("button", { name: /play/i })).toBeNull();
     });
 
@@ -88,7 +88,7 @@ describe("GenreTree", () => {
       for (const hideRoot of [false, true]) {
         for (const [selectedNodeId, expected] of [["leaf", ["Root", "Mid"]], ["mid", ["Root"]]] as const) {
           const { container, unmount } = render(
-            <GenreTree nodes={nodes} selectedNodeId={selectedNodeId} hideRoot={hideRoot} />,
+            <GenreTree itemCountLabel="Track count" nodes={nodes} selectedNodeId={selectedNodeId} hideRoot={hideRoot} />,
           );
           const section = within(container.querySelector(".gtv-info-panel") as HTMLElement)
             .getByText("Ancestors")
@@ -105,30 +105,30 @@ describe("GenreTree", () => {
         { id: "mid", parentId: "root", name: "Mid", itemCount: 0 },
         { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 3 },
       ];
-      const { container } = render(<GenreTree nodes={nodes} selectedNodeId="mid" />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={nodes} selectedNodeId="mid" />);
       const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
       expect((panel.getByRole("button", { name: /play/i }) as HTMLButtonElement).disabled).toBe(false);
     });
 
     it("hides the actions while a reparent is in progress", () => {
-      const { container } = render(<GenreTree nodes={TREE} selectedNodeId="root" reparentingNodeId="child-a" />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="root" reparentingNodeId="child-a" />);
       const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
       expect(panel.queryByRole("button", { name: /play/i })).toBeNull();
     });
 
     it("closes the overflow menu when the selected node changes", () => {
-      const { container, rerender } = render(<GenreTree nodes={TREE} selectedNodeId="root" />);
+      const { container, rerender } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="root" />);
       const panel = () => within(container.querySelector(".gtv-info-panel") as HTMLElement);
       fireEvent.click(panel().getByRole("button", { name: /more actions/i }));
       expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).toBe("true");
-      rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" />);
+      rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="child-a" />);
       expect(panel().getByRole("button", { name: /more actions/i }).getAttribute("aria-expanded")).not.toBe("true");
     });
   });
 
   it("fires onNodeClick with the node's data when its body is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTree nodes={TREE} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} onNodeClick={onNodeClick} />);
 
     const nodeGroup = container.querySelector("#group-child-a") as SVGGElement;
     fireEvent.click(nodeGroup);
@@ -140,7 +140,7 @@ describe("GenreTree", () => {
   it("does not fire onNodeClick while a reparent is in progress", () => {
     const onNodeClick = vi.fn();
     const { container } = render(
-      <GenreTree nodes={TREE} reparentingNodeId="child-a" onNodeClick={onNodeClick} />,
+      <GenreTree itemCountLabel="Track count" nodes={TREE} reparentingNodeId="child-a" onNodeClick={onNodeClick} />,
     );
 
     const rootGroup = container.querySelector("#group-root") as SVGGElement;
@@ -153,7 +153,7 @@ describe("GenreTree", () => {
     it("adds the reparent-target overlay only on eligible, non-forbidden nodes and forwards the selection", async () => {
       const onReparent = vi.fn();
       const { container } = render(
-        <GenreTree nodes={TREE} reparentingNodeId="child-a" onReparent={onReparent} />,
+        <GenreTree itemCountLabel="Track count" nodes={TREE} reparentingNodeId="child-a" onReparent={onReparent} />,
       );
 
       const rootGroup = container.querySelector("#group-root") as SVGGElement;
@@ -169,7 +169,7 @@ describe("GenreTree", () => {
     });
 
     it("does not forbid any node when reparentingNodeId belongs to a different tree instance", () => {
-      const { container } = render(<GenreTree nodes={TREE} reparentingNodeId="not-in-this-tree" />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} reparentingNodeId="not-in-this-tree" />);
 
       const rootGroup = container.querySelector("#group-root") as SVGGElement;
       fireEvent.mouseEnter(rootGroup);
@@ -177,7 +177,7 @@ describe("GenreTree", () => {
     });
 
     it("excludes the node being reparented and its descendants from the overlay", () => {
-      const { container } = render(<GenreTree nodes={TREE} reparentingNodeId="root" />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} reparentingNodeId="root" />);
 
       const rootGroup = container.querySelector("#group-root") as SVGGElement;
       fireEvent.mouseEnter(rootGroup);
@@ -189,7 +189,7 @@ describe("GenreTree", () => {
     });
 
     it("does not add the overlay when no reparent is in progress", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const rootGroup = container.querySelector("#group-root") as SVGGElement;
       fireEvent.mouseEnter(rootGroup);
       expect(container.querySelector("#select-as-new-parent-group-root")).toBeFalsy();
@@ -221,7 +221,7 @@ describe("GenreTree", () => {
     });
 
     it("ctrl+wheel scales the shared transform, anchored on the cursor", async () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
@@ -232,7 +232,7 @@ describe("GenreTree", () => {
     });
 
     it("plain wheel (no ctrlKey) also scales the shared transform, like Google Maps", async () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
@@ -243,7 +243,7 @@ describe("GenreTree", () => {
     });
 
     it("does not rescale when a zero delta resolves to the same clamped scale", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
       const svg = container.querySelector("svg") as SVGSVGElement;
       const baseWidth = svg.getAttribute("width");
@@ -254,7 +254,7 @@ describe("GenreTree", () => {
     });
 
     it("drag-panning from empty background moves the shared transform", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const svg = container.querySelector("svg") as SVGSVGElement;
       const transformDiv = getTransformDiv(container);
 
@@ -266,7 +266,7 @@ describe("GenreTree", () => {
     });
 
     it("does not start a pan drag from a pointerdown on a node", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const rootGroup = container.querySelector("#group-root") as SVGGElement;
       const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 
@@ -280,7 +280,7 @@ describe("GenreTree", () => {
     });
 
     it("ignores a non-primary-button pointerdown", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const svg = container.querySelector("svg") as SVGSVGElement;
       const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 
@@ -294,7 +294,7 @@ describe("GenreTree", () => {
     });
 
     it("zoom-in button scales the shared transform up, anchored on the viewport center", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
 
@@ -304,7 +304,7 @@ describe("GenreTree", () => {
     });
 
     it("zoom-out button scales the shared transform down", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
 
@@ -314,7 +314,7 @@ describe("GenreTree", () => {
     });
 
     it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
 
       for (const name of ["Zoom in", "Zoom out", "Fit to frame"]) {
         const button = within(container).getByRole("button", { name });
@@ -323,7 +323,7 @@ describe("GenreTree", () => {
     });
 
     it("disables the zoom-in button once the max scale is reached", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const zoomIn = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
       const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 
@@ -335,7 +335,7 @@ describe("GenreTree", () => {
     });
 
     it("disables the zoom-out button once the min scale is reached", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const zoomOut = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
       const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 
@@ -347,7 +347,7 @@ describe("GenreTree", () => {
     });
 
     it("does not start a pan drag from a pointerdown on the zoom controls", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const zoomControls = container.querySelector(".gtv-zoom-controls") as HTMLElement;
       const scrollBySpy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 
@@ -361,7 +361,7 @@ describe("GenreTree", () => {
     });
 
     it("does not start a pan drag from a pointerdown on the info panel", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       fireEvent.click(container.querySelector("#group-child-a") as SVGGElement);
       const panel = container.querySelector(".gtv-info-panel") as HTMLElement;
       const transformDiv = getTransformDiv(container);
@@ -375,7 +375,7 @@ describe("GenreTree", () => {
     });
 
     it("fit-to-frame button rescales the shared transform to fit content larger than the viewport", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const wrapper = container.firstChild as HTMLElement;
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
@@ -396,7 +396,7 @@ describe("GenreTree", () => {
     });
 
     it("fit-to-frame is a no-op when the target element isn't measurable", () => {
-      const { container } = render(<GenreTree nodes={TREE} />);
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
       const transformDiv = getTransformDiv(container);
       const baseScale = getScale(transformDiv);
 
@@ -416,7 +416,7 @@ describe("GenreTree", () => {
       };
 
       it("opens on the left by default when the node is clear of the panel's footprint", () => {
-        const { container } = render(<GenreTree nodes={TREE} />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
 
@@ -431,7 +431,7 @@ describe("GenreTree", () => {
       });
 
       it("uses the solid root color and white text for the header when hideRoot is true", () => {
-        const { container } = render(<GenreTree nodes={TREE} hideRoot />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} hideRoot />);
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
 
@@ -451,7 +451,7 @@ describe("GenreTree", () => {
           ...TREE,
           { id: "grandchild-a", parentId: "child-a", name: "Grandchild A", itemCount: 1 },
         ];
-        const { container } = render(<GenreTree nodes={nested} hideRoot />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={nested} hideRoot />);
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
 
@@ -474,7 +474,7 @@ describe("GenreTree", () => {
       });
 
       it("updates content when a different node is clicked, without closing", () => {
-        const { container } = render(<GenreTree nodes={TREE} />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
         const nodeGroupA = container.querySelector("#group-child-a") as SVGGElement;
         const nodeGroupB = container.querySelector("#group-child-b") as SVGGElement;
@@ -497,7 +497,7 @@ describe("GenreTree", () => {
       });
 
       it("closes only when the panel's close button is clicked", () => {
-        const { container } = render(<GenreTree nodes={TREE} />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
 
@@ -511,7 +511,7 @@ describe("GenreTree", () => {
       });
 
       it("switches to the parent node when its chip is clicked", () => {
-        const { container } = render(<GenreTree nodes={TREE} />);
+        const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
 
@@ -534,13 +534,13 @@ describe("GenreTree", () => {
 
       it("opens for an externally-controlled selectedNodeId, as a direct click would", () => {
         const { container, rerender } = render(
-          <GenreTree nodes={TREE} selectedNodeId={null} />,
+          <GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId={null} />,
         );
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
-        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="child-a" />);
 
         expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
 
@@ -550,7 +550,7 @@ describe("GenreTree", () => {
       it("notifies onSelectedNodeChange on click, chip navigation and close, and closes on a null selection", () => {
         const onSelectedNodeChange = vi.fn();
         const { container, rerender } = render(
-          <GenreTree nodes={TREE} onSelectedNodeChange={onSelectedNodeChange} />,
+          <GenreTree itemCountLabel="Track count" nodes={TREE} onSelectedNodeChange={onSelectedNodeChange} />,
         );
         const wrapper = container.firstChild as HTMLElement;
         const rectSpy = mockRects(container, wrapper, 400);
@@ -565,14 +565,14 @@ describe("GenreTree", () => {
         expect(onSelectedNodeChange).toHaveBeenLastCalledWith(null);
         expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
 
-        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
         expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Child A");
         expect(container.querySelector(".gtv-info-panel-close")).toBeNull();
 
-        rerender(<GenreTree nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelTitle />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="child-a" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelTitle />);
         expect(container.querySelector(".gtv-info-panel-title--hidden")?.textContent).toBe("Child A");
 
-        rerender(<GenreTree nodes={TREE} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
         expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
 
@@ -580,19 +580,19 @@ describe("GenreTree", () => {
       });
 
       it("ignores a selectedNodeId that matches no node", () => {
-        const { container, rerender } = render(<GenreTree nodes={TREE} selectedNodeId={null} />);
+        const { container, rerender } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId={null} />);
 
-        rerender(<GenreTree nodes={TREE} selectedNodeId="missing" />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} selectedNodeId="missing" />);
 
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
       });
 
       it("leaves the panel to its ancestor when selectedNodeId is set on a non-interactive tree", () => {
         const { container, rerender } = render(
-          <GenreTree nodes={TREE} interactive={false} selectedNodeId={null} />,
+          <GenreTree itemCountLabel="Track count" nodes={TREE} interactive={false} selectedNodeId={null} />,
         );
 
-        rerender(<GenreTree nodes={TREE} interactive={false} selectedNodeId="child-a" />);
+        rerender(<GenreTree itemCountLabel="Track count" nodes={TREE} interactive={false} selectedNodeId="child-a" />);
 
         expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
       });
@@ -600,7 +600,7 @@ describe("GenreTree", () => {
   });
   it("renders overlayPanel with no node selected", () => {
     const { getByText } = render(
-      <GenreTree nodes={TREE} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
+      <GenreTree itemCountLabel="Track count" nodes={TREE} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
     );
     expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
     expect(getByText("Overlay body")).toBeTruthy();

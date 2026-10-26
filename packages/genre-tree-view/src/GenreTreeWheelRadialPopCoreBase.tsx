@@ -53,7 +53,9 @@ import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
+  ACCENT_COLOR,
   calculateNodeDotRadius,
+  calculateSelectedNodeBorderWidth,
   CENTER_NODE_NAME,
   getGenreNodeColor,
   getGenreNodeStyle,
@@ -62,7 +64,6 @@ import {
   INFO_PANEL_WIDTH,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
-  PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
@@ -167,6 +168,7 @@ export function WheelRadialPopCoreCore({
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
+  itemCountLabel,
   readOnly,
   editMode,
   onEditModeChange,
@@ -1248,6 +1250,10 @@ export function WheelRadialPopCoreCore({
                     width: centerChipDiameter,
                     "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
                     "--gtv-chip-color": centerNodeColor,
+                    ...(panel?.node.id === centerNode.id && {
+                      borderColor: ACCENT_COLOR,
+                      borderWidth: calculateSelectedNodeBorderWidth(centerChipDiameter / 2),
+                    }),
                   } as React.CSSProperties
                 }
                 onClick={(event) => {
@@ -1267,9 +1273,7 @@ export function WheelRadialPopCoreCore({
                 }}
                 onDoubleClick={() => focusOnNode(centerNode.id)}
                 aria-label={centerNode.name}
-              >
-                {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
-              </button>
+              />
             </div>
           </div>
 
@@ -1314,6 +1318,10 @@ export function WheelRadialPopCoreCore({
                           width: diameter,
                           "--gtv-wheel-chip-base-height": `${diameter}px`,
                           "--gtv-chip-color": chipColor,
+                          ...(panel?.node.id === group.root.id && {
+                            borderColor: ACCENT_COLOR,
+                            borderWidth: calculateSelectedNodeBorderWidth(diameter / 2),
+                          }),
                         } as React.CSSProperties
                       }
                       aria-label={group.root.name}
@@ -1335,11 +1343,7 @@ export function WheelRadialPopCoreCore({
                         });
                       }}
                       onDoubleClick={() => focusOnNode(group.root.id)}
-                    >
-                      {PER_TREE_ACCENT_DOT && (
-                        <span className="gtv-wheel-chip-dot" />
-                      )}
-                    </button>
+                    />
                   </div>
                 </div>
               );
@@ -1395,6 +1399,7 @@ export function WheelRadialPopCoreCore({
           previousLabel={typeof previousSelectedId === "string" ? index.byId.get(previousSelectedId)?.name : undefined}
           hideClose={hideInfoPanelClose}
           hideTitle={hideInfoPanelTitle}
+          itemCountLabel={itemCountLabel}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}

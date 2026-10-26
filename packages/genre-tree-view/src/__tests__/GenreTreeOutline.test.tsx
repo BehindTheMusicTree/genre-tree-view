@@ -51,14 +51,14 @@ function expandAll(container: HTMLElement) {
 describe("GenreTreeOutline", () => {
   it("throws without a Mainstream Pop root", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<GenreTreeOutline nodes={NODES.filter((n) => n.name !== "Mainstream Pop" && n.parentId !== "pop")} />)).toThrow(
+    expect(() => render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES.filter((n) => n.name !== "Mainstream Pop" && n.parentId !== "pop")} />)).toThrow(
       'GenreTreeOutline requires a root node named "Mainstream Pop"',
     );
     vi.restoreAllMocks();
   });
 
   it("colors every row's bullet like its genre, and the panel header like the bullet", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expandAll(container);
     const dot = (id: string) => (itemOf(container, id).querySelector(".gtv-outline-dot") as HTMLElement).style.background;
     const style = (hex: string) => {
@@ -75,7 +75,7 @@ describe("GenreTreeOutline", () => {
   });
 
   it("lists Mainstream Pop first, then the other roots in data order", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     const rootList = container.querySelector(".gtv-outline-list--roots")!;
     const rootIds = Array.from(rootList.children).map((li) => li.getAttribute("data-gtv-node-id"));
     expect(rootIds).toEqual(["pop", "root-a", "root-b", "root-c"]);
@@ -87,7 +87,7 @@ describe("GenreTreeOutline", () => {
       { id: "genreless", parentId: null, name: "Genreless", itemCount: 3, detached: true },
       { id: "genreless-child", parentId: "genreless", name: "Untagged", itemCount: 2 },
     ];
-    const { container } = render(<GenreTreeOutline nodes={nodes} selectedNodeId="genreless-child" />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={nodes} selectedNodeId="genreless-child" />);
     const [rootList, detachedList] = Array.from(container.querySelectorAll(".gtv-outline-list--roots"));
     const ids = (list: Element) => Array.from(list.children).map((li) => li.getAttribute("data-gtv-node-id"));
     expect(ids(rootList)).toEqual(["pop", "root-a", "root-b", "root-c"]);
@@ -108,19 +108,19 @@ describe("GenreTreeOutline", () => {
 
   it("marks an umbrella node's name and leaves others unmarked", () => {
     const nodes = NODES.map((n) => (n.id === "a-core" ? { ...n, umbrella: true } : n));
-    const { container } = render(<GenreTreeOutline nodes={nodes} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={nodes} />);
     expandAll(container);
     expect(nameButton(container, "a-core").classList.contains("gtv-outline-name--umbrella")).toBe(true);
     expect(nameButton(container, "a-pop").classList.contains("gtv-outline-name--umbrella")).toBe(false);
   });
 
   it("renders no detached section when no root is detached", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expect(container.querySelector(".gtv-outline-list--detached")).toBeNull();
   });
 
   it("splits a root's children into Core and Pop sections, omitting an empty one", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expandAll(container);
     const labels = (id: string) =>
       Array.from(itemOf(container, id).querySelectorAll(".gtv-outline-section-label")).map((el) => el.textContent);
@@ -132,14 +132,14 @@ describe("GenreTreeOutline", () => {
   });
 
   it("starts with every section collapsed", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     const details = Array.from(container.querySelectorAll("details"));
     expect(details.length).toBeGreaterThan(0);
     expect(details.every((d) => !d.open)).toBe(true);
   });
 
   it("shows each root's aggregated item count", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expandAll(container);
     expect(itemOf(container, "root-a").querySelector(".gtv-outline-count")!.textContent).toBe("7");
     expect(itemOf(container, "a-core").querySelector(".gtv-outline-count")!.textContent).toBe("3");
@@ -149,7 +149,7 @@ describe("GenreTreeOutline", () => {
     const onReparent = vi.fn();
     const onNodeClick = vi.fn();
     const { container } = render(
-      <GenreTreeOutline nodes={NODES} reparentingNodeId="a-core" onReparent={onReparent} onNodeClick={onNodeClick} />,
+      <GenreTreeOutline itemCountLabel="Track count" nodes={NODES} reparentingNodeId="a-core" onReparent={onReparent} onNodeClick={onNodeClick} />,
     );
     expandAll(container);
     expect(nameButton(container, "a-core").disabled).toBe(true);
@@ -164,7 +164,7 @@ describe("GenreTreeOutline", () => {
 
   it("opens the info panel and fires onNodeClick on a name click, without toggling the section", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeOutline nodes={NODES} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onNodeClick={onNodeClick} />);
     fireEvent.click(nameButton(container, "root-a"));
 
     expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: "root-a" }), expect.any(MouseEvent));
@@ -181,18 +181,18 @@ describe("GenreTreeOutline", () => {
 
   it("hides the panel actions once a reparent starts with the panel open", () => {
     const onPlayPause = vi.fn();
-    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} onPlayPause={onPlayPause} />);
+    const { container, rerender } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onPlayPause={onPlayPause} />);
     fireEvent.click(nameButton(container, "root-a"));
     const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
     expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
 
-    rerender(<GenreTreeOutline nodes={NODES} onPlayPause={onPlayPause} reparentingNodeId="b-core" />);
+    rerender(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onPlayPause={onPlayPause} reparentingNodeId="b-core" />);
 
     expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
   });
 
   it("opens every ancestor section when navigating to a node from the panel", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     const panelChip = (name: string) => within(container.querySelector(".gtv-info-panel-mini-tree") as HTMLElement).getByText(name);
     fireEvent.click(nameButton(container, "root-a"));
     fireEvent.click(panelChip("Pop Rock"));
@@ -218,7 +218,7 @@ describe("GenreTreeOutline", () => {
   });
 
   it("styles panel chips by where the node renders: center tinted, core solid, pop tinted", () => {
-    const { container } = render(<GenreTreeOutline nodes={NODES} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} />);
     expandAll(container);
     fireEvent.click(nameButton(container, "root-a"));
     const chipColor = (name: string) =>
@@ -233,7 +233,7 @@ describe("GenreTreeOutline", () => {
 
   it("notifies onSelectedNodeChange on name click, chip navigation and close, without echoing a controlled selection", () => {
     const onSelectedNodeChange = vi.fn();
-    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} onSelectedNodeChange={onSelectedNodeChange} />);
+    const { container, rerender } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onSelectedNodeChange={onSelectedNodeChange} />);
     const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
 
     fireEvent.click(nameButton(container, "root-a"));
@@ -246,7 +246,7 @@ describe("GenreTreeOutline", () => {
     expect(onSelectedNodeChange).toHaveBeenLastCalledWith(null);
     expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
 
-    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
+    rerender(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} hideInfoPanelClose />);
     expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Bebop");
     expect(within(panel()).queryByLabelText("Close")).toBeNull();
     expect(onSelectedNodeChange).toHaveBeenCalledTimes(3);
@@ -255,27 +255,27 @@ describe("GenreTreeOutline", () => {
   it.each([null, undefined])("closes the panel without notifying when selectedNodeId becomes %s", (cleared) => {
     const onSelectedNodeChange = vi.fn();
     const { container, rerender } = render(
-      <GenreTreeOutline nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} />,
+      <GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="b-core" onSelectedNodeChange={onSelectedNodeChange} />,
     );
     expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
 
-    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId={cleared} onSelectedNodeChange={onSelectedNodeChange} />);
+    rerender(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId={cleared} onSelectedNodeChange={onSelectedNodeChange} />);
 
     expect(container.querySelector(".gtv-info-panel")).toBeNull();
     expect(onSelectedNodeChange).not.toHaveBeenCalled();
   });
 
   it("opens the panel for an externally-selected node and ignores unknown ids", () => {
-    const { container, rerender } = render(<GenreTreeOutline nodes={NODES} selectedNodeId="missing" />);
+    const { container, rerender } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="missing" />);
     expect(container.querySelector(".gtv-info-panel")).toBeNull();
 
-    rerender(<GenreTreeOutline nodes={NODES} selectedNodeId="b-core" />);
+    rerender(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="b-core" />);
     expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Bebop");
     expect(itemOf(container, "root-b").querySelector("details")!.open).toBe(true);
   });
   it("fires onNodeHover on a name's pointerenter and focus", () => {
     const onNodeHover = vi.fn();
-    const { container } = render(<GenreTreeOutline nodes={NODES} onNodeHover={onNodeHover} />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onNodeHover={onNodeHover} />);
     fireEvent.pointerEnter(nameButton(container, "root-a"));
     fireEvent.focus(nameButton(container, "root-b"));
     expect(onNodeHover.mock.calls.map(([node]) => node.id)).toEqual(["root-a", "root-b"]);
@@ -283,7 +283,7 @@ describe("GenreTreeOutline", () => {
 
   it("scrolls an externally-selected node into view and keeps the panel on it", () => {
     vi.mocked(Element.prototype.scrollIntoView).mockClear();
-    const { container } = render(<GenreTreeOutline nodes={NODES} selectedNodeId="a-core-child" />);
+    const { container } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="a-core-child" />);
     expect(container.querySelector(".gtv-info-panel-title")!.textContent).toBe("Hardcore");
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
     expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts[0]).toBe(itemOf(container, "a-core-child"));
@@ -293,7 +293,7 @@ describe("GenreTreeOutline", () => {
   });
   it("renders overlayPanel with no node selected", () => {
     const { getByText } = render(
-      <GenreTreeOutline nodes={NODES} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
+      <GenreTreeOutline itemCountLabel="Track count" nodes={NODES} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
     );
     expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
     expect(getByText("Overlay body")).toBeTruthy();

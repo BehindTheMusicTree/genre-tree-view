@@ -30,8 +30,7 @@ import {
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
   tintSurface,
-  NODE_MAX_BORDER_WIDTH,
-  SELECTED_BORDER_WIDTH_RATIO,
+  SELECTED_BORDER_TO_RADIUS_RATIO,
   DOUBLE_CLICK_DELAY_MS,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
@@ -701,7 +700,9 @@ describe("renderPopSubtree selection highlight", () => {
 
     const childDot = childGroup.querySelector(".gtv-node-dot") as SVGCircleElement;
     expect(childDot.getAttribute("stroke")).toBe("#4F46E5");
-    expect(childDot.getAttribute("stroke-width")).toBe(String(NODE_MAX_BORDER_WIDTH * SELECTED_BORDER_WIDTH_RATIO));
+    expect(Number(childDot.getAttribute("stroke-width"))).toBeCloseTo(
+      Number(childDot.getAttribute("r")) * SELECTED_BORDER_TO_RADIUS_RATIO,
+    );
   });
 
   it("leaves every node undimmed and unaccented when no node is selected", () => {

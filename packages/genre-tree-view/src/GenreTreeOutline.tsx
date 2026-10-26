@@ -276,6 +276,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     renderExtraDetails,
     hideInfoPanelClose = false,
     hideInfoPanelTitle = false,
+    itemCountLabel,
     readOnly,
     editMode,
     onEditModeChange,
@@ -434,6 +435,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           onSelectNode={(id) => selectNodeRef.current(id)}
           hideClose={hideInfoPanelClose}
           hideTitle={hideInfoPanelTitle}
+          itemCountLabel={itemCountLabel}
           readOnly={readOnly}
           editMode={editMode}
           onEditModeChange={onEditModeChange}
