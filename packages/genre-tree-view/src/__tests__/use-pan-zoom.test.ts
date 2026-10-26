@@ -842,6 +842,30 @@ describe("usePanZoom", () => {
     document.body.removeChild(element);
   });
 
+  it("centerOnElement keeps the current scale when it's already above the target, only panning", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const baseScale = result.current.zoomScale;
+
+    act(() => {
+      result.current.centerOnElement(element, baseScale / 2);
+    });
+
+    await waitFor(() => expect(result.current.panX + 140 * baseScale).toBeCloseTo(600));
+    expect(result.current.zoomScale).toBe(baseScale);
+    expect(result.current.panY + 220 * baseScale).toBeCloseTo(375);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
   it("centerOnElement clamps the target scale to at most ZOOM_MAX_SCALE", async () => {
     const viewport = document.createElement("div");
     const element = document.createElement("div");

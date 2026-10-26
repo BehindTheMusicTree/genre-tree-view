@@ -404,9 +404,9 @@ export const ZOOM_ANIMATION_DURATION_MS = 220;
 // Breathing room (px) kept around content when "fit to frame" computes a scale — content is
 // never scaled to touch the viewport's edges exactly.
 export const ZOOM_FIT_PADDING = 40;
-// Scale a clicked node is zoomed/centered to (see usePanZoom's centerOnElement) — a fixed,
-// comfortable reading scale applied consistently regardless of the scale the user was already at,
-// so clicking always reads as "focus on this node" rather than an unpredictable relative zoom.
+// Minimum scale a clicked node is zoomed/centered to (see usePanZoom's centerOnElement) — a
+// comfortable reading scale: zooms in when the user is farther out, but never zooms out when
+// they're already closer.
 // 0.2 (not 1): full scale read as "too zoomed in" once clicked, cropping most of the surrounding tree.
 export const ZOOM_FOCUS_SCALE = 0.2;
 // On-screen font size (px) of radial dot labels, smallest to biggest genre: labels keep this size

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Selecting a node no longer zooms the view out when you're already zoomed in past the focus scale; it only pans to center the node beside the info panel, and still zooms in when you're farther out.
+
 ## [2.9.0] - 2026-10-22
 
 ### Added
