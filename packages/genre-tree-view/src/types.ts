@@ -4,6 +4,8 @@ export interface GenreTreeNode {
   id: string;
   parentId: string | null;
   name: string;
+  /** Subtree total: this node's own items plus all its descendants'. Parents must already include
+   * their children's counts — the library displays and sizes by this value as-is, never summing. */
   itemCount: number;
   /** Whether add-child, rename, delete and reparent actions apply to this node. Defaults to true. */
   actionable?: boolean;

@@ -147,6 +147,9 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
+- **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
+  supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
+  outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.
 - **Node info panel**: clicking any node opens a read-only panel showing that node's item count
   (row label supplied by the required `itemCountLabel` prop) and side, its ancestors root-first (including the parent) as a vertical chain, and its direct
   children, each as a clickable circle node filled with that node's own color — internal presentational chrome,

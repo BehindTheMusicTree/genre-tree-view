@@ -84,7 +84,6 @@ interface OutlineModel {
   ringRoots: GenreTreeNode[];
   detachedRoots: GenreTreeNode[];
   ringSplitById: ReadonlyMap<string, PopCoreSplit>;
-  aggregatedRootItemCountById: ReadonlyMap<string, number>;
   styleOf: (node: GenreTreeNode) => { fill: string; textColor: string };
 }
 
@@ -121,9 +120,6 @@ function buildOutlineModel(nodes: readonly GenreTreeNode[], index: TreeIndex): O
     ringRoots: ringGroups.map((group) => group.root),
     detachedRoots: detachedGroups.map((group) => group.root),
     ringSplitById,
-    aggregatedRootItemCountById: new Map(
-      groups.map((group) => [group.root.id, group.nodes.reduce((sum, node) => sum + node.itemCount, 0)]),
-    ),
     styleOf,
   };
 }
@@ -170,7 +166,7 @@ function OutlineNodeView({
     s.reparentingNodeId === null ? null : s.reparentForbiddenIds.has(nodeId) ? "forbidden" : "target",
   );
 
-  const itemCount = isRoot ? model.aggregatedRootItemCountById.get(nodeId)! : node.itemCount;
+  const { itemCount } = node;
   const children = model.index.childrenByParentId.get(nodeId) ?? [];
   const split = isRoot ? model.ringSplitById.get(nodeId) : undefined;
 
@@ -448,7 +444,6 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           actions={
             showToolbar && !reparentingNodeId
               ? {
-                  itemCount: model.index.subtreeItemCountById.get(selectedNode.id),
                   playingNodeId,
                   playState,
                   onPlayPause: callbacks.onPlayPause,

@@ -99,15 +99,25 @@ describe("GenreTree", () => {
       }
     });
 
-    it("enables Play for a parent whose own count is 0 but whose descendants have tracks", () => {
+    it("enables Play for a parent holding its subtree total", () => {
       const nodes: GenreTreeNode[] = [
-        { id: "root", parentId: null, name: "Root", itemCount: 0 },
-        { id: "mid", parentId: "root", name: "Mid", itemCount: 0 },
+        { id: "root", parentId: null, name: "Root", itemCount: 3 },
+        { id: "mid", parentId: "root", name: "Mid", itemCount: 3 },
         { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 3 },
       ];
       const { container } = render(<GenreTree itemCountLabel="Track count" nodes={nodes} selectedNodeId="mid" />);
       const panel = within(container.querySelector(".gtv-info-panel") as HTMLElement);
       expect((panel.getByRole("button", { name: /play/i }) as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("shows the selected node's itemCount as given, not rolled up from its children", () => {
+      const nodes: GenreTreeNode[] = [
+        { id: "root", parentId: null, name: "Root", itemCount: 3 },
+        { id: "mid", parentId: "root", name: "Mid", itemCount: 3 },
+        { id: "leaf", parentId: "mid", name: "Leaf", itemCount: 3 },
+      ];
+      const { container } = render(<GenreTree itemCountLabel="Track count" nodes={nodes} selectedNodeId="mid" />);
+      expect(within(container.querySelector(".gtv-info-panel") as HTMLElement).getByText("Track count").nextElementSibling?.textContent).toBe("3");
     });
 
     it("hides the actions while a reparent is in progress", () => {

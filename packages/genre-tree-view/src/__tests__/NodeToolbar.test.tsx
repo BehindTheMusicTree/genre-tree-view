@@ -25,11 +25,6 @@ describe("NodeToolbar", () => {
     expect(onPlayPause).toHaveBeenCalledWith("root-a");
   });
 
-  it("uses the itemCount override instead of node.itemCount for playability", () => {
-    const { container } = render(<NodeToolbar node={{ ...NODE, itemCount: 0 }} itemCount={2} />);
-    expect((container.querySelector('[aria-label="Play"]') as HTMLButtonElement).disabled).toBe(false);
-  });
-
   it("shows Pause when this node is playing", () => {
     const { container } = render(
       <NodeToolbar node={NODE} playingNodeId="root-a" playState="playing" />,
