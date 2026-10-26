@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-26
+
 ### Changed
 
 - **Breaking:** `itemCount` is now a subtree total (the node plus all its descendants). The library no longer rolls counts up, so displayed counts (tree nodes, wheel and outline roots, info panel) equal the input exactly. Consumers sending own-only counts must roll them up before passing `nodes`; already-rolled-up inputs previously displayed inflated numbers that grew with depth.
