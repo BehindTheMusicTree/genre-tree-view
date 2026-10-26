@@ -7,6 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The pop-core wheel's root and center chips no longer show a small white dot.
+- In the info panel's Family section, a node with no parent now centers its tree horizontally instead of clipping its label against the left edge.
 - In the pop-core wheel, the selected node's border now scales with its size instead of swamping small dots, and selected root and center chips now get the accent border too.
 - Selecting a node no longer zooms the view out when you're already zoomed in past the focus scale; it only pans to center the node beside the info panel, and still zooms in when you're farther out.
 

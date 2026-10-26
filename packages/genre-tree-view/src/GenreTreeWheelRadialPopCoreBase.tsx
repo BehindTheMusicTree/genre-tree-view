@@ -64,7 +64,6 @@ import {
   INFO_PANEL_WIDTH,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
-  PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
@@ -1273,9 +1272,7 @@ export function WheelRadialPopCoreCore({
                 }}
                 onDoubleClick={() => focusOnNode(centerNode.id)}
                 aria-label={centerNode.name}
-              >
-                {PER_TREE_ACCENT_DOT && centerHasPopDisc && <span className="gtv-wheel-chip-dot" />}
-              </button>
+              />
             </div>
           </div>
 
@@ -1345,11 +1342,7 @@ export function WheelRadialPopCoreCore({
                         });
                       }}
                       onDoubleClick={() => focusOnNode(group.root.id)}
-                    >
-                      {PER_TREE_ACCENT_DOT && (
-                        <span className="gtv-wheel-chip-dot" />
-                      )}
-                    </button>
+                    />
                   </div>
                 </div>
               );
