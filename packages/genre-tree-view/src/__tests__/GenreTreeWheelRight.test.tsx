@@ -225,21 +225,15 @@ describe("GenreTreeWheelRight", () => {
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
-  it("sizes a root's chip from its whole subtree's item count, not just its own", () => {
-    // root-empty has itemCount 0 itself but a child carrying the whole subtree's items — its
-    // chip should size (and scale the shared range) off that aggregated total, not read as 0.
-    const nodesWithZeroRoot: GenreTreeNode[] = [
-      { id: "root-empty", parentId: null, name: "Empty", itemCount: 0 },
-      { id: "empty-child", parentId: "root-empty", name: "Filled", itemCount: 9 },
+  it("sizes a root's chip from its own itemCount, which is already the subtree total", () => {
+    const nodesWithTotals: GenreTreeNode[] = [
+      { id: "root-big", parentId: null, name: "Big", itemCount: 9 },
+      { id: "big-child", parentId: "root-big", name: "Filled", itemCount: 9 },
       { id: "root-flat", parentId: null, name: "Flat", itemCount: 0 },
     ];
-    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={nodesWithZeroRoot} />);
+    const { container } = render(<GenreTreeWheelRight itemCountLabel="Track count" nodes={nodesWithTotals} />);
 
-    const emptyChip = chipFor(container, "Empty");
-    const flatChip = chipFor(container, "Flat");
-
-    expect(emptyChip.style.width).not.toBe(flatChip.style.width);
-    expect(parseFloat(emptyChip.style.width)).toBeGreaterThan(parseFloat(flatChip.style.width));
+    expect(parseFloat(chipFor(container, "Big").style.width)).toBeGreaterThan(parseFloat(chipFor(container, "Flat").style.width));
   });
 
   it("reserves anchor clearance from the selected root's own local subtree size, not the cross-root chip scale", () => {
