@@ -39,7 +39,8 @@ export interface UsePanZoomResult {
   fitToFrame: (elements: (Element | null | undefined)[]) => void;
   /** Animates pan/scale so `element`'s center glides to the center of the viewport's *available*
    * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
-   * to a fixed, comfortable reading scale regardless of the scale the user was already at. Pass
+   * to a comfortable reading scale. `targetScale` is a minimum: if the user is already zoomed in
+   * past it, the current scale is kept so selecting a node never zooms out. Pass
    * `obscuredWidth`/`obscuredSide` when an overlay (e.g. the info panel) will cover part of the
    * viewport, so the element centers within the space that remains visible beside it rather than
    * the viewport's full width. No-ops if the element/viewport isn't present/measurable. */
@@ -573,7 +574,7 @@ export function usePanZoom(
       // live value.
       const view = viewRef.current;
       const currentScale = view.k;
-      const newScale = clampZoomScale(targetScale, minScaleRef.current);
+      const newScale = clampZoomScale(Math.max(targetScale, currentScale), minScaleRef.current);
       const centerX = (rect.left + rect.width / 2 - viewportRect.left - view.x) / currentScale;
       const centerY = (rect.top + rect.height / 2 - viewportRect.top - view.y) / currentScale;
       // With an overlay obscuring one side, "centered on screen" means centered in the strip that
