@@ -5,8 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `collapsed` slides the info panel out of view and makes it inert while keeping it mounted; `hideExpandButton` drops the header's expand toggle for hosts that draw their own control.
+
 ### Changed
 
+- The info panel follows the Google Maps side panel: 25.5rem wide (`--layout-detail-panel-w`), `--radius-panel` corners, an elevation shadow instead of a border, and 1.5rem horizontal padding.
 - Installing the workspace on a Node version other than the pinned 22.23.2 now fails instead of warning (`engineStrict`).
 
 ## [4.3.0] - 2026-10-27

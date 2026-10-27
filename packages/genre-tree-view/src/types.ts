@@ -189,6 +189,10 @@ export interface GenreTreeProps {
    * requested state, and Escape fires it with `false` while expanded (unless focus is in an
    * input/textarea/select or a dialog is open). */
   onExpandedChange?: (on: boolean) => void;
+  /** Slides the info panel out of view and makes it inert, keeping it mounted. Defaults to false. */
+  collapsed?: boolean;
+  /** Drops the header's expand/collapse toggle when the host draws its own control for it. */
+  hideExpandButton?: boolean;
   /** Consumer content shown over the tree at the expanded info panel's exact size, independent of
    * node selection (e.g. an About page). Its header ✕ and Escape (same exceptions as
    * `onExpandedChange`) fire `onClose`. Showing it alongside the info panel is the consumer's

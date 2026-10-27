@@ -177,6 +177,8 @@ export function WheelRadialPopCoreCore({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  collapsed,
+  hideExpandButton,
   overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
@@ -1408,6 +1410,8 @@ export function WheelRadialPopCoreCore({
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
+          collapsed={collapsed}
+          hideExpandButton={hideExpandButton}
           actions={
             showToolbar && !reparentingNodeId
               ? {
