@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Installing the workspace on a Node version other than the pinned 22.23.2 now fails instead of warning (`engineStrict`).
+
 ## [4.3.0] - 2026-10-27
 
 ### Added
