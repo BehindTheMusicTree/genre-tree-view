@@ -7,7 +7,7 @@ import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
 
 // Same log-scaled position as a tree card (scaled across the mini tree's own nodes), mapped onto
-// a range that stays legible in the 280px panel instead of the tree's 35-120px card heights.
+// a range that stays legible in the 17.5rem panel instead of the tree's 35-120px card heights.
 const MINI_NODE_MIN_DIAMETER = 14;
 const MINI_NODE_MAX_DIAMETER = 32;
 const MINI_NODE_MIN_FONT_SIZE = 10;
