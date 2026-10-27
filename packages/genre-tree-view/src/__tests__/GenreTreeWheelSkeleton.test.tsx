@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GenreTreeWheelSkeleton } from "../GenreTreeWheelSkeleton";
+import { GenreTreeWheelSkeleton, buildMaskSvgMarkup } from "../GenreTreeWheelSkeleton";
 
 describe("GenreTreeWheelSkeleton", () => {
   it("renders an accessible loading label and a hidden svg wheel", () => {
@@ -46,14 +46,46 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(gradientLayer.style.opacity).toBe("0.22");
   });
 
-  it("renders unique gradient/mask ids across multiple mounted instances", () => {
+  it("renders unique shape/gradient ids across multiple mounted instances", () => {
     const { container: containerA } = render(<GenreTreeWheelSkeleton />);
     const { container: containerB } = render(<GenreTreeWheelSkeleton />);
 
-    const maskIdA = containerA.querySelector("mask")?.id;
-    const maskIdB = containerB.querySelector("mask")?.id;
-    expect(maskIdA).toBeTruthy();
-    expect(maskIdB).toBeTruthy();
-    expect(maskIdA).not.toBe(maskIdB);
+    const gradientIdA = containerA.querySelector("radialGradient")?.id;
+    const gradientIdB = containerB.querySelector("radialGradient")?.id;
+    expect(gradientIdA).toBeTruthy();
+    expect(gradientIdB).toBeTruthy();
+    expect(gradientIdA).not.toBe(gradientIdB);
+  });
+
+  it("animates the sweep in an HTML layer, not as an SVG mask or style inside the svg", () => {
+    const { container } = render(<GenreTreeWheelSkeleton />);
+
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("mask")).toBeNull();
+    expect(svg.querySelector("style")).toBeNull();
+
+    const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer");
+    expect(shimmer).toHaveAttribute("aria-hidden", "true");
+    expect(shimmer?.querySelector(".gtv-wheel-skeleton-shimmer-wedge")).not.toBeNull();
+  });
+
+  it("masks the sweep with the wheel shapes once mounted", () => {
+    const { container } = render(<GenreTreeWheelSkeleton />);
+
+    const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement;
+    expect(shimmer.style.maskImage).toMatch(/^url\("data:image\/svg\+xml/);
+  });
+});
+
+describe("buildMaskSvgMarkup", () => {
+  it("serializes every dot and link into a white svg sharing the component's viewBox", () => {
+    const markup = buildMaskSvgMarkup();
+    const { container } = render(<GenreTreeWheelSkeleton />);
+    const svg = container.querySelector("svg") as SVGSVGElement;
+
+    expect(markup.startsWith("<svg ")).toBe(true);
+    expect(markup).toContain(`viewBox="${svg.getAttribute("viewBox")}"`);
+    expect(markup.split("<circle").length - 1).toBe(container.querySelectorAll("defs circle").length);
+    expect(markup.split("<path").length - 1).toBe(container.querySelectorAll("defs path").length);
   });
 });

@@ -1,12 +1,11 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { NODE_DOT_MIN_RADIUS, TREE_COLORS } from "./constants";
 
 // Neutral grays rather than the real wheel's per-root tints, so the loading state reads as a
 // placeholder — see GenreTreeSkeleton's comment on why these are approximated, not imported.
 const SHAPE_COLOR = "#D4D4D8";
-const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
 const SECTOR_FILL_OPACITY = 0.22;
 const INNER_TINT_OPACITY = 0.55;
 const POP_LINK_OPACITY = 0.6;
@@ -185,15 +184,34 @@ const SECTOR_GRADIENT_CSS = `conic-gradient(from ${SECTOR_GRADIENT_ROTATION}deg,
     }deg`,
 ).join(", ")})`;
 
+// The sweep is an HTML layer (rotating on the compositor) clipped by this static mask, instead of
+// an SVG <mask> re-rasterized every frame: SVG children can't be composited, so animating a wedge
+// under an SVG mask repaints hundreds of shapes per frame on the main thread, which is busiest
+// exactly while the skeleton is shown.
+export function buildMaskSvgMarkup(): string {
+  const links = LINKS.map(
+    (link) =>
+      `<path d="${link.d}" fill="none" stroke="#fff" stroke-width="${link.width}" stroke-opacity="${link.opacity}" stroke-linecap="round"/>`,
+  ).join("");
+  const dots = DOTS.map((dot) => `<circle cx="${dot.point.x}" cy="${dot.point.y}" r="${dot.r}" fill="#fff"/>`).join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${CANVAS_ORIGIN} ${CANVAS_ORIGIN} ${CANVAS_SIZE} ${CANVAS_SIZE}">${links}${dots}</svg>`;
+}
+
 export function GenreTreeWheelSkeleton() {
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const gradientId = `genre-tree-wheel-skeleton-gradient-${uid}`;
-  const maskId = `genre-tree-wheel-skeleton-mask-${uid}`;
   const shapesId = `genre-tree-wheel-skeleton-shapes-${uid}`;
   const mainstreamId = `genre-tree-wheel-skeleton-mainstream-${uid}`;
-  const animationName = `genre-tree-wheel-skeleton-spin-${uid}`;
-  const shimmerWedgeClass = `genre-tree-wheel-skeleton-shimmer-wedge-${uid}`;
+  const shimmerRef = useRef<HTMLDivElement>(null);
+
+  // Set client-side only so the large data URI never lands in the SSR HTML.
+  useEffect(() => {
+    const layer = shimmerRef.current;
+    if (!layer) return;
+    const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(buildMaskSvgMarkup())}")`;
+    layer.style.maskImage = mask;
+    layer.style.webkitMaskImage = mask;
+  }, []);
 
   return (
     <div className="gtv-wheel-skeleton">
@@ -209,35 +227,12 @@ export function GenreTreeWheelSkeleton() {
         className="gtv-wheel-skeleton-svg"
         aria-hidden="true"
       >
-        <style>{`
-          @keyframes ${animationName} {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .${shimmerWedgeClass} {
-            transform-origin: 0px 0px;
-            animation: ${animationName} 2.4s linear infinite;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .${shimmerWedgeClass} {
-              animation: none;
-            }
-          }
-        `}</style>
         <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor={SHIMMER_HIGHLIGHT_COLOR} stopOpacity={0} />
-            <stop offset="50%" stopColor={SHIMMER_HIGHLIGHT_COLOR} stopOpacity={0.9} />
-            <stop offset="100%" stopColor={SHIMMER_HIGHLIGHT_COLOR} stopOpacity={0} />
-          </linearGradient>
           <radialGradient id={mainstreamId}>
             <stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.45} />
             <stop offset="65%" stopColor="#FFFFFF" stopOpacity={0.15} />
             <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
           </radialGradient>
-          {/* Drawn once in currentColor and referenced twice: gray for the visible wheel, white
-              inside the mask — so the shimmer only lights up dots and links, never the empty
-              space between them. */}
           <g id={shapesId}>
             {LINKS.map((link, i) => (
               <path
@@ -254,27 +249,16 @@ export function GenreTreeWheelSkeleton() {
               <circle key={`dot-${i}`} cx={dot.point.x} cy={dot.point.y} r={dot.r} fill="currentColor" />
             ))}
           </g>
-          <mask id={maskId}>
-            <use href={`#${shapesId}`} color="#FFFFFF" />
-          </mask>
         </defs>
 
         <circle cx={0} cy={0} r={RING_RADIUS} fill="#FFFFFF" fillOpacity={INNER_TINT_OPACITY} />
         <circle cx={0} cy={0} r={MAINSTREAM_RADIUS} fill={`url(#${mainstreamId})`} />
 
         <use href={`#${shapesId}`} color={SHAPE_COLOR} />
-
-        <g mask={`url(#${maskId})`}>
-          <g className={shimmerWedgeClass}>
-            <path
-              d={`M0,0 L0,${-CANVAS_SIZE} A${CANVAS_SIZE},${CANVAS_SIZE} 0 0 1 ${round(
-                CANVAS_SIZE * Math.sin((40 * Math.PI) / 180),
-              )},${round(-CANVAS_SIZE * Math.cos((40 * Math.PI) / 180))} Z`}
-              fill={`url(#${gradientId})`}
-            />
-          </g>
-        </g>
       </svg>
+      <div ref={shimmerRef} className="gtv-wheel-skeleton-shimmer" aria-hidden="true">
+        <div className="gtv-wheel-skeleton-shimmer-wedge" />
+      </div>
     </div>
   );
 }
