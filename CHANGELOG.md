@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-10-27
+
 ### Changed
 
 - Spacing, insets and font sizes in `styles.css` are now rem (4px scale on the browser-default root) instead of px, so the library renders the same under any host root font size. Hosts that set a smaller root (e.g. 14px) will see everything scale up.
