@@ -84,6 +84,14 @@ export type WheelZoomMode = "always" | "modifier";
 /** Layout of the floating zoom/pop/fit controls — see `GenreTreeProps.controlsOrientation`. */
 export type ControlsOrientation = "horizontal" | "vertical";
 
+/** The pan/zoom view as the content-space point shown at the viewport's center plus the scale —
+ * independent of the container's pixel size, so a saved view lands on the same spot in any window. */
+export interface GenreTreeViewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   /** Label for the info panel's `itemCount` row (e.g. "Song count"); the library can't know what unit is counted. */
@@ -198,6 +206,13 @@ export interface GenreTreeProps {
    * `onExpandedChange`) fire `onClose`. Showing it alongside the info panel is the consumer's
    * call — close one before opening the other to keep them exclusive. */
   overlayPanel?: GenreTreeOverlayPanel;
+  /** Seeds the pan/zoom on mount, replacing the initial fit-to-frame and the centering on an
+   * initial `selectedNodeId`. Read once; later changes are ignored. Ignored when `interactive` is
+   * false and by `GenreTreeOutline`. */
+  defaultViewport?: GenreTreeViewport;
+  /** Fired once a user-driven pan/zoom settles (drag, wheel, pinch, zoom/fit buttons, centering on
+   * a clicked node) — not for the initial fit or for applying `defaultViewport`. */
+  onViewportChange?: (viewport: GenreTreeViewport) => void;
 }
 
 export interface GenreTreeOverlayPanel {

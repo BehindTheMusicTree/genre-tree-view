@@ -132,6 +132,8 @@ export function WheelRadialCore({
   hideExpandButton,
   overlayPanel,
   wheelZoom,
+  defaultViewport,
+  onViewportChange,
   controlsOrientation = "vertical",
   selectedNodeId,
 }: WheelRadialCoreProps) {
@@ -145,7 +147,7 @@ export function WheelRadialCore({
   );
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
@@ -456,7 +458,7 @@ export function WheelRadialCore({
     const elements = [wheelCircleRef.current, coreSvgRef.current];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
-    panZoom.fitToFrame(elements);
+    panZoom.fitToFrame(elements, { silent: true });
   });
 
   const handleChipClick = (rootId: string) => {
