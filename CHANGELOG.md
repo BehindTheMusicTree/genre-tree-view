@@ -9,6 +9,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Column placement: `--gtv-center-left`, `--gtv-center-right` and `--gtv-center-top` position the `overlayPanel` in a host's center column, and `--gtv-center-right` stops an expanded info panel at the right column, so it spans the left and center columns. Unset, both fill the container as before.
 
+### Fixed
+
+- The wheel loading skeleton's shimmer sweep is masked and spinning from the first paint (no static ray before hydration), runs on the compositor and keeps its position across loading stages (including when the server-rendered skeleton is replaced at hydration), so it no longer stutters or jumps while the tree loads.
+
 ### Removed
 
 - `--gtv-overlay-panel-right`, replaced by `--gtv-center-right`.

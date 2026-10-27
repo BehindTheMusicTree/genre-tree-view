@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GenreTreeWheelSkeleton } from "../GenreTreeWheelSkeleton";
+import { GenreTreeWheelSkeleton, buildMaskSvgMarkup } from "../GenreTreeWheelSkeleton";
 
 describe("GenreTreeWheelSkeleton", () => {
   it("renders an accessible loading label and a hidden svg wheel", () => {
@@ -46,14 +46,129 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(gradientLayer.style.opacity).toBe("0.22");
   });
 
-  it("renders unique gradient/mask ids across multiple mounted instances", () => {
+  it("renders unique shape/gradient ids across multiple mounted instances", () => {
     const { container: containerA } = render(<GenreTreeWheelSkeleton />);
     const { container: containerB } = render(<GenreTreeWheelSkeleton />);
 
-    const maskIdA = containerA.querySelector("mask")?.id;
-    const maskIdB = containerB.querySelector("mask")?.id;
-    expect(maskIdA).toBeTruthy();
-    expect(maskIdB).toBeTruthy();
-    expect(maskIdA).not.toBe(maskIdB);
+    const gradientIdA = containerA.querySelector("radialGradient")?.id;
+    const gradientIdB = containerB.querySelector("radialGradient")?.id;
+    expect(gradientIdA).toBeTruthy();
+    expect(gradientIdB).toBeTruthy();
+    expect(gradientIdA).not.toBe(gradientIdB);
+  });
+
+  it("animates the sweep in an HTML layer, not as an SVG mask or style inside the svg", () => {
+    const { container } = render(<GenreTreeWheelSkeleton />);
+
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg.querySelector("mask")).toBeNull();
+    expect(svg.querySelector("style")).toBeNull();
+
+    const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer");
+    expect(shimmer).toHaveAttribute("aria-hidden", "true");
+    expect(shimmer?.querySelector(".gtv-wheel-skeleton-shimmer-wedge")).not.toBeNull();
+  });
+
+  it("leaves the mask and the spin to CSS so the server-rendered skeleton needs no JS", () => {
+    const { container } = render(<GenreTreeWheelSkeleton />);
+
+    const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement;
+    expect(shimmer.getAttribute("style")).toBeNull();
+  });
+});
+
+describe("GenreTreeWheelSkeleton sweep phase", () => {
+  const originalGetAnimations = Element.prototype.getAnimations;
+
+  afterEach(() => {
+    Element.prototype.getAnimations = originalGetAnimations;
+    Reflect.deleteProperty(document, "timeline");
+    vi.resetModules();
+  });
+
+  function stubGetAnimations(startTime: number | null) {
+    const animation = { startTime };
+    Element.prototype.getAnimations = (() => [animation]) as unknown as typeof Element.prototype.getAnimations;
+    return animation;
+  }
+
+  async function renderSkeleton() {
+    const { GenreTreeWheelSkeleton: Fresh } = await import("../GenreTreeWheelSkeleton");
+    return render(<Fresh />);
+  }
+
+  it("keeps the first skeleton's running start time as the shared reference", async () => {
+    const first = stubGetAnimations(1200);
+    await renderSkeleton();
+
+    expect(first.startTime).toBe(1200);
+  });
+
+  it("puts every later skeleton on the first one's start time so remounts resume in phase", async () => {
+    stubGetAnimations(1200);
+    await renderSkeleton();
+    const second = stubGetAnimations(5000);
+    await renderSkeleton();
+
+    expect(second.startTime).toBe(1200);
+  });
+
+  it("falls back to the document timeline when the animation has no start time yet", async () => {
+    Object.defineProperty(document, "timeline", { value: { currentTime: 777 }, configurable: true });
+    const animation = stubGetAnimations(null);
+    await renderSkeleton();
+
+    expect(animation.startTime).toBe(777);
+  });
+
+  describe("with a sweep already running in the document", () => {
+    const originalDocumentGetAnimations = document.getAnimations;
+
+    afterEach(() => {
+      document.getAnimations = originalDocumentGetAnimations;
+    });
+
+    function stubDocumentAnimations(animations: Array<{ animationName: string; startTime: number }>) {
+      document.getAnimations = (() => animations) as unknown as typeof document.getAnimations;
+    }
+
+    it("starts on the running sweep's start time even if that sweep is removed before layout effects", async () => {
+      stubDocumentAnimations([{ animationName: "gtv-wheel-skeleton-spin", startTime: 1234 }]);
+      const animation = stubGetAnimations(9000);
+      await renderSkeleton();
+
+      expect(animation.startTime).toBe(1234);
+    });
+
+    it("ignores running animations that are not the skeleton sweep", async () => {
+      stubDocumentAnimations([{ animationName: "something-else", startTime: 1234 }]);
+      const animation = stubGetAnimations(9000);
+      await renderSkeleton();
+
+      expect(animation.startTime).toBe(9000);
+    });
+  });
+
+  it("does nothing when there is no animation (reduced motion)", async () => {
+    Element.prototype.getAnimations = (() => []) as typeof Element.prototype.getAnimations;
+
+    await expect(renderSkeleton()).resolves.toBeDefined();
+  });
+});
+
+describe("buildMaskSvgMarkup", () => {
+  it("matches the committed wheel-skeleton-mask.svg that styles.css references", async () => {
+    await expect(buildMaskSvgMarkup()).toMatchFileSnapshot("../wheel-skeleton-mask.svg");
+  });
+
+  it("serializes every dot and link into a white svg sharing the component's viewBox", () => {
+    const markup = buildMaskSvgMarkup();
+    const { container } = render(<GenreTreeWheelSkeleton />);
+    const svg = container.querySelector("svg") as SVGSVGElement;
+
+    expect(markup.startsWith("<svg ")).toBe(true);
+    expect(markup).toContain(`viewBox="${svg.getAttribute("viewBox")}"`);
+    expect(markup.split("<circle").length - 1).toBe(container.querySelectorAll("defs circle").length);
+    expect(markup.split("<path").length - 1).toBe(container.querySelectorAll("defs path").length);
   });
 });

@@ -1343,6 +1343,7 @@
 
 .gtv-wheel-skeleton {
   position: relative;
+  container-type: size;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -1362,6 +1363,42 @@
   height: 100%;
   max-width: 100%;
   max-height: 100%;
+}
+
+.gtv-wheel-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+  margin: auto;
+  overflow: hidden;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: url("./wheel-skeleton-mask.svg");
+  -webkit-mask-image: url("./wheel-skeleton-mask.svg");
+  pointer-events: none;
+}
+
+.gtv-wheel-skeleton-shimmer-wedge {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from -20deg, transparent 0deg, rgb(255 255 255 / 0.9) 20deg, transparent 40deg, transparent 360deg);
+  will-change: transform;
+  animation: gtv-wheel-skeleton-spin 2.4s linear infinite;
+}
+
+@keyframes gtv-wheel-skeleton-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gtv-wheel-skeleton-shimmer-wedge {
+    animation: none;
+  }
 }
 
 .gtv-view-skeleton-wheel-wrapper {
