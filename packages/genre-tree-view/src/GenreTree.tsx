@@ -71,13 +71,15 @@ export function GenreTree({
   hideExpandButton,
   overlayPanel,
   wheelZoom,
+  defaultViewport,
+  onViewportChange,
   controlsOrientation = "vertical",
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
@@ -250,7 +252,7 @@ export function GenreTree({
     const elements = queryTreeContentElements(svgRef.current);
     if (elements.length === 0) return;
     hasInitialFitRef.current = true;
-    panZoom.fitToFrame(elements);
+    panZoom.fitToFrame(elements, { silent: true });
   });
 
   const svg = (

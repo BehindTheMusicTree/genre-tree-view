@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { usePanZoom } from "../use-pan-zoom";
-import { PAN_MIN_VISIBLE_PX, PAN_ZOOM_SETTLE_MS, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
+import { DEFAULT_VIEWPORT_CENTER_GUARD_MS, PAN_MIN_VISIBLE_PX, PAN_ZOOM_SETTLE_MS, ZOOM_FIT_PADDING, ZOOM_MAX_SCALE, ZOOM_MIN_SCALE, ZOOM_PINCH_SCALE_SPEED } from "../constants";
 import { computeFitScale } from "../zoom-pan";
 
 const WHEEL_TICK_DELTA = 4.000244140625;
@@ -1053,5 +1053,117 @@ describe("usePanZoom", () => {
 
     removeEventListenerSpy.mockRestore();
     document.body.removeChild(viewport);
+  });
+
+  describe("viewport deep link", () => {
+    const mount = (options: Parameters<typeof usePanZoom>[3]) => {
+      const viewport = document.createElement("div");
+      const content = document.createElement("div");
+      document.body.appendChild(viewport);
+      document.body.appendChild(content);
+      viewport.getBoundingClientRect = () =>
+        ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+      content.getBoundingClientRect = () =>
+        ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
+      const hook = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, options));
+      const cleanup = () => {
+        document.body.removeChild(viewport);
+        document.body.removeChild(content);
+      };
+      return { ...hook, content, cleanup };
+    };
+
+    it("applies defaultViewport on the first fitToFrame instead of the fitted view, without notifying", () => {
+      const onViewportChange = vi.fn();
+      const { result, content, cleanup } = mount({ defaultViewport: { x: 400, y: 300, zoom: 0.5 }, onViewportChange });
+
+      act(() => {
+        result.current.fitToFrame([content], { silent: true });
+      });
+
+      expect(result.current.zoomScale).toBe(0.5);
+      expect(result.current.panX).toBe(1200 / 2 - 400 * 0.5);
+      expect(result.current.panY).toBe(750 / 2 - 300 * 0.5);
+      expect(onViewportChange).not.toHaveBeenCalled();
+      cleanup();
+    });
+
+    it("applies defaultViewport only once", () => {
+      const { result, content, cleanup } = mount({ defaultViewport: { x: 400, y: 300, zoom: 0.5 } });
+
+      act(() => {
+        result.current.fitToFrame([content], { silent: true });
+      });
+      act(() => {
+        result.current.fitToFrame([content], { silent: true });
+      });
+
+      expect(result.current.zoomScale).not.toBe(0.5);
+      cleanup();
+    });
+
+    it("clamps a seeded zoom to the allowed range", () => {
+      const { result, content, cleanup } = mount({ defaultViewport: { x: 0, y: 0, zoom: ZOOM_MAX_SCALE * 10 } });
+
+      act(() => {
+        result.current.fitToFrame([content]);
+      });
+
+      expect(result.current.zoomScale).toBe(ZOOM_MAX_SCALE);
+      cleanup();
+    });
+
+    it("ignores centerOnElement right after seeding, then honors it once the guard expires", async () => {
+      const { result, content, cleanup } = mount({ defaultViewport: { x: 600, y: 375, zoom: 0.5 } });
+      act(() => {
+        result.current.fitToFrame([content], { silent: true });
+      });
+
+      act(() => {
+        result.current.centerOnElement(content, 1.5);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      });
+      expect(result.current.zoomScale).toBe(0.5);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, DEFAULT_VIEWPORT_CENTER_GUARD_MS));
+      });
+      act(() => {
+        result.current.centerOnElement(content, 1.5);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      });
+      expect(result.current.zoomScale).toBe(1.5);
+
+      cleanup();
+    });
+
+    it("notifies the settled content-space viewport after a user zoom, but not after a silent fit", () => {
+      const onViewportChange = vi.fn();
+      const { result, content, cleanup } = mount({ onViewportChange });
+
+      act(() => {
+        result.current.fitToFrame([content], { silent: true });
+      });
+      expect(onViewportChange).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.zoomIn();
+      });
+      expect(onViewportChange).toHaveBeenCalledTimes(1);
+      const { x, y, zoom } = onViewportChange.mock.calls[0][0];
+      expect(zoom).toBe(result.current.zoomScale);
+      expect(x).toBeCloseTo((1200 / 2 - result.current.panX) / zoom);
+      expect(y).toBeCloseTo((750 / 2 - result.current.panY) / zoom);
+
+      act(() => {
+        result.current.fitToFrame([content]);
+      });
+      expect(onViewportChange).toHaveBeenCalledTimes(2);
+      cleanup();
+    });
   });
 });

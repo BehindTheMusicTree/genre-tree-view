@@ -181,6 +181,8 @@ export function WheelRadialPopCoreCore({
   hideExpandButton,
   overlayPanel,
   wheelZoom,
+  defaultViewport,
+  onViewportChange,
   controlsOrientation = "vertical",
   allowWheelRotation = true,
   selectedNodeId,
@@ -283,7 +285,7 @@ export function WheelRadialPopCoreCore({
   }
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -1077,7 +1079,7 @@ export function WheelRadialPopCoreCore({
     ];
     if (!elements.some(Boolean)) return;
     hasInitialFitRef.current = true;
-    panZoom.fitToFrame(elements);
+    panZoom.fitToFrame(elements, { silent: true });
   });
 
   const handleChipClick = (rootId: string) => {

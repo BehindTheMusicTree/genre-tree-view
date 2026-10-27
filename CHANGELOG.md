@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-10-27
+
+### Added
+
+- `defaultViewport` and `onViewportChange` props (and the `GenreTreeViewport` type) on the pan/zoom renderers, so hosts can restore and persist the viewport, e.g. in a shareable URL. The viewport is content-space, so it lands on the same spot at any container size.
+
 ## [4.4.0] - 2026-10-27
 
 ### Added

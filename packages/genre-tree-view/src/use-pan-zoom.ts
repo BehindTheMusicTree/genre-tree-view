@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   CENTER_ON_ELEMENT_DURATION_MS,
+  DEFAULT_VIEWPORT_CENTER_GUARD_MS,
   PAN_MIN_VISIBLE_PX,
   PAN_ZOOM_SETTLE_MS,
   ZOOM_ANIMATION_DURATION_MS,
@@ -17,8 +18,15 @@ import {
   computeZoomScale,
   computeZoomScaleForButton,
   createWheelClassifierState,
+  viewToViewport,
+  viewportToView,
 } from "./zoom-pan";
-import type { WheelZoomMode } from "./types";
+import type { GenreTreeViewport, WheelZoomMode } from "./types";
+
+export interface UsePanZoomOptions {
+  defaultViewport?: GenreTreeViewport;
+  onViewportChange?: (viewport: GenreTreeViewport) => void;
+}
 
 export interface UsePanZoomResult {
   panX: number;
@@ -35,8 +43,10 @@ export interface UsePanZoomResult {
   /** Recomputes pan/scale so the union bounding box of the given elements (nulls ignored) fits
    * inside the viewport with ZOOM_FIT_PADDING of clearance. No-ops if none are present/measurable.
    * Also relaxes manual zoom-out's floor to match, when this content needs to go further out
-   * than ZOOM_MIN_SCALE — see minScale below. */
-  fitToFrame: (elements: (Element | null | undefined)[]) => void;
+   * than ZOOM_MIN_SCALE — see minScale below. The first successful call applies the hook's
+   * `defaultViewport` instead of the fitted pan/scale. `silent` keeps the result from reaching
+   * `onViewportChange` — for the automatic fit on mount, as opposed to the fit button. */
+  fitToFrame: (elements: (Element | null | undefined)[], options?: { silent?: boolean }) => void;
   /** Animates pan/scale so `element`'s center glides to the center of the viewport's *available*
    * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
    * to a comfortable reading scale. `targetScale` is a minimum: if the user is already zoomed in
@@ -75,6 +85,7 @@ export function usePanZoom(
   viewportRef: React.RefObject<HTMLElement | null>,
   wheelZoom: WheelZoomMode = "always",
   stageRef: React.RefObject<HTMLElement | null>,
+  options: UsePanZoomOptions = {},
 ): UsePanZoomResult {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
@@ -87,6 +98,12 @@ export function usePanZoom(
   const frameIdRef = useRef<number | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageAnimationRef = useRef<Animation | null>(null);
+  const defaultViewportRef = useRef(options.defaultViewport);
+  const centerGuardUntilRef = useRef(0);
+  const onViewportChangeRef = useRef(options.onViewportChange);
+  useEffect(() => {
+    onViewportChangeRef.current = options.onViewportChange;
+  }, [options.onViewportChange]);
 
   const writeStage = useCallback(() => {
     const stage = stageRef.current;
@@ -106,7 +123,7 @@ export function usePanZoom(
     else stageAnimationRef.current = stage.animate(keyframes, { duration: Infinity, fill: "forwards" });
   }, [stageRef]);
 
-  const commitView = useCallback(() => {
+  const commitView = useCallback((notify = true) => {
     if (settleTimerRef.current !== null) {
       clearTimeout(settleTimerRef.current);
       settleTimerRef.current = null;
@@ -126,7 +143,11 @@ export function usePanZoom(
     setPanX(x);
     setPanY(y);
     setZoomScale(k);
-  }, [stageRef]);
+    const viewport = viewportRef.current;
+    if (!notify || !onViewportChangeRef.current || !viewport) return;
+    const { width, height } = viewport.getBoundingClientRect();
+    if (width > 0 && height > 0) onViewportChangeRef.current(viewToViewport({ x, y, k }, width, height));
+  }, [stageRef, viewportRef]);
 
   // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
@@ -439,7 +460,7 @@ export function usePanZoom(
   // fitting the wheel+tree doesn't require re-deriving their geometry (radius, chip offsets,
   // svg dimensions) a second time here.
   const fitToFrame = useCallback(
-    (elements: (Element | null | undefined)[]) => {
+    (elements: (Element | null | undefined)[], { silent = false }: { silent?: boolean } = {}) => {
       const viewport = viewportRef.current;
       const present = elements.filter((el): el is Element => Boolean(el));
       if (!viewport || present.length === 0) return;
@@ -492,10 +513,25 @@ export function usePanZoom(
       // eslint-disable-next-line react-hooks/immutability -- see comment above
       minScaleRef.current = newMinScale;
       setMinScale(newMinScale);
+      const seed = defaultViewportRef.current;
+      if (seed) {
+        defaultViewportRef.current = undefined;
+        const seeded = viewportToView(
+          { ...seed, zoom: clampZoomScale(seed.zoom, newMinScale) },
+          viewportRect.width,
+          viewportRect.height,
+        );
+        view.k = seeded.k;
+        view.x = seeded.x;
+        view.y = seeded.y;
+        centerGuardUntilRef.current = performance.now() + DEFAULT_VIEWPORT_CENTER_GUARD_MS;
+        commitView(false);
+        return;
+      }
       view.k = fitScale;
       view.x = viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale;
       view.y = viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale;
-      commitView();
+      commitView(!silent);
     },
     [viewportRef, commitView],
   );
@@ -562,7 +598,7 @@ export function usePanZoom(
       obscured?: { width: number; side: "left" | "right" } | null,
     ) => {
       const viewport = viewportRef.current;
-      if (!viewport || !element) return;
+      if (!viewport || !element || performance.now() < centerGuardUntilRef.current) return;
 
       const viewportRect = viewport.getBoundingClientRect();
       if (viewportRect.width <= 0 || viewportRect.height <= 0) return;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   GenreTree,
   GenreTreeOutline,
@@ -9,6 +9,7 @@ import {
   groupNodesByRoot,
   type GenreTreeNode,
   type GenreTreePlayState,
+  type GenreTreeViewport,
 } from "@behindthemusictree/genre-tree-view";
 import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
 import realGenreTreeFixture from "./fixtures/genre-tree.json";
@@ -560,7 +561,24 @@ export function App() {
   const [nodes, setNodes] = useState<GenreTreeNode[]>(initialNodes);
   const [wheelNodes, setWheelNodes] = useState<GenreTreeNode[]>(largeWheelNodes);
   const [popCoreNodes, setPopCoreNodes] = useState<GenreTreeNode[]>(popCoreWheelNodes);
-  const [popCoreFocusNodeId, setPopCoreFocusNodeId] = useState<string | null>(null);
+  const [popCoreSelectedNodeId, setPopCoreSelectedNodeId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("genre"),
+  );
+  const [popCoreFocusNodeId, setPopCoreFocusNodeId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("zoom"),
+  );
+  const [popCoreDefaultViewport] = useState<GenreTreeViewport | undefined>(() => {
+    const [x, y, zoom] = (new URLSearchParams(window.location.search).get("view") ?? "").split(",").map(Number);
+    return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(zoom) && zoom > 0 ? { x, y, zoom } : undefined;
+  });
+  const writePopCoreUrl = useCallback((key: "genre" | "zoom" | "view", value: string | null, method: "push" | "replace") => {
+    const url = new URL(window.location.href);
+    if (value === null) url.searchParams.delete(key);
+    else url.searchParams.set(key, value);
+    if (url.href === window.location.href) return;
+    if (method === "push") window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
+  }, []);
   const [playingNodeId, setPlayingNodeId] = useState<string | null>(null);
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
@@ -750,8 +768,21 @@ export function App() {
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
+            selectedNodeId={popCoreSelectedNodeId}
+            onSelectedNodeChange={(node) => {
+              setPopCoreSelectedNodeId(node?.id ?? null);
+              writePopCoreUrl("genre", node?.id ?? null, "push");
+            }}
             focusNodeId={popCoreFocusNodeId}
-            onFocusChange={setPopCoreFocusNodeId}
+            onFocusChange={(id) => {
+              setPopCoreFocusNodeId(id);
+              writePopCoreUrl("view", null, "replace");
+              writePopCoreUrl("zoom", id, "push");
+            }}
+            defaultViewport={popCoreDefaultViewport}
+            onViewportChange={({ x, y, zoom }) =>
+              writePopCoreUrl("view", `${x.toFixed(1)},${y.toFixed(1)},${zoom.toFixed(2)}`, "replace")
+            }
           />
         </div>
       )}
