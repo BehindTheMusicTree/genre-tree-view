@@ -69,71 +69,70 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(shimmer?.querySelector(".gtv-wheel-skeleton-shimmer-wedge")).not.toBeNull();
   });
 
-  it("masks the sweep with the wheel shapes once mounted", () => {
+  it("leaves the mask and the spin to CSS so the server-rendered skeleton needs no JS", () => {
     const { container } = render(<GenreTreeWheelSkeleton />);
 
     const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement;
-    expect(shimmer.style.maskImage).toMatch(/^url\("data:image\/svg\+xml/);
+    expect(shimmer.getAttribute("style")).toBeNull();
   });
 });
 
-describe("GenreTreeWheelSkeleton sweep animation", () => {
-  const originalAnimate = Element.prototype.animate;
+describe("GenreTreeWheelSkeleton sweep phase", () => {
+  const originalGetAnimations = Element.prototype.getAnimations;
 
   afterEach(() => {
-    Element.prototype.animate = originalAnimate;
-    vi.unstubAllGlobals();
+    Element.prototype.getAnimations = originalGetAnimations;
+    Reflect.deleteProperty(document, "timeline");
+    vi.resetModules();
   });
 
-  function stubAnimate() {
-    const cancel = vi.fn();
-    const animation = { cancel, startTime: null as number | null };
-    const animate = vi.fn(() => animation);
-    Element.prototype.animate = animate as unknown as typeof Element.prototype.animate;
-    vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    return { animate, animation, cancel };
+  function stubGetAnimations(startTime: number | null) {
+    const animation = { startTime };
+    Element.prototype.getAnimations = (() => [animation]) as unknown as typeof Element.prototype.getAnimations;
+    return animation;
   }
 
-  it("rotates the wedge a full turn on the document timeline so remounts resume in phase", () => {
-    const { animate, animation } = stubAnimate();
-    render(<GenreTreeWheelSkeleton />);
+  async function renderSkeleton() {
+    const { GenreTreeWheelSkeleton: Fresh } = await import("../GenreTreeWheelSkeleton");
+    return render(<Fresh />);
+  }
 
-    expect(animate).toHaveBeenCalledWith(
-      [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
-      { duration: 2400, iterations: Infinity },
-    );
-    expect(animation.startTime).toBe(0);
+  it("keeps the first skeleton's running start time as the shared reference", async () => {
+    const first = stubGetAnimations(1200);
+    await renderSkeleton();
+
+    expect(first.startTime).toBe(1200);
   });
 
-  it("cancels the animation on unmount", () => {
-    const { cancel } = stubAnimate();
-    const { unmount } = render(<GenreTreeWheelSkeleton />);
+  it("puts every later skeleton on the first one's start time so remounts resume in phase", async () => {
+    stubGetAnimations(1200);
+    await renderSkeleton();
+    const second = stubGetAnimations(5000);
+    await renderSkeleton();
 
-    unmount();
-
-    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(second.startTime).toBe(1200);
   });
 
-  it("does not animate under prefers-reduced-motion", () => {
-    const { animate } = stubAnimate();
-    vi.stubGlobal("matchMedia", () => ({ matches: true }));
-    render(<GenreTreeWheelSkeleton />);
+  it("falls back to the document timeline when the animation has no start time yet", async () => {
+    Object.defineProperty(document, "timeline", { value: { currentTime: 777 }, configurable: true });
+    const animation = stubGetAnimations(null);
+    await renderSkeleton();
 
-    expect(animate).not.toHaveBeenCalled();
+    expect(animation.startTime).toBe(777);
   });
 
-  it("reuses the same mask image across mounts", () => {
-    const { container: containerA } = render(<GenreTreeWheelSkeleton />);
-    const { container: containerB } = render(<GenreTreeWheelSkeleton />);
+  it("does nothing when there is no animation (reduced motion)", async () => {
+    Element.prototype.getAnimations = (() => []) as typeof Element.prototype.getAnimations;
 
-    const maskOf = (container: HTMLElement) =>
-      (container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement).style.maskImage;
-    expect(maskOf(containerA)).toBeTruthy();
-    expect(maskOf(containerA)).toBe(maskOf(containerB));
+    await expect(renderSkeleton()).resolves.toBeDefined();
   });
 });
 
 describe("buildMaskSvgMarkup", () => {
+  it("matches the committed wheel-skeleton-mask.svg that styles.css references", async () => {
+    await expect(buildMaskSvgMarkup()).toMatchFileSnapshot("../wheel-skeleton-mask.svg");
+  });
+
   it("serializes every dot and link into a white svg sharing the component's viewBox", () => {
     const markup = buildMaskSvgMarkup();
     const { container } = render(<GenreTreeWheelSkeleton />);

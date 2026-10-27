@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef } from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 import { NODE_DOT_MIN_RADIUS, TREE_COLORS } from "./constants";
 
 // Neutral grays rather than the real wheel's per-root tints, so the loading state reads as a
@@ -184,10 +184,11 @@ const SECTOR_GRADIENT_CSS = `conic-gradient(from ${SECTOR_GRADIENT_ROTATION}deg,
     }deg`,
 ).join(", ")})`;
 
-// The sweep is an HTML layer (rotating on the compositor) clipped by this static mask, instead of
+// The sweep is an HTML layer (rotating on the compositor) clipped by a static mask, instead of
 // an SVG <mask> re-rasterized every frame: SVG children can't be composited, so animating a wedge
 // under an SVG mask repaints hundreds of shapes per frame on the main thread, which is busiest
-// exactly while the skeleton is shown.
+// exactly while the skeleton is shown. The mask ships as wheel-skeleton-mask.svg (referenced from
+// styles.css, snapshot-tested against this function) so it applies from the first paint.
 export function buildMaskSvgMarkup(): string {
   const links = LINKS.map(
     (link) =>
@@ -197,44 +198,24 @@ export function buildMaskSvgMarkup(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${CANVAS_ORIGIN} ${CANVAS_ORIGIN} ${CANVAS_SIZE} ${CANVAS_SIZE}">${links}${dots}</svg>`;
 }
 
-const SHIMMER_PERIOD_MS = 2400;
-
-let maskImageUrl: string | undefined;
-
-function getMaskImageUrl(): string {
-  maskImageUrl ??= `url("data:image/svg+xml;utf8,${encodeURIComponent(buildMaskSvgMarkup())}")`;
-  return maskImageUrl;
-}
+// Start time of the first skeleton's spin, shared so every later remount (one per loading stage)
+// continues at the same angle instead of restarting from 0deg.
+let sharedStartTime: CSSNumberish | null = null;
 
 export function GenreTreeWheelSkeleton() {
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const shapesId = `genre-tree-wheel-skeleton-shapes-${uid}`;
   const mainstreamId = `genre-tree-wheel-skeleton-mainstream-${uid}`;
-  const shimmerRef = useRef<HTMLDivElement>(null);
   const wedgeRef = useRef<HTMLDivElement>(null);
 
-  // Set client-side only so the large data URI never lands in the SSR HTML.
-  useEffect(() => {
-    const layer = shimmerRef.current;
-    if (!layer) return;
-    const mask = getMaskImageUrl();
-    layer.style.maskImage = mask;
-    layer.style.webkitMaskImage = mask;
-  }, []);
-
+  // The mask and the spin come from CSS so the server-rendered skeleton is already correct before
+  // hydration; this only syncs the phase. No animation means reduced motion or no WAAPI.
   useLayoutEffect(() => {
-    const wedge = wedgeRef.current;
-    if (!wedge || typeof wedge.animate !== "function") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const animation = wedge.animate(
-      [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
-      { duration: SHIMMER_PERIOD_MS, iterations: Infinity },
-    );
-    // Anchored to the document timeline so a skeleton remounted by the next loading stage
-    // resumes at the angle the previous one showed instead of restarting from 0deg.
-    animation.startTime = 0;
-    return () => animation.cancel();
+    const [animation] = wedgeRef.current?.getAnimations?.() ?? [];
+    if (!animation) return;
+    sharedStartTime ??= animation.startTime ?? document.timeline.currentTime;
+    animation.startTime = sharedStartTime;
   }, []);
 
   return (
@@ -280,7 +261,7 @@ export function GenreTreeWheelSkeleton() {
 
         <use href={`#${shapesId}`} color={SHAPE_COLOR} />
       </svg>
-      <div ref={shimmerRef} className="gtv-wheel-skeleton-shimmer" aria-hidden="true">
+      <div className="gtv-wheel-skeleton-shimmer" aria-hidden="true">
         <div ref={wedgeRef} className="gtv-wheel-skeleton-shimmer-wedge" />
       </div>
     </div>
