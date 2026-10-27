@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Column placement: `--gtv-center-left`, `--gtv-center-right` and `--gtv-center-top` position the `overlayPanel` in a host's center column, and `--gtv-center-right` stops an expanded info panel at the right column, so it spans the left and center columns. Unset, both fill the container as before.
+
+### Removed
+
+- `--gtv-overlay-panel-right`, replaced by `--gtv-center-right`.
+
 ## [4.2.0] - 2026-10-27
 
 ### Changed

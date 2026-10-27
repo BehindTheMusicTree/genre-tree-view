@@ -378,6 +378,7 @@
 .gtv-info-panel--expanded {
   inset: 0.75rem;
   top: var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem));
+  right: var(--gtv-center-right, 0.75rem);
   width: auto;
   display: flex;
   flex-direction: column;
@@ -412,10 +413,12 @@
   border-right: none;
 }
 
-/* A host that keeps its own panel on the right sets --gtv-overlay-panel-right to that panel's width so
-   the overlay stops where it starts. */
+/* A host with left / center / right columns sets --gtv-center-left and --gtv-center-right (insets from the
+   container's edges) and --gtv-center-top: the overlay fills the center column and an expanded panel spans
+   the left and center columns. Unset, both fill the container. */
 .gtv-info-panel--overlay {
-  right: var(--gtv-overlay-panel-right, var(--layout-gutter, 0.75rem));
+  top: var(--gtv-center-top, var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem)));
+  left: var(--gtv-center-left, 0.75rem);
 }
 
 @container (max-width: 767px) {
