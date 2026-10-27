@@ -202,7 +202,20 @@ export function buildMaskSvgMarkup(): string {
 // continues at the same angle instead of restarting from 0deg.
 let sharedStartTime: CSSNumberish | null = null;
 
+export const WHEEL_SKELETON_SPIN_ANIMATION = "gtv-wheel-skeleton-spin";
+
+function adoptRunningSweepStartTime(): void {
+  if (sharedStartTime !== null || typeof document === "undefined") return;
+  const running = document.getAnimations?.().find(
+    (animation) => (animation as CSSAnimation).animationName === WHEEL_SKELETON_SPIN_ANIMATION,
+  );
+  sharedStartTime = running?.startTime ?? null;
+}
+
 export function GenreTreeWheelSkeleton() {
+  // Read during render: a server-rendered skeleton discarded at hydration is already out of the
+  // document by layout-effect time, and the replacement must continue its angle.
+  adoptRunningSweepStartTime();
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const shapesId = `genre-tree-wheel-skeleton-shapes-${uid}`;

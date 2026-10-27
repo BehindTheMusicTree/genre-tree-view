@@ -7,7 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- The wheel loading skeleton's shimmer sweep is masked and spinning from the first paint (no static ray before hydration), runs on the compositor and keeps its position across loading stages, so it no longer stutters or jumps while the tree loads.
+- The wheel loading skeleton's shimmer sweep is masked and spinning from the first paint (no static ray before hydration), runs on the compositor and keeps its position across loading stages (including when the server-rendered skeleton is replaced at hydration), so it no longer stutters or jumps while the tree loads.
 
 ## [4.1.0] - 2026-10-27
 

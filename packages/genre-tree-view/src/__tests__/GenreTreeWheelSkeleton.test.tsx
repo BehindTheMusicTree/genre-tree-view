@@ -121,6 +121,34 @@ describe("GenreTreeWheelSkeleton sweep phase", () => {
     expect(animation.startTime).toBe(777);
   });
 
+  describe("with a sweep already running in the document", () => {
+    const originalDocumentGetAnimations = document.getAnimations;
+
+    afterEach(() => {
+      document.getAnimations = originalDocumentGetAnimations;
+    });
+
+    function stubDocumentAnimations(animations: Array<{ animationName: string; startTime: number }>) {
+      document.getAnimations = (() => animations) as unknown as typeof document.getAnimations;
+    }
+
+    it("starts on the running sweep's start time even if that sweep is removed before layout effects", async () => {
+      stubDocumentAnimations([{ animationName: "gtv-wheel-skeleton-spin", startTime: 1234 }]);
+      const animation = stubGetAnimations(9000);
+      await renderSkeleton();
+
+      expect(animation.startTime).toBe(1234);
+    });
+
+    it("ignores running animations that are not the skeleton sweep", async () => {
+      stubDocumentAnimations([{ animationName: "something-else", startTime: 1234 }]);
+      const animation = stubGetAnimations(9000);
+      await renderSkeleton();
+
+      expect(animation.startTime).toBe(9000);
+    });
+  });
+
   it("does nothing when there is no animation (reduced motion)", async () => {
     Element.prototype.getAnimations = (() => []) as typeof Element.prototype.getAnimations;
 
