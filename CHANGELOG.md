@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The wheel loading skeleton now draws small round node dots, thin curved radial links, uneven sector washes, a tinted inner disc and a mainstream center subtree, so it resembles the loaded wheel instead of a card tree.
+
 ## [4.0.0] - 2026-10-26
 
 ### Changed
