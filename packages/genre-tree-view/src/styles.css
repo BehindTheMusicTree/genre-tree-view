@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1;
   font-family:
@@ -34,7 +34,7 @@
 }
 
 .gtv-node-label--root {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -85,7 +85,7 @@
 }
 
 .gtv-reparent-target-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-left: 0.5rem;
 }
 
@@ -97,13 +97,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 4px;
+  padding: 0 0.25rem;
   background: var(--gtv-node-fill, #ffffff);
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .gtv-toolbar-btn {
@@ -115,7 +115,7 @@
   height: 1.2em;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: var(--gtv-toolbar-icon-color, #52525b);
   cursor: pointer;
@@ -139,7 +139,7 @@
 .gtv-menu-card {
   background: var(--gtv-surface, var(--color-surface, #ffffff));
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 8px;
+  border-radius: 0.5rem;
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
   overflow: hidden;
 }
@@ -147,17 +147,17 @@
 .gtv-menu-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: 100%;
   height: 30px;
-  padding: 0 10px;
+  padding: 0 0.625rem;
   border: none;
   background: transparent;
   font: inherit;
   text-align: left;
   color: var(--gtv-text, var(--color-text, #18181b));
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -195,7 +195,7 @@
 
 .gtv-menu-divider {
   height: 1px;
-  margin: 4px 0;
+  margin: 0.25rem 0;
   background-color: var(--gtv-border, var(--color-border, #e4e4e7));
 }
 
@@ -221,24 +221,24 @@
 
 .gtv-wheel-floating-controls {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 0.75rem;
+  right: 0.75rem;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .gtv-zoom-controls {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   width: fit-content;
-  padding: 3px;
+  padding: 0.1875rem;
   box-sizing: border-box;
   background: var(--gtv-surface, var(--color-surface, #ffffff));
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 8px;
+  border-radius: 0.5rem;
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
 }
 
@@ -246,23 +246,23 @@
    right), and the trail sits right above the wheel it describes. */
 .gtv-wheel-breadcrumb {
   position: absolute;
-  top: 12px;
+  top: 0.75rem;
   left: 50%;
   z-index: 10;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   max-width: calc(100% - 24px);
   box-sizing: border-box;
   overflow: hidden;
   white-space: nowrap;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
   color: var(--gtv-text-muted, var(--color-text-muted, #52525b));
   background: var(--gtv-surface, var(--color-surface, #ffffff));
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 8px;
+  border-radius: 0.5rem;
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
 }
 
@@ -296,8 +296,8 @@
 @container (max-width: 767px) {
   .gtv-wheel-breadcrumb {
     top: auto;
-    bottom: 12px;
-    left: 12px;
+    bottom: 0.75rem;
+    left: 0.75rem;
     transform: none;
     max-width: calc(100% - 152px);
   }
@@ -316,7 +316,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: var(--gtv-text-muted, var(--color-text-muted, #52525b));
   cursor: pointer;
@@ -348,36 +348,36 @@
    so it stays fixed regardless of pan/zoom state. */
 .gtv-info-panel {
   position: absolute;
-  top: var(--gtv-info-panel-top, 12px);
-  bottom: 12px;
-  width: 280px;
+  top: var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem));
+  bottom: 0.75rem;
+  width: var(--layout-detail-panel-w, 17.5rem);
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 10;
   background: var(--gtv-surface, var(--color-surface, #ffffff));
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 8px;
+  border-radius: 0.5rem;
   filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
   cursor: default;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--gtv-text, var(--color-text, #18181b));
 }
 
 .gtv-info-panel--left {
-  left: 12px;
+  left: 0.75rem;
 }
 
 .gtv-info-panel--right {
-  right: 12px;
+  right: 0.75rem;
 }
 
 /* Fills the tree container (still absolute, not fixed/Fullscreen API, so the host page's nav and
    player stay visible); the header stays on top while the body splits into two independently
    scrolling columns. */
 .gtv-info-panel--expanded {
-  inset: 12px;
-  top: var(--gtv-info-panel-top, 12px);
+  inset: 0.75rem;
+  top: var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem));
   width: auto;
   display: flex;
   flex-direction: column;
@@ -415,7 +415,7 @@
 /* A host that keeps its own panel on the right sets --gtv-overlay-panel-right to that panel's width so
    the overlay stops where it starts. */
 .gtv-info-panel--overlay {
-  right: var(--gtv-overlay-panel-right, 12px);
+  right: var(--gtv-overlay-panel-right, var(--layout-gutter, 0.75rem));
 }
 
 @container (max-width: 767px) {
@@ -438,11 +438,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0.5rem;
   /* A host that floats its own control (e.g. a search bar) over the panel's top edge sets
      --gtv-info-panel-header-inset to that control's height plus its margins, so the header's
      fill extends behind the control and its own content starts below it. */
-  padding: calc(10px + var(--gtv-info-panel-header-inset, 0px)) 8px 10px 14px;
+  padding: calc(0.625rem + var(--gtv-info-panel-header-inset, 0px)) 0.5rem 0.625rem 0.875rem;
   border-bottom: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
   /* Matches .gtv-info-panel's own radius on the two corners it shares with the panel — the
      header's own background (the clicked node's fill, set inline by InfoPanel.tsx) would
@@ -454,7 +454,7 @@
 .gtv-info-panel-title {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -482,7 +482,7 @@
   height: 24px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -500,12 +500,12 @@
 .gtv-info-panel-edit {
   flex-shrink: 0;
   height: 24px;
-  padding: 0 8px;
+  padding: 0 0.5rem;
   font: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   border: 1px solid currentColor;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -518,15 +518,15 @@
 
 .gtv-info-panel-fields {
   margin: 0;
-  padding: 10px 14px;
+  padding: 0.625rem 0.875rem;
 }
 
 .gtv-info-panel-fields dt {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 .gtv-info-panel-fields dt:first-child {
@@ -534,8 +534,8 @@
 }
 
 .gtv-info-panel-fields dd {
-  margin: 2px 0 0;
-  font-size: 13px;
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
   color: var(--gtv-text, var(--color-text, #18181b));
   word-break: break-word;
 }
@@ -543,23 +543,23 @@
 .gtv-info-panel-toolbar {
   justify-content: flex-start;
   height: auto;
-  padding: 8px 14px 0;
-  font-size: 16px;
+  padding: 0.5rem 0.875rem 0;
+  font-size: 1rem;
   background: transparent;
 }
 
 .gtv-info-panel-children {
-  padding: 0 14px 10px;
+  padding: 0 0.875rem 0.625rem;
   border-top: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
 }
 
 .gtv-info-panel-children-title {
   display: block;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 .gtv-info-panel-section-toggle {
@@ -567,7 +567,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 0.625rem;
   padding: 0;
   border: 0;
   background: none;
@@ -591,8 +591,8 @@
 .gtv-info-panel-children-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 6px 0 0;
+  gap: 0.375rem;
+  margin: 0.375rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -604,11 +604,11 @@
    radius-to-height ratio close to a real node's. */
 .gtv-info-panel-child {
   font: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 2px;
+  border-radius: 0.125rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -629,7 +629,7 @@
 
 /* Room for the parent's label, which sits above its dot. */
 .gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent) {
-  padding-top: 26px;
+  padding-top: 1.625rem;
 }
 
 /* No parent: size the children to their content and center the node + children as a group,
@@ -661,13 +661,13 @@
   top: 100%;
   right: 0;
   left: auto;
-  margin-top: 2px;
+  margin-top: 0.125rem;
   text-align: right;
 }
 
 .gtv-info-panel-mini-tree-parent,
 .gtv-info-panel-mini-tree-node:not(:last-child) {
-  padding-right: 40px;
+  padding-right: 2.5rem;
 }
 
 .gtv-info-panel-mini-tree-parent::after,
@@ -681,7 +681,7 @@
 }
 
 .gtv-info-panel-mini-tree-node:not(:last-child) {
-  padding-right: 12px;
+  padding-right: 0.75rem;
 }
 
 .gtv-info-panel-mini-tree-node:not(:last-child)::after {
@@ -697,7 +697,7 @@
 }
 
 .gtv-info-panel-mini-tree-parent {
-  margin-bottom: 60px;
+  margin-bottom: 3.75rem;
 }
 
 .gtv-info-panel-mini-tree-parent::before,
@@ -713,7 +713,7 @@
 }
 
 .gtv-info-panel-mini-tree-parent::before {
-  left: calc(100% - 40px);
+  left: calc(100% - 2.5rem);
   top: 50%;
   border-top-width: 1.5px;
   border-right-width: 1.5px;
@@ -721,8 +721,8 @@
 }
 
 .gtv-info-panel-mini-tree-parent::after {
-  left: calc(100% - 20px);
-  top: calc(50% + 15px);
+  left: calc(100% - 1.25rem);
+  top: calc(50% + 0.9375rem);
   border-bottom-width: 1.5px;
   border-left-width: 1.5px;
   border-bottom-left-radius: 8px;
@@ -735,7 +735,7 @@
   position: relative;
   overflow: visible;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -754,7 +754,7 @@
   position: absolute;
   bottom: 100%;
   left: 0;
-  margin-bottom: 2px;
+  margin-bottom: 0.125rem;
 }
 
 .gtv-info-panel-mini-tree-current .gtv-info-panel-mini-dot {
@@ -784,9 +784,9 @@
 .gtv-info-panel-mini-tree-children > .gtv-info-panel-children-title {
   position: absolute;
   bottom: 100%;
-  left: 12px;
+  left: 0.75rem;
   right: 0;
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
   text-align: center;
   white-space: nowrap;
 }
@@ -804,7 +804,7 @@
 .gtv-info-panel-mini-tree .gtv-info-panel-children-list li {
   position: relative;
   max-width: 100%;
-  padding: 10px 0 10px 12px;
+  padding: 0.625rem 0 0.625rem 0.75rem;
   box-sizing: border-box;
 }
 
@@ -865,13 +865,13 @@
 .gtv-info-panel-ancestors-list li {
   position: relative;
   max-width: 100%;
-  padding: 3px 0;
+  padding: 0.1875rem 0;
 }
 
 .gtv-info-panel-ancestors-list li:not(:last-child)::after {
   content: "";
   position: absolute;
-  left: 16px;
+  left: 1rem;
   top: 50%;
   height: 100%;
   border-left: 1.5px solid var(--gtv-border-strong, var(--color-neutral-300, #d4d4d8));
@@ -918,7 +918,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: var(--gtv-wheel-viewport-height, 550px);
+  bottom: var(--gtv-wheel-viewport-height, 34.375rem);
   height: 0;
   transform-origin: 50% 0;
 }
@@ -948,7 +948,7 @@
   left: 50%;
   width: calc(var(--gtv-wheel-radius, 260px) * 2);
   height: calc(var(--gtv-wheel-radius, 260px) * 2);
-  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
   border-radius: 50%;
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
   pointer-events: none;
@@ -967,7 +967,7 @@
   position: absolute;
   top: 0;
   left: 50%;
-  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
   overflow: visible;
   pointer-events: none;
 }
@@ -1000,7 +1000,7 @@
    overflow-wrap still lets longer labels break as a fallback rather than overflow the circle. */
 .gtv-wheel-center-label {
   position: absolute;
-  top: var(--gtv-wheel-radius, 260px);
+  top: var(--gtv-wheel-radius, 16.25rem);
   left: 50%;
   transform: translate(-50%, -50%);
   width: calc(var(--gtv-wheel-radius, 260px) * 1.5);
@@ -1009,7 +1009,7 @@
   justify-content: center;
   text-align: center;
   overflow-wrap: anywhere;
-  font-size: calc(var(--gtv-wheel-radius, 260px) * 0.15);
+  font-size: calc(var(--gtv-wheel-radius, 16.25rem) * 0.15);
   font-weight: 700;
   line-height: 1.05;
   color: var(--gtv-text, var(--color-text, #18181b));
@@ -1044,7 +1044,7 @@
   left: 50%;
   width: calc(var(--gtv-wheel-radius, 260px) * 2);
   height: calc(var(--gtv-wheel-radius, 260px) * 2);
-  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
   transform: rotate(var(--gtv-wheel-rotation, 0deg));
   pointer-events: none;
 }
@@ -1189,7 +1189,7 @@
   height: var(--gtv-wheel-chip-base-height);
   padding: 0;
   margin-top: 0;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
   background: var(--gtv-chip-color, #ffffff);
   color: #ffffff;
@@ -1221,7 +1221,7 @@
 
 .gtv-toolbar-overflow-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   left: 0;
   width: max-content;
 }
@@ -1234,8 +1234,8 @@
    the dot's own 8px so its center, not its top edge, lands there). */
 .gtv-wheel-chip-dot {
   position: absolute;
-  left: 8px;
-  bottom: calc(var(--gtv-wheel-chip-base-height) / 2 - 4px);
+  left: 0.5rem;
+  bottom: calc(var(--gtv-wheel-chip-base-height) / 2 - 0.25rem);
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -1269,7 +1269,7 @@
    the anchor line" and which is "centered on the container's full extent". */
 
 .gtv-wheel-container--left .gtv-wheel-stage {
-  left: var(--gtv-wheel-viewport-height, 550px);
+  left: var(--gtv-wheel-viewport-height, 34.375rem);
   right: auto;
   top: 0;
   bottom: 0;
@@ -1294,13 +1294,13 @@
   left: auto;
   right: 0;
   margin-left: 0;
-  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-top: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
 }
 
 .gtv-wheel-container--left .gtv-wheel-center-label {
   top: 50%;
   left: auto;
-  right: var(--gtv-wheel-radius, 260px);
+  right: var(--gtv-wheel-radius, 16.25rem);
   transform: translate(50%, -50%);
 }
 
@@ -1309,7 +1309,7 @@
   left: auto;
   right: 0;
   margin-left: 0;
-  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-top: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
 }
 
 /* GenreTreeSkeleton / GenreTreeWheelSkeleton / GenreTreeViewSkeleton — loading placeholders
@@ -1425,8 +1425,8 @@
 .gtv-wheel-container--radial .gtv-wheel-circle {
   top: 50%;
   left: 50%;
-  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
-  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
+  margin-top: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
 }
 
 .gtv-wheel-container--radial .gtv-wheel-middle-circle {
@@ -1453,8 +1453,8 @@
 .gtv-wheel-container--radial .gtv-wheel {
   top: 50%;
   left: 50%;
-  margin-left: calc(var(--gtv-wheel-radius, 260px) * -1);
-  margin-top: calc(var(--gtv-wheel-radius, 260px) * -1);
+  margin-left: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
+  margin-top: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
 }
 
 /* GenreTreeOutline — nested collapsible lists (native <details>) instead of an SVG tree. The info
@@ -1466,18 +1466,18 @@
   height: 100%;
   container-type: inline-size;
   color: var(--gtv-text, var(--color-text, #18181b));
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .gtv-outline-scroll {
   height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
-  padding: calc(12px + var(--gtv-info-panel-header-inset, 0px)) 16px 12px;
+  padding: calc(0.75rem + var(--gtv-info-panel-header-inset, 0px)) 1rem 0.75rem;
 }
 
 .gtv-outline--panel-open .gtv-outline-scroll {
-  padding-left: 304px;
+  padding-left: 19rem;
 }
 
 .gtv-outline-list {
@@ -1533,10 +1533,10 @@
 .gtv-outline-row {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   min-height: 26px;
-  padding: 0 6px;
-  border-radius: 6px;
+  padding: 0 0.375rem;
+  border-radius: 0.375rem;
 }
 
 .gtv-outline-row:hover,
@@ -1575,11 +1575,11 @@
 }
 
 .gtv-info-panel-umbrella-badge {
-  margin-left: 8px;
-  padding: 1px 6px;
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.375rem;
   border: 1px dashed currentColor;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: 62.4375rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   font-style: italic;
   vertical-align: middle;
@@ -1611,8 +1611,8 @@
 
 .gtv-outline-skeleton-row {
   height: 14px;
-  margin-bottom: 12px;
-  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  border-radius: 0.375rem;
   background: var(--gtv-surface-muted, var(--color-surface-muted, #f4f4f5));
 }
 

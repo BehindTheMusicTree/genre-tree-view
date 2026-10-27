@@ -9,6 +9,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - The wheel loading skeleton's shimmer sweep is masked and spinning from the first paint (no static ray before hydration), runs on the compositor and keeps its position across loading stages (including when the server-rendered skeleton is replaced at hydration), so it no longer stutters or jumps while the tree loads.
 
+## [4.2.0] - 2026-10-27
+
+### Changed
+
+- Spacing, insets and font sizes in `styles.css` are now rem (4px scale on the browser-default root) instead of px, so the library renders the same under any host root font size. Hosts that set a smaller root (e.g. 14px) will see everything scale up.
+- The info panel width, and its top and right offsets, read `--layout-detail-panel-w` and `--layout-gutter` from `@behindthemusictree/brand` (fallbacks 17.5rem / 0.75rem). `--gtv-info-panel-top` and `--gtv-overlay-panel-right` still win when set.
+
 ## [4.1.0] - 2026-10-27
 
 ### Changed
