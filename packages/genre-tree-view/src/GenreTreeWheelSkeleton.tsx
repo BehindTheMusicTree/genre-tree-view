@@ -1,70 +1,38 @@
 "use client";
 
 import { useId } from "react";
-import { TREE_COLORS } from "./constants";
+import { NODE_DOT_MIN_RADIUS, TREE_COLORS } from "./constants";
 
-// Card fill/border match the connector color (rather than GenreTreeSkeleton's lighter tokens) so
-// wheel nodes stay visible against this skeleton's own light background — see that file's comment
-// on why these are approximated rather than imported.
-const CONNECTOR_COLOR = "#D4D4D8";
-const CARD_FILL = CONNECTOR_COLOR;
-const CARD_BORDER_COLOR = CONNECTOR_COLOR;
-const RING_COLOR = "#E4E4E7";
-const CORNER_RADIUS = 1;
+// Neutral grays rather than the real wheel's per-root tints, so the loading state reads as a
+// placeholder — see GenreTreeSkeleton's comment on why these are approximated, not imported.
+const SHAPE_COLOR = "#D4D4D8";
 const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
-const SECTOR_FILL_OPACITY = 0.16;
-
-const HUB_RADIUS = 46;
-const WHEEL_RADIUS = 140;
+const SECTOR_FILL_OPACITY = 0.22;
+const INNER_TINT_OPACITY = 0.55;
+const POP_LINK_OPACITY = 0.6;
 const CANVAS_PADDING = 20;
 
-// Mirrors the real wheel's root-chip ring: one chip per root, evenly spaced — see
-// getCardinalRingOffsets/computeRadialLayout in the genre-tree-view package for the real layout
-// this approximates. Every root gets the same deep 3-level radiating subtree (~30 nodes) so the
-// loading state reads as "a handful of genres, each with dozens of tracks/subgenres" rather than a
-// literal preview. Angles use the same CSS rotate() convention (0 = top, clockwise).
-const N_CHIPS = 9;
-const CHIP_ANGLES: { angle: number }[] = Array.from({ length: N_CHIPS }, (_, i) => ({
-  angle: (360 / N_CHIPS) * i,
-}));
+const N_ROOTS = 9;
 
-const CHIP_WIDTH = 68;
-const CHIP_HEIGHT = 22;
+// Radii (from the wheel's center) mirror the real pop/core wheel: a small mainstream subtree at
+// the center, the ring roots on the circle bounding the white "pop" region, each root's pop
+// branch reaching inward and its core branch outward.
+const MAINSTREAM_RADIUS = 70;
+const RING_RADIUS = 300;
+const POP_RADII = [245, 195, 145];
+const CORE_RADII = [375, 445, 515, 575];
 
-// Polar layout: every node's position is (angle, radius) with radius fixed per depth, so all
-// nodes at the same depth sit on the same circle around the hub — fanning out to children only
-// ever changes angle, never radius.
-const BRANCH_LEVEL1_RADIUS = 245;
-const BRANCH_LEVEL2_RADIUS = 305;
-const BRANCH_LEVEL3_RADIUS = 365;
-const BRANCH_LEVEL1_SIZE = { width: 48, height: 16 };
-const BRANCH_LEVEL2_SIZE = { width: 32, height: 11 };
-const BRANCH_LEVEL3_SIZE = { width: 20, height: 7 };
-const BRANCH_LEVEL2_FAN_ANGLES = [-16, -9.6, -3.2, 3.2, 9.6, 16];
-// Last-depth fan-out count varies per branch (2-6 children) rather than being fixed, so the wheel
-// doesn't read as a uniform grid. The count is derived deterministically from each branch's
-// position (not Math.random()) so server and client renders stay identical.
-const BRANCH_LEVEL3_MIN_COUNT = 2;
-const BRANCH_LEVEL3_MAX_COUNT = 6;
-const BRANCH_LEVEL3_FAN_SPREAD = 6;
+const ROOT_DOT_RADIUS_RANGE = 8;
+const LEVEL1_DOT_RADIUS_RANGE = 3;
+const LINK_WIDTH = 1;
+const LEAF_LINK_WIDTH = 0.75;
 
-function pseudoRandomCount(seed: number, min: number, max: number): number {
-  const x = Math.sin(seed * 12.9898) * 43758.5453;
-  const frac = round(x - Math.floor(x));
-  return Math.min(max, min + Math.floor(frac * (max - min + 1)));
-}
-
-function evenFanOffsets(count: number, spread: number): number[] {
-  if (count <= 1) return [0];
-  const step = spread / (count - 1);
-  return Array.from({ length: count }, (_, i) => -spread / 2 + i * step);
-}
-
-// All geometry below is computed around the origin (0,0); the SVG's viewBox is derived from the
-// content's own bounding box afterward (see CANVAS below) instead of assuming a fixed square, so
-// deep branches are never clipped regardless of how far their outermost level reaches.
+// Angles use the real wheel's convention (0 = top, clockwise), so the sector gradient below
+// lines up with the dots without any translation.
 type Point = { x: number; y: number };
-type Rect = { x: number; y: number; width: number; height: number };
+type Polar = { angle: number; radius: number; point: Point };
+type Dot = { point: Point; r: number };
+type Link = { d: string; width: number; opacity: number };
 
 // Math.sin/Math.cos aren't specified to the ULP by ECMAScript, so raw trig output can differ in
 // the last float digit between server (Node) and client (browser) V8. Rounding well below that
@@ -80,122 +48,126 @@ function pointOnCircle(angleDeg: number, radius: number): Point {
   return { x: round(radius * Math.sin(rad)), y: round(-radius * Math.cos(rad)) };
 }
 
-function rectCentered(center: Point, width: number, height: number): Rect {
-  return { x: center.x - width / 2, y: center.y - height / 2, width, height };
+// Deterministic (not Math.random()) so server and client renders stay identical.
+function unitRandom(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return round(x - Math.floor(x));
 }
 
-function rectCenter(rect: Rect): Point {
-  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+function randomCount(seed: number, min: number, max: number): number {
+  return Math.min(max, min + Math.floor(unitRandom(seed) * (max - min + 1)));
 }
 
-type Chip = { rect: Rect; angle: number };
-type Branch = { chip: Chip; level1: Rect; level2: Rect[]; level3: Rect[][] };
-
-const CHIPS: Chip[] = CHIP_ANGLES.map(({ angle }) => ({
-  rect: rectCentered(pointOnCircle(angle, WHEEL_RADIUS), CHIP_WIDTH, CHIP_HEIGHT),
-  angle,
-}));
-
-// Each child's angle is its parent's angle plus a fan offset; radius is fixed per depth, so
-// same-depth nodes always land on the same circle regardless of which root they hang from.
-const BRANCHES: Branch[] = CHIPS.map((chip, chipIndex) => {
-  const level1 = rectCentered(
-    pointOnCircle(chip.angle, BRANCH_LEVEL1_RADIUS),
-    BRANCH_LEVEL1_SIZE.width,
-    BRANCH_LEVEL1_SIZE.height,
-  );
-
-  const level2 = BRANCH_LEVEL2_FAN_ANGLES.map((offset) =>
-    rectCentered(pointOnCircle(chip.angle + offset, BRANCH_LEVEL2_RADIUS), BRANCH_LEVEL2_SIZE.width, BRANCH_LEVEL2_SIZE.height),
-  );
-
-  const level3 = BRANCH_LEVEL2_FAN_ANGLES.map((parentOffset, level2Index) => {
-    const count = pseudoRandomCount(chipIndex * 31 + level2Index * 7 + 1, BRANCH_LEVEL3_MIN_COUNT, BRANCH_LEVEL3_MAX_COUNT);
-    return evenFanOffsets(count, BRANCH_LEVEL3_FAN_SPREAD).map((childOffset) =>
-      rectCentered(
-        pointOnCircle(chip.angle + parentOffset + childOffset, BRANCH_LEVEL3_RADIUS),
-        BRANCH_LEVEL3_SIZE.width,
-        BRANCH_LEVEL3_SIZE.height,
-      ),
-    );
-  });
-
-  return { chip, level1, level2, level3 };
-});
-
-function connectorPath(from: Point, to: Point) {
-  const midX = (from.x + to.x) / 2;
-  const midY = (from.y + to.y) / 2;
-  return `M${from.x},${from.y} Q${midX},${midY} ${to.x},${to.y}`;
+function fanAngles(center: number, spread: number, count: number): number[] {
+  if (count <= 1) return [center];
+  const step = spread / (count - 1);
+  return Array.from({ length: count }, (_, i) => center - spread / 2 + i * step);
 }
 
-const ALL_LINKS: { from: Point; to: Point }[] = [];
-for (const branch of BRANCHES) {
-  const chipCenter = rectCenter(branch.chip.rect);
-  const level1Center = rectCenter(branch.level1);
-  ALL_LINKS.push({ from: chipCenter, to: level1Center });
-  branch.level2.forEach((level2Rect, i) => {
-    const level2Center = rectCenter(level2Rect);
-    ALL_LINKS.push({ from: level1Center, to: level2Center });
-    for (const child of branch.level3[i]) {
-      ALL_LINKS.push({ from: level2Center, to: rectCenter(child) });
-    }
-  });
+// Same shape as d3.linkRadial: a cubic whose control points sit at the mid radius on each end's
+// own angle, so branches curve along the wheel's rings instead of cutting chords across them.
+function linkPath(from: Polar, to: Polar): string {
+  const midRadius = (from.radius + to.radius) / 2;
+  const c0 = pointOnCircle(from.angle, midRadius);
+  const c1 = pointOnCircle(to.angle, midRadius);
+  return `M${from.point.x},${from.point.y} C${c0.x},${c0.y} ${c1.x},${c1.y} ${to.point.x},${to.point.y}`;
 }
 
-const ALL_RECTS: Rect[] = [
-  ...CHIPS.map((chip) => chip.rect),
-  ...BRANCHES.flatMap((branch) => [branch.level1, ...branch.level2, ...branch.level3.flat()]),
-];
+const DOTS: Dot[] = [];
+const LINKS: Link[] = [];
 
-// One color sector per chip, filling the background between the midpoints to its neighbors —
-// mirrors the real wheel's per-root color, cycled by ring position since the skeleton renders
-// before any real root is known.
+function addNode(angle: number, radius: number, dotRadius: number): Polar {
+  const point = pointOnCircle(angle, radius);
+  DOTS.push({ point, r: dotRadius });
+  return { angle, radius, point };
+}
+
+function addLink(from: Polar, to: Polar, width: number, opacity = 1) {
+  LINKS.push({ d: linkPath(from, to), width, opacity });
+}
+
+// Roots share the circle unevenly, like the real wheel's weight-proportional sectors; each root
+// sits at the middle of its own span and its branches fan within it.
+const ROOT_WEIGHTS = Array.from({ length: N_ROOTS }, (_, i) => 0.25 + 0.75 * unitRandom(i * 17 + 3));
+const TOTAL_WEIGHT = ROOT_WEIGHTS.reduce((sum, weight) => sum + weight, 0);
+
 type Sector = { startAngle: number; endAngle: number; color: string };
+const SECTORS: Sector[] = [];
+{
+  let cursor = (-360 * ROOT_WEIGHTS[0]) / TOTAL_WEIGHT / 2;
+  ROOT_WEIGHTS.forEach((weight, i) => {
+    const span = (360 * weight) / TOTAL_WEIGHT;
+    SECTORS.push({ startAngle: cursor, endAngle: cursor + span, color: TREE_COLORS[i % TREE_COLORS.length] });
+    cursor += span;
+  });
+}
 
-const WHEEL_CONTENT_RADIUS = (() => {
-  let maxAbs = HUB_RADIUS;
-  for (const rect of ALL_RECTS) {
-    for (const [x, y] of [
-      [rect.x, rect.y],
-      [rect.x + rect.width, rect.y],
-      [rect.x, rect.y + rect.height],
-      [rect.x + rect.width, rect.y + rect.height],
-    ]) {
-      maxAbs = Math.max(maxAbs, Math.abs(x), Math.abs(y));
-    }
-  }
-  return maxAbs;
-})();
+function buildMainstream() {
+  const center = addNode(0, 0, NODE_DOT_MIN_RADIUS * 2);
+  const level1Count = 6;
+  fanAngles(0, 360 - 360 / level1Count, level1Count).forEach((angle, i) => {
+    const level1 = addNode(angle, 26, NODE_DOT_MIN_RADIUS * 0.8);
+    addLink(center, level1, LINK_WIDTH);
+    const leafCount = randomCount(i * 5 + 101, 2, 3);
+    fanAngles(angle, 40, leafCount).forEach((leafAngle) => {
+      addLink(level1, addNode(leafAngle, 50, NODE_DOT_MIN_RADIUS * 0.5), LEAF_LINK_WIDTH);
+    });
+  });
+}
 
-const CANVAS = (() => {
-  let minX = -WHEEL_CONTENT_RADIUS;
-  let maxX = WHEEL_CONTENT_RADIUS;
-  let minY = -WHEEL_CONTENT_RADIUS;
-  let maxY = WHEEL_CONTENT_RADIUS;
-  for (const rect of ALL_RECTS) {
-    minX = Math.min(minX, rect.x);
-    maxX = Math.max(maxX, rect.x + rect.width);
-    minY = Math.min(minY, rect.y);
-    maxY = Math.max(maxY, rect.y + rect.height);
-  }
-  return {
-    minX: minX - CANVAS_PADDING,
-    minY: minY - CANVAS_PADDING,
-    width: maxX - minX + CANVAS_PADDING * 2,
-    height: maxY - minY + CANVAS_PADDING * 2,
-  };
-})();
+function buildRoot(index: number) {
+  const { startAngle, endAngle } = SECTORS[index];
+  const angle = (startAngle + endAngle) / 2;
+  const usable = (endAngle - startAngle) * 0.8;
+  const weight = ROOT_WEIGHTS[index];
+  const leafDotRadius = NODE_DOT_MIN_RADIUS * 0.6;
 
-const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
-  const prevAngle = i === 0 ? CHIP_ANGLES[CHIP_ANGLES.length - 1].angle - 360 : CHIP_ANGLES[i - 1].angle;
-  const nextAngle = i === CHIP_ANGLES.length - 1 ? CHIP_ANGLES[0].angle + 360 : CHIP_ANGLES[i + 1].angle;
-  return {
-    startAngle: (prevAngle + angle) / 2,
-    endAngle: (angle + nextAngle) / 2,
-    color: TREE_COLORS[i % TREE_COLORS.length],
-  };
-});
+  const root = addNode(angle, RING_RADIUS, NODE_DOT_MIN_RADIUS + weight * ROOT_DOT_RADIUS_RANGE);
+
+  const popLevel1 = addNode(angle, POP_RADII[0], NODE_DOT_MIN_RADIUS + weight * LEVEL1_DOT_RADIUS_RANGE * 0.6);
+  addLink(root, popLevel1, LINK_WIDTH, POP_LINK_OPACITY);
+  const popLevel2Count = 2 + Math.round(weight * 2);
+  fanAngles(angle, usable * 0.5, popLevel2Count).forEach((level2Angle, i) => {
+    const popLevel2 = addNode(level2Angle, POP_RADII[1], NODE_DOT_MIN_RADIUS * 0.8);
+    addLink(popLevel1, popLevel2, LINK_WIDTH, POP_LINK_OPACITY);
+    const leafCount = randomCount(index * 31 + i * 7 + 211, 2, 3);
+    fanAngles(level2Angle, (usable * 0.5) / popLevel2Count, leafCount).forEach((leafAngle) => {
+      addLink(popLevel2, addNode(leafAngle, POP_RADII[2], leafDotRadius), LEAF_LINK_WIDTH, POP_LINK_OPACITY);
+    });
+  });
+
+  const coreLevel1 = addNode(angle, CORE_RADII[0], NODE_DOT_MIN_RADIUS + weight * LEVEL1_DOT_RADIUS_RANGE);
+  addLink(root, coreLevel1, LINK_WIDTH);
+  const coreLevel2Count = 2 + Math.round(weight * 5);
+  const coreLevel2Spread = usable * 0.75;
+  const level2Slot = coreLevel2Spread / coreLevel2Count;
+  fanAngles(angle, coreLevel2Spread, coreLevel2Count).forEach((level2Angle, i) => {
+    const coreLevel2 = addNode(level2Angle, CORE_RADII[1], NODE_DOT_MIN_RADIUS * 0.9);
+    addLink(coreLevel1, coreLevel2, LINK_WIDTH);
+    const level3Count = randomCount(index * 31 + i * 7 + 1, 2, 5);
+    fanAngles(level2Angle, level2Slot * 0.9, level3Count).forEach((level3Angle, j) => {
+      const coreLevel3 = addNode(level3Angle, CORE_RADII[2], leafDotRadius);
+      addLink(coreLevel2, coreLevel3, LEAF_LINK_WIDTH);
+      if (weight < 0.75) return;
+      const level4Count = randomCount(index * 131 + i * 17 + j * 3 + 401, 1, 2);
+      fanAngles(level3Angle, (level2Slot * 0.9) / level3Count, level4Count).forEach((level4Angle) => {
+        addLink(coreLevel3, addNode(level4Angle, CORE_RADII[3], leafDotRadius * 0.8), LEAF_LINK_WIDTH);
+      });
+    });
+  });
+}
+
+buildMainstream();
+for (let i = 0; i < N_ROOTS; i++) buildRoot(i);
+
+// Square and centered on the wheel's pivot (like the real wheel) so the shimmer's rotation
+// origin stays at the viewBox's own middle.
+const CONTENT_RADIUS = Math.max(
+  RING_RADIUS,
+  ...DOTS.map((dot) => Math.hypot(dot.point.x, dot.point.y) + dot.r),
+);
+const CANVAS_SIZE = (CONTENT_RADIUS + CANVAS_PADDING) * 2;
+const CANVAS_ORIGIN = -(CONTENT_RADIUS + CANVAS_PADDING);
 
 // Rendered as a CSS conic-gradient on a layer separate from the content SVG (see the component
 // below) rather than as SVG wedge paths sharing the content's own viewBox: the content SVG uses
@@ -203,8 +175,8 @@ const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
 // a square viewBox inside a non-square container — a wedge drawn in that same coordinate space
 // would letterbox too, leaving the container's corners uncolored. A CSS gradient instead covers
 // `100% / 100%` of the container directly, independent of the content's aspect ratio.
-// CSS conic-gradient's 0deg (12 o'clock, clockwise) matches this file's own angle convention
-// (see pointOnCircle), so stops need only be shifted so the first one starts at 0deg.
+// CSS conic-gradient's 0deg (12 o'clock, clockwise) matches this file's own angle convention, so
+// stops need only be shifted so the first one starts at 0deg.
 const SECTOR_GRADIENT_ROTATION = SECTORS[0].startAngle;
 const SECTOR_GRADIENT_CSS = `conic-gradient(from ${SECTOR_GRADIENT_ROTATION}deg, ${SECTORS.map(
   (sector) =>
@@ -218,6 +190,8 @@ export function GenreTreeWheelSkeleton() {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const gradientId = `genre-tree-wheel-skeleton-gradient-${uid}`;
   const maskId = `genre-tree-wheel-skeleton-mask-${uid}`;
+  const shapesId = `genre-tree-wheel-skeleton-shapes-${uid}`;
+  const mainstreamId = `genre-tree-wheel-skeleton-mainstream-${uid}`;
   const animationName = `genre-tree-wheel-skeleton-spin-${uid}`;
   const shimmerWedgeClass = `genre-tree-wheel-skeleton-shimmer-wedge-${uid}`;
 
@@ -230,7 +204,7 @@ export function GenreTreeWheelSkeleton() {
       />
       <span className="gtv-skeleton-sr-only">Loading genre tree…</span>
       <svg
-        viewBox={`${CANVAS.minX} ${CANVAS.minY} ${CANVAS.width} ${CANVAS.height}`}
+        viewBox={`${CANVAS_ORIGIN} ${CANVAS_ORIGIN} ${CANVAS_SIZE} ${CANVAS_SIZE}`}
         preserveAspectRatio="xMidYMid meet"
         className="gtv-wheel-skeleton-svg"
         aria-hidden="true"
@@ -256,72 +230,46 @@ export function GenreTreeWheelSkeleton() {
             <stop offset="50%" stopColor={SHIMMER_HIGHLIGHT_COLOR} stopOpacity={0.9} />
             <stop offset="100%" stopColor={SHIMMER_HIGHLIGHT_COLOR} stopOpacity={0} />
           </linearGradient>
-          {/* White = visible: masks the shimmer wedge to the wheel's own silhouette so the sweep
-              only lights up chips, branches, and connectors, never the empty space between them. */}
-          <mask id={maskId}>
-            <circle cx={0} cy={0} r={HUB_RADIUS} fill="#FFFFFF" />
-            {ALL_LINKS.map((link, i) => (
+          <radialGradient id={mainstreamId}>
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.45} />
+            <stop offset="65%" stopColor="#FFFFFF" stopOpacity={0.15} />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
+          </radialGradient>
+          {/* Drawn once in currentColor and referenced twice: gray for the visible wheel, white
+              inside the mask — so the shimmer only lights up dots and links, never the empty
+              space between them. */}
+          <g id={shapesId}>
+            {LINKS.map((link, i) => (
               <path
-                key={`link-mask-${i}`}
-                d={connectorPath(link.from, link.to)}
+                key={`link-${i}`}
+                d={link.d}
                 fill="none"
-                stroke="#FFFFFF"
-                strokeWidth={1.25}
+                stroke="currentColor"
+                strokeWidth={link.width}
+                strokeOpacity={link.opacity}
+                strokeLinecap="round"
               />
             ))}
-            {ALL_RECTS.map((rect, i) => (
-              <rect
-                key={`rect-mask-${i}`}
-                x={rect.x}
-                y={rect.y}
-                width={rect.width}
-                height={rect.height}
-                rx={CORNER_RADIUS}
-                ry={CORNER_RADIUS}
-                fill="#FFFFFF"
-              />
+            {DOTS.map((dot, i) => (
+              <circle key={`dot-${i}`} cx={dot.point.x} cy={dot.point.y} r={dot.r} fill="currentColor" />
             ))}
+          </g>
+          <mask id={maskId}>
+            <use href={`#${shapesId}`} color="#FFFFFF" />
           </mask>
         </defs>
 
-        <circle
-          cx={0}
-          cy={0}
-          r={WHEEL_RADIUS}
-          fill="none"
-          stroke={RING_COLOR}
-          strokeWidth={1}
-          strokeDasharray="2 6"
-        />
+        <circle cx={0} cy={0} r={RING_RADIUS} fill="#FFFFFF" fillOpacity={INNER_TINT_OPACITY} />
+        <circle cx={0} cy={0} r={MAINSTREAM_RADIUS} fill={`url(#${mainstreamId})`} />
 
-        {ALL_LINKS.map((link, i) => (
-          <path key={`link-${i}`} d={connectorPath(link.from, link.to)} fill="none" stroke={CONNECTOR_COLOR} strokeWidth={1.25} />
-        ))}
-
-        {ALL_RECTS.map((rect, i) => (
-          <rect
-            key={`rect-${i}`}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
-            rx={CORNER_RADIUS}
-            ry={CORNER_RADIUS}
-            fill={CARD_FILL}
-            stroke={CARD_BORDER_COLOR}
-            strokeWidth={1}
-          />
-        ))}
-
-        <circle cx={0} cy={0} r={HUB_RADIUS} fill={CARD_FILL} stroke={CARD_BORDER_COLOR} strokeWidth={1.5} />
-        <circle cx={0} cy={0} r={5} fill={CONNECTOR_COLOR} />
+        <use href={`#${shapesId}`} color={SHAPE_COLOR} />
 
         <g mask={`url(#${maskId})`}>
           <g className={shimmerWedgeClass}>
             <path
-              d={`M0,0 L0,${-CANVAS.height} A${CANVAS.height},${CANVAS.height} 0 0 1 ${round(
-                CANVAS.height * Math.sin((40 * Math.PI) / 180),
-              )},${round(-CANVAS.height * Math.cos((40 * Math.PI) / 180))} Z`}
+              d={`M0,0 L0,${-CANVAS_SIZE} A${CANVAS_SIZE},${CANVAS_SIZE} 0 0 1 ${round(
+                CANVAS_SIZE * Math.sin((40 * Math.PI) / 180),
+              )},${round(-CANVAS_SIZE * Math.cos((40 * Math.PI) / 180))} Z`}
               fill={`url(#${gradientId})`}
             />
           </g>
