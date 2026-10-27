@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useRef } from "react";
 import { NODE_DOT_MIN_RADIUS, TREE_COLORS } from "./constants";
 
 // Neutral grays rather than the real wheel's per-root tints, so the loading state reads as a
@@ -197,20 +197,44 @@ export function buildMaskSvgMarkup(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${CANVAS_ORIGIN} ${CANVAS_ORIGIN} ${CANVAS_SIZE} ${CANVAS_SIZE}">${links}${dots}</svg>`;
 }
 
+const SHIMMER_PERIOD_MS = 2400;
+
+let maskImageUrl: string | undefined;
+
+function getMaskImageUrl(): string {
+  maskImageUrl ??= `url("data:image/svg+xml;utf8,${encodeURIComponent(buildMaskSvgMarkup())}")`;
+  return maskImageUrl;
+}
+
 export function GenreTreeWheelSkeleton() {
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const shapesId = `genre-tree-wheel-skeleton-shapes-${uid}`;
   const mainstreamId = `genre-tree-wheel-skeleton-mainstream-${uid}`;
   const shimmerRef = useRef<HTMLDivElement>(null);
+  const wedgeRef = useRef<HTMLDivElement>(null);
 
   // Set client-side only so the large data URI never lands in the SSR HTML.
   useEffect(() => {
     const layer = shimmerRef.current;
     if (!layer) return;
-    const mask = `url("data:image/svg+xml;utf8,${encodeURIComponent(buildMaskSvgMarkup())}")`;
+    const mask = getMaskImageUrl();
     layer.style.maskImage = mask;
     layer.style.webkitMaskImage = mask;
+  }, []);
+
+  useLayoutEffect(() => {
+    const wedge = wedgeRef.current;
+    if (!wedge || typeof wedge.animate !== "function") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const animation = wedge.animate(
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
+      { duration: SHIMMER_PERIOD_MS, iterations: Infinity },
+    );
+    // Anchored to the document timeline so a skeleton remounted by the next loading stage
+    // resumes at the angle the previous one showed instead of restarting from 0deg.
+    animation.startTime = 0;
+    return () => animation.cancel();
   }, []);
 
   return (
@@ -257,7 +281,7 @@ export function GenreTreeWheelSkeleton() {
         <use href={`#${shapesId}`} color={SHAPE_COLOR} />
       </svg>
       <div ref={shimmerRef} className="gtv-wheel-skeleton-shimmer" aria-hidden="true">
-        <div className="gtv-wheel-skeleton-shimmer-wedge" />
+        <div ref={wedgeRef} className="gtv-wheel-skeleton-shimmer-wedge" />
       </div>
     </div>
   );

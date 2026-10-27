@@ -7,7 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- The wheel loading skeleton's shimmer sweep runs on the compositor and no longer stutters while the page is busy loading the tree.
+- The wheel loading skeleton's shimmer sweep runs on the compositor and keeps its position across loading stages, so it no longer stutters or jumps while the tree loads.
 
 ## [4.1.0] - 2026-10-27
 

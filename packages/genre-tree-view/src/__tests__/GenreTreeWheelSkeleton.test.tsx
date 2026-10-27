@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { GenreTreeWheelSkeleton, buildMaskSvgMarkup } from "../GenreTreeWheelSkeleton";
 
@@ -74,6 +74,62 @@ describe("GenreTreeWheelSkeleton", () => {
 
     const shimmer = container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement;
     expect(shimmer.style.maskImage).toMatch(/^url\("data:image\/svg\+xml/);
+  });
+});
+
+describe("GenreTreeWheelSkeleton sweep animation", () => {
+  const originalAnimate = Element.prototype.animate;
+
+  afterEach(() => {
+    Element.prototype.animate = originalAnimate;
+    vi.unstubAllGlobals();
+  });
+
+  function stubAnimate() {
+    const cancel = vi.fn();
+    const animation = { cancel, startTime: null as number | null };
+    const animate = vi.fn(() => animation);
+    Element.prototype.animate = animate as unknown as typeof Element.prototype.animate;
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    return { animate, animation, cancel };
+  }
+
+  it("rotates the wedge a full turn on the document timeline so remounts resume in phase", () => {
+    const { animate, animation } = stubAnimate();
+    render(<GenreTreeWheelSkeleton />);
+
+    expect(animate).toHaveBeenCalledWith(
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
+      { duration: 2400, iterations: Infinity },
+    );
+    expect(animation.startTime).toBe(0);
+  });
+
+  it("cancels the animation on unmount", () => {
+    const { cancel } = stubAnimate();
+    const { unmount } = render(<GenreTreeWheelSkeleton />);
+
+    unmount();
+
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not animate under prefers-reduced-motion", () => {
+    const { animate } = stubAnimate();
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<GenreTreeWheelSkeleton />);
+
+    expect(animate).not.toHaveBeenCalled();
+  });
+
+  it("reuses the same mask image across mounts", () => {
+    const { container: containerA } = render(<GenreTreeWheelSkeleton />);
+    const { container: containerB } = render(<GenreTreeWheelSkeleton />);
+
+    const maskOf = (container: HTMLElement) =>
+      (container.querySelector(".gtv-wheel-skeleton-shimmer") as HTMLElement).style.maskImage;
+    expect(maskOf(containerA)).toBeTruthy();
+    expect(maskOf(containerA)).toBe(maskOf(containerB));
   });
 });
 
