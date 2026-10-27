@@ -20,5 +20,9 @@ export default defineConfig({
       path.join(repoRoot, "src/styles.css"),
       path.join(repoRoot, "dist/styles.css"),
     );
+    fs.copyFileSync(
+      path.join(repoRoot, "src/wheel-skeleton-mask.svg"),
+      path.join(repoRoot, "dist/wheel-skeleton-mask.svg"),
+    );
   },
 });
