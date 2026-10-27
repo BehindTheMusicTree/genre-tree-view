@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
 
 import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
@@ -7,7 +7,7 @@ import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
 
 // Same log-scaled position as a tree card (scaled across the mini tree's own nodes), mapped onto
-// a range that stays legible in the 17.5rem panel instead of the tree's 35-120px card heights.
+// a range that stays legible in the 25.5rem panel instead of the tree's 35-120px card heights.
 const MINI_NODE_MIN_DIAMETER = 14;
 const MINI_NODE_MAX_DIAMETER = 32;
 const MINI_NODE_MIN_FONT_SIZE = 10;
@@ -72,6 +72,10 @@ export interface InfoPanelProps {
   expanded?: boolean;
   /** See GenreTreeProps.onExpandedChange. */
   onExpandedChange?: (on: boolean) => void;
+  /** See GenreTreeProps.collapsed. */
+  collapsed?: boolean;
+  /** See GenreTreeProps.hideExpandButton. */
+  hideExpandButton?: boolean;
 }
 
 export function isEscapeOwnedElsewhere(event: KeyboardEvent): boolean {
@@ -113,7 +117,14 @@ export function InfoPanel({
   renderDangerZone,
   expanded = false,
   onExpandedChange,
+  collapsed = false,
+  hideExpandButton = false,
 }: InfoPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  // `inert` is a boolean attribute in React 19 but an unknown string one in 18 (the peer range covers both).
+  useEffect(() => {
+    panelRef.current?.toggleAttribute("inert", collapsed);
+  }, [collapsed]);
   const editing = editMode && !readOnly;
   const shownParent = editing && renderParentsEditor ? null : parentNode;
   const miniTreeRange = getItemCountRange([
@@ -158,7 +169,8 @@ export function InfoPanel({
 
   return (
     <div
-      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !renderExtraDetails ? " gtv-info-panel--expanded-solo" : ""}`}
+      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !renderExtraDetails ? " gtv-info-panel--expanded-solo" : ""}${collapsed ? " gtv-info-panel--collapsed" : ""}`}
+      ref={panelRef}
     >
       <div
         className="gtv-info-panel-header"
@@ -210,7 +222,7 @@ export function InfoPanel({
             {editMode ? "Done" : "Edit"}
           </button>
         )}
-        {onExpandedChange && (
+        {onExpandedChange && !hideExpandButton && (
           <button
             type="button"
             className="gtv-info-panel-close"

@@ -281,6 +281,8 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     renderDangerZone,
     expanded,
     onExpandedChange,
+    collapsed,
+    hideExpandButton,
     overlayPanel,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -440,6 +442,8 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
+          collapsed={collapsed}
+          hideExpandButton={hideExpandButton}
           renderExtraDetails={renderExtraDetails}
           actions={
             showToolbar && !reparentingNodeId
