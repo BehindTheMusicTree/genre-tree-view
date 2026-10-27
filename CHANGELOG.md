@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-10-27
+
 ### Added
 
 - `collapsed` slides the info panel out of view and makes it inert while keeping it mounted; `hideExpandButton` drops the header's expand toggle for hosts that draw their own control.
