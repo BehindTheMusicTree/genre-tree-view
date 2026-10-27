@@ -128,6 +128,8 @@ export function WheelRadialCore({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  collapsed,
+  hideExpandButton,
   overlayPanel,
   wheelZoom,
   controlsOrientation = "vertical",
@@ -723,6 +725,8 @@ export function WheelRadialCore({
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
+          collapsed={collapsed}
+          hideExpandButton={hideExpandButton}
           renderExtraDetails={renderExtraDetails}
           actions={
             showToolbar && !reparentingNodeId

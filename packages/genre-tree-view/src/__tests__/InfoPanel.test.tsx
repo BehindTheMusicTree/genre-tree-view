@@ -712,6 +712,25 @@ describe("InfoPanel", () => {
       expect(screen.queryByRole("button", { name: /expand panel|collapse panel/i })).toBeNull();
     });
 
+    it("drops the expand button with hideExpandButton", () => {
+      renderPanel({ onExpandedChange: vi.fn(), hideExpandButton: true });
+      expect(screen.queryByRole("button", { name: /expand panel|collapse panel/i })).toBeNull();
+    });
+
+    it("hides a collapsed panel from the accessibility tree and makes it inert", () => {
+      const { container } = renderPanel({ collapsed: true });
+      const panel = container.firstElementChild as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--collapsed")).toBe(true);
+      expect(panel.hasAttribute("inert")).toBe(true);
+    });
+
+    it("is not inert when not collapsed", () => {
+      const { container } = renderPanel({});
+      const panel = container.firstElementChild as HTMLElement;
+      expect(panel.classList.contains("gtv-info-panel--collapsed")).toBe(false);
+      expect(panel.hasAttribute("inert")).toBe(false);
+    });
+
     it("toggles via Expand panel / Collapse panel", () => {
       const onExpandedChange = vi.fn();
       const { rerender } = renderPanel({ onExpandedChange });
