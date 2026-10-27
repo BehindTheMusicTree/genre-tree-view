@@ -5,12 +5,27 @@ import {
   ZOOM_WHEEL_MAX_EXPONENT,
   ZOOM_WHEEL_SCALE_SPEED,
 } from "./constants";
+import type { GenreTreeViewport } from "./types";
 
 /** `minScale` defaults to ZOOM_MIN_SCALE but accepts an override so manual zoom-out's floor can
  * be relaxed to match a "fit to frame" scale computed for content too large for the static
  * default to reach — see usePanZoom's dynamic min-scale tracking. */
 export function clampZoomScale(scale: number, minScale: number = ZOOM_MIN_SCALE): number {
   return Math.min(ZOOM_MAX_SCALE, Math.max(minScale, scale));
+}
+
+export interface PanZoomView {
+  x: number;
+  y: number;
+  k: number;
+}
+
+export function viewToViewport(view: PanZoomView, width: number, height: number): GenreTreeViewport {
+  return { x: (width / 2 - view.x) / view.k, y: (height / 2 - view.y) / view.k, zoom: view.k };
+}
+
+export function viewportToView(viewport: GenreTreeViewport, width: number, height: number): PanZoomView {
+  return { x: width / 2 - viewport.x * viewport.zoom, y: height / 2 - viewport.y * viewport.zoom, k: viewport.zoom };
 }
 
 /** Exponential response to wheel delta so the zoom feels proportional at any current scale —

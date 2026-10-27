@@ -451,6 +451,10 @@ export const PAN_MIN_VISIBLE_PX = 80;
 // tracked pan/zoom into React state (re-rendering and re-running the zoom-dependent label effects).
 export const PAN_ZOOM_SETTLE_MS = 100;
 
+// After usePanZoom applies a `defaultViewport`, centerOnElement is ignored for this long so the
+// initial `selectedNodeId` (which centers on mount) doesn't glide away from the restored view.
+export const DEFAULT_VIEWPORT_CENTER_GUARD_MS = 1000;
+
 // Fixed width (px) of the node info panel (see InfoPanel.tsx) — also the collision threshold
 // resolveInfoPanelSide compares a clicked node's screen rect against, so the panel never renders
 // directly on top of the node that opened it.

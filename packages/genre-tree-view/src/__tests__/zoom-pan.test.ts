@@ -7,6 +7,8 @@ import {
   computeZoomScaleForButton,
   createWheelClassifierState,
   queryTreeContentElements,
+  viewToViewport,
+  viewportToView,
 } from "../zoom-pan";
 import { ZOOM_MAX_SCALE, ZOOM_MIN_SCALE } from "../constants";
 
@@ -177,5 +179,27 @@ describe("queryTreeContentElements", () => {
       <div class="gtv-hover-hit-area"></div>
     `;
     expect(queryTreeContentElements(container)).toHaveLength(2);
+  });
+});
+
+describe("viewToViewport / viewportToView", () => {
+  it("maps the viewport center to the content-space point shown there", () => {
+    expect(viewToViewport({ x: 400, y: 225, k: 0.5 }, 1200, 750)).toEqual({ x: 400, y: 300, zoom: 0.5 });
+  });
+
+  it("round-trips a view", () => {
+    const view = { x: -137.5, y: 62.25, k: 1.6 };
+    const viewport = viewToViewport(view, 900, 600);
+    const back = viewportToView(viewport, 900, 600);
+    expect(back.x).toBeCloseTo(view.x);
+    expect(back.y).toBeCloseTo(view.y);
+    expect(back.k).toBe(view.k);
+  });
+
+  it("lands on the same content point in a differently sized viewport", () => {
+    const viewport = { x: 400, y: 300, zoom: 2 };
+    const view = viewportToView(viewport, 600, 400);
+    expect((600 / 2 - view.x) / view.k).toBe(400);
+    expect((400 / 2 - view.y) / view.k).toBe(300);
   });
 });

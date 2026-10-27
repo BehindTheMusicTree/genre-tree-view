@@ -16,6 +16,13 @@ pnpm workspace with two members:
   `showToolbar` (default true) suppresses the hover toolbar and hover name-label on every node,
   and the wheel renderers' root/center chips' own inner toolbar and hover name-label, when false —
   the chips themselves (name label, click-to-select/expand) stay visible.
+  `defaultViewport` / `onViewportChange` expose the pan/zoom as a `GenreTreeViewport` (content-space
+  center `x`,`y` + `zoom`, independent of the container's pixel size — `viewToViewport` /
+  `viewportToView` in `zoom-pan.ts`). `defaultViewport` is a mount-only seed: the first
+  `fitToFrame` in `use-pan-zoom.ts` applies it (zoom clamped to the fitted min scale) instead of
+  fitting, and `centerOnElement` is suppressed for `DEFAULT_VIEWPORT_CENTER_GUARD_MS` afterwards so
+  initial-selection centering doesn't override it. `onViewportChange` fires from `commitView`
+  (the single settle point), but not for the mount fit or the seed.
 - **`GenreTreeWheel.tsx`**, **`GenreTreeWheelRight.tsx`**, **`GenreTreeWheelRadial.tsx`**, and
   **`GenreTreeWheelRadialPopCore.tsx`** all distribute the root genres of a forest around a wheel
   and mount a single (or, for the two radial variants, one per root) `GenreTree` instance(s) with
