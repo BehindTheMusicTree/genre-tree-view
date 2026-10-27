@@ -12,17 +12,20 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(svg).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("renders the wheel ring guide, hub circle, and accent dot", () => {
+  it("draws small circular dots and curved links instead of card rects", () => {
     render(<GenreTreeWheelSkeleton />);
 
-    expect(document.querySelectorAll("circle").length).toBe(4);
+    expect(document.querySelectorAll("rect").length).toBe(0);
+    expect(document.querySelectorAll("circle").length).toBeGreaterThan(100);
+    expect(document.querySelectorAll("path[stroke]").length).toBeGreaterThan(100);
   });
 
-  it("renders chip/branch rects and connector paths", () => {
-    render(<GenreTreeWheelSkeleton />);
+  it("renders identically on every mount so it can SSR without a hydration mismatch", () => {
+    const { container: containerA } = render(<GenreTreeWheelSkeleton />);
+    const { container: containerB } = render(<GenreTreeWheelSkeleton />);
 
-    expect(document.querySelectorAll("rect").length).toBeGreaterThan(1);
-    expect(document.querySelectorAll("path").length).toBeGreaterThan(0);
+    const normalize = (html: string) => html.replace(/[a-zA-Z0-9_-]*genre-tree-wheel-skeleton[a-zA-Z0-9_-]*/g, "id");
+    expect(normalize(containerA.innerHTML)).toBe(normalize(containerB.innerHTML));
   });
 
   it("fills the container corners via a CSS conic-gradient layer independent of the content viewBox", () => {
@@ -40,7 +43,7 @@ describe("GenreTreeWheelSkeleton", () => {
     ) as HTMLElement;
     expect(gradientLayer).not.toBeNull();
     expect(gradientLayer.style.background).toMatch(/^conic-gradient\(/);
-    expect(gradientLayer.style.opacity).toBe("0.16");
+    expect(gradientLayer.style.opacity).toBe("0.22");
   });
 
   it("renders unique gradient/mask ids across multiple mounted instances", () => {
