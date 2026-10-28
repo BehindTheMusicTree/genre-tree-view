@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The overlay panel draws a divider between the top-level blocks of `content` and of `extraContent`, and between the two when they are stacked, so consumers no longer draw their own separators.
+
 ## [4.6.0] - 2026-10-28
 
 ### Added
