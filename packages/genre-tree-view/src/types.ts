@@ -236,4 +236,8 @@ export interface GenreTreeOverlayPanel {
   collapsed?: boolean;
   /** See GenreTreeProps.hideExpandButton. */
   hideExpandButton?: boolean;
+  /** See GenreTreeProps.hideInfoPanelTitle. */
+  hideTitle?: boolean;
+  /** See GenreTreeProps.hideInfoPanelClose; Escape still closes. */
+  hideClose?: boolean;
 }

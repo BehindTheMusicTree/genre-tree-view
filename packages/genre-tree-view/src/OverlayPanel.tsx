@@ -16,6 +16,8 @@ export function OverlayPanel({
   extraContent,
   collapsed = false,
   hideExpandButton = false,
+  hideTitle = false,
+  hideClose = false,
 }: GenreTreeOverlayPanel) {
   const panelRef = useRef<HTMLDivElement>(null);
   const expandable = !!onExpandedChange;
@@ -49,13 +51,15 @@ export function OverlayPanel({
   return (
     <div className={className} ref={panelRef}>
       <div className="gtv-info-panel-header">
-        <span className="gtv-info-panel-title">{title}</span>
+        <span className={`gtv-info-panel-title${hideTitle ? " gtv-info-panel-title--hidden" : ""}`}>{title}</span>
         {onExpandedChange && !hideExpandButton && (
           <InfoPanelExpandButton expanded={expanded} onExpandedChange={onExpandedChange} />
         )}
-        <button type="button" className="gtv-info-panel-close" onClick={onClose} aria-label="Close">
-          <MdClose className="gtv-icon" size={16} />
-        </button>
+        {!hideClose && (
+          <button type="button" className="gtv-info-panel-close" onClick={onClose} aria-label="Close">
+            <MdClose className="gtv-icon" size={16} />
+          </button>
+        )}
       </div>
       <div className="gtv-info-panel-body">
         <div className="gtv-info-panel-main gtv-overlay-content">{content}</div>
