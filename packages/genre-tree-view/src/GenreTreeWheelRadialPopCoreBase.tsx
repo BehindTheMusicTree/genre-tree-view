@@ -8,6 +8,7 @@ import { createDeferredClick } from "./defer-click";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { useTreeIndex } from "./use-tree-index";
+import { findSceneStack, SceneStack } from "./scene-stack";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
   buildCoreHierarchy,
@@ -74,7 +75,11 @@ import {
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
   ZOOM_FOCUS_SCALE,
+  shadeSurface,
+  UNDERGROUND_DARKEN_RATIO,
 } from "./constants";
+
+type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
  * root-view buttons and breadcrumb, a `selectedNodeId` outside the current zoom (e.g. a search result), or a
@@ -414,6 +419,14 @@ export function WheelRadialPopCoreCore({
     [groups, splitByRootId],
   );
 
+  const sceneStackByHierarchy = useMemo(() => {
+    const stacks = new Map<D3Node, SceneStack | null>();
+    branchHierarchiesByRootId.forEach(({ core }) => {
+      core.forEach((hierarchy) => stacks.set(hierarchy, findSceneStack(hierarchy)));
+    });
+    return stacks;
+  }, [branchHierarchiesByRootId]);
+
   // How far past the ring roots' own circle the tallest developed root's pop wedge reaches —
   // computed as a delta (base radius 0) since the actual base (coreRootCircleRadius) isn't known
   // yet; folded into coreRootCircleRadius below, then re-applied at the real base for rendering.
@@ -458,12 +471,13 @@ export function WheelRadialPopCoreCore({
             hierarchy,
             POP_TREE_DEPTH_RADIAL_SPACING,
             0,
+            sceneStackByHierarchy.get(hierarchy),
           ),
         );
       });
     });
     return extent;
-  }, [branchHierarchiesByRootId]);
+  }, [branchHierarchiesByRootId, sceneStackByHierarchy]);
 
   // Pins coreRootCircleRadius so the deepest node of the deepest developed pop branch (which
   // climbs inward from coreRootCircleRadius by a fixed depthSpacing per depth step — see
@@ -501,6 +515,7 @@ export function WheelRadialPopCoreCore({
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
                   wheelItemCountRange,
+                  sceneStackByHierarchy.get(hierarchy),
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -508,7 +523,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId, sceneStackByHierarchy, rootItemCountById, wheelItemCountRange],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -761,6 +776,10 @@ export function WheelRadialPopCoreCore({
         .attr("data-gtv-root-id", rootId);
 
       branches.forEach(({ hierarchy, angle, span }, branchIndex) => {
+        const sceneStack = sceneStackByHierarchy.get(hierarchy);
+        const undergroundIds = sceneStack
+          ? new Set(sceneStack.underground.descendants().map((d) => d.data.id))
+          : null;
         const laidOut = computeCoreRadialLayout(
           d3,
           hierarchy,
@@ -769,6 +788,7 @@ export function WheelRadialPopCoreCore({
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
           wheelItemCountRange,
+          sceneStack,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -782,6 +802,29 @@ export function WheelRadialPopCoreCore({
           .append("g")
           .attr("class", "gtv-wheel-core-branch")
           .attr("data-gtv-branch-index", branchIndex);
+
+        if (sceneStack) {
+          const ringRadius = coreRadiusOfDepth(coreRootCircleRadius, POP_TREE_DEPTH_RADIAL_SPACING);
+          const halfStep = POP_TREE_DEPTH_RADIAL_SPACING / 2;
+          const startAngle = ((angle - span / 2) * Math.PI) / 180;
+          const endAngle = ((angle + span / 2) * Math.PI) / 180;
+          const commercialInner = ringRadius(sceneStack.ringDepthOf(sceneStack.commercial)) - halfStep;
+          const undergroundInner = ringRadius(sceneStack.ringDepthOf(sceneStack.underground)) - halfStep;
+          const undergroundOuter =
+            ringRadius(Math.max(...laidOut.descendants().map((d) => sceneStack.ringDepthOf(d)))) + halfStep;
+          const arc = d3.arc();
+          const band = (className: string, innerRadius: number, outerRadius: number) =>
+            branchGroup
+              .append("path")
+              .attr("class", className)
+              .attr("d", arc({ innerRadius, outerRadius, startAngle, endAngle }));
+          band("gtv-wheel-scene-band gtv-wheel-scene-band--commercial", commercialInner, undergroundInner);
+          band("gtv-wheel-scene-band gtv-wheel-scene-band--underground", undergroundInner, undergroundOuter);
+          branchGroup
+            .append("path")
+            .attr("class", "gtv-wheel-scene-divider")
+            .attr("d", arc({ innerRadius: undergroundInner, outerRadius: undergroundInner, startAngle, endAngle }));
+        }
 
         renderPopSubtree(
           d3,
@@ -824,7 +867,11 @@ export function WheelRadialPopCoreCore({
             isCoreSector: true,
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
-            nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
+            nodeFillOf: (node) => {
+              const fill = getGenreNodeStyle(index, node.id).fill;
+              return undergroundIds?.has(node.id) ? shadeSurface(fill, UNDERGROUND_DARKEN_RATIO) : fill;
+            },
+            sceneCrossLinkTargetId: sceneStack?.underground.data.id,
           },
         );
       });
@@ -948,6 +995,7 @@ export function WheelRadialPopCoreCore({
     index,
     popHierarchyByRootId,
     coreHierarchyByRootId,
+    sceneStackByHierarchy,
     coreRootCircleRadius,
     svgCanvasRadius,
     mainstreamCircleRadius,
