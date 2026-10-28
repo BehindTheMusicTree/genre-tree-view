@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27`, and the CI workflows read `.nvmrc`. The published package is unaffected.
+
 ## [4.8.0] - 2026-10-28
 
 ### Added
