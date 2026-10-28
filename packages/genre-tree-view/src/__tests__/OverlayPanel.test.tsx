@@ -39,4 +39,67 @@ describe("OverlayPanel", () => {
     fireEvent.keyDown(document, { key: "Enter" });
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  describe("expandable", () => {
+    it("has no expand button without onExpandedChange", () => {
+      render(<OverlayPanel title="About" content="x" onClose={() => {}} />);
+      expect(screen.queryByRole("button", { name: /expand panel|collapse panel/i })).toBeNull();
+    });
+
+    it("sits in the compact left slot until expanded", () => {
+      const props = { title: "Artist", content: "x", onClose: () => {}, onExpandedChange: () => {} };
+      const { container, rerender } = render(<OverlayPanel {...props} />);
+      const panel = container.firstElementChild;
+      expect(panel?.classList.contains("gtv-info-panel--left")).toBe(true);
+      expect(panel?.classList.contains("gtv-info-panel--overlay")).toBe(false);
+      expect(panel?.classList.contains("gtv-info-panel--expanded")).toBe(false);
+      rerender(<OverlayPanel {...props} expanded />);
+      expect(panel?.classList.contains("gtv-info-panel--expanded")).toBe(true);
+      expect(panel?.classList.contains("gtv-info-panel--expanded-solo")).toBe(true);
+    });
+
+    it("toggles via Expand panel / Collapse panel", () => {
+      const onExpandedChange = vi.fn();
+      const props = { title: "Artist", content: "x", onClose: () => {}, onExpandedChange };
+      const { rerender } = render(<OverlayPanel {...props} />);
+      fireEvent.click(screen.getByRole("button", { name: "Expand panel" }));
+      expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+      rerender(<OverlayPanel {...props} expanded />);
+      fireEvent.click(screen.getByRole("button", { name: "Collapse panel" }));
+      expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it("drops the expand button with hideExpandButton", () => {
+      render(<OverlayPanel title="Artist" content="x" onClose={() => {}} onExpandedChange={() => {}} hideExpandButton />);
+      expect(screen.queryByRole("button", { name: /expand panel|collapse panel/i })).toBeNull();
+    });
+
+    it("collapses on Escape while expanded, closes on Escape while compact", () => {
+      const onClose = vi.fn();
+      const onExpandedChange = vi.fn();
+      const props = { title: "Artist", content: "x", onClose, onExpandedChange };
+      const { rerender } = render(<OverlayPanel {...props} expanded />);
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onExpandedChange).toHaveBeenCalledWith(false);
+      expect(onClose).not.toHaveBeenCalled();
+      rerender(<OverlayPanel {...props} />);
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders extraContent and drops the solo layout when expanded", () => {
+      const { container } = render(
+        <OverlayPanel title="Artist" content="main" extraContent={<p>Discography</p>} onClose={() => {}} onExpandedChange={() => {}} expanded />,
+      );
+      expect(screen.getByText("Discography")).toBeTruthy();
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(false);
+    });
+
+    it("is inert and slid away when collapsed", () => {
+      const { container } = render(<OverlayPanel title="Artist" content="x" onClose={() => {}} onExpandedChange={() => {}} collapsed />);
+      const panel = container.firstElementChild;
+      expect(panel?.classList.contains("gtv-info-panel--collapsed")).toBe(true);
+      expect(panel?.hasAttribute("inert")).toBe(true);
+    });
+  });
 });
