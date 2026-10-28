@@ -96,6 +96,28 @@ export interface GenreTreeViewport {
   zoom: number;
 }
 
+/** The info panel's built-in sections, handed to `renderInfoPanelBody` for placement. Each is
+ * `null` when it has nothing to show. */
+export interface InfoPanelSections {
+  /** The node's action toolbar — null when `showToolbar` is off or a reparent is in progress. */
+  toolbar: ReactNode;
+  /** Ancestor chips, root-first — null for a root. */
+  ancestors: ReactNode;
+  /** Parent, node and children mini tree, preceded in edit mode by `renderParentsEditor`. */
+  family: ReactNode;
+  /** The `itemCountLabel` row. */
+  itemCount: ReactNode;
+}
+
+/** The info panel body a `renderInfoPanelBody` returns. */
+export interface InfoPanelBody {
+  /** The wide column when expanded; on top when compact. */
+  primary: ReactNode;
+  /** The narrow left column when expanded; below `primary` when compact. Omit (or null) for a
+   * single column. */
+  aside?: ReactNode;
+}
+
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   /** Label for the info panel's `itemCount` row (e.g. "Song count"); the library can't know what unit is counted. */
@@ -160,11 +182,13 @@ export interface GenreTreeProps {
    * info panel for that node — the same effect a direct click on it would have — swapping in its
    * owning root/sector first if needed. Leave unset to use the internal selection. */
   selectedNodeId?: string | null;
-  /** Renders extra content into the built-in info panel for the clicked node, below its built-in
-   * fields — e.g. a consumer-fetched detail like essential tracks. The library has no knowledge
-   * of what this renders (loading state, data fetching, etc. are entirely the consumer's
-   * responsibility, mirroring `additionalActions`); omit for no extra section. */
-  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** Composes the info panel body for the clicked node: places the built-in `sections` (any
+   * omitted one is not rendered) among the consumer's own content — e.g. a consumer-fetched detail
+   * like essential tracks. The library has no knowledge of what this renders (loading state, data
+   * fetching, etc. are entirely the consumer's responsibility, mirroring `additionalActions`).
+   * Omitted, the body is the built-in sections in one column. The panel frame (header, columns,
+   * scrolling, edit-mode danger zone) stays the library's. */
+  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Fired when a user action changes the node shown in the info panel (a click on the tree, or on
    * a parent/child/ancestor chip in the panel), or with `null` when the user closes it (its header
    * ✕) — so a consumer driving `selectedNodeId` stays in sync. Not fired when re-selecting the node
@@ -193,8 +217,8 @@ export interface GenreTreeProps {
   renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
   /** Edit mode only: rendered at the bottom of the info panel. */
   renderDangerZone?: (node: GenreTreeNode) => ReactNode;
-  /** Whether the info panel fills the tree container (controlled), splitting into a left column
-   * (fields, lists, toolbar, danger zone) and a right one (`renderExtraDetails`). Selecting
+  /** Whether the info panel fills the tree container (controlled), splitting into a narrow left
+   * column (the body's `aside`, then the danger zone) and a wide right one (its `primary`). Selecting
    * another node from the panel keeps it expanded. Defaults to false. */
   expanded?: boolean;
   /** When set, the info panel header shows an expand/collapse toggle firing this with the
@@ -234,10 +258,14 @@ export interface GenreTreeOverlayPanel {
   /** Adds the header's expand/collapse toggle; Escape fires it with `false` while expanded. */
   onExpandedChange?: (on: boolean) => void;
   /** Stacked below `content` when compact, the right column when expanded — same as the info
-   * panel's `renderExtraDetails`. */
+   * panel body's `primary`. */
   extraContent?: ReactNode;
   /** See GenreTreeProps.collapsed. */
   collapsed?: boolean;
   /** See GenreTreeProps.hideExpandButton. */
   hideExpandButton?: boolean;
+  /** See GenreTreeProps.hideInfoPanelTitle. */
+  hideTitle?: boolean;
+  /** See GenreTreeProps.hideInfoPanelClose; Escape still closes. */
+  hideClose?: boolean;
 }

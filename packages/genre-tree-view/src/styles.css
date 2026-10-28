@@ -433,15 +433,21 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-areas: "aside primary";
 }
 
-.gtv-info-panel--expanded .gtv-info-panel-main,
-.gtv-info-panel--expanded .gtv-info-panel-extra {
+.gtv-info-panel--expanded .gtv-info-panel-primary,
+.gtv-info-panel--expanded .gtv-info-panel-aside {
   min-height: 0;
   overflow-y: auto;
 }
 
-.gtv-info-panel--expanded .gtv-info-panel-main {
+.gtv-info-panel--expanded .gtv-info-panel-primary {
+  grid-area: primary;
+}
+
+.gtv-info-panel--expanded .gtv-info-panel-aside {
+  grid-area: aside;
   border-right: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
 }
 
@@ -449,9 +455,12 @@
    GenreTree's own viewport), not the browser viewport. */
 .gtv-info-panel--expanded-solo .gtv-info-panel-body {
   grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: none;
 }
 
-.gtv-info-panel--expanded-solo .gtv-info-panel-main {
+.gtv-info-panel--expanded-solo .gtv-info-panel-primary,
+.gtv-info-panel--expanded-solo .gtv-info-panel-aside {
+  grid-area: auto;
   border-right: none;
 }
 
@@ -474,12 +483,12 @@
     overflow-y: auto;
   }
 
-  .gtv-info-panel--expanded .gtv-info-panel-main,
-  .gtv-info-panel--expanded .gtv-info-panel-extra {
+  .gtv-info-panel--expanded .gtv-info-panel-primary,
+  .gtv-info-panel--expanded .gtv-info-panel-aside {
     overflow-y: visible;
   }
 
-  .gtv-info-panel--expanded .gtv-info-panel-main {
+  .gtv-info-panel--expanded .gtv-info-panel-aside {
     border-right: none;
   }
 

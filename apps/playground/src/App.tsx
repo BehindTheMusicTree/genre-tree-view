@@ -8,6 +8,7 @@ import {
   GenreTreeWheelRight,
   groupNodesByRoot,
   type GenreTreeNode,
+  type InfoPanelSections,
   type GenreTreePlayState,
   type GenreTreeViewport,
 } from "@behindthemusictree/genre-tree-view";
@@ -533,25 +534,33 @@ function createNodeCallbacks(
         },
       },
     ],
-    // Demonstrates GenreTreeProps.renderExtraDetails: the library knows nothing about "essential
-    // tracks" — this is entirely playground-owned mock content/loading state.
-    renderExtraDetails: (node: GenreTreeNode) => {
+    // Demonstrates GenreTreeProps.renderInfoPanelBody: the library knows nothing about "essential
+    // tracks" — this is entirely playground-owned mock content/loading state. It also reorders the
+    // built-in sections (Ancestors in the aside, no count row).
+    renderInfoPanelBody: (node: GenreTreeNode, sections: InfoPanelSections) => {
       const isRoot = node.parentId === null;
       const trackCount = isRoot ? 20 : Math.min(3, node.itemCount);
-      return (
-        <div style={{ padding: "12px 16px", borderTop: "1px solid #e4e4e7" }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Essential tracks</div>
-          {trackCount === 0 ? (
-            <div style={{ color: "#71717a" }}>No tracks yet.</div>
-          ) : (
-            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-              {Array.from({ length: trackCount }, (_, i) => (
-                <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      );
+      return {
+        primary: (
+          <>
+            {sections.toolbar}
+            <div style={{ padding: "12px 16px", borderTop: "1px solid #e4e4e7" }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Essential tracks</div>
+              {trackCount === 0 ? (
+                <div style={{ color: "#71717a" }}>No tracks yet.</div>
+              ) : (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                  {Array.from({ length: trackCount }, (_, i) => (
+                    <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {sections.family}
+          </>
+        ),
+        aside: sections.ancestors,
+      };
     },
   };
 }

@@ -83,7 +83,7 @@ export function WheelCore({
   onNodeClick,
   additionalActions,
   showToolbar = true,
-  renderExtraDetails,
+  renderInfoPanelBody,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
@@ -567,7 +567,7 @@ export function WheelCore({
           onExpandedChange={onExpandedChange}
           collapsed={collapsed}
           hideExpandButton={hideExpandButton}
-          renderExtraDetails={renderExtraDetails}
+          renderInfoPanelBody={renderInfoPanelBody}
           actions={
             showToolbar && !reparentingNodeId
               ? {

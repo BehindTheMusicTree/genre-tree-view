@@ -25,6 +25,15 @@ describe("OverlayPanel", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("hides its title and close button on request, and Escape still closes", () => {
+    const onClose = vi.fn();
+    render(<OverlayPanel title="Artist" content="x" onClose={onClose} hideTitle hideClose />);
+    expect(screen.getByText("Artist").classList.contains("gtv-info-panel-title--hidden")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("calls onClose on Escape", () => {
     const onClose = vi.fn();
     render(<OverlayPanel title="About" content="x" onClose={onClose} />);

@@ -190,10 +190,17 @@ pnpm workspace with two members:
   `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
   pan/zoom-transformed content so it never scales or pans with the tree. Its Ancestors and Family
   sections each wrap `InfoPanelSection.tsx`, which owns the section's chevron collapse toggle.
-  `GenreTreeProps.renderExtraDetails`
-  (an optional `(node) => ReactNode`, threaded through all six renderers to `InfoPanel`) renders
-  extra content below the panel's built-in sections — e.g. a consumer-fetched detail like essential
-  tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
+  `GenreTreeProps.renderInfoPanelBody`
+  (an optional `(node, sections) => { primary, aside? }`, threaded through all six renderers to
+  `InfoPanel`) composes the panel body: `InfoPanel` builds its sections from tree data (`toolbar`,
+  `ancestors`, `family` — preceded in edit mode by the parents editor — and `itemCount`, each `null`
+  when empty) and the consumer places them among its own content (e.g. a consumer-fetched detail like
+  essential tracks), so the order is the same in every panel mode and the library stays agnostic of
+  what it renders, mirroring `additionalActions`. Omitted, the body is the four sections in one column.
+  `InfoPanel` keeps the frame: `.gtv-info-panel-primary` precedes `.gtv-info-panel-aside` in the DOM
+  (the compact stack), the expanded grid puts the aside left via `grid-template-areas`, a missing aside
+  makes it single-column (`--expanded-solo`), and the edit-mode danger zone ends the left column when
+  expanded and follows the body when compact.
   `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
   `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
   identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`. Setting

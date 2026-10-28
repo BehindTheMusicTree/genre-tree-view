@@ -9,6 +9,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `GenreTreeNode.scene` (`commercial` | `underground`). In the pop-core wheel, the two scene children of "Core electronic" share its angular wedge: the underground subtree starts on the ring after the commercial subtree's deepest one, with a darker annular band, darker nodes and a dashed link from the parent. Throws if those children are not exactly one of each; no effect when none carries `scene`.
 
+## [5.0.0] - 2026-10-28
+
+### Changed
+
+- **Breaking:** `renderExtraDetails` is replaced by `renderInfoPanelBody(node, sections) => { primary, aside? }`. The info panel hands its built-in sections (`toolbar`, `ancestors`, `family`, `itemCount`; the parents editor is part of `family`) to the consumer, which places them among its own content — so the body order is the same in compact and expanded mode, and a section left out is not rendered. `primary` is the wide column when expanded and the top of the stack when compact; `aside` is the narrow left column, or below `primary`. Without an `aside` the expanded panel is single-column. `InfoPanelSections` and `InfoPanelBody` are exported. The body column classes are renamed `gtv-info-panel-main` / `gtv-info-panel-extra` → `gtv-info-panel-primary` / `gtv-info-panel-aside` (in the overlay panel, `content` is the aside and `extraContent` the primary). Migration: `renderExtraDetails={(node) => extra}` → `renderInfoPanelBody={(node, s) => ({ primary: extra, aside: <>{s.toolbar}{s.ancestors}{s.family}{s.itemCount}</> })}`.
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27`, and the CI workflows read `.nvmrc`. The published package is unaffected.
+
+## [4.8.0] - 2026-10-28
+
+### Added
+
+- `overlayPanel` accepts `hideTitle` and `hideClose`, matching `hideInfoPanelTitle` and `hideInfoPanelClose`, so a host that shows the overlay's title in its own search bar (and clears it from there) can drop the duplicated header. Escape still closes the overlay.
+
 ## [4.7.0] - 2026-10-28
 
 ### Added
