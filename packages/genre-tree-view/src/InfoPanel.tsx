@@ -5,7 +5,7 @@ import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./consta
 import { InfoPanelExpandButton } from "./InfoPanelExpandButton";
 import { InfoPanelSection } from "./InfoPanelSection";
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
-import { GenreTreeNode } from "./types";
+import { GenreTreeNode, InfoPanelBody, InfoPanelSections } from "./types";
 
 // Same log-scaled position as a tree card (scaled across the mini tree's own nodes), mapped onto
 // a range that stays legible in the 25.5rem panel instead of the tree's 35-120px card heights.
@@ -50,8 +50,8 @@ export interface InfoPanelProps {
   hideTitle?: boolean;
   /** See GenreTreeProps.itemCountLabel. */
   itemCountLabel: string;
-  /** See GenreTreeProps.renderExtraDetails — rendered below the built-in Children section. */
-  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** See GenreTreeProps.renderInfoPanelBody. */
+  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** When set, shows a "Zoom in" action that fires it. */
   onZoomIn?: () => void;
   /** When set, renders the node's play/add-child/rename/reparent/delete actions below the
@@ -104,7 +104,7 @@ export function InfoPanel({
   onSelectNode,
   onPrevious,
   previousLabel,
-  renderExtraDetails,
+  renderInfoPanelBody,
   hideClose = false,
   hideTitle = false,
   itemCountLabel,
@@ -168,9 +168,90 @@ export function InfoPanel({
     <div className="gtv-info-panel-danger-zone">{renderDangerZone(node)}</div>
   );
 
+  const toolbar = actions ? <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} /> : null;
+  const ancestors =
+    ancestorNodes.length > 0 ? (
+      <InfoPanelSection title="Ancestors">
+        <ul className="gtv-info-panel-children-list gtv-info-panel-ancestors-list">
+          {ancestorNodes.map(({ node: ancestor, fill }) => (
+            <li key={ancestor.id}>
+              <button
+                type="button"
+                className="gtv-info-panel-child"
+                title={ancestor.name}
+                onClick={() => onSelectNode(ancestor.id)}
+              >
+                {miniNodeContent(ancestor, fill, ancestorRange)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </InfoPanelSection>
+    ) : null;
+  const family = (
+    <>
+      {editing && renderParentsEditor && renderParentsEditor(node)}
+      <InfoPanelSection title="Family">
+        <div className="gtv-info-panel-mini-tree">
+          {shownParent && (
+            <div className="gtv-info-panel-mini-tree-parent">
+              <button
+                type="button"
+                className="gtv-info-panel-child"
+                title={shownParent.node.name}
+                onClick={() => onSelectNode(shownParent.node.id)}
+              >
+                {miniNodeContent(shownParent.node, shownParent.fill, miniTreeRange)}
+              </button>
+            </div>
+          )}
+          <div
+              className={`gtv-info-panel-mini-tree-node${childNodes.length === 0 ? " gtv-info-panel-mini-tree-node--leaf" : ""}`}
+            >
+            <span
+              className="gtv-info-panel-child gtv-info-panel-mini-tree-current"
+              title={node.name}
+            >
+              {miniNodeContent(node, fill, miniTreeRange)}
+            </span>
+          </div>
+          <div className="gtv-info-panel-mini-tree-children">
+            <span className="gtv-info-panel-children-title">{childNodes.length} {childNodes.length <= 1 ? "child" : "children"}</span>
+            {childNodes.length > 0 && (
+              <ul className="gtv-info-panel-children-list">
+                {sortedChildNodes.map(({ node: child, fill }) => (
+                  <li key={child.id}>
+                    <button
+                      type="button"
+                      className="gtv-info-panel-child"
+                      title={child.name}
+                      onClick={() => onSelectNode(child.id)}
+                    >
+                      {miniNodeContent(child, fill, miniTreeRange)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </InfoPanelSection>
+    </>
+  );
+  const itemCount = (
+    <dl className="gtv-info-panel-fields">
+      <dt>{itemCountLabel}</dt>
+      <dd>{node.itemCount}</dd>
+    </dl>
+  );
+  const { primary, aside } = renderInfoPanelBody
+    ? renderInfoPanelBody(node, { toolbar, ancestors, family, itemCount })
+    : { primary: <>{toolbar}{ancestors}{family}{itemCount}</> };
+  const hasAside = aside !== undefined && aside !== null && aside !== false;
+
   return (
     <div
-      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !renderExtraDetails ? " gtv-info-panel--expanded-solo" : ""}${collapsed ? " gtv-info-panel--collapsed" : ""}`}
+      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !hasAside ? " gtv-info-panel--expanded-solo" : ""}${collapsed ? " gtv-info-panel--collapsed" : ""}`}
       ref={panelRef}
     >
       <div
@@ -239,80 +320,15 @@ export function InfoPanel({
         )}
       </div>
       <div className="gtv-info-panel-body">
-        <div className="gtv-info-panel-main">
-          {actions && <NodeToolbar key={node.id} node={node} className="gtv-info-panel-toolbar" {...actions} />}
-          {ancestorNodes.length > 0 && (
-            <InfoPanelSection title="Ancestors">
-              <ul className="gtv-info-panel-children-list gtv-info-panel-ancestors-list">
-                {ancestorNodes.map(({ node: ancestor, fill }) => (
-                  <li key={ancestor.id}>
-                    <button
-                      type="button"
-                      className="gtv-info-panel-child"
-                      title={ancestor.name}
-                      onClick={() => onSelectNode(ancestor.id)}
-                    >
-                      {miniNodeContent(ancestor, fill, ancestorRange)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </InfoPanelSection>
-          )}
-          {editing && renderParentsEditor && renderParentsEditor(node)}
-          <InfoPanelSection title="Family">
-            <div className="gtv-info-panel-mini-tree">
-              {shownParent && (
-                <div className="gtv-info-panel-mini-tree-parent">
-                  <button
-                    type="button"
-                    className="gtv-info-panel-child"
-                    title={shownParent.node.name}
-                    onClick={() => onSelectNode(shownParent.node.id)}
-                  >
-                    {miniNodeContent(shownParent.node, shownParent.fill, miniTreeRange)}
-                  </button>
-                </div>
-              )}
-              <div
-                  className={`gtv-info-panel-mini-tree-node${childNodes.length === 0 ? " gtv-info-panel-mini-tree-node--leaf" : ""}`}
-                >
-                <span
-                  className="gtv-info-panel-child gtv-info-panel-mini-tree-current"
-                  title={node.name}
-                >
-                  {miniNodeContent(node, fill, miniTreeRange)}
-                </span>
-              </div>
-              <div className="gtv-info-panel-mini-tree-children">
-                <span className="gtv-info-panel-children-title">{childNodes.length} {childNodes.length <= 1 ? "child" : "children"}</span>
-                {childNodes.length > 0 && (
-                  <ul className="gtv-info-panel-children-list">
-                    {sortedChildNodes.map(({ node: child, fill }) => (
-                      <li key={child.id}>
-                        <button
-                          type="button"
-                          className="gtv-info-panel-child"
-                          title={child.name}
-                          onClick={() => onSelectNode(child.id)}
-                        >
-                          {miniNodeContent(child, fill, miniTreeRange)}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </InfoPanelSection>
-          <dl className="gtv-info-panel-fields">
-            <dt>{itemCountLabel}</dt>
-            <dd>{node.itemCount}</dd>
-          </dl>
-          {expanded && dangerZone}
+        <div className="gtv-info-panel-primary">
+          {primary}
+          {expanded && !hasAside && dangerZone}
         </div>
-        {renderExtraDetails && (
-          <div className="gtv-info-panel-extra">{renderExtraDetails(node)}</div>
+        {hasAside && (
+          <div className="gtv-info-panel-aside">
+            {aside}
+            {expanded && dangerZone}
+          </div>
         )}
       </div>
       {!expanded && dangerZone}

@@ -62,8 +62,8 @@ export function OverlayPanel({
         )}
       </div>
       <div className="gtv-info-panel-body">
-        <div className="gtv-info-panel-main gtv-overlay-content">{content}</div>
-        {extraContent && <div className="gtv-info-panel-extra gtv-overlay-content">{extraContent}</div>}
+        <div className="gtv-info-panel-aside gtv-overlay-content">{content}</div>
+        {extraContent && <div className="gtv-info-panel-primary gtv-overlay-content">{extraContent}</div>}
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ export type {
   ControlsOrientation,
   GenreTreeOverlayPanel,
   GenreTreeViewport,
+  InfoPanelBody,
+  InfoPanelSections,
 } from "./types";
 export type { GenreTreeViewSkeletonProps } from "./GenreTreeViewSkeleton";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";
