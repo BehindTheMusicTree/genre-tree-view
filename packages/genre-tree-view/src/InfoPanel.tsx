@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useRef } from "react";
-import { MdArrowBack, MdClose, MdCloseFullscreen, MdOpenInFull, MdZoomIn } from "react-icons/md";
+import { MdArrowBack, MdClose, MdZoomIn } from "react-icons/md";
 
 import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
+import { InfoPanelExpandButton } from "./InfoPanelExpandButton";
 import { InfoPanelSection } from "./InfoPanelSection";
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
 import { GenreTreeNode } from "./types";
@@ -223,19 +224,7 @@ export function InfoPanel({
           </button>
         )}
         {onExpandedChange && !hideExpandButton && (
-          <button
-            type="button"
-            className="gtv-info-panel-close"
-            style={{ color: textColor }}
-            onClick={() => onExpandedChange(!expanded)}
-            aria-label={expanded ? "Collapse panel" : "Expand panel"}
-          >
-            {expanded ? (
-              <MdCloseFullscreen className="gtv-icon" size={16} />
-            ) : (
-              <MdOpenInFull className="gtv-icon" size={16} />
-            )}
-          </button>
+          <InfoPanelExpandButton expanded={expanded} onExpandedChange={onExpandedChange} style={{ color: textColor }} />
         )}
         {!hideClose && (
           <button

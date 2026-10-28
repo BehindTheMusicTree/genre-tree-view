@@ -201,10 +201,12 @@ export interface GenreTreeProps {
   collapsed?: boolean;
   /** Drops the header's expand/collapse toggle when the host draws its own control for it. */
   hideExpandButton?: boolean;
-  /** Consumer content shown over the tree at the expanded info panel's exact size, independent of
-   * node selection (e.g. an About page). Its header ✕ and Escape (same exceptions as
-   * `onExpandedChange`) fire `onClose`. Showing it alongside the info panel is the consumer's
-   * call — close one before opening the other to keep them exclusive. */
+  /** Consumer content shown over the tree independent of node selection — at the expanded info
+   * panel's size (e.g. an About page), or as an expandable info-panel peer when it sets
+   * `onExpandedChange` (e.g. an artist). Its header ✕ and Escape (same exceptions as
+   * `onExpandedChange`) fire `onClose`; Escape collapses an expanded panel first. Showing it
+   * alongside the info panel is the consumer's call — close one before opening the other to keep
+   * them exclusive. */
   overlayPanel?: GenreTreeOverlayPanel;
   /** Seeds the pan/zoom on mount, replacing the initial fit-to-frame and the centering on an
    * initial `selectedNodeId`. Read once; later changes are ignored. Ignored when `interactive` is
@@ -219,4 +221,17 @@ export interface GenreTreeOverlayPanel {
   title: string;
   content: ReactNode;
   onClose: () => void;
+  /** With `onExpandedChange`, the panel behaves like the info panel: compact in its left slot,
+   * expanding to its expanded size (controlled). Without it, the panel always covers the center
+   * column at the expanded size, with no toggle. */
+  expanded?: boolean;
+  /** Adds the header's expand/collapse toggle; Escape fires it with `false` while expanded. */
+  onExpandedChange?: (on: boolean) => void;
+  /** Stacked below `content` when compact, the right column when expanded — same as the info
+   * panel's `renderExtraDetails`. */
+  extraContent?: ReactNode;
+  /** See GenreTreeProps.collapsed. */
+  collapsed?: boolean;
+  /** See GenreTreeProps.hideExpandButton. */
+  hideExpandButton?: boolean;
 }
