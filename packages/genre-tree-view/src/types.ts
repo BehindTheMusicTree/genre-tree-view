@@ -22,6 +22,10 @@ export interface GenreTreeNode {
   /** A grouping node that no item is filed under directly. Read by InfoPanel (badge), GenreTreeOutline
    * and the stacked/wheel node labels (italic); the pop-core labels ignore it. */
   umbrella?: boolean;
+  /** Which side of its parent a child stands for. Only interpreted by GenreTreeWheelRadialPopCore,
+   * on the children of SCENE_SPLIT_PARENT_NAME: the "underground" subtree is stacked on the rings
+   * past the "commercial" one instead of beside it. */
+  scene?: "commercial" | "underground";
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";

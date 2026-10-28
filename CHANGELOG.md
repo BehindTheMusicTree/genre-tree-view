@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeNode.scene` (`commercial` | `underground`). In the pop-core wheel, the two scene children of "Core electronic" share its angular wedge: the underground subtree starts on the ring after the commercial subtree's deepest one, with a darker annular band, darker nodes and a dashed link from the parent. Throws if those children are not exactly one of each; no effect when none carries `scene`.
+
 ## [4.7.0] - 2026-10-28
 
 ### Added

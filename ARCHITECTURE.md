@@ -154,6 +154,14 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
+  - `scene-stack.ts` — `findSceneStack` detects the "Core electronic" node (`SCENE_SPLIT_PARENT_NAME`)
+    whose two children carry `GenreTreeNode.scene` (`commercial` / `underground`) and returns a
+    `ringDepthOf` that pushes the underground subtree past the commercial subtree's deepest ring.
+    The core layout (`measureWedge`/`layoutWedge`) then centers both children on the parent's angle
+    instead of placing them side by side, so the parent's angular need is the max, not the sum.
+    `GenreTreeWheelRadialPopCoreBase` draws an annular band per scene (underground darker, nodes
+    shaded with `shadeSurface`) and a dashed link to the underground root. `null` when no child
+    carries `scene`; throws unless there is exactly one of each.
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
   outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.
