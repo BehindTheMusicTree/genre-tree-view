@@ -269,8 +269,8 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     reparentingNodeId = null,
     showToolbar = true,
     selectedNodeId,
-    renderExtraDetails,
-    hideInfoPanelClose = false,
+    renderInfoPanelBody,
+      hideInfoPanelClose = false,
     hideInfoPanelTitle = false,
     itemCountLabel,
     readOnly,
@@ -444,7 +444,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           onExpandedChange={onExpandedChange}
           collapsed={collapsed}
           hideExpandButton={hideExpandButton}
-          renderExtraDetails={renderExtraDetails}
+          renderInfoPanelBody={renderInfoPanelBody}
           actions={
             showToolbar && !reparentingNodeId
               ? {

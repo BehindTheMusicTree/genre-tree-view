@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { InfoPanel } from "../InfoPanel";
 import type { InfoPanelProps } from "../InfoPanel";
 import type { InfoPanelChild } from "../InfoPanel";
-import type { GenreTreeNode } from "../types";
+import type { GenreTreeNode, InfoPanelSections } from "../types";
 
 afterEach(() => {
   cleanup();
@@ -543,49 +543,77 @@ describe("InfoPanel", () => {
     expect(onSelectNode).toHaveBeenCalledWith("root-genre");
   });
 
-  it("renders renderExtraDetails' output, called with the panel's node, below the built-in sections", () => {
-    const renderExtraDetails = vi.fn((node: GenreTreeNode) => (
-      <div data-testid="extra-details">Essential tracks for {node.name}</div>
-    ));
-    const { getByTestId } = render(
-      <InfoPanel
-        itemCountLabel="Track count"
-        node={FULL_NODE}
-        fill="#4F46E5"
-        textColor="#FFFFFF"
-        parentNode={null}
-        childNodes={[]}
-        ancestorNodes={[]}
-        side="left"
-        onClose={vi.fn()}
-        onSelectNode={vi.fn()}
-        renderExtraDetails={renderExtraDetails}
-      />,
-    );
+  describe("body", () => {
+    const props = {
+      itemCountLabel: "Track count",
+      node: FULL_NODE,
+      fill: "#4F46E5",
+      textColor: "#FFFFFF",
+      parentNode: PARENT_NODE,
+      childNodes: [],
+      ancestorNodes: ANCESTOR_NODES,
+      side: "left" as const,
+      onClose: vi.fn(),
+      onSelectNode: vi.fn(),
+      actions: { onAddChild: vi.fn() },
+    };
+    const sectionTitles = (el: Element | null) =>
+      Array.from(el?.querySelectorAll(
+          ":scope > .gtv-info-panel-children-title, :scope > * > .gtv-info-panel-section-toggle, :scope > dl > dt",
+        ) ?? []).map((t) => t.textContent);
 
-    expect(renderExtraDetails).toHaveBeenCalledWith(FULL_NODE);
-    expect(getByTestId("extra-details").textContent).toBe(
-      "Essential tracks for Rock",
-    );
-  });
+    it("stacks toolbar, Ancestors, Family and the count in one column by default", () => {
+      const { container } = render(<InfoPanel {...props} expanded />);
+      const primary = container.querySelector(".gtv-info-panel-primary");
+      expect(primary?.firstElementChild?.classList.contains("gtv-info-panel-toolbar")).toBe(true);
+      expect(sectionTitles(primary)).toEqual(["Ancestors", "Family", "Track count"]);
+      expect(container.querySelector(".gtv-info-panel-aside")).toBeNull();
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(true);
+    });
 
-  it("omits any extra section when renderExtraDetails is not passed", () => {
-    const { container } = render(
-      <InfoPanel
-        itemCountLabel="Track count"
-        node={MINIMAL_NODE}
-        fill="#F1F0FD"
-        textColor="#18181B"
-        parentNode={null}
-        childNodes={[]}
-        ancestorNodes={[]}
-        side="left"
-        onClose={vi.fn()}
-        onSelectNode={vi.fn()}
-      />,
-    );
+    it("places the sections where renderInfoPanelBody puts them, dropping omitted ones", () => {
+      const renderInfoPanelBody = vi.fn((node: GenreTreeNode, s: InfoPanelSections) => ({
+        primary: (
+          <>
+            {s.toolbar}
+            <p className="gtv-info-panel-children-title">Summary of {node.name}</p>
+            {s.family}
+          </>
+        ),
+        aside: s.ancestors,
+      }));
+      const { container } = render(<InfoPanel {...props} renderInfoPanelBody={renderInfoPanelBody} />);
 
-    expect(container.querySelector('[data-testid="extra-details"]')).toBeNull();
+      expect(renderInfoPanelBody).toHaveBeenCalledWith(FULL_NODE, expect.any(Object));
+      const primary = container.querySelector(".gtv-info-panel-primary");
+      expect(primary?.firstElementChild?.classList.contains("gtv-info-panel-toolbar")).toBe(true);
+      expect(sectionTitles(primary)).toEqual(["Summary of Rock", "Family"]);
+      expect(sectionTitles(container.querySelector(".gtv-info-panel-aside"))).toEqual(["Ancestors"]);
+      expect(container.querySelector(".gtv-info-panel-fields")).toBeNull();
+      expect(primary?.nextElementSibling?.classList.contains("gtv-info-panel-aside")).toBe(true);
+    });
+
+    it("hands over null toolbar and ancestors when there is nothing to show", () => {
+      const renderInfoPanelBody = vi.fn(() => ({ primary: null }));
+      render(<InfoPanel {...props} actions={undefined} ancestorNodes={[]} renderInfoPanelBody={renderInfoPanelBody} />);
+      expect(renderInfoPanelBody).toHaveBeenCalledWith(
+        FULL_NODE,
+        expect.objectContaining({ toolbar: null, ancestors: null }),
+      );
+    });
+
+    it("goes single-column when expanded without an aside", () => {
+      const { container, rerender } = render(
+        <InfoPanel {...props} expanded renderInfoPanelBody={(_n, s) => ({ primary: s.family, aside: null })} />,
+      );
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(true);
+      expect(container.querySelector(".gtv-info-panel-aside")).toBeNull();
+
+      rerender(
+        <InfoPanel {...props} expanded renderInfoPanelBody={(_n, s) => ({ primary: s.family, aside: s.ancestors })} />,
+      );
+      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(false);
+    });
   });
 
   describe("edit mode", () => {
@@ -682,9 +710,49 @@ describe("InfoPanel", () => {
       expect(screen.getByText("Danger zone")).toBeTruthy();
     });
 
-    it("keeps the danger zone in the panel when expanded", () => {
-      renderPanel({ editMode: true, expanded: true });
-      expect(screen.getByText("Danger zone")).toBeTruthy();
+    it("renders the parents editor inside the family section", () => {
+      const { container } = renderPanel({
+        editMode: true,
+        renderInfoPanelBody: (_n, s) => ({ primary: <div data-testid="family">{s.family}</div> }),
+      });
+      expect(screen.getByTestId("family").textContent).toContain("Parents editor");
+      expect(container.querySelector('[data-testid="family"] .gtv-info-panel-mini-tree')).not.toBeNull();
+    });
+
+    it("puts the danger zone after the body when compact", () => {
+      const { container } = renderPanel({ editMode: true });
+      const body = container.querySelector(".gtv-info-panel-body");
+      expect(body?.textContent).not.toContain("Danger zone");
+      expect(body?.nextElementSibling?.textContent).toBe("Danger zone");
+    });
+
+    it("ends the aside with the danger zone when expanded, or the primary column without one", () => {
+      const { container, rerender } = renderPanel({
+        editMode: true,
+        expanded: true,
+        renderInfoPanelBody: (_n, s) => ({ primary: s.family, aside: <p>Aside</p> }),
+      });
+      expect(container.querySelector(".gtv-info-panel-aside")?.lastElementChild?.textContent).toBe("Danger zone");
+      expect(container.querySelector(".gtv-info-panel-primary")?.textContent).not.toContain("Danger zone");
+
+      rerender(
+        <InfoPanel
+          itemCountLabel="Track count"
+          node={FULL_NODE}
+          fill="#4F46E5"
+          textColor="#FFFFFF"
+          parentNode={PARENT_NODE}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={vi.fn()}
+          onSelectNode={vi.fn()}
+          renderDangerZone={() => <p>Danger zone</p>}
+          editMode
+          expanded
+        />,
+      );
+      expect(container.querySelector(".gtv-info-panel-primary")?.lastElementChild?.textContent).toBe("Danger zone");
     });
   });
 
@@ -778,7 +846,7 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <input aria-label="Search" />,
+        renderInfoPanelBody: () => ({ primary: <input aria-label="Search" /> }),
       });
       fireEvent.keyDown(screen.getByLabelText("Search"), { key: "Escape" });
       expect(onExpandedChange).not.toHaveBeenCalled();
@@ -789,7 +857,7 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <div role="dialog" aria-modal="true" aria-label="Confirm" />,
+        renderInfoPanelBody: () => ({ primary: <div role="dialog" aria-modal="true" aria-label="Confirm" /> }),
       });
       fireEvent.keyDown(document, { key: "Escape" });
       expect(onExpandedChange).not.toHaveBeenCalled();
@@ -800,7 +868,7 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <div role="alertdialog" aria-label="Confirm" />,
+        renderInfoPanelBody: () => ({ primary: <div role="alertdialog" aria-label="Confirm" /> }),
       });
       fireEvent.keyDown(document, { key: "Escape" });
       expect(onExpandedChange).not.toHaveBeenCalled();
@@ -811,7 +879,7 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <div role="dialog" aria-label="Popover" />,
+        renderInfoPanelBody: () => ({ primary: <div role="dialog" aria-label="Popover" /> }),
       });
       fireEvent.keyDown(document, { key: "Escape" });
       expect(onExpandedChange).toHaveBeenCalledWith(false);
@@ -831,20 +899,11 @@ describe("InfoPanel", () => {
       renderPanel({
         expanded: true,
         onExpandedChange,
-        renderExtraDetails: () => <div contentEditable suppressContentEditableWarning aria-label="Rich" role="textbox" />,
+        renderInfoPanelBody: () => ({ primary: <div contentEditable suppressContentEditableWarning aria-label="Rich" role="textbox" /> }),
       });
       fireEvent.keyDown(screen.getByRole("textbox", { name: "Rich" }), { key: "Escape" });
       expect(onExpandedChange).not.toHaveBeenCalled();
     });
 
-    it("uses a single column without renderExtraDetails", () => {
-      const { container } = renderPanel({ expanded: true });
-      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(true);
-    });
-
-    it("keeps two columns with renderExtraDetails", () => {
-      const { container } = renderPanel({ expanded: true, renderExtraDetails: () => <p>Extra</p> });
-      expect(container.firstElementChild?.classList.contains("gtv-info-panel--expanded-solo")).toBe(false);
-    });
   });
 });
