@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-10-28
+
 ### Changed
 
 - **Breaking:** `renderExtraDetails` is replaced by `renderInfoPanelBody(node, sections) => { primary, aside? }`. The info panel hands its built-in sections (`toolbar`, `ancestors`, `family`, `itemCount`; the parents editor is part of `family`) to the consumer, which places them among its own content — so the body order is the same in compact and expanded mode, and a section left out is not rendered. `primary` is the wide column when expanded and the top of the stack when compact; `aside` is the narrow left column, or below `primary`. Without an `aside` the expanded panel is single-column. `InfoPanelSections` and `InfoPanelBody` are exported. The body column classes are renamed `gtv-info-panel-main` / `gtv-info-panel-extra` → `gtv-info-panel-primary` / `gtv-info-panel-aside` (in the overlay panel, `content` is the aside and `extraContent` the primary). Migration: `renderExtraDetails={(node) => extra}` → `renderInfoPanelBody={(node, s) => ({ primary: extra, aside: <>{s.toolbar}{s.ancestors}{s.family}{s.itemCount}</> })}`.
