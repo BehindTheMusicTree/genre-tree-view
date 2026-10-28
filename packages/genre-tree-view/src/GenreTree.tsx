@@ -54,7 +54,7 @@ export function GenreTree({
   depthSpacingScale = 1,
   showToolbar = true,
   selectedNodeId: selectedNodeIdProp,
-  renderExtraDetails,
+  renderInfoPanelBody,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
@@ -384,7 +384,7 @@ export function GenreTree({
           onExpandedChange={onExpandedChange}
           collapsed={collapsed}
           hideExpandButton={hideExpandButton}
-          renderExtraDetails={renderExtraDetails}
+          renderInfoPanelBody={renderInfoPanelBody}
           actions={
             showToolbar && !reparentingNodeId
               ? {

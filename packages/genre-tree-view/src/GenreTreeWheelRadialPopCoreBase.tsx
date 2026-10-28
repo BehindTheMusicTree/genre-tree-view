@@ -164,7 +164,7 @@ export function WheelRadialPopCoreCore({
   onNodeHover,
   additionalActions,
   showToolbar = true,
-  renderExtraDetails,
+  renderInfoPanelBody,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
@@ -1428,7 +1428,7 @@ export function WheelRadialPopCoreCore({
                 }
               : undefined
           }
-          renderExtraDetails={renderExtraDetails}
+          renderInfoPanelBody={renderInfoPanelBody}
           onZoomIn={
             onFocusChange && panel.node.id !== focusNodeId && isZoomableNode(nodes, panel.node.id)
               ? () => onFocusChange(panel.node.id, "zoom-in")

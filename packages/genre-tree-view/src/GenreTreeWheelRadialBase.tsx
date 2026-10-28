@@ -115,7 +115,7 @@ export function WheelRadialCore({
   onNodeClick,
   additionalActions,
   showToolbar = true,
-  renderExtraDetails,
+  renderInfoPanelBody,
   onSelectedNodeChange,
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
@@ -729,7 +729,7 @@ export function WheelRadialCore({
           onExpandedChange={onExpandedChange}
           collapsed={collapsed}
           hideExpandButton={hideExpandButton}
-          renderExtraDetails={renderExtraDetails}
+          renderInfoPanelBody={renderInfoPanelBody}
           actions={
             showToolbar && !reparentingNodeId
               ? {
