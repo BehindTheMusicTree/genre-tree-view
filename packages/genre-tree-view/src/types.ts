@@ -219,6 +219,8 @@ export interface GenreTreeProps {
 
 export interface GenreTreeOverlayPanel {
   title: string;
+  /** Its top-level children (and `extraContent`'s) are separated by a divider, as is `extraContent`
+   * from `content` when stacked — blocks must not draw their own. */
   content: ReactNode;
   onClose: () => void;
   /** With `onExpandedChange`, the panel behaves like the info panel: compact in its left slot,
