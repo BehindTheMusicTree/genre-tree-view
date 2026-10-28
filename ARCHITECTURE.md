@@ -188,7 +188,11 @@ pnpm workspace with two members:
   tracks — with the library staying agnostic of what it renders, mirroring `additionalActions`.
   `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
   `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
-  identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`.
+  identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`. Setting
+  `onExpandedChange` (with `expanded`, `extraContent`, `collapsed`, `hideExpandButton`, same semantics as the
+  info panel's) makes it an info-panel peer instead: compact in the info panel's left slot, expanding to the
+  expanded info panel's area, Escape collapsing it before closing. The expand toggle is the shared
+  `InfoPanelExpandButton.tsx`.
   A host with left / center / right columns sets `--gtv-center-left`, `--gtv-center-right` and `--gtv-center-top`
   (lengths with a unit, default `12px` / `12px` / the panel top): the overlay fills the center column and an
   expanded info panel spans the left and center columns. A host that floats its own control over the panels'

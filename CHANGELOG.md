@@ -9,6 +9,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27`, and the CI workflows read `.nvmrc`. The published package is unaffected.
 
+## [4.8.0] - 2026-10-28
+
+### Added
+
+- `overlayPanel` accepts `hideTitle` and `hideClose`, matching `hideInfoPanelTitle` and `hideInfoPanelClose`, so a host that shows the overlay's title in its own search bar (and clears it from there) can drop the duplicated header. Escape still closes the overlay.
+
+## [4.7.0] - 2026-10-28
+
+### Added
+
+- The overlay panel draws a divider between the top-level blocks of `content` and of `extraContent`, and between the two when they are stacked, so consumers no longer draw their own separators.
+
+## [4.6.0] - 2026-10-28
+
+### Added
+
+- `overlayPanel` accepts `expanded`, `onExpandedChange`, `extraContent`, `collapsed` and `hideExpandButton`. With `onExpandedChange` set, the overlay works like the info panel: it sits compact in the left slot, expands to the expanded size, and Escape collapses it before closing. Without it, the overlay behaves as before (About).
+
 ## [4.5.0] - 2026-10-27
 
 ### Added
