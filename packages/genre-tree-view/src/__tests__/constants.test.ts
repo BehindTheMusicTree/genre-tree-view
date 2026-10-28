@@ -34,6 +34,7 @@ import {
   getGenreNodeStyle,
   CENTER_NODE_NAME,
   tintSurface,
+  shadeSurface,
   POP_SECTOR_TINT_RATIO,
   TEXT_COLOR,
   ACCENT_TEXT_COLOR,
@@ -254,5 +255,13 @@ describe("getGenreNodeStyle", () => {
   it("paints the Mainstream Pop lineage a white tint with dark text", () => {
     expect(getGenreNodeStyle(index, "pop")).toEqual(mainstreamStyle);
     expect(getGenreNodeStyle(index, "dance-pop")).toEqual(mainstreamStyle);
+  });
+});
+
+describe("shadeSurface", () => {
+  it("mixes a color toward black by the given ratio", () => {
+    expect(shadeSurface("#ffffff", 0.5)).toBe("#808080");
+    expect(shadeSurface("#102030", 1)).toBe("#102030");
+    expect(shadeSurface("#ff8000", 0)).toBe("#000000");
   });
 });

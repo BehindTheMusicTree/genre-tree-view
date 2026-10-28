@@ -54,11 +54,19 @@ export const ROOT_TINT_RATIO = 0.08;
 // shade of their root's own color rather than the near-white wash the toolbar/card surfaces use.
 export const POP_SECTOR_TINT_RATIO = 0.8;
 
+// Share of its color the underground side of a scene split keeps (the rest is mixed toward black).
+export const UNDERGROUND_DARKEN_RATIO = 0.62;
+
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
 // The pop-core renderers (GenreTreeWheelRadialPopCore's wheel pivot, GenreTreeOutline's first
 // entry) single out this specific root by name and throw if it's missing.
 export const CENTER_NODE_NAME = "Mainstream Pop";
+
+// The pop-core wheel stacks the "commercial" and "underground" children of this specific core node
+// on successive rings instead of side by side, and throws if their `scene` markers aren't exactly
+// one of each.
+export const SCENE_SPLIT_PARENT_NAME = "Core electronic";
 
 // Placeholder palette cycled where no real root exists (GenreTreeWheelSkeleton); real roots use
 // ROOT_GENRE_COLORS.
@@ -154,6 +162,13 @@ type GenreStyleIndex = Pick<TreeIndex, "byId" | "childrenByParentId" | "ancestor
 export function isMainstreamPopLineage(index: GenreStyleIndex, nodeId: string): boolean {
   const topRoot = index.ancestorsOf(nodeId)[0] ?? index.byId.get(nodeId);
   return topRoot?.name === CENTER_NODE_NAME;
+}
+
+/** Mixes `hex` toward black: `ratio` 1 keeps it, 0 is black. Counterpart of `tintSurface`. */
+export function shadeSurface(hex: string, ratio: number): string {
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  const toHex = (value: number) => Math.round(value * ratio).toString(16).padStart(2, "0");
+  return `#${toHex(channel(1))}${toHex(channel(3))}${toHex(channel(5))}`;
 }
 
 /** Fill/text color of `nodeId` in the pop-core wheel: the Mainstream Pop lineage is a white tint
