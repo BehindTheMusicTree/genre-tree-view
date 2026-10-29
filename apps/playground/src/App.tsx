@@ -744,7 +744,7 @@ export function App() {
         </label>
       )}
 
-      <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #e4e4e7", marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #e4e4e7", marginBottom: 24, overflowX: "auto" }}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -756,6 +756,7 @@ export function App() {
               background: "none",
               fontWeight: activeTab === tab.id ? 600 : 400,
               cursor: "pointer",
+              flex: "none",
             }}
           >
             {tab.label}
@@ -767,7 +768,7 @@ export function App() {
         <div
           style={{
             width: "100%",
-            height: "70vh",
+            height: "70dvh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -792,7 +793,7 @@ export function App() {
         <div
           style={{
             width: "100%",
-            height: "70vh",
+            height: "70dvh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -815,7 +816,7 @@ export function App() {
         <div
           style={{
             width: "100%",
-            height: "70vh",
+            height: "70dvh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -839,7 +840,7 @@ export function App() {
         <div
           style={{
             width: "100%",
-            height: "70vh",
+            height: "70dvh",
             border: "1px solid #e4e4e7",
             background: "#f4f4f5",
             marginBottom: 32,
@@ -878,7 +879,7 @@ export function App() {
         <div
           style={{
             width: "100%",
-            height: "70vh",
+            height: "70dvh",
             border: "1px solid #e4e4e7",
             background: "#ffffff",
             marginBottom: 32,
@@ -895,7 +896,7 @@ export function App() {
               key={group.root.id}
               style={{
                 width: "100%",
-                height: "70vh",
+                height: "70dvh",
                 border: "1px solid #e4e4e7",
                 background: "#f4f4f5",
               }}

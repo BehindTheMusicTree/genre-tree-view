@@ -21,6 +21,7 @@ import {
   viewToViewport,
   viewportToView,
 } from "./zoom-pan";
+import type { ObscuredArea } from "./info-panel-geometry";
 import type { GenreTreeViewport, WheelZoomMode } from "./types";
 
 export interface UsePanZoomOptions {
@@ -51,13 +52,13 @@ export interface UsePanZoomResult {
    * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
    * to a comfortable reading scale. `targetScale` is a minimum: if the user is already zoomed in
    * past it, the current scale is kept so selecting a node never zooms out. Pass
-   * `obscuredWidth`/`obscuredSide` when an overlay (e.g. the info panel) will cover part of the
-   * viewport, so the element centers within the space that remains visible beside it rather than
-   * the viewport's full width. No-ops if the element/viewport isn't present/measurable. */
+   * `obscured` when an overlay (e.g. the info panel) will cover part of the viewport, so the
+   * element centers within the space that remains visible beside or above it rather than the full
+   * viewport. No-ops if the element/viewport isn't present/measurable. */
   centerOnElement: (
     element: Element | null | undefined,
     targetScale: number,
-    obscured?: { width: number; side: "left" | "right" } | null,
+    obscured?: ObscuredArea | null,
   ) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
   /** CSS `touch-action` for the viewport element — see the `wheelZoom` param. */
@@ -595,7 +596,7 @@ export function usePanZoom(
     (
       element: Element | null | undefined,
       targetScale: number,
-      obscured?: { width: number; side: "left" | "right" } | null,
+      obscured?: ObscuredArea | null,
     ) => {
       const viewport = viewportRef.current;
       if (!viewport || !element || performance.now() < centerGuardUntilRef.current) return;
@@ -614,15 +615,18 @@ export function usePanZoom(
       const centerX = (rect.left + rect.width / 2 - viewportRect.left - view.x) / currentScale;
       const centerY = (rect.top + rect.height / 2 - viewportRect.top - view.y) / currentScale;
       // With an overlay obscuring one side, "centered on screen" means centered in the strip that
-      // remains visible beside it, not the viewport's full width — otherwise the element ends up
-      // right where the overlay covers it.
-      const availableCenterX = !obscured
-        ? viewportRect.width / 2
-        : obscured.side === "left"
+      // remains visible beside (or above) it, not the full viewport — otherwise the element ends
+      // up right where the overlay covers it.
+      const availableCenterX =
+        obscured?.side === "left"
           ? obscured.width + (viewportRect.width - obscured.width) / 2
-          : (viewportRect.width - obscured.width) / 2;
+          : obscured?.side === "right"
+            ? (viewportRect.width - obscured.width) / 2
+            : viewportRect.width / 2;
+      const availableCenterY =
+        obscured?.side === "bottom" ? (viewportRect.height - obscured.height) / 2 : viewportRect.height / 2;
       const targetPanX = availableCenterX - centerX * newScale;
-      const targetPanY = viewportRect.height / 2 - centerY * newScale;
+      const targetPanY = availableCenterY - centerY * newScale;
 
       // Cancel any in-flight wheel-notch glide so it doesn't fight this animation over the same
       // panX/panY/zoomScale state.

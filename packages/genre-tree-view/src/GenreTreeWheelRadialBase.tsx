@@ -131,6 +131,7 @@ export function WheelRadialCore({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  showZoomControls = "auto",
   floatingControlsLeading,
   busy,
   selectedNodeId,
@@ -745,6 +746,7 @@ export function WheelRadialCore({
       <FloatingControls
         panZoom={panZoom}
         orientation={controlsOrientation}
+        zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
         onFit={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}

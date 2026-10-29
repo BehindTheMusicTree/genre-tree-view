@@ -356,6 +356,13 @@
   color: var(--gtv-text, var(--color-text, #18181b));
 }
 
+/* Pinch and pan replace the buttons on a touch screen (see `showZoomControls`). */
+@media (pointer: coarse) {
+  .gtv-zoom-controls--auto {
+    display: none;
+  }
+}
+
 /* Node info panel — shows a clicked node's own fields, anchored to the left of the tree
    viewport by default, flipped to the right when it would cover the clicked node itself (see
    info-panel-geometry.ts). Positioned absolutely against the same viewport as .gtv-zoom-controls,
@@ -482,6 +489,83 @@
 
   .gtv-info-panel--expanded .gtv-overlay-content + .gtv-overlay-content {
     border-top: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
+  }
+}
+
+.gtv-info-panel-grabber {
+  display: none;
+}
+
+/* A side column would leave no room for the tree in a narrow container, so the node panel docks
+   to the bottom as a sheet within thumb reach: peek covers INFO_PANEL_SHEET_PEEK_FRACTION of the
+   container (see constants.ts), full rises to the panel's usual top. */
+@container (max-width: 767px) {
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) {
+    --gtv-info-panel-header-inset: 0px;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-radius: var(--radius-panel, 1rem) var(--radius-panel, 1rem) 0 0;
+    transition: transform 200ms ease-out, visibility 0s linear 0s, height 200ms ease-out;
+  }
+
+  .gtv-info-panel--sheet-full:not(.gtv-info-panel--expanded) {
+    height: calc(100% - var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem)));
+  }
+
+  .gtv-info-panel--sheet.gtv-info-panel--collapsed:not(.gtv-info-panel--expanded) {
+    transform: translateY(100%);
+    transition: transform 200ms ease-out, visibility 0s linear 200ms;
+  }
+
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) > .gtv-info-panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) .gtv-info-panel-grabber {
+    display: flex;
+    flex: none;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: var(--layout-touch-target, 2.75rem);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) > .gtv-info-panel-header {
+    flex: none;
+    border-radius: 0;
+  }
+
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) .gtv-info-panel-grabber::before {
+    content: "";
+    width: 2.25rem;
+    height: 0.25rem;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded),
+  .gtv-info-panel--sheet.gtv-info-panel--collapsed:not(.gtv-info-panel--expanded) {
+    transition: none;
   }
 }
 
@@ -1719,5 +1803,27 @@
 @media (prefers-reduced-motion: reduce) {
   .gtv-busy-ring {
     animation: gtv-busy-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+/* Finger-sized hit areas (44px, Apple HIG) on touch screens; mouse layouts keep their density. */
+@media (pointer: coarse) {
+  .gtv-zoom-btn,
+  .gtv-info-panel-close,
+  .gtv-info-panel-previous,
+  .gtv-info-panel-zoom-in {
+    width: var(--layout-touch-target, 2.75rem);
+    height: var(--layout-touch-target, 2.75rem);
+  }
+
+  .gtv-menu-row {
+    height: var(--layout-touch-target, 2.75rem);
+    font-size: 0.875rem;
+  }
+
+  .gtv-outline-row,
+  .gtv-info-panel-child,
+  .gtv-info-panel-section-toggle {
+    min-height: var(--layout-touch-target, 2.75rem);
   }
 }
