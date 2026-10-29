@@ -2221,6 +2221,13 @@
     "wikidataId": "Q542703"
   },
   {
+    "id": "srscore",
+    "parentId": "melodic-hardcore",
+    "name": "Srscore",
+    "itemCount": 0,
+    "wikidataId": "Q141903674"
+  },
+  {
     "id": "beatdown-hardcore",
     "parentId": "hardcore-punk",
     "name": "Beatdown hardcore",
@@ -5371,8 +5378,1010 @@
     "id": "underground-electronic",
     "parentId": "core-electronic",
     "name": "Underground electronic",
-    "itemCount": 0,
+    "itemCount": 313,
     "wikidataId": "LOCAL:underground-electronic"
+  },
+  {
+    "id": "experimental-electronic-music",
+    "parentId": "underground-electronic",
+    "name": "Experimental electronic music",
+    "itemCount": 0,
+    "wikidataId": "Q105763581"
+  },
+  {
+    "id": "intelligent-dance-music",
+    "parentId": "experimental-electronic-music",
+    "name": "Intelligent dance music",
+    "itemCount": 0,
+    "wikidataId": "Q660984"
+  },
+  {
+    "id": "wonky",
+    "parentId": "intelligent-dance-music",
+    "name": "Wonky",
+    "itemCount": 0,
+    "wikidataId": "Q1136045"
+  },
+  {
+    "id": "aquacrunk",
+    "parentId": "wonky",
+    "name": "Aquacrunk",
+    "itemCount": 0,
+    "wikidataId": "Q123922710"
+  },
+  {
+    "id": "drill-and-bass",
+    "parentId": "intelligent-dance-music",
+    "name": "Drill and bass",
+    "itemCount": 0,
+    "wikidataId": "Q1259016"
+  },
+  {
+    "id": "flashcore",
+    "parentId": "experimental-electronic-music",
+    "name": "Flashcore",
+    "itemCount": 0,
+    "wikidataId": "Q108297242"
+  },
+  {
+    "id": "clicks-cuts",
+    "parentId": "experimental-electronic-music",
+    "name": "Clicks & cuts",
+    "itemCount": 0,
+    "wikidataId": "Q108907695"
+  },
+  {
+    "id": "microsound",
+    "parentId": "experimental-electronic-music",
+    "name": "Microsound",
+    "itemCount": 0,
+    "wikidataId": "Q3503814"
+  },
+  {
+    "id": "wave-electronic",
+    "parentId": "underground-electronic",
+    "name": "Wave (Electronic)",
+    "itemCount": 0,
+    "wikidataId": "Q106369996"
+  },
+  {
+    "id": "hardwave",
+    "parentId": "wave-electronic",
+    "name": "Hardwave",
+    "itemCount": 0,
+    "wikidataId": "Q106388388"
+  },
+  {
+    "id": "bit-music",
+    "parentId": "underground-electronic",
+    "name": "Bit music",
+    "itemCount": 0,
+    "wikidataId": "Q106422444"
+  },
+  {
+    "id": "bytebeat",
+    "parentId": "bit-music",
+    "name": "Bytebeat",
+    "itemCount": 0,
+    "wikidataId": "Q110942239"
+  },
+  {
+    "id": "midi-music",
+    "parentId": "bit-music",
+    "name": "MIDI music",
+    "itemCount": 0,
+    "wikidataId": "Q118324067"
+  },
+  {
+    "id": "doom-wad-music",
+    "parentId": "midi-music",
+    "name": "Doom WAD music",
+    "itemCount": 0,
+    "wikidataId": "Q138588725"
+  },
+  {
+    "id": "black-midi",
+    "parentId": "midi-music",
+    "name": "Black MIDI",
+    "itemCount": 0,
+    "wikidataId": "Q22964975"
+  },
+  {
+    "id": "1-bit-music",
+    "parentId": "bit-music",
+    "name": "1-bit music",
+    "itemCount": 0,
+    "wikidataId": "Q16894106"
+  },
+  {
+    "id": "8-bit-music",
+    "parentId": "bit-music",
+    "name": "8-bit music",
+    "itemCount": 0,
+    "wikidataId": "Q1980100"
+  },
+  {
+    "id": "sampler-based-music",
+    "parentId": "bit-music",
+    "name": "Sampler-based music",
+    "itemCount": 0,
+    "wikidataId": "Q2271846"
+  },
+  {
+    "id": "tracker-music",
+    "parentId": "sampler-based-music",
+    "name": "Tracker music",
+    "itemCount": 0,
+    "wikidataId": "Q106423092"
+  },
+  {
+    "id": "demostyle",
+    "parentId": "tracker-music",
+    "name": "Demostyle",
+    "itemCount": 0,
+    "wikidataId": "Q125799361"
+  },
+  {
+    "id": "bitpop",
+    "parentId": "bit-music",
+    "name": "Bitpop",
+    "itemCount": 0,
+    "wikidataId": "Q773880"
+  },
+  {
+    "id": "acid",
+    "parentId": "underground-electronic",
+    "name": "Acid",
+    "itemCount": 0,
+    "wikidataId": "Q106528337"
+  },
+  {
+    "id": "cyberpunk-music",
+    "parentId": "underground-electronic",
+    "name": "Cyberpunk music",
+    "itemCount": 0,
+    "wikidataId": "Q106582942"
+  },
+  {
+    "id": "hexd",
+    "parentId": "underground-electronic",
+    "name": "HexD",
+    "itemCount": 46,
+    "wikidataId": "Q107697234"
+  },
+  {
+    "id": "epic-collage",
+    "parentId": "underground-electronic",
+    "name": "Epic collage",
+    "itemCount": 0,
+    "wikidataId": "Q108297235"
+  },
+  {
+    "id": "glitch",
+    "parentId": "underground-electronic",
+    "name": "Glitch",
+    "itemCount": 0,
+    "wikidataId": "Q1100989"
+  },
+  {
+    "id": "minimal-glitch",
+    "parentId": "glitch",
+    "name": "Minimal glitch",
+    "itemCount": 0,
+    "wikidataId": "Q12037719"
+  },
+  {
+    "id": "oceanic-glitch",
+    "parentId": "glitch",
+    "name": "Oceanic glitch",
+    "itemCount": 0,
+    "wikidataId": "Q12042106"
+  },
+  {
+    "id": "moogsploitation",
+    "parentId": "underground-electronic",
+    "name": "Moogsploitation",
+    "itemCount": 0,
+    "wikidataId": "Q111387914"
+  },
+  {
+    "id": "synth-music",
+    "parentId": "underground-electronic",
+    "name": "Synth music",
+    "itemCount": 0,
+    "wikidataId": "Q11308620"
+  },
+  {
+    "id": "spacesynth",
+    "parentId": "synth-music",
+    "name": "Spacesynth",
+    "itemCount": 0,
+    "wikidataId": "Q4049849"
+  },
+  {
+    "id": "doskpop",
+    "parentId": "spacesynth",
+    "name": "Doskpop",
+    "itemCount": 0,
+    "wikidataId": "Q108297232"
+  },
+  {
+    "id": "horror-synth",
+    "parentId": "synth-music",
+    "name": "Horror synth",
+    "itemCount": 0,
+    "wikidataId": "Q107985638"
+  },
+  {
+    "id": "digital-fusion",
+    "parentId": "underground-electronic",
+    "name": "Digital fusion",
+    "itemCount": 0,
+    "wikidataId": "Q115063474"
+  },
+  {
+    "id": "electro-dub",
+    "parentId": "underground-electronic",
+    "name": "Electro dub",
+    "itemCount": 0,
+    "wikidataId": "Q127470373"
+  },
+  {
+    "id": "fixed-media",
+    "parentId": "underground-electronic",
+    "name": "Fixed media",
+    "itemCount": 0,
+    "wikidataId": "Q131286868"
+  },
+  {
+    "id": "electroacoustic-music",
+    "parentId": "underground-electronic",
+    "name": "Electroacoustic music",
+    "itemCount": 0,
+    "wikidataId": "Q1326777"
+  },
+  {
+    "id": "live-electronic-music",
+    "parentId": "electroacoustic-music",
+    "name": "Live electronic music",
+    "itemCount": 0,
+    "wikidataId": "Q1866223"
+  },
+  {
+    "id": "acousmatic-music",
+    "parentId": "electroacoustic-music",
+    "name": "Acousmatic music",
+    "itemCount": 0,
+    "wikidataId": "Q423918"
+  },
+  {
+    "id": "musique-concr-te",
+    "parentId": "electroacoustic-music",
+    "name": "Musique concrète",
+    "itemCount": 0,
+    "wikidataId": "Q823560"
+  },
+  {
+    "id": "aliencore",
+    "parentId": "underground-electronic",
+    "name": "Aliencore",
+    "itemCount": 0,
+    "wikidataId": "Q134983275"
+  },
+  {
+    "id": "chiptune",
+    "parentId": "underground-electronic",
+    "name": "Chiptune",
+    "itemCount": 0,
+    "wikidataId": "Q135637"
+  },
+  {
+    "id": "electro-industrial",
+    "parentId": "underground-electronic",
+    "name": "Electro-industrial",
+    "itemCount": 0,
+    "wikidataId": "Q1403744"
+  },
+  {
+    "id": "electronic-body-music",
+    "parentId": "electro-industrial",
+    "name": "Electronic body music",
+    "itemCount": 0,
+    "wikidataId": "Q372103"
+  },
+  {
+    "id": "dark-disco",
+    "parentId": "electronic-body-music",
+    "name": "Dark disco",
+    "itemCount": 0,
+    "wikidataId": "Q109873537"
+  },
+  {
+    "id": "electro",
+    "parentId": "electronic-body-music",
+    "name": "Electro",
+    "itemCount": 0,
+    "wikidataId": "Q15957030"
+  },
+  {
+    "id": "new-beat",
+    "parentId": "electronic-body-music",
+    "name": "New beat",
+    "itemCount": 0,
+    "wikidataId": "Q1890098"
+  },
+  {
+    "id": "hard-beat",
+    "parentId": "new-beat",
+    "name": "Hard beat",
+    "itemCount": 0,
+    "wikidataId": "Q106577108"
+  },
+  {
+    "id": "skizzo",
+    "parentId": "new-beat",
+    "name": "Skizzo",
+    "itemCount": 0,
+    "wikidataId": "Q141149482"
+  },
+  {
+    "id": "old-school-ebm",
+    "parentId": "electronic-body-music",
+    "name": "Old school EBM",
+    "itemCount": 0,
+    "wikidataId": "Q2638634"
+  },
+  {
+    "id": "dark-electro",
+    "parentId": "electronic-body-music",
+    "name": "Dark electro",
+    "itemCount": 0,
+    "wikidataId": "Q4155078"
+  },
+  {
+    "id": "aggrotech",
+    "parentId": "dark-electro",
+    "name": "Aggrotech",
+    "itemCount": 0,
+    "wikidataId": "Q1091450"
+  },
+  {
+    "id": "futurepop",
+    "parentId": "electronic-body-music",
+    "name": "Futurepop",
+    "itemCount": 0,
+    "wikidataId": "Q828243"
+  },
+  {
+    "id": "anhalt-ebm",
+    "parentId": "electronic-body-music",
+    "name": "Anhalt EBM",
+    "itemCount": 0,
+    "wikidataId": "Q9615674"
+  },
+  {
+    "id": "minimal-electronic-music",
+    "parentId": "underground-electronic",
+    "name": "Minimal electronic music",
+    "itemCount": 0,
+    "wikidataId": "Q141085413"
+  },
+  {
+    "id": "minimal-electro",
+    "parentId": "minimal-electronic-music",
+    "name": "Minimal electro",
+    "itemCount": 0,
+    "wikidataId": "Q181999"
+  },
+  {
+    "id": "lo-fi-music",
+    "parentId": "underground-electronic",
+    "name": "Lo-fi music",
+    "itemCount": 0,
+    "wikidataId": "Q1507298"
+  },
+  {
+    "id": "no-fi",
+    "parentId": "lo-fi-music",
+    "name": "No-Fi",
+    "itemCount": 0,
+    "wikidataId": "Q7042753"
+  },
+  {
+    "id": "vaporwave",
+    "parentId": "underground-electronic",
+    "name": "Vaporwave",
+    "itemCount": 0,
+    "wikidataId": "Q15733887"
+  },
+  {
+    "id": "spamwave",
+    "parentId": "vaporwave",
+    "name": "Spamwave",
+    "itemCount": 0,
+    "wikidataId": "Q137442003"
+  },
+  {
+    "id": "dreampunk",
+    "parentId": "vaporwave",
+    "name": "Dreampunk",
+    "itemCount": 0,
+    "wikidataId": "Q106583068"
+  },
+  {
+    "id": "utopian-virtual",
+    "parentId": "vaporwave",
+    "name": "Utopian virtual",
+    "itemCount": 0,
+    "wikidataId": "Q106594177"
+  },
+  {
+    "id": "daycore",
+    "parentId": "vaporwave",
+    "name": "Daycore",
+    "itemCount": 0,
+    "wikidataId": "Q106844185"
+  },
+  {
+    "id": "sludgefest",
+    "parentId": "daycore",
+    "name": "Sludgefest",
+    "itemCount": 0,
+    "wikidataId": "Q116780115"
+  },
+  {
+    "id": "broken-transmission",
+    "parentId": "vaporwave",
+    "name": "Broken transmission",
+    "itemCount": 0,
+    "wikidataId": "Q107697260"
+  },
+  {
+    "id": "signaltrap",
+    "parentId": "broken-transmission",
+    "name": "Signaltrap",
+    "itemCount": 0,
+    "wikidataId": "Q141489496"
+  },
+  {
+    "id": "late-night-lo-fi",
+    "parentId": "vaporwave",
+    "name": "Late night lo-fi",
+    "itemCount": 0,
+    "wikidataId": "Q109771322"
+  },
+  {
+    "id": "vapornoise",
+    "parentId": "vaporwave",
+    "name": "Vapornoise",
+    "itemCount": 0,
+    "wikidataId": "Q109771345"
+  },
+  {
+    "id": "slushwave",
+    "parentId": "vaporwave",
+    "name": "Slushwave",
+    "itemCount": 0,
+    "wikidataId": "Q117193815"
+  },
+  {
+    "id": "eccojams",
+    "parentId": "vaporwave",
+    "name": "Eccojams",
+    "itemCount": 0,
+    "wikidataId": "Q124170473"
+  },
+  {
+    "id": "simpsonwave",
+    "parentId": "vaporwave",
+    "name": "Simpsonwave",
+    "itemCount": 0,
+    "wikidataId": "Q24905903"
+  },
+  {
+    "id": "vaportrap",
+    "parentId": "vaporwave",
+    "name": "Vaportrap",
+    "itemCount": 0,
+    "wikidataId": "Q80724932"
+  },
+  {
+    "id": "algorave",
+    "parentId": "underground-electronic",
+    "name": "Algorave",
+    "itemCount": 0,
+    "wikidataId": "Q16002495"
+  },
+  {
+    "id": "illbient",
+    "parentId": "underground-electronic",
+    "name": "Illbient",
+    "itemCount": 0,
+    "wikidataId": "Q1658757"
+  },
+  {
+    "id": "a-d",
+    "parentId": "underground-electronic",
+    "name": "A&D",
+    "itemCount": 0,
+    "wikidataId": "Q17231682"
+  },
+  {
+    "id": "witch-house",
+    "parentId": "underground-electronic",
+    "name": "Witch house",
+    "itemCount": 0,
+    "wikidataId": "Q1840167"
+  },
+  {
+    "id": "drum-and-bass",
+    "parentId": "underground-electronic",
+    "name": "Drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q188994",
+    "umbrella": true
+  },
+  {
+    "id": "dubwise-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Dubwise drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q10268931"
+  },
+  {
+    "id": "minimal-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Minimal drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q106404300"
+  },
+  {
+    "id": "microfunk",
+    "parentId": "minimal-drum-and-bass",
+    "name": "Microfunk",
+    "itemCount": 0,
+    "wikidataId": "Q135437342"
+  },
+  {
+    "id": "autonomic",
+    "parentId": "minimal-drum-and-bass",
+    "name": "Autonomic",
+    "itemCount": 0,
+    "wikidataId": "Q135553474"
+  },
+  {
+    "id": "halftime",
+    "parentId": "drum-and-bass",
+    "name": "Halftime",
+    "itemCount": 0,
+    "wikidataId": "Q107010574"
+  },
+  {
+    "id": "dancefloor-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Dancefloor drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q107332291"
+  },
+  {
+    "id": "jungle",
+    "parentId": "drum-and-bass",
+    "name": "Jungle",
+    "itemCount": 0,
+    "wikidataId": "Q1102161"
+  },
+  {
+    "id": "experimental-jungle",
+    "parentId": "jungle",
+    "name": "Experimental jungle",
+    "itemCount": 0,
+    "wikidataId": "Q111540473"
+  },
+  {
+    "id": "industrial-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Industrial drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q110584483"
+  },
+  {
+    "id": "footwork-jungle",
+    "parentId": "drum-and-bass",
+    "name": "Footwork jungle",
+    "itemCount": 0,
+    "wikidataId": "Q110967939"
+  },
+  {
+    "id": "deep-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Deep drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q111804002"
+  },
+  {
+    "id": "meme-techno",
+    "parentId": "drum-and-bass",
+    "name": "Meme techno",
+    "itemCount": 0,
+    "wikidataId": "Q114238485"
+  },
+  {
+    "id": "darkstep",
+    "parentId": "drum-and-bass",
+    "name": "Darkstep",
+    "itemCount": 0,
+    "wikidataId": "Q1166321"
+  },
+  {
+    "id": "skullstep",
+    "parentId": "darkstep",
+    "name": "Skullstep",
+    "itemCount": 0,
+    "wikidataId": "Q108716407"
+  },
+  {
+    "id": "drum-and-bass-electronic-rock",
+    "parentId": "drum-and-bass",
+    "name": "Drum and bass electronic rock",
+    "itemCount": 0,
+    "wikidataId": "Q124791567"
+  },
+  {
+    "id": "techstep",
+    "parentId": "drum-and-bass",
+    "name": "Techstep",
+    "itemCount": 0,
+    "wikidataId": "Q1335569"
+  },
+  {
+    "id": "liquid-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Liquid drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q2082572"
+  },
+  {
+    "id": "drumfunk",
+    "parentId": "drum-and-bass",
+    "name": "Drumfunk",
+    "itemCount": 0,
+    "wikidataId": "Q2121992"
+  },
+  {
+    "id": "intelligent-drum-and-bass",
+    "parentId": "drum-and-bass",
+    "name": "Intelligent drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q2615500"
+  },
+  {
+    "id": "atmospheric-drum-and-bass",
+    "parentId": "intelligent-drum-and-bass",
+    "name": "Atmospheric drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q2842043"
+  },
+  {
+    "id": "artcore-drum-and-bass",
+    "parentId": "intelligent-drum-and-bass",
+    "name": "Artcore drum and bass",
+    "itemCount": 0,
+    "wikidataId": "Q30919272"
+  },
+  {
+    "id": "japanese-artcore",
+    "parentId": "artcore-drum-and-bass",
+    "name": "Japanese artcore",
+    "itemCount": 0,
+    "wikidataId": "Q111442385"
+  },
+  {
+    "id": "jazzstep",
+    "parentId": "intelligent-drum-and-bass",
+    "name": "Jazzstep",
+    "itemCount": 0,
+    "wikidataId": "Q9011351"
+  },
+  {
+    "id": "hardstep",
+    "parentId": "drum-and-bass",
+    "name": "Hardstep",
+    "itemCount": 0,
+    "wikidataId": "Q2640307"
+  },
+  {
+    "id": "sambass",
+    "parentId": "drum-and-bass",
+    "name": "Sambass",
+    "itemCount": 0,
+    "wikidataId": "Q3179786"
+  },
+  {
+    "id": "halfstep",
+    "parentId": "drum-and-bass",
+    "name": "Halfstep",
+    "itemCount": 0,
+    "wikidataId": "Q4040357"
+  },
+  {
+    "id": "technoid",
+    "parentId": "drum-and-bass",
+    "name": "Technoid",
+    "itemCount": 0,
+    "wikidataId": "Q4181927"
+  },
+  {
+    "id": "jump-up",
+    "parentId": "drum-and-bass",
+    "name": "Jump-up",
+    "itemCount": 0,
+    "wikidataId": "Q46649"
+  },
+  {
+    "id": "clownstep",
+    "parentId": "jump-up",
+    "name": "Clownstep",
+    "itemCount": 0,
+    "wikidataId": "Q1102871"
+  },
+  {
+    "id": "trancestep",
+    "parentId": "drum-and-bass",
+    "name": "Trancestep",
+    "itemCount": 0,
+    "wikidataId": "Q646165"
+  },
+  {
+    "id": "neurofunk",
+    "parentId": "drum-and-bass",
+    "name": "Neurofunk",
+    "itemCount": 0,
+    "wikidataId": "Q967654"
+  },
+  {
+    "id": "ambient-music",
+    "parentId": "underground-electronic",
+    "name": "Ambient music",
+    "itemCount": 0,
+    "wikidataId": "Q193207"
+  },
+  {
+    "id": "contemporary-instrumental-music",
+    "parentId": "ambient-music",
+    "name": "Contemporary instrumental music",
+    "itemCount": 0,
+    "wikidataId": "Q127471482"
+  },
+  {
+    "id": "dungeon-synth",
+    "parentId": "ambient-music",
+    "name": "Dungeon synth",
+    "itemCount": 0,
+    "wikidataId": "Q48971892"
+  },
+  {
+    "id": "comfy-synth",
+    "parentId": "dungeon-synth",
+    "name": "Comfy synth",
+    "itemCount": 0,
+    "wikidataId": "Q112118783"
+  },
+  {
+    "id": "winter-synth",
+    "parentId": "dungeon-synth",
+    "name": "Winter synth",
+    "itemCount": 0,
+    "wikidataId": "Q112118786"
+  },
+  {
+    "id": "keller-synth",
+    "parentId": "dungeon-synth",
+    "name": "Keller synth",
+    "itemCount": 0,
+    "wikidataId": "Q140369600"
+  },
+  {
+    "id": "dungeon-chip",
+    "parentId": "dungeon-synth",
+    "name": "Dungeon chip",
+    "itemCount": 0,
+    "wikidataId": "Q140630035"
+  },
+  {
+    "id": "experimental-ambient",
+    "parentId": "ambient-music",
+    "name": "Experimental ambient",
+    "itemCount": 0,
+    "wikidataId": "Q109500753"
+  },
+  {
+    "id": "environmental-music",
+    "parentId": "ambient-music",
+    "name": "Environmental music",
+    "itemCount": 0,
+    "wikidataId": "Q110592449"
+  },
+  {
+    "id": "kanky-ongaku",
+    "parentId": "environmental-music",
+    "name": "Kankyō ongaku",
+    "itemCount": 0,
+    "wikidataId": "Q112159506"
+  },
+  {
+    "id": "space-ambient",
+    "parentId": "ambient-music",
+    "name": "Space ambient",
+    "itemCount": 0,
+    "wikidataId": "Q16625659"
+  },
+  {
+    "id": "dark-ambient",
+    "parentId": "ambient-music",
+    "name": "Dark ambient",
+    "itemCount": 0,
+    "wikidataId": "Q756956"
+  },
+  {
+    "id": "black-ambient",
+    "parentId": "dark-ambient",
+    "name": "Black ambient",
+    "itemCount": 0,
+    "wikidataId": "Q106642137"
+  },
+  {
+    "id": "ritual-ambient",
+    "parentId": "dark-ambient",
+    "name": "Ritual ambient",
+    "itemCount": 0,
+    "wikidataId": "Q12671486"
+  },
+  {
+    "id": "isolationism",
+    "parentId": "dark-ambient",
+    "name": "Isolationism",
+    "itemCount": 0,
+    "wikidataId": "Q13580383"
+  },
+  {
+    "id": "ambient-industrial",
+    "parentId": "dark-ambient",
+    "name": "Ambient industrial",
+    "itemCount": 0,
+    "wikidataId": "Q1440196"
+  },
+  {
+    "id": "tribal-ambient",
+    "parentId": "ambient-music",
+    "name": "Tribal ambient",
+    "itemCount": 0,
+    "wikidataId": "Q98528139"
+  },
+  {
+    "id": "space-music",
+    "parentId": "underground-electronic",
+    "name": "Space music",
+    "itemCount": 0,
+    "wikidataId": "Q2342263"
+  },
+  {
+    "id": "chillwave",
+    "parentId": "underground-electronic",
+    "name": "Chillwave",
+    "itemCount": 0,
+    "wikidataId": "Q2626684"
+  },
+  {
+    "id": "chillsynth",
+    "parentId": "chillwave",
+    "name": "Chillsynth",
+    "itemCount": 0,
+    "wikidataId": "Q110620412"
+  },
+  {
+    "id": "lowercase",
+    "parentId": "underground-electronic",
+    "name": "Lowercase",
+    "itemCount": 0,
+    "wikidataId": "Q310871"
+  },
+  {
+    "id": "lowercase-noise-wall",
+    "parentId": "lowercase",
+    "name": "Lowercase noise wall",
+    "itemCount": 0,
+    "wikidataId": "Q113884370"
+  },
+  {
+    "id": "seapunk",
+    "parentId": "underground-electronic",
+    "name": "Seapunk",
+    "itemCount": 0,
+    "wikidataId": "Q3476798"
+  },
+  {
+    "id": "alternative-electronic",
+    "parentId": "underground-electronic",
+    "name": "Alternative electronic",
+    "itemCount": 0,
+    "wikidataId": "Q4736507"
+  },
+  {
+    "id": "electrogaze",
+    "parentId": "underground-electronic",
+    "name": "Electrogaze",
+    "itemCount": 0,
+    "wikidataId": "Q5358022"
+  },
+  {
+    "id": "leftfield-electronic",
+    "parentId": "underground-electronic",
+    "name": "Leftfield electronic",
+    "itemCount": 0,
+    "wikidataId": "Q65937906"
+  },
+  {
+    "id": "electro-orchestral-music",
+    "parentId": "underground-electronic",
+    "name": "Electro-orchestral music",
+    "itemCount": 0,
+    "wikidataId": "Q66686936"
+  },
+  {
+    "id": "sampledelia",
+    "parentId": "underground-electronic",
+    "name": "Sampledelia",
+    "itemCount": 0,
+    "wikidataId": "Q7410145"
+  },
+  {
+    "id": "progressive-electronic-music",
+    "parentId": "underground-electronic",
+    "name": "Progressive electronic music",
+    "itemCount": 267,
+    "wikidataId": "Q79784514"
+  },
+  {
+    "id": "berlin-school-of-electronic-music",
+    "parentId": "progressive-electronic-music",
+    "name": "Berlin School of electronic music",
+    "itemCount": 267,
+    "wikidataId": "Q530750"
+  },
+  {
+    "id": "hauntology",
+    "parentId": "underground-electronic",
+    "name": "Hauntology",
+    "itemCount": 0,
+    "wikidataId": "Q85765918"
+  },
+  {
+    "id": "electro-goth",
+    "parentId": "underground-electronic",
+    "name": "Electro-goth",
+    "itemCount": 0,
+    "wikidataId": "Q9298306"
+  },
+  {
+    "id": "bass-music",
+    "parentId": "underground-electronic",
+    "name": "Bass music",
+    "itemCount": 0,
+    "wikidataId": "Q96740854"
+  },
+  {
+    "id": "us-bass-music",
+    "parentId": "bass-music",
+    "name": "US bass music",
+    "itemCount": 0,
+    "wikidataId": "Q114880124"
+  },
+  {
+    "id": "disk-drive-music",
+    "parentId": "underground-electronic",
+    "name": "Disk drive music",
+    "itemCount": 0,
+    "wikidataId": "Q98804240"
   },
   {
     "id": "hard-dance",
@@ -5429,13 +6438,6 @@
     "name": "Poky",
     "itemCount": 0,
     "wikidataId": "Q6081528"
-  },
-  {
-    "id": "nightcore",
-    "parentId": "hard-dance",
-    "name": "Nightcore",
-    "itemCount": 0,
-    "wikidataId": "Q3876770"
   },
   {
     "id": "speed-house",
@@ -5543,216 +6545,6 @@
     "wikidataId": "Q141591216"
   },
   {
-    "id": "experimental-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Experimental electronic music",
-    "itemCount": 0,
-    "wikidataId": "Q105763581"
-  },
-  {
-    "id": "epic-collage",
-    "parentId": "experimental-electronic-music",
-    "name": "Epic collage",
-    "itemCount": 0,
-    "wikidataId": "Q108297235"
-  },
-  {
-    "id": "electroacoustic-music",
-    "parentId": "experimental-electronic-music",
-    "name": "Electroacoustic music",
-    "itemCount": 0,
-    "wikidataId": "Q1326777"
-  },
-  {
-    "id": "live-electronic-music",
-    "parentId": "electroacoustic-music",
-    "name": "Live electronic music",
-    "itemCount": 0,
-    "wikidataId": "Q1866223"
-  },
-  {
-    "id": "acousmatic-music",
-    "parentId": "electroacoustic-music",
-    "name": "Acousmatic music",
-    "itemCount": 0,
-    "wikidataId": "Q423918"
-  },
-  {
-    "id": "musique-concr-te",
-    "parentId": "electroacoustic-music",
-    "name": "Musique concrète",
-    "itemCount": 0,
-    "wikidataId": "Q823560"
-  },
-  {
-    "id": "algorave",
-    "parentId": "experimental-electronic-music",
-    "name": "Algorave",
-    "itemCount": 0,
-    "wikidataId": "Q16002495"
-  },
-  {
-    "id": "intelligent-dance-music",
-    "parentId": "experimental-electronic-music",
-    "name": "Intelligent dance music",
-    "itemCount": 0,
-    "wikidataId": "Q660984"
-  },
-  {
-    "id": "glitch",
-    "parentId": "intelligent-dance-music",
-    "name": "Glitch",
-    "itemCount": 0,
-    "wikidataId": "Q1100989"
-  },
-  {
-    "id": "minimal-glitch",
-    "parentId": "glitch",
-    "name": "Minimal glitch",
-    "itemCount": 0,
-    "wikidataId": "Q12037719"
-  },
-  {
-    "id": "oceanic-glitch",
-    "parentId": "glitch",
-    "name": "Oceanic glitch",
-    "itemCount": 0,
-    "wikidataId": "Q12042106"
-  },
-  {
-    "id": "wonky",
-    "parentId": "intelligent-dance-music",
-    "name": "Wonky",
-    "itemCount": 0,
-    "wikidataId": "Q1136045"
-  },
-  {
-    "id": "aquacrunk",
-    "parentId": "wonky",
-    "name": "Aquacrunk",
-    "itemCount": 0,
-    "wikidataId": "Q123922710"
-  },
-  {
-    "id": "drill-and-bass",
-    "parentId": "intelligent-dance-music",
-    "name": "Drill and bass",
-    "itemCount": 0,
-    "wikidataId": "Q1259016"
-  },
-  {
-    "id": "flashcore",
-    "parentId": "experimental-electronic-music",
-    "name": "Flashcore",
-    "itemCount": 0,
-    "wikidataId": "Q108297242"
-  },
-  {
-    "id": "clicks-cuts",
-    "parentId": "experimental-electronic-music",
-    "name": "Clicks & cuts",
-    "itemCount": 0,
-    "wikidataId": "Q108907695"
-  },
-  {
-    "id": "microsound",
-    "parentId": "experimental-electronic-music",
-    "name": "Microsound",
-    "itemCount": 0,
-    "wikidataId": "Q3503814"
-  },
-  {
-    "id": "bit-music",
-    "parentId": "core-electronic",
-    "name": "Bit music",
-    "itemCount": 0,
-    "wikidataId": "Q106422444"
-  },
-  {
-    "id": "digital-fusion",
-    "parentId": "bit-music",
-    "name": "Digital fusion",
-    "itemCount": 0,
-    "wikidataId": "Q115063474"
-  },
-  {
-    "id": "chiptune",
-    "parentId": "bit-music",
-    "name": "Chiptune",
-    "itemCount": 0,
-    "wikidataId": "Q135637"
-  },
-  {
-    "id": "bytebeat",
-    "parentId": "bit-music",
-    "name": "Bytebeat",
-    "itemCount": 0,
-    "wikidataId": "Q110942239"
-  },
-  {
-    "id": "midi-music",
-    "parentId": "bit-music",
-    "name": "MIDI music",
-    "itemCount": 0,
-    "wikidataId": "Q118324067"
-  },
-  {
-    "id": "doom-wad-music",
-    "parentId": "midi-music",
-    "name": "Doom WAD music",
-    "itemCount": 0,
-    "wikidataId": "Q138588725"
-  },
-  {
-    "id": "black-midi",
-    "parentId": "midi-music",
-    "name": "Black MIDI",
-    "itemCount": 0,
-    "wikidataId": "Q22964975"
-  },
-  {
-    "id": "1-bit-music",
-    "parentId": "bit-music",
-    "name": "1-bit music",
-    "itemCount": 0,
-    "wikidataId": "Q16894106"
-  },
-  {
-    "id": "8-bit-music",
-    "parentId": "bit-music",
-    "name": "8-bit music",
-    "itemCount": 0,
-    "wikidataId": "Q1980100"
-  },
-  {
-    "id": "sampler-based-music",
-    "parentId": "bit-music",
-    "name": "Sampler-based music",
-    "itemCount": 0,
-    "wikidataId": "Q2271846"
-  },
-  {
-    "id": "tracker-music",
-    "parentId": "sampler-based-music",
-    "name": "Tracker music",
-    "itemCount": 0,
-    "wikidataId": "Q106423092"
-  },
-  {
-    "id": "demostyle",
-    "parentId": "tracker-music",
-    "name": "Demostyle",
-    "itemCount": 0,
-    "wikidataId": "Q125799361"
-  },
-  {
-    "id": "bitpop",
-    "parentId": "bit-music",
-    "name": "Bitpop",
-    "itemCount": 0,
-    "wikidataId": "Q773880"
-  },
-  {
     "id": "glitch-hop-edm",
     "parentId": "core-electronic",
     "name": "Glitch hop (EDM)",
@@ -5774,116 +6566,11 @@
     "wikidataId": "Q18432631"
   },
   {
-    "id": "acid",
-    "parentId": "core-electronic",
-    "name": "Acid",
-    "itemCount": 0,
-    "wikidataId": "Q106528337"
-  },
-  {
-    "id": "beatdown",
-    "parentId": "core-electronic",
-    "name": "Beatdown",
-    "itemCount": 0,
-    "wikidataId": "Q106574871"
-  },
-  {
-    "id": "tribal-music",
-    "parentId": "core-electronic",
-    "name": "Tribal music",
-    "itemCount": 0,
-    "wikidataId": "Q106576170"
-  },
-  {
-    "id": "cyberpunk-music",
-    "parentId": "core-electronic",
-    "name": "Cyberpunk music",
-    "itemCount": 0,
-    "wikidataId": "Q106582942"
-  },
-  {
     "id": "hard-drum",
     "parentId": "core-electronic",
     "name": "Hard drum",
     "itemCount": 0,
     "wikidataId": "Q107697201"
-  },
-  {
-    "id": "hexd",
-    "parentId": "core-electronic",
-    "name": "HexD",
-    "itemCount": 46,
-    "wikidataId": "Q107697234"
-  },
-  {
-    "id": "moogsploitation",
-    "parentId": "core-electronic",
-    "name": "Moogsploitation",
-    "itemCount": 0,
-    "wikidataId": "Q111387914"
-  },
-  {
-    "id": "synth-music",
-    "parentId": "core-electronic",
-    "name": "Synth music",
-    "itemCount": 0,
-    "wikidataId": "Q11308620"
-  },
-  {
-    "id": "synthwave",
-    "parentId": "synth-music",
-    "name": "Synthwave",
-    "itemCount": 0,
-    "wikidataId": "Q19938910"
-  },
-  {
-    "id": "electro-wave",
-    "parentId": "synthwave",
-    "name": "Electro wave",
-    "itemCount": 0,
-    "wikidataId": "Q1325966"
-  },
-  {
-    "id": "dreamwave",
-    "parentId": "synthwave",
-    "name": "Dreamwave",
-    "itemCount": 0,
-    "wikidataId": "Q140005978"
-  },
-  {
-    "id": "sovietwave",
-    "parentId": "synthwave",
-    "name": "Sovietwave",
-    "itemCount": 0,
-    "wikidataId": "Q30895273"
-  },
-  {
-    "id": "darksynth",
-    "parentId": "synthwave",
-    "name": "Darksynth",
-    "itemCount": 0,
-    "wikidataId": "Q60973191"
-  },
-  {
-    "id": "spacesynth",
-    "parentId": "synth-music",
-    "name": "Spacesynth",
-    "itemCount": 0,
-    "wikidataId": "Q4049849"
-  },
-  {
-    "id": "doskpop",
-    "parentId": "spacesynth",
-    "name": "Doskpop",
-    "itemCount": 0,
-    "wikidataId": "Q108297232"
-  },
-  {
-    "id": "horror-synth",
-    "parentId": "synth-music",
-    "name": "Horror synth",
-    "itemCount": 0,
-    "wikidataId": "Q107985638"
   },
   {
     "id": "bass-music-edm",
@@ -5898,20 +6585,6 @@
     "name": "Bass",
     "itemCount": 75,
     "wikidataId": "Q21006606"
-  },
-  {
-    "id": "wave-electronic",
-    "parentId": "bass",
-    "name": "Wave (Electronic)",
-    "itemCount": 0,
-    "wikidataId": "Q106369996"
-  },
-  {
-    "id": "hardwave",
-    "parentId": "wave-electronic",
-    "name": "Hardwave",
-    "itemCount": 0,
-    "wikidataId": "Q106388388"
   },
   {
     "id": "ghetto-club",
@@ -6236,32 +6909,11 @@
     "wikidataId": "Q12200830"
   },
   {
-    "id": "sigma-music",
-    "parentId": "core-electronic",
-    "name": "Sigma music",
-    "itemCount": 0,
-    "wikidataId": "Q122216296"
-  },
-  {
     "id": "dub-techno",
     "parentId": "core-electronic",
     "name": "Dub techno",
     "itemCount": 0,
     "wikidataId": "Q1262781"
-  },
-  {
-    "id": "electro-dub",
-    "parentId": "core-electronic",
-    "name": "Electro dub",
-    "itemCount": 0,
-    "wikidataId": "Q127470373"
-  },
-  {
-    "id": "fixed-media",
-    "parentId": "core-electronic",
-    "name": "Fixed media",
-    "itemCount": 0,
-    "wikidataId": "Q131286868"
   },
   {
     "id": "slimepunk",
@@ -6271,13 +6923,6 @@
     "wikidataId": "Q134380635"
   },
   {
-    "id": "aliencore",
-    "parentId": "core-electronic",
-    "name": "Aliencore",
-    "itemCount": 0,
-    "wikidataId": "Q134983275"
-  },
-  {
     "id": "outrun",
     "parentId": "core-electronic",
     "name": "Outrun",
@@ -6285,228 +6930,11 @@
     "wikidataId": "Q140369806"
   },
   {
-    "id": "electro-industrial",
-    "parentId": "core-electronic",
-    "name": "Electro-industrial",
-    "itemCount": 0,
-    "wikidataId": "Q1403744"
-  },
-  {
-    "id": "electronic-body-music",
-    "parentId": "electro-industrial",
-    "name": "Electronic body music",
-    "itemCount": 0,
-    "wikidataId": "Q372103"
-  },
-  {
-    "id": "dark-disco",
-    "parentId": "electronic-body-music",
-    "name": "Dark disco",
-    "itemCount": 0,
-    "wikidataId": "Q109873537"
-  },
-  {
-    "id": "electro",
-    "parentId": "electronic-body-music",
-    "name": "Electro",
-    "itemCount": 0,
-    "wikidataId": "Q15957030"
-  },
-  {
-    "id": "new-beat",
-    "parentId": "electronic-body-music",
-    "name": "New beat",
-    "itemCount": 0,
-    "wikidataId": "Q1890098"
-  },
-  {
-    "id": "hard-beat",
-    "parentId": "new-beat",
-    "name": "Hard beat",
-    "itemCount": 0,
-    "wikidataId": "Q106577108"
-  },
-  {
-    "id": "skizzo",
-    "parentId": "new-beat",
-    "name": "Skizzo",
-    "itemCount": 0,
-    "wikidataId": "Q141149482"
-  },
-  {
-    "id": "old-school-ebm",
-    "parentId": "electronic-body-music",
-    "name": "Old school EBM",
-    "itemCount": 0,
-    "wikidataId": "Q2638634"
-  },
-  {
-    "id": "dark-electro",
-    "parentId": "electronic-body-music",
-    "name": "Dark electro",
-    "itemCount": 0,
-    "wikidataId": "Q4155078"
-  },
-  {
-    "id": "aggrotech",
-    "parentId": "dark-electro",
-    "name": "Aggrotech",
-    "itemCount": 0,
-    "wikidataId": "Q1091450"
-  },
-  {
-    "id": "futurepop",
-    "parentId": "electronic-body-music",
-    "name": "Futurepop",
-    "itemCount": 0,
-    "wikidataId": "Q828243"
-  },
-  {
-    "id": "anhalt-ebm",
-    "parentId": "electronic-body-music",
-    "name": "Anhalt EBM",
-    "itemCount": 0,
-    "wikidataId": "Q9615674"
-  },
-  {
-    "id": "electro-goth",
-    "parentId": "electro-industrial",
-    "name": "Electro-goth",
-    "itemCount": 0,
-    "wikidataId": "Q9298306"
-  },
-  {
     "id": "minimal-edm",
     "parentId": "core-electronic",
     "name": "Minimal EDM",
     "itemCount": 0,
     "wikidataId": "Q141085400"
-  },
-  {
-    "id": "minimal-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Minimal electronic music",
-    "itemCount": 0,
-    "wikidataId": "Q141085413"
-  },
-  {
-    "id": "minimal-electro",
-    "parentId": "minimal-electronic-music",
-    "name": "Minimal electro",
-    "itemCount": 0,
-    "wikidataId": "Q181999"
-  },
-  {
-    "id": "lo-fi-music",
-    "parentId": "core-electronic",
-    "name": "Lo-fi music",
-    "itemCount": 0,
-    "wikidataId": "Q1507298"
-  },
-  {
-    "id": "no-fi",
-    "parentId": "lo-fi-music",
-    "name": "No-Fi",
-    "itemCount": 0,
-    "wikidataId": "Q7042753"
-  },
-  {
-    "id": "vaporwave",
-    "parentId": "core-electronic",
-    "name": "Vaporwave",
-    "itemCount": 0,
-    "wikidataId": "Q15733887"
-  },
-  {
-    "id": "spamwave",
-    "parentId": "vaporwave",
-    "name": "Spamwave",
-    "itemCount": 0,
-    "wikidataId": "Q137442003"
-  },
-  {
-    "id": "dreampunk",
-    "parentId": "vaporwave",
-    "name": "Dreampunk",
-    "itemCount": 0,
-    "wikidataId": "Q106583068"
-  },
-  {
-    "id": "utopian-virtual",
-    "parentId": "vaporwave",
-    "name": "Utopian virtual",
-    "itemCount": 0,
-    "wikidataId": "Q106594177"
-  },
-  {
-    "id": "daycore",
-    "parentId": "vaporwave",
-    "name": "Daycore",
-    "itemCount": 0,
-    "wikidataId": "Q106844185"
-  },
-  {
-    "id": "sludgefest",
-    "parentId": "daycore",
-    "name": "Sludgefest",
-    "itemCount": 0,
-    "wikidataId": "Q116780115"
-  },
-  {
-    "id": "broken-transmission",
-    "parentId": "vaporwave",
-    "name": "Broken transmission",
-    "itemCount": 0,
-    "wikidataId": "Q107697260"
-  },
-  {
-    "id": "signaltrap",
-    "parentId": "broken-transmission",
-    "name": "Signaltrap",
-    "itemCount": 0,
-    "wikidataId": "Q141489496"
-  },
-  {
-    "id": "late-night-lo-fi",
-    "parentId": "vaporwave",
-    "name": "Late night lo-fi",
-    "itemCount": 0,
-    "wikidataId": "Q109771322"
-  },
-  {
-    "id": "vapornoise",
-    "parentId": "vaporwave",
-    "name": "Vapornoise",
-    "itemCount": 0,
-    "wikidataId": "Q109771345"
-  },
-  {
-    "id": "slushwave",
-    "parentId": "vaporwave",
-    "name": "Slushwave",
-    "itemCount": 0,
-    "wikidataId": "Q117193815"
-  },
-  {
-    "id": "eccojams",
-    "parentId": "vaporwave",
-    "name": "Eccojams",
-    "itemCount": 0,
-    "wikidataId": "Q124170473"
-  },
-  {
-    "id": "simpsonwave",
-    "parentId": "vaporwave",
-    "name": "Simpsonwave",
-    "itemCount": 0,
-    "wikidataId": "Q24905903"
-  },
-  {
-    "id": "vaportrap",
-    "parentId": "vaporwave",
-    "name": "Vaportrap",
-    "itemCount": 0,
-    "wikidataId": "Q80724932"
   },
   {
     "id": "industrial-dance",
@@ -6865,392 +7293,6 @@
     "name": "UK hardcore (techno)",
     "itemCount": 0,
     "wikidataId": "Q9364029"
-  },
-  {
-    "id": "a-d",
-    "parentId": "core-electronic",
-    "name": "A&D",
-    "itemCount": 0,
-    "wikidataId": "Q17231682"
-  },
-  {
-    "id": "witch-house",
-    "parentId": "core-electronic",
-    "name": "Witch house",
-    "itemCount": 0,
-    "wikidataId": "Q1840167"
-  },
-  {
-    "id": "drum-and-bass",
-    "parentId": "core-electronic",
-    "name": "Drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q188994",
-    "umbrella": true
-  },
-  {
-    "id": "dubwise-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Dubwise drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q10268931"
-  },
-  {
-    "id": "minimal-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Minimal drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q106404300"
-  },
-  {
-    "id": "microfunk",
-    "parentId": "minimal-drum-and-bass",
-    "name": "Microfunk",
-    "itemCount": 0,
-    "wikidataId": "Q135437342"
-  },
-  {
-    "id": "autonomic",
-    "parentId": "minimal-drum-and-bass",
-    "name": "Autonomic",
-    "itemCount": 0,
-    "wikidataId": "Q135553474"
-  },
-  {
-    "id": "halftime",
-    "parentId": "drum-and-bass",
-    "name": "Halftime",
-    "itemCount": 0,
-    "wikidataId": "Q107010574"
-  },
-  {
-    "id": "dancefloor-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Dancefloor drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q107332291"
-  },
-  {
-    "id": "jungle",
-    "parentId": "drum-and-bass",
-    "name": "Jungle",
-    "itemCount": 0,
-    "wikidataId": "Q1102161"
-  },
-  {
-    "id": "experimental-jungle",
-    "parentId": "jungle",
-    "name": "Experimental jungle",
-    "itemCount": 0,
-    "wikidataId": "Q111540473"
-  },
-  {
-    "id": "industrial-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Industrial drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q110584483"
-  },
-  {
-    "id": "footwork-jungle",
-    "parentId": "drum-and-bass",
-    "name": "Footwork jungle",
-    "itemCount": 0,
-    "wikidataId": "Q110967939"
-  },
-  {
-    "id": "deep-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Deep drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q111804002"
-  },
-  {
-    "id": "meme-techno",
-    "parentId": "drum-and-bass",
-    "name": "Meme techno",
-    "itemCount": 0,
-    "wikidataId": "Q114238485"
-  },
-  {
-    "id": "darkstep",
-    "parentId": "drum-and-bass",
-    "name": "Darkstep",
-    "itemCount": 0,
-    "wikidataId": "Q1166321"
-  },
-  {
-    "id": "skullstep",
-    "parentId": "darkstep",
-    "name": "Skullstep",
-    "itemCount": 0,
-    "wikidataId": "Q108716407"
-  },
-  {
-    "id": "drum-and-bass-electronic-rock",
-    "parentId": "drum-and-bass",
-    "name": "Drum and bass electronic rock",
-    "itemCount": 0,
-    "wikidataId": "Q124791567"
-  },
-  {
-    "id": "techstep",
-    "parentId": "drum-and-bass",
-    "name": "Techstep",
-    "itemCount": 0,
-    "wikidataId": "Q1335569"
-  },
-  {
-    "id": "liquid-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Liquid drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q2082572"
-  },
-  {
-    "id": "drumfunk",
-    "parentId": "drum-and-bass",
-    "name": "Drumfunk",
-    "itemCount": 0,
-    "wikidataId": "Q2121992"
-  },
-  {
-    "id": "intelligent-drum-and-bass",
-    "parentId": "drum-and-bass",
-    "name": "Intelligent drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q2615500"
-  },
-  {
-    "id": "atmospheric-drum-and-bass",
-    "parentId": "intelligent-drum-and-bass",
-    "name": "Atmospheric drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q2842043"
-  },
-  {
-    "id": "artcore-drum-and-bass",
-    "parentId": "intelligent-drum-and-bass",
-    "name": "Artcore drum and bass",
-    "itemCount": 0,
-    "wikidataId": "Q30919272"
-  },
-  {
-    "id": "japanese-artcore",
-    "parentId": "artcore-drum-and-bass",
-    "name": "Japanese artcore",
-    "itemCount": 0,
-    "wikidataId": "Q111442385"
-  },
-  {
-    "id": "jazzstep",
-    "parentId": "intelligent-drum-and-bass",
-    "name": "Jazzstep",
-    "itemCount": 0,
-    "wikidataId": "Q9011351"
-  },
-  {
-    "id": "hardstep",
-    "parentId": "drum-and-bass",
-    "name": "Hardstep",
-    "itemCount": 0,
-    "wikidataId": "Q2640307"
-  },
-  {
-    "id": "sambass",
-    "parentId": "drum-and-bass",
-    "name": "Sambass",
-    "itemCount": 0,
-    "wikidataId": "Q3179786"
-  },
-  {
-    "id": "halfstep",
-    "parentId": "drum-and-bass",
-    "name": "Halfstep",
-    "itemCount": 0,
-    "wikidataId": "Q4040357"
-  },
-  {
-    "id": "technoid",
-    "parentId": "drum-and-bass",
-    "name": "Technoid",
-    "itemCount": 0,
-    "wikidataId": "Q4181927"
-  },
-  {
-    "id": "jump-up",
-    "parentId": "drum-and-bass",
-    "name": "Jump-up",
-    "itemCount": 0,
-    "wikidataId": "Q46649"
-  },
-  {
-    "id": "clownstep",
-    "parentId": "jump-up",
-    "name": "Clownstep",
-    "itemCount": 0,
-    "wikidataId": "Q1102871"
-  },
-  {
-    "id": "trancestep",
-    "parentId": "drum-and-bass",
-    "name": "Trancestep",
-    "itemCount": 0,
-    "wikidataId": "Q646165"
-  },
-  {
-    "id": "neurofunk",
-    "parentId": "drum-and-bass",
-    "name": "Neurofunk",
-    "itemCount": 0,
-    "wikidataId": "Q967654"
-  },
-  {
-    "id": "ambient-music",
-    "parentId": "core-electronic",
-    "name": "Ambient music",
-    "itemCount": 0,
-    "wikidataId": "Q193207"
-  },
-  {
-    "id": "contemporary-instrumental-music",
-    "parentId": "ambient-music",
-    "name": "Contemporary instrumental music",
-    "itemCount": 0,
-    "wikidataId": "Q127471482"
-  },
-  {
-    "id": "illbient",
-    "parentId": "ambient-music",
-    "name": "Illbient",
-    "itemCount": 0,
-    "wikidataId": "Q1658757"
-  },
-  {
-    "id": "space-music",
-    "parentId": "ambient-music",
-    "name": "Space music",
-    "itemCount": 0,
-    "wikidataId": "Q2342263"
-  },
-  {
-    "id": "lowercase",
-    "parentId": "ambient-music",
-    "name": "Lowercase",
-    "itemCount": 0,
-    "wikidataId": "Q310871"
-  },
-  {
-    "id": "lowercase-noise-wall",
-    "parentId": "lowercase",
-    "name": "Lowercase noise wall",
-    "itemCount": 0,
-    "wikidataId": "Q113884370"
-  },
-  {
-    "id": "dungeon-synth",
-    "parentId": "ambient-music",
-    "name": "Dungeon synth",
-    "itemCount": 0,
-    "wikidataId": "Q48971892"
-  },
-  {
-    "id": "comfy-synth",
-    "parentId": "dungeon-synth",
-    "name": "Comfy synth",
-    "itemCount": 0,
-    "wikidataId": "Q112118783"
-  },
-  {
-    "id": "winter-synth",
-    "parentId": "dungeon-synth",
-    "name": "Winter synth",
-    "itemCount": 0,
-    "wikidataId": "Q112118786"
-  },
-  {
-    "id": "keller-synth",
-    "parentId": "dungeon-synth",
-    "name": "Keller synth",
-    "itemCount": 0,
-    "wikidataId": "Q140369600"
-  },
-  {
-    "id": "dungeon-chip",
-    "parentId": "dungeon-synth",
-    "name": "Dungeon chip",
-    "itemCount": 0,
-    "wikidataId": "Q140630035"
-  },
-  {
-    "id": "experimental-ambient",
-    "parentId": "ambient-music",
-    "name": "Experimental ambient",
-    "itemCount": 0,
-    "wikidataId": "Q109500753"
-  },
-  {
-    "id": "environmental-music",
-    "parentId": "ambient-music",
-    "name": "Environmental music",
-    "itemCount": 0,
-    "wikidataId": "Q110592449"
-  },
-  {
-    "id": "kanky-ongaku",
-    "parentId": "environmental-music",
-    "name": "Kankyō ongaku",
-    "itemCount": 0,
-    "wikidataId": "Q112159506"
-  },
-  {
-    "id": "space-ambient",
-    "parentId": "ambient-music",
-    "name": "Space ambient",
-    "itemCount": 0,
-    "wikidataId": "Q16625659"
-  },
-  {
-    "id": "dark-ambient",
-    "parentId": "ambient-music",
-    "name": "Dark ambient",
-    "itemCount": 0,
-    "wikidataId": "Q756956"
-  },
-  {
-    "id": "black-ambient",
-    "parentId": "dark-ambient",
-    "name": "Black ambient",
-    "itemCount": 0,
-    "wikidataId": "Q106642137"
-  },
-  {
-    "id": "ritual-ambient",
-    "parentId": "dark-ambient",
-    "name": "Ritual ambient",
-    "itemCount": 0,
-    "wikidataId": "Q12671486"
-  },
-  {
-    "id": "isolationism",
-    "parentId": "dark-ambient",
-    "name": "Isolationism",
-    "itemCount": 0,
-    "wikidataId": "Q13580383"
-  },
-  {
-    "id": "ambient-industrial",
-    "parentId": "dark-ambient",
-    "name": "Ambient industrial",
-    "itemCount": 0,
-    "wikidataId": "Q1440196"
-  },
-  {
-    "id": "tribal-ambient",
-    "parentId": "ambient-music",
-    "name": "Tribal ambient",
-    "itemCount": 0,
-    "wikidataId": "Q98528139"
   },
   {
     "id": "house-music",
@@ -7778,13 +7820,6 @@
     "wikidataId": "Q27961199"
   },
   {
-    "id": "retrosound",
-    "parentId": "core-electronic",
-    "name": "Retrosound",
-    "itemCount": 0,
-    "wikidataId": "Q2146293"
-  },
-  {
     "id": "electro-1980s",
     "parentId": "core-electronic",
     "name": "Electro (1980s)",
@@ -7818,13 +7853,6 @@
     "name": "Neo-electro",
     "itemCount": 0,
     "wikidataId": "Q110584608"
-  },
-  {
-    "id": "seapunk",
-    "parentId": "core-electronic",
-    "name": "Seapunk",
-    "itemCount": 0,
-    "wikidataId": "Q3476798"
   },
   {
     "id": "hardcore",
@@ -8192,20 +8220,6 @@
     "wikidataId": "Q2181965"
   },
   {
-    "id": "alternative-electronic",
-    "parentId": "core-electronic",
-    "name": "Alternative electronic",
-    "itemCount": 0,
-    "wikidataId": "Q4736507"
-  },
-  {
-    "id": "electrogaze",
-    "parentId": "core-electronic",
-    "name": "Electrogaze",
-    "itemCount": 0,
-    "wikidataId": "Q5358022"
-  },
-  {
     "id": "shamstep",
     "parentId": "core-electronic",
     "name": "Shamstep",
@@ -8360,13 +8374,6 @@
     "wikidataId": "Q4706203"
   },
   {
-    "id": "leftfield-electronic",
-    "parentId": "core-electronic",
-    "name": "Leftfield electronic",
-    "itemCount": 0,
-    "wikidataId": "Q65937906"
-  },
-  {
     "id": "breakbeat",
     "parentId": "core-electronic",
     "name": "Breakbeat",
@@ -8451,22 +8458,155 @@
     "wikidataId": "Q858579"
   },
   {
-    "id": "electro-orchestral-music",
+    "id": "electronic-dance-music",
     "parentId": "core-electronic",
-    "name": "Electro-orchestral music",
-    "itemCount": 0,
-    "wikidataId": "Q66686936"
+    "name": "Electronic dance music",
+    "itemCount": 354,
+    "wikidataId": "Q851213"
   },
   {
-    "id": "sampledelia",
-    "parentId": "core-electronic",
-    "name": "Sampledelia",
+    "id": "budots",
+    "parentId": "electronic-dance-music",
+    "name": "Budots",
     "itemCount": 0,
-    "wikidataId": "Q7410145"
+    "wikidataId": "Q100922002"
+  },
+  {
+    "id": "future-rave",
+    "parentId": "electronic-dance-music",
+    "name": "Future rave",
+    "itemCount": 0,
+    "wikidataId": "Q101109587"
+  },
+  {
+    "id": "post-dubstep",
+    "parentId": "electronic-dance-music",
+    "name": "Post-dubstep",
+    "itemCount": 0,
+    "wikidataId": "Q106130091"
+  },
+  {
+    "id": "beatdown",
+    "parentId": "electronic-dance-music",
+    "name": "Beatdown",
+    "itemCount": 0,
+    "wikidataId": "Q106574871"
+  },
+  {
+    "id": "tribal-music",
+    "parentId": "electronic-dance-music",
+    "name": "Tribal music",
+    "itemCount": 0,
+    "wikidataId": "Q106576170"
+  },
+  {
+    "id": "experimental-club-music",
+    "parentId": "electronic-dance-music",
+    "name": "Experimental club music",
+    "itemCount": 0,
+    "wikidataId": "Q110527222"
+  },
+  {
+    "id": "deconstructed-club",
+    "parentId": "experimental-club-music",
+    "name": "Deconstructed club",
+    "itemCount": 0,
+    "wikidataId": "Q96376113"
+  },
+  {
+    "id": "drift-phonk",
+    "parentId": "electronic-dance-music",
+    "name": "Drift phonk",
+    "itemCount": 0,
+    "wikidataId": "Q112997482"
+  },
+  {
+    "id": "funkot",
+    "parentId": "electronic-dance-music",
+    "name": "Funkot",
+    "itemCount": 0,
+    "wikidataId": "Q11332204"
+  },
+  {
+    "id": "sigma-music",
+    "parentId": "electronic-dance-music",
+    "name": "Sigma music",
+    "itemCount": 0,
+    "wikidataId": "Q122216296"
+  },
+  {
+    "id": "synthwave",
+    "parentId": "electronic-dance-music",
+    "name": "Synthwave",
+    "itemCount": 0,
+    "wikidataId": "Q19938910"
+  },
+  {
+    "id": "electro-wave",
+    "parentId": "synthwave",
+    "name": "Electro wave",
+    "itemCount": 0,
+    "wikidataId": "Q1325966"
+  },
+  {
+    "id": "dreamwave",
+    "parentId": "synthwave",
+    "name": "Dreamwave",
+    "itemCount": 0,
+    "wikidataId": "Q140005978"
+  },
+  {
+    "id": "sovietwave",
+    "parentId": "synthwave",
+    "name": "Sovietwave",
+    "itemCount": 0,
+    "wikidataId": "Q30895273"
+  },
+  {
+    "id": "darksynth",
+    "parentId": "synthwave",
+    "name": "Darksynth",
+    "itemCount": 0,
+    "wikidataId": "Q60973191"
+  },
+  {
+    "id": "future-house",
+    "parentId": "electronic-dance-music",
+    "name": "Future house",
+    "itemCount": 0,
+    "wikidataId": "Q20021059"
+  },
+  {
+    "id": "slap-house",
+    "parentId": "future-house",
+    "name": "Slap house",
+    "itemCount": 0,
+    "wikidataId": "Q106493832"
+  },
+  {
+    "id": "future-bounce",
+    "parentId": "future-house",
+    "name": "Future bounce",
+    "itemCount": 0,
+    "wikidataId": "Q106634926"
+  },
+  {
+    "id": "retrosound",
+    "parentId": "electronic-dance-music",
+    "name": "Retrosound",
+    "itemCount": 0,
+    "wikidataId": "Q2146293"
+  },
+  {
+    "id": "nightcore",
+    "parentId": "electronic-dance-music",
+    "name": "Nightcore",
+    "itemCount": 0,
+    "wikidataId": "Q3876770"
   },
   {
     "id": "chill-out-music",
-    "parentId": "core-electronic",
+    "parentId": "electronic-dance-music",
     "name": "Chill-out music",
     "itemCount": 7,
     "wikidataId": "Q757143"
@@ -8528,88 +8668,11 @@
     "wikidataId": "Q749475"
   },
   {
-    "id": "progressive-electronic-music",
-    "parentId": "core-electronic",
-    "name": "Progressive electronic music",
-    "itemCount": 267,
-    "wikidataId": "Q79784514"
-  },
-  {
-    "id": "berlin-school-of-electronic-music",
-    "parentId": "progressive-electronic-music",
-    "name": "Berlin School of electronic music",
-    "itemCount": 267,
-    "wikidataId": "Q530750"
-  },
-  {
-    "id": "electronic-dance-music",
-    "parentId": "core-electronic",
-    "name": "Electronic dance music",
-    "itemCount": 347,
-    "wikidataId": "Q851213"
-  },
-  {
-    "id": "budots",
+    "id": "phonk",
     "parentId": "electronic-dance-music",
-    "name": "Budots",
+    "name": "Phonk",
     "itemCount": 0,
-    "wikidataId": "Q100922002"
-  },
-  {
-    "id": "future-rave",
-    "parentId": "electronic-dance-music",
-    "name": "Future rave",
-    "itemCount": 0,
-    "wikidataId": "Q101109587"
-  },
-  {
-    "id": "post-dubstep",
-    "parentId": "electronic-dance-music",
-    "name": "Post-dubstep",
-    "itemCount": 0,
-    "wikidataId": "Q106130091"
-  },
-  {
-    "id": "experimental-club-music",
-    "parentId": "electronic-dance-music",
-    "name": "Experimental club music",
-    "itemCount": 0,
-    "wikidataId": "Q110527222"
-  },
-  {
-    "id": "deconstructed-club",
-    "parentId": "experimental-club-music",
-    "name": "Deconstructed club",
-    "itemCount": 0,
-    "wikidataId": "Q96376113"
-  },
-  {
-    "id": "funkot",
-    "parentId": "electronic-dance-music",
-    "name": "Funkot",
-    "itemCount": 0,
-    "wikidataId": "Q11332204"
-  },
-  {
-    "id": "future-house",
-    "parentId": "electronic-dance-music",
-    "name": "Future house",
-    "itemCount": 0,
-    "wikidataId": "Q20021059"
-  },
-  {
-    "id": "slap-house",
-    "parentId": "future-house",
-    "name": "Slap house",
-    "itemCount": 0,
-    "wikidataId": "Q106493832"
-  },
-  {
-    "id": "future-bounce",
-    "parentId": "future-house",
-    "name": "Future bounce",
-    "itemCount": 0,
-    "wikidataId": "Q106634926"
+    "wikidataId": "Q90568328"
   },
   {
     "id": "tanzhammer-pop",
@@ -8696,13 +8759,6 @@
     "wikidataId": "Q888137"
   },
   {
-    "id": "hauntology",
-    "parentId": "core-electronic",
-    "name": "Hauntology",
-    "itemCount": 0,
-    "wikidataId": "Q85765918"
-  },
-  {
     "id": "electroclash",
     "parentId": "core-electronic",
     "name": "Electroclash",
@@ -8736,41 +8792,6 @@
     "name": "Funkstep",
     "itemCount": 0,
     "wikidataId": "Q1460303"
-  },
-  {
-    "id": "bass-music",
-    "parentId": "core-electronic",
-    "name": "Bass music",
-    "itemCount": 0,
-    "wikidataId": "Q96740854"
-  },
-  {
-    "id": "phonk",
-    "parentId": "bass-music",
-    "name": "Phonk",
-    "itemCount": 0,
-    "wikidataId": "Q90568328"
-  },
-  {
-    "id": "drift-phonk",
-    "parentId": "phonk",
-    "name": "Drift phonk",
-    "itemCount": 0,
-    "wikidataId": "Q112997482"
-  },
-  {
-    "id": "us-bass-music",
-    "parentId": "bass-music",
-    "name": "US bass music",
-    "itemCount": 0,
-    "wikidataId": "Q114880124"
-  },
-  {
-    "id": "disk-drive-music",
-    "parentId": "core-electronic",
-    "name": "Disk drive music",
-    "itemCount": 0,
-    "wikidataId": "Q98804240"
   },
   {
     "id": "pop-electronic",
@@ -8850,20 +8871,6 @@
     "name": "Indie sleaze revival",
     "itemCount": 0,
     "wikidataId": "Q139566596"
-  },
-  {
-    "id": "chillwave",
-    "parentId": "pop-electronic",
-    "name": "Chillwave",
-    "itemCount": 0,
-    "wikidataId": "Q2626684"
-  },
-  {
-    "id": "chillsynth",
-    "parentId": "chillwave",
-    "name": "Chillsynth",
-    "itemCount": 0,
-    "wikidataId": "Q110620412"
   },
   {
     "id": "dance-music",
