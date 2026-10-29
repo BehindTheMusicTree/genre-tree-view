@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-10-29
+
 ### Added
 
 - Pop-core wheel: the background slice behind an underground subtree is drawn darker, from the pop-core circle out to the wheel's edge.
