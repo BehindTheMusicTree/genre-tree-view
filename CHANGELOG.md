@@ -13,7 +13,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Touch screens: zoom buttons, info panel header buttons, menu rows, outline rows, info panel chips and section toggles get 44px touch targets (`--layout-touch-target`).
+- The zoom in / zoom out / fit buttons render through `ZoomControls` from `@behindthemusictree/ui`, now a peer dependency (`^0.10.0`). The `gtv-zoom-controls` class stays on the cluster; `gtv-zoom-btn*` classes are gone.
+- Touch screens: info panel header buttons, menu rows, outline rows, info panel chips and section toggles get 44px touch targets (`--layout-touch-target`).
 
 ## [6.2.0] - 2026-10-29
 

@@ -236,19 +236,6 @@
   gap: 0.5rem;
 }
 
-.gtv-zoom-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  width: fit-content;
-  padding: 0.1875rem;
-  box-sizing: border-box;
-  background: var(--gtv-surface, var(--color-surface, #ffffff));
-  border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 0.5rem;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
-}
-
 /* Top-centre: the top corners belong to the host (search + panel on the left, app chrome on the
    right), and the trail sits right above the wheel it describes. */
 .gtv-wheel-breadcrumb {
@@ -310,8 +297,7 @@
   }
 }
 
-.gtv-wheel-floating-controls--horizontal,
-.gtv-wheel-floating-controls--horizontal .gtv-zoom-controls {
+.gtv-wheel-floating-controls--horizontal {
   flex-direction: row;
 }
 
@@ -320,40 +306,6 @@
   .gtv-wheel-floating-controls--horizontal {
     flex-direction: column;
   }
-}
-
-.gtv-zoom-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 0.375rem;
-  background: transparent;
-  color: var(--gtv-text-muted, var(--color-text-muted, #52525b));
-  cursor: pointer;
-}
-
-.gtv-zoom-btn:hover {
-  background-color: var(--gtv-surface-muted, var(--color-surface-muted, #f4f4f5));
-  color: var(--gtv-text, var(--color-text, #18181b));
-}
-
-.gtv-zoom-btn--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.gtv-zoom-btn--disabled:hover {
-  background-color: transparent;
-  color: var(--gtv-text-muted, var(--color-text-muted, #52525b));
-}
-
-.gtv-zoom-btn--selected {
-  background-color: var(--gtv-surface-muted, var(--color-surface-muted, #f4f4f5));
-  color: var(--gtv-text, var(--color-text, #18181b));
 }
 
 /* Pinch and pan replace the buttons on a touch screen (see `showZoomControls`). */
@@ -1808,7 +1760,6 @@
 
 /* Finger-sized hit areas (44px, Apple HIG) on touch screens; mouse layouts keep their density. */
 @media (pointer: coarse) {
-  .gtv-zoom-btn,
   .gtv-info-panel-close,
   .gtv-info-panel-previous,
   .gtv-info-panel-zoom-in {
