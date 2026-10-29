@@ -121,10 +121,6 @@ export function WheelRadialCore({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -721,10 +717,6 @@ export function WheelRadialCore({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}

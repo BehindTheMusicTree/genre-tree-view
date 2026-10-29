@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING**: info panel edit mode. Removed props `editMode`, `onEditModeChange`, `renderTitleEditor` and `renderParentsEditor` (and the Edit/Done button). The title and Parent section are always the read-only ones.
+
+### Changed
+
+- **BREAKING**: `renderDangerZone` is rendered whenever it is set (unless `readOnly`), no longer only in edit mode.
+
 ## [5.3.0] - 2026-10-29
 
 ### Added
