@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   bench:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5.1.0
 
@@ -23,7 +23,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: CodSpeedHQ/action@v4
+      - uses: CodSpeedHQ/action@v5.6.0
         with:
           mode: simulation
           run: pnpm --filter @behindthemusictree/genre-tree-view bench
