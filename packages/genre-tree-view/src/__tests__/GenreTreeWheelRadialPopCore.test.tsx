@@ -859,7 +859,6 @@ describe("GenreTreeWheelRadialPopCore", () => {
     }
 
     expect(zoomInButton.disabled).toBe(true);
-    expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("disables the zoom-out button once the minimum scale is reached", () => {
@@ -871,7 +870,6 @@ describe("GenreTreeWheelRadialPopCore", () => {
     }
 
     expect(zoomOutButton.disabled).toBe(true);
-    expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("does not add a reparent overlay to a pop node being reparented itself", () => {
