@@ -16,7 +16,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { NODE_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -91,14 +91,6 @@ function nodeCoords(container: HTMLElement, id: string) {
   const group = container.querySelector(`#group-${id}`) as SVGGElement;
   const match = group.getAttribute("transform")!.match(/translate\(([^,]+),\s*([^)]+)\)/)!;
   return [Number(match[1]), Number(match[2])] as const;
-}
-
-// The center chip's rendered width is exactly `centerChipDiameter` (collapsed) or
-// `centerNodeDimensions.WIDTH` (expanded) — reading it off the DOM avoids reimplementing the
-// component's internal item-count-range sizing just to get the mainstream circle's radius.
-function centerChipRadius(container: HTMLElement) {
-  const chip = container.querySelector(".gtv-wheel-chip--center") as HTMLElement;
-  return parseFloat(chip.style.width) / 2;
 }
 
 describe("GenreTreeWheelRadialPopCore", () => {
@@ -206,6 +198,16 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(Math.abs(withRadius - withoutRadius)).toBeLessThanOrEqual(1);
   });
 
+  it("keeps wheel radius and node positions identical when only the size metric (itemCount) changes", () => {
+    const rescaled = NODES_WITH_POP.map((node, i) => ({ ...node, itemCount: node.itemCount * 7 + (i % 3) * 50 + 1 }));
+    const a = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container;
+    const b = render(<GenreTreeWheelRadialPopCore itemCountLabel="View count" nodes={rescaled} />).container;
+
+    expect(getWheelRadius(b)).toBe(getWheelRadius(a));
+    const popIds = NODES_WITH_POP.filter((node) => node.id.startsWith("a-pop")).map((node) => node.id);
+    for (const id of popIds) expect(nodeCoords(b, id)).toEqual(nodeCoords(a, id));
+  });
+
   it("grows the wheel's outer circle only by the overlap when a deep center subtree reaches past chip clearance", () => {
     const deepCenterNodes = [...NO_POP_NODES, ...centerChain(6)];
     const mainstreamRadius = mainstreamRadiusFor(deepCenterNodes);
@@ -225,7 +227,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ];
     const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={deepPopNodes} />);
 
-    const mainstreamRadius = centerChipRadius(container);
+    const mainstreamRadius = NODE_LAYOUT_SLOT_RADIUS;
     const popHierarchy = buildPopHierarchy(
       d3,
       deepPopNodes.filter((node) => node.id.startsWith("a-pop")),
@@ -323,7 +325,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     // chip clearance) left it stranded partway to the ring roots' circle instead of glued to it.
     const manyRootsNodes: GenreTreeNode[] = [
       ...NODES_WITH_POP,
-      ...Array.from({ length: 60 }, (_, i) => [
+      ...Array.from({ length: 150 }, (_, i) => [
         { id: `extra-root-${i}`, parentId: null, name: `Extra ${i}`, itemCount: 1000 } satisfies GenreTreeNode,
         {
           id: `extra-root-${i}-child`,
@@ -335,7 +337,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ];
     const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={manyRootsNodes} />);
 
-    const mainstreamRadius = centerChipRadius(container);
+    const mainstreamRadius = NODE_LAYOUT_SLOT_RADIUS;
     const popHierarchy = buildPopHierarchy(
       d3,
       manyRootsNodes.filter((node) => node.id.startsWith("a-pop")),

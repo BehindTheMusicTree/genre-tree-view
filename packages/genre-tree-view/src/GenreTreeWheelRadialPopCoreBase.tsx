@@ -70,6 +70,7 @@ import {
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
   REGION_LABEL_TARGET_PX,
+  NODE_LAYOUT_SLOT_RADIUS,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -287,6 +288,7 @@ export function WheelRadialPopCoreCore({
   }
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const dotRadiusMemoryRef = useRef(new Map<string, number>());
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
@@ -440,8 +442,8 @@ export function WheelRadialPopCoreCore({
             0,
             POP_TREE_DEPTH_RADIAL_SPACING,
           )
-        : centerChipDiameter / 2,
-    [centerSubtreeHierarchy, centerChipDiameter],
+        : NODE_LAYOUT_SLOT_RADIUS,
+    [centerSubtreeHierarchy],
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
@@ -480,8 +482,7 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
-          const chipWidth =
-            2 * calculateNodeDotRadius(rootItemCountById.get(group.root.id)!, wheelItemCountRange);
+          const chipWidth = 2 * NODE_LAYOUT_SLOT_RADIUS;
           return [
             group.root.id,
             {
@@ -490,7 +491,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   popRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               core: core.map((hierarchy) =>
@@ -498,7 +498,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -506,7 +505,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -686,7 +685,6 @@ export function WheelRadialPopCoreCore({
           coreRootCircleRadius,
           span,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -741,6 +739,7 @@ export function WheelRadialPopCoreCore({
           {
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
           },
         );
@@ -772,7 +771,6 @@ export function WheelRadialPopCoreCore({
           span,
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -861,6 +859,7 @@ export function WheelRadialPopCoreCore({
             isCoreSector: true,
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => {
               const fill = getGenreNodeStyle(index, node.id).fill;
               return undergroundIds.has(node.id) ? shadeSurface(fill, UNDERGROUND_DARKEN_RATIO) : fill;
@@ -930,6 +929,7 @@ export function WheelRadialPopCoreCore({
           skipRootNode: true,
           isMainstreamSector: isCenterMainstream,
           selectedNodeId: panel?.node.id ?? null,
+          dotRadiusMemory: dotRadiusMemoryRef.current,
           nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
         },
       );

@@ -11,7 +11,7 @@ import {
   ItemCountRange,
   MAX_NODE_WIDTH,
   NODE_DOT_LABEL_GAP,
-  NODE_DOT_MAX_RADIUS,
+  NODE_LAYOUT_SLOT_RADIUS,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   RADIAL_CORE_LINK_TINT_RATIO,
@@ -51,6 +51,7 @@ export const POP_SUBTREE_OUTER_MARGIN = 24;
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
 // regardless of which root it belongs to.
 const POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH = 1;
+const DOT_RADIUS_TRANSITION_MS = 250;
 
 /** The radius (px, from the wheel's true center) for a node at `depth` steps below the ring roots'
  * own circle (`coreRootCircleRadius`) — the single formula every radial depth (ring roots, their
@@ -149,7 +150,6 @@ export function computePopRadialLayout(
   coreRootCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
   depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
-  itemCountRange?: ItemCountRange,
 ): D3Node {
   return layoutWedge(
     d3Lib,
@@ -157,7 +157,6 @@ export function computePopRadialLayout(
     wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
     popRadiusOfDepth(coreRootCircleRadius, depthSpacing),
-    itemCountRange,
   );
 }
 
@@ -190,10 +189,8 @@ export function measureWedge(
   _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
-  itemCountRange?: ItemCountRange,
 ): number {
-  const dotRadius = (d: D3Node) =>
-    itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
+  const dotRadius = () => NODE_LAYOUT_SLOT_RADIUS;
   const offsetFromParent = new Map<D3Node, number>();
   const shiftLevel = (level: Contour[number], by: number) => ({
     left: { ...level.left, x: level.left.x + by },
@@ -201,7 +198,7 @@ export function measureWedge(
   });
 
   const pack = (node: D3Node): Contour => {
-    const own = { x: 0, dotRadius: dotRadius(node) };
+    const own = { x: 0, dotRadius: dotRadius() };
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
@@ -235,7 +232,7 @@ export function measureWedge(
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {
-    const inset = (dotRadius(d) + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
+    const inset = (dotRadius() + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
     min = Math.min(min, d.x! - inset);
     max = Math.max(max, d.x! + inset);
   });
@@ -276,10 +273,9 @@ export function layoutWedge(
   wedgeCenterAngleDegrees: number,
   wedgeSpanDegrees: number,
   radiusOfDepth: (depth: number) => number,
-  itemCountRange?: ItemCountRange,
   slack: WedgeSlack = "center",
 ): D3Node {
-  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
@@ -554,6 +550,9 @@ export function renderPopSubtree(
     // Per-node fill overriding the sector-wide one derived from rootColor, for a caller whose node
     // colors must not depend on which sector they happen to render in.
     nodeFillOf?: (node: GenreTreeNode) => string;
+    // Last rendered dot radius per node id, read to animate a size change (e.g. the size-metric
+    // toggle) from the old radius and overwritten with the new ones.
+    dotRadiusMemory?: Map<string, number>;
   } = {},
 ): void {
   const {
@@ -563,6 +562,7 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     selectedNodeId = null,
     nodeFillOf,
+    dotRadiusMemory,
   } = options;
   const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -706,10 +706,17 @@ export function renderPopSubtree(
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
+  const targetDotRadius = (d: D3Node) => calculateNodeDotRadius(d.data.itemCount, itemCountRange);
+  const animateDots =
+    dotRadiusMemory !== undefined &&
+    !(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  const startDotRadius = (d: D3Node) =>
+    (animateDots ? dotRadiusMemory?.get(d.data.id) : undefined) ?? targetDotRadius(d);
+
   nodes
     .append("circle")
     .attr("class", "gtv-node-dot")
-    .attr("r", (d) => calculateNodeDotRadius(d.data.itemCount, itemCountRange))
+    .attr("r", startDotRadius)
     .attr("fill", nodeFill)
     .attr("stroke", (d) =>
       isSelected(d)
@@ -723,7 +730,17 @@ export function renderPopSubtree(
         ? calculateSelectedNodeBorderWidth(calculateNodeDotRadius(d.data.itemCount, itemCountRange))
         : calculateNodeBorderWidth(d.data.itemCount, itemCountRange),
     )
-    .style("pointer-events", "none");
+    .style("pointer-events", "none")
+    .filter((d) => startDotRadius(d) !== targetDotRadius(d))
+    .transition()
+    .duration(DOT_RADIUS_TRANSITION_MS)
+    .ease(d3Lib.easeCubicOut)
+    .attr("r", targetDotRadius);
+
+  nodes.each((d) => dotRadiusMemory?.set(d.data.id, targetDotRadius(d)));
+
+  // Smallest dots painted last so a big dot never hides a small one it overlaps.
+  nodes.sort((a, b) => targetDotRadius(b) - targetDotRadius(a));
 
   nodes
     .append("text")
