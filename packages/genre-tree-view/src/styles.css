@@ -1234,6 +1234,12 @@
   box-shadow: 0 2px 600px rgba(255, 255, 255, 0.16);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-chip--circle {
+    transition: width 250ms ease-out, height 250ms ease-out;
+  }
+}
+
 /* Center "Mainstream Pop" chip: white fill (see centerNodeColor), so the default white label
    text and light border used for colored chips would be invisible / too subtle here. */
 .gtv-wheel-chip--center {

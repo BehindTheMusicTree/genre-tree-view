@@ -286,6 +286,7 @@ export function WheelRadialPopCoreCore({
   }
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const dotRadiusMemoryRef = useRef(new Map<string, number>());
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
@@ -736,6 +737,7 @@ export function WheelRadialPopCoreCore({
           {
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
           },
         );
@@ -822,6 +824,7 @@ export function WheelRadialPopCoreCore({
             isCoreSector: true,
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => {
               const fill = getGenreNodeStyle(index, node.id).fill;
               return undergroundIds.has(node.id) ? shadeSurface(fill, UNDERGROUND_DARKEN_RATIO) : fill;
@@ -891,6 +894,7 @@ export function WheelRadialPopCoreCore({
           skipRootNode: true,
           isMainstreamSector: isCenterMainstream,
           selectedNodeId: panel?.node.id ?? null,
+          dotRadiusMemory: dotRadiusMemoryRef.current,
           nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
         },
       );

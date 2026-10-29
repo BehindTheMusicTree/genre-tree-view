@@ -865,7 +865,10 @@ describe("renderPopSubtree dot + label nodes", () => {
 
     expect(svg.selectAll("circle.gtv-node-dot").size()).toBe(2);
     expect(svg.selectAll("text.gtv-node-label").size()).toBe(2);
-    expect(svg.select("text.gtv-node-label").text()).toBe("Pop Rock");
+    expect(svg.selectAll("text.gtv-node-label").nodes().map((n) => n.textContent)).toEqual([
+      "Arena Rock",
+      "Pop Rock",
+    ]);
   });
 
   it("fills each node from nodeFillOf instead of the sector-wide color when given", () => {

@@ -51,6 +51,7 @@ export const POP_SUBTREE_OUTER_MARGIN = 24;
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
 // regardless of which root it belongs to.
 const POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH = 1;
+const DOT_RADIUS_TRANSITION_MS = 250;
 
 /** The radius (px, from the wheel's true center) for a node at `depth` steps below the ring roots'
  * own circle (`coreRootCircleRadius`) — the single formula every radial depth (ring roots, their
@@ -507,6 +508,9 @@ export function renderPopSubtree(
     // Per-node fill overriding the sector-wide one derived from rootColor, for a caller whose node
     // colors must not depend on which sector they happen to render in.
     nodeFillOf?: (node: GenreTreeNode) => string;
+    // Last rendered dot radius per node id, read to animate a size change (e.g. the size-metric
+    // toggle) from the old radius and overwritten with the new ones.
+    dotRadiusMemory?: Map<string, number>;
   } = {},
 ): void {
   const {
@@ -516,6 +520,7 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     selectedNodeId = null,
     nodeFillOf,
+    dotRadiusMemory,
   } = options;
   const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -659,10 +664,17 @@ export function renderPopSubtree(
     .attr("fill", "transparent")
     .attr("pointer-events", "all");
 
+  const targetDotRadius = (d: D3Node) => calculateNodeDotRadius(d.data.itemCount, itemCountRange);
+  const animateDots =
+    dotRadiusMemory !== undefined &&
+    !(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  const startDotRadius = (d: D3Node) =>
+    (animateDots ? dotRadiusMemory?.get(d.data.id) : undefined) ?? targetDotRadius(d);
+
   nodes
     .append("circle")
     .attr("class", "gtv-node-dot")
-    .attr("r", (d) => calculateNodeDotRadius(d.data.itemCount, itemCountRange))
+    .attr("r", startDotRadius)
     .attr("fill", nodeFill)
     .attr("stroke", (d) =>
       isSelected(d)
@@ -676,7 +688,17 @@ export function renderPopSubtree(
         ? calculateSelectedNodeBorderWidth(calculateNodeDotRadius(d.data.itemCount, itemCountRange))
         : calculateNodeBorderWidth(d.data.itemCount, itemCountRange),
     )
-    .style("pointer-events", "none");
+    .style("pointer-events", "none")
+    .filter((d) => startDotRadius(d) !== targetDotRadius(d))
+    .transition()
+    .duration(DOT_RADIUS_TRANSITION_MS)
+    .ease(d3Lib.easeCubicOut)
+    .attr("r", targetDotRadius);
+
+  nodes.each((d) => dotRadiusMemory?.set(d.data.id, targetDotRadius(d)));
+
+  // Smallest dots painted last so a big dot never hides a small one it overlaps.
+  nodes.sort((a, b) => targetDotRadius(b) - targetDotRadius(a));
 
   nodes
     .append("text")

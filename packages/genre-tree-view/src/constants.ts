@@ -356,7 +356,9 @@ export const NODE_LAYOUT_SLOT_RADIUS = 8;
 /** Radius of a radial-wheel subgenre dot, on the same log scale as its label's font size
  * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
-  return NODE_DOT_MIN_RADIUS + logarithmicPosition(itemCount, range) * (NODE_DOT_MAX_RADIUS - NODE_DOT_MIN_RADIUS);
+  const minArea = NODE_DOT_MIN_RADIUS ** 2;
+  const maxArea = NODE_DOT_MAX_RADIUS ** 2;
+  return Math.sqrt(minArea + logarithmicPosition(itemCount, range) * (maxArea - minArea));
 }
 
 // GenreTreeWheel tokens. Chips are spread evenly around the full circle (see getChipAngle in
