@@ -346,7 +346,7 @@ export function calculateRootLabelFontSize(layoutFontSize: number, zoomScale: nu
 }
 
 export const NODE_DOT_MIN_RADIUS = 3;
-export const NODE_DOT_MAX_RADIUS = 50;
+export const NODE_DOT_MAX_RADIUS = 24;
 export const NODE_DOT_LABEL_GAP = 6;
 // Half-width every node reserves on its ring when the radial wheels measure a subtree's angular
 // width: identical for all nodes, so layout depends on tree topology only and never on the size

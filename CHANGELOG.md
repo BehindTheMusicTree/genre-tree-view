@@ -7,7 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `GenreTreeWheelRadialPopCore` and `GenreTreeWheelRadial`: wheel radius, root sectors and node positions no longer change with the size metric (`itemCount`). Layout is measured from tree topology with a fixed per-node slot (`NODE_LAYOUT_SLOT_RADIUS`); `itemCount` only drives dot size, fonts and label ranking.
+- `GenreTreeWheelRadialPopCore` and `GenreTreeWheelRadial`: wheel radius, root sectors and node positions no longer change with the size metric (`itemCount`). Layout is measured from tree topology with a fixed per-node slot (`NODE_LAYOUT_SLOT_RADIUS`); `itemCount` only drives dot size, fonts and label ranking. Max dot radius lowered from 50 to 24 px so large dots no longer collide on the now size-independent ring.
 
 ## [6.1.0] - 2026-10-29
 
