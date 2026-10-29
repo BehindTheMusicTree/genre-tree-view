@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
+
 jobs:
   bench:
     runs-on: ubuntu-24.04
