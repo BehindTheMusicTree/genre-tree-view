@@ -394,6 +394,24 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector(".gtv-wheel-chip--center.gtv-wheel-chip--circle")).toBeTruthy();
   });
 
+  it("draws an underground-scene node and its descendants darker than their commercial sibling, at the same depth", () => {
+    const nodes: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-edm", parentId: "root-a", name: "EDM", itemCount: 1, scene: "commercial" },
+      { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
+      { id: "a-edm-child", parentId: "a-edm", name: "House", itemCount: 1 },
+      { id: "a-ug-child", parentId: "a-ug", name: "Dub", itemCount: 1 },
+    ];
+    const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={nodes} />);
+    const dotFill = (id: string) => container.querySelector(`#group-${id} .gtv-node-dot`)!.getAttribute("fill");
+    const radius = (id: string) => Math.hypot(...nodeCoords(container, id));
+
+    expect(dotFill("a-ug")).not.toBe(dotFill("a-edm"));
+    expect(dotFill("a-ug-child")).not.toBe(dotFill("a-edm-child"));
+    expect(radius("a-ug")).toBeCloseTo(radius("a-edm"));
+    expect(container.querySelector(".gtv-wheel-scene-band")).toBeNull();
+  });
+
   it("develops every root's core branch and renders its pop branch inside the wheel's own circle", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />);
 

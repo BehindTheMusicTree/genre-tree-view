@@ -2,7 +2,6 @@ import * as d3 from "d3";
 
 import { GenreTreeNode } from "./types";
 import { ItemCountRange, MAX_NODE_WIDTH } from "./constants";
-import { SceneStack } from "./scene-stack";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { coreRadiusOfDepth, getRadialDepthRadius, layoutWedge } from "./pop-core-radial-layout";
 
@@ -47,7 +46,6 @@ export function computeCoreRadialLayout(
   coreRootCircleRadius: number,
   depthSpacing: number,
   itemCountRange?: ItemCountRange,
-  sceneStack?: SceneStack | null,
 ): D3Node {
   return layoutWedge(
     d3Lib,
@@ -56,7 +54,6 @@ export function computeCoreRadialLayout(
     wedgeSpanDegrees,
     coreRadiusOfDepth(coreRootCircleRadius, depthSpacing),
     itemCountRange,
-    sceneStack,
   );
 }
 
@@ -69,13 +66,9 @@ export function calculateCoreSubtreeRadialExtent(
   hierarchy: D3Node,
   depthSpacing: number,
   coreRootCircleRadius = 0,
-  sceneStack?: SceneStack | null,
 ): number {
-  const height = sceneStack
-    ? Math.max(...hierarchy.descendants().map((d) => sceneStack.ringDepthOf(d)))
-    : hierarchy.height;
   return (
-    getRadialDepthRadius(height + 1, coreRootCircleRadius, depthSpacing) +
+    getRadialDepthRadius(hierarchy.height + 1, coreRootCircleRadius, depthSpacing) +
     MAX_NODE_WIDTH / 2 +
     CORE_SUBTREE_OUTER_MARGIN
   );

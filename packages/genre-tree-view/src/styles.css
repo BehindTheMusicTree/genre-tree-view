@@ -59,32 +59,6 @@
   opacity: 0.35;
 }
 
-/* Dashed, dimmed link that jumps over the commercial rings of a scene split to reach the
-   underground subtree (see scene-stack.ts). */
-.gtv-link.gtv-wheel-link--scene-cross {
-  stroke-dasharray: 6 5;
-  opacity: 0.45;
-}
-
-.gtv-wheel-scene-band--commercial {
-  fill: rgba(255, 255, 255, 0.35);
-}
-
-.gtv-wheel-scene-band--underground {
-  fill: rgba(0, 0, 0, 0.16);
-}
-
-.gtv-wheel-scene-divider {
-  fill: none;
-  stroke: var(--gtv-border, var(--color-border, #e4e4e7));
-  stroke-width: 1.5px;
-  pointer-events: none;
-}
-
-.gtv-wheel-scene-band {
-  pointer-events: none;
-}
-
 .gtv-icon {
   display: block;
 }
