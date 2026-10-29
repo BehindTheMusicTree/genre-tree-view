@@ -814,6 +814,20 @@ describe("GenreTreeWheelRadialPopCore", () => {
     }
   });
 
+  it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {
+    const { container } = render(
+      <GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} floatingControlsLeading={<span data-testid="leading" />} />,
+    );
+    const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;
+    const leading = controls.querySelector(".gtv-floating-controls-leading") as HTMLElement;
+    expect(leading.querySelector("[data-testid='leading']")).not.toBeNull();
+    expect(leading.nextElementSibling?.classList.contains("gtv-zoom-controls")).toBe(true);
+    cleanup();
+    expect(
+      render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container.querySelector(".gtv-floating-controls-leading"),
+    ).toBeNull();
+  });
+
   it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
     const selector = ".gtv-wheel-floating-controls--horizontal";
     expect(render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container.querySelector(selector)).toBeNull();

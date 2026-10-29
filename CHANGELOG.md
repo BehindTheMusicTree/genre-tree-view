@@ -9,6 +9,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Pop-core wheel: the background slice behind an underground subtree is drawn darker, out to the wheel's edge.
 
+## [5.3.0] - 2026-10-29
+
+### Added
+
+- `floatingControlsLeading` prop: host content rendered in the floating controls box, beside the zoom buttons (above them when `controlsOrientation` is vertical, and in containers under 768px). Not available on the outline.
+
 ## [5.2.0] - 2026-10-29
 
 ### Changed

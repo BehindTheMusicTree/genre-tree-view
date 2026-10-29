@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
-import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
 import { GenreTreeProps } from "./types";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
@@ -20,6 +19,7 @@ import {
   tintSurface,
   ZOOM_FOCUS_SCALE,
 } from "./constants";
+import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
@@ -74,6 +74,7 @@ export function GenreTree({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  floatingControlsLeading,
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -402,55 +403,12 @@ export function GenreTree({
         />
       )}
       {overlayPanel && <OverlayPanel {...overlayPanel} />}
-      <div
-        className={[
-          "gtv-wheel-floating-controls",
-          controlsOrientation === "horizontal" && "gtv-wheel-floating-controls--horizontal",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <div className="gtv-zoom-controls">
-          <button
-            type="button"
-            className={[
-              "gtv-zoom-btn",
-              !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            disabled={!panZoom.canZoomIn}
-            onClick={panZoom.zoomIn}
-            aria-label="Zoom in"
-          >
-            <MdZoomIn className="gtv-icon" size={18} />
-          </button>
-          <button
-            type="button"
-            className={[
-              "gtv-zoom-btn",
-              !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            disabled={!panZoom.canZoomOut}
-            onClick={panZoom.zoomOut}
-            aria-label="Zoom out"
-          >
-            <MdZoomOut className="gtv-icon" size={18} />
-          </button>
-          <button
-            type="button"
-            className="gtv-zoom-btn"
-            onClick={() =>
-              panZoom.fitToFrame(queryTreeContentElements(svgRef.current))
-            }
-            aria-label="Fit to frame"
-          >
-            <MdFitScreen className="gtv-icon" size={18} />
-          </button>
-        </div>
-      </div>
+      <FloatingControls
+        panZoom={panZoom}
+        orientation={controlsOrientation}
+        leading={floatingControlsLeading}
+        onFit={() => panZoom.fitToFrame(queryTreeContentElements(svgRef.current))}
+      />
     </div>
   );
 }

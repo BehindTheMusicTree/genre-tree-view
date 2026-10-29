@@ -166,6 +166,9 @@ export interface GenreTreeProps {
   /** Stacks the floating zoom/pop/fit controls vertically ("vertical", the default) or lays them
    * out in a row ("horizontal"). */
   controlsOrientation?: ControlsOrientation;
+  /** Host content rendered in the floating controls box, beside the zoom buttons ("horizontal")
+   * or above them ("vertical"); stacked above them in narrow containers. */
+  floatingControlsLeading?: ReactNode;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;
