@@ -21,6 +21,20 @@ describe("GenreTree", () => {
     expect(container.querySelectorAll("path.gtv-link").length).toBe(2);
   });
 
+  it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {
+    const { container } = render(
+      <GenreTree itemCountLabel="Track count" nodes={TREE} floatingControlsLeading={<span data-testid="leading" />} />,
+    );
+    const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;
+    const leading = controls.querySelector(".gtv-floating-controls-leading") as HTMLElement;
+    expect(leading.querySelector("[data-testid='leading']")).not.toBeNull();
+    expect(leading.nextElementSibling?.classList.contains("gtv-zoom-controls")).toBe(true);
+    cleanup();
+    expect(
+      render(<GenreTree itemCountLabel="Track count" nodes={TREE} />).container.querySelector(".gtv-floating-controls-leading"),
+    ).toBeNull();
+  });
+
   it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
     const selector = ".gtv-wheel-floating-controls--horizontal";
     expect(render(<GenreTree itemCountLabel="Track count" nodes={TREE} />).container.querySelector(selector)).toBeNull();

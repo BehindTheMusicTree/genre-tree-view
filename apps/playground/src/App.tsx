@@ -13,7 +13,59 @@ import {
   type GenreTreeViewport,
 } from "@behindthemusictree/genre-tree-view";
 import { version as genreTreeViewVersion } from "@behindthemusictree/genre-tree-view/package.json";
+import { MusicNoteIcon, VisibilityIcon } from "./icons";
 import realGenreTreeFixture from "./fixtures/genre-tree.json";
+
+type SizeMetric = "songs" | "views";
+
+const SIZE_METRICS: { id: SizeMetric; label: string; tip: string; Icon: typeof MusicNoteIcon }[] = [
+  { id: "songs", label: "Size by songs", tip: "Node size by song count", Icon: MusicNoteIcon },
+  { id: "views", label: "Size by views", tip: "Node size by song views", Icon: VisibilityIcon },
+];
+
+function SizeMetricToggle({ value, onChange }: { value: SizeMetric; onChange: (next: SizeMetric) => void }) {
+  return (
+    <div
+      role="group"
+      aria-label="Size nodes by"
+      style={{ display: "flex", gap: 2, padding: 3, background: "#fff", border: "1px solid #e4e4e7", borderRadius: 8 }}
+    >
+      {SIZE_METRICS.map(({ id, label, tip, Icon }) => (
+        <button
+          key={id}
+          type="button"
+          aria-label={label}
+          aria-pressed={value === id}
+          title={tip}
+          onClick={() => onChange(id)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            border: 0,
+            cursor: "pointer",
+            background: value === id ? "#18181b" : "transparent",
+            color: value === id ? "#fff" : "#18181b",
+          }}
+        >
+          <Icon size={18} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Fake views: each node's subtree total scaled by a deterministic per-node factor so the size order differs from songs. */
+function withDemoViews(nodes: GenreTreeNode[]): GenreTreeNode[] {
+  return nodes.map((n) => {
+    let hash = 0;
+    for (const char of n.id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+    return { ...n, itemCount: n.itemCount * (1 + (hash % 60)) * 1000 };
+  });
+}
 
 const MIN_DEMO_ITEM_COUNT = 50;
 const MAX_DEMO_ITEM_COUNT = 10000;
@@ -592,6 +644,7 @@ export function App() {
   const [playState, setPlayState] = useState<GenreTreePlayState>("paused");
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const [sizeMetric, setSizeMetric] = useState<SizeMetric>("songs");
   const [showToolbar, setShowToolbar] = useState(false);
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
@@ -617,6 +670,16 @@ export function App() {
     }
     return wheelNodes.filter((node) => !excludedIds.has(node.id));
   }, [wheelNodes]);
+
+  const metricWheelNodes = useMemo(() => (sizeMetric === "views" ? withDemoViews(wheelNodes) : wheelNodes), [sizeMetric, wheelNodes]);
+  const metricPlainRadialNodes = useMemo(
+    () => (sizeMetric === "views" ? withDemoViews(plainRadialWheelNodes) : plainRadialWheelNodes),
+    [sizeMetric, plainRadialWheelNodes],
+  );
+  const metricPopCoreNodes = useMemo(
+    () => (sizeMetric === "views" ? withDemoViews(popCoreNodes) : popCoreNodes),
+    [sizeMetric, popCoreNodes],
+  );
 
   const playCallbacks = {
     playingNodeId,
@@ -706,8 +769,10 @@ export function App() {
           }}
         >
           <GenreTreeWheel
+            controlsOrientation="horizontal"
+            floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             itemCountLabel="Track count"
-            nodes={wheelNodes}
+            nodes={metricWheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
@@ -729,7 +794,7 @@ export function App() {
         >
           <GenreTreeWheelRight
             itemCountLabel="Track count"
-            nodes={wheelNodes}
+            nodes={metricWheelNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
@@ -750,8 +815,10 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadial
+            controlsOrientation="horizontal"
+            floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             itemCountLabel="Track count"
-            nodes={plainRadialWheelNodes}
+            nodes={metricPlainRadialNodes}
             {...wheelCallbacks}
             showToolbar={showToolbar}
             centerLabel="TheMusicTree"
@@ -771,8 +838,10 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadialPopCore
+            controlsOrientation="horizontal"
+            floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             itemCountLabel="Track count"
-            nodes={popCoreNodes}
+            nodes={metricPopCoreNodes}
             {...popCoreCallbacks}
             showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
