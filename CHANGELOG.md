@@ -5,6 +5,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-10-29
+
+### Added
+
+- Pop-core wheel: the background slice behind an underground subtree is drawn darker, from the pop-core circle out to the wheel's edge.
+
+### Changed
+
+- CI: the bench job runs on a pinned `ubuntu-24.04` runner with `CodSpeedHQ/action` pinned to 5.6.0 so base and head compare like for like, and the core layout now has its own benchmark.
+- Pop-core wheel: core subtrees spread to their sector's edges; spare angle goes between sub-branches instead of an empty gutter at the sector border.
+- `GenreTreeWheelRadialPopCore`: dot radius now scales with area (not diameter) of the size metric, dots animate to their new size when the metric changes (skipped under `prefers-reduced-motion`), and smaller dots are painted above larger ones so overlaps never hide them.
+
+### Fixed
+
+- `GenreTreeWheelRadialPopCore` and `GenreTreeWheelRadial`: wheel radius, root sectors and node positions no longer change with the size metric (`itemCount`). Layout is measured from tree topology with a fixed per-node slot (`NODE_LAYOUT_SLOT_RADIUS`); `itemCount` only drives dot size, fonts and label ranking. Max dot radius lowered from 50 to 24 px so large dots no longer collide on the now size-independent ring.
+
 ## [6.1.0] - 2026-10-29
 
 ### Added

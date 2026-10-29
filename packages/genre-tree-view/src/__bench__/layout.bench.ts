@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { bench, describe } from "vitest";
-import { getItemCountRange } from "../constants";
+import { getItemCountRange, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { buildCoreHierarchy, computeCoreRadialLayout } from "../core-radial-layout";
 import {
   buildPopHierarchy,
   computePopRadialLayout,
@@ -24,6 +25,10 @@ const collectSubtree = (root: GenreTreeNode): GenreTreeNode[] => [
   ...(childrenByParent.get(root.id) ?? []).flatMap(collectSubtree),
 ];
 const largestSubtree = (childrenByParent.get(null) ?? [])
+  .map(collectSubtree)
+  .reduce((a, b) => (b.length > a.length ? b : a));
+
+const largestCoreSubtree = (childrenByParent.get(largestSubtree[0].id) ?? [])
   .map(collectSubtree)
   .reduce((a, b) => (b.length > a.length ? b : a));
 
@@ -55,5 +60,11 @@ describe(`pop-core on the largest fixture root (${largestSubtree.length} nodes)`
   });
   bench("hideCollidingLabels at zoom 3", () => {
     hideCollidingLabels(d3, svg, range, 3);
+  });
+});
+
+describe(`core on the largest fixture root's largest child (${largestCoreSubtree.length} nodes)`, () => {
+  bench("buildCoreHierarchy + computeCoreRadialLayout", () => {
+    computeCoreRadialLayout(d3, buildCoreHierarchy(d3, largestCoreSubtree), 0, 200, 1000, POP_TREE_DEPTH_RADIAL_SPACING);
   });
 });

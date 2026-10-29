@@ -368,7 +368,6 @@ export function WheelRadialCore({
           span,
           wheelRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut

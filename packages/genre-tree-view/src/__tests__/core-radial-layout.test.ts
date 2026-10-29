@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { describe, expect, it } from "vitest";
 import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "../core-radial-layout";
 import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH } from "../constants";
+import { coreRadiusOfDepth, layoutWedge } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
 
 const rockCore: GenreTreeNode[] = [
@@ -83,6 +84,37 @@ describe("computeCoreRadialLayout", () => {
     expect(node.x!).toBeCloseTo(0, 5);
     // wedge centered on 180deg (bottom): projects to (0, +radius).
     expect(node.y!).toBeCloseTo(coreRootCircleRadius + POP_TREE_DEPTH_RADIAL_SPACING, 5);
+  });
+});
+
+describe("computeCoreRadialLayout slack", () => {
+  const leafAngles = (root: d3.HierarchyNode<GenreTreeNode>, centerDeg: number) =>
+    root
+      .leaves()
+      .map((d) => centerDeg + ((((Math.atan2(d.x!, -d.y!) * 180) / Math.PI - centerDeg + 540) % 360) - 180));
+
+  it("spreads spare wedge angle between the branching node's children, reaching both wedge edges", () => {
+    const wedgeSpanDeg = 200;
+    const spread = leafAngles(
+      computeCoreRadialLayout(d3, buildCoreHierarchy(d3, rockCore.slice(1)), 90, wedgeSpanDeg, 500, POP_TREE_DEPTH_RADIAL_SPACING),
+      90,
+    );
+    const centered = leafAngles(
+      layoutWedge(d3, buildCoreHierarchy(d3, rockCore.slice(1)), 90, wedgeSpanDeg, coreRadiusOfDepth(500, POP_TREE_DEPTH_RADIAL_SPACING)),
+      90,
+    );
+
+    const edgeGap = (angles: number[]) => Math.min(...angles) - (90 - wedgeSpanDeg / 2);
+    expect(edgeGap(spread)).toBeLessThan(edgeGap(centered) / 2);
+    expect(Math.max(...spread) - Math.min(...spread)).toBeGreaterThan(Math.max(...centered) - Math.min(...centered));
+    expect(Math.max(...spread)).toBeLessThanOrEqual(90 + wedgeSpanDeg / 2 + 1e-6);
+  });
+
+  it("keeps the branching node centered over its first and last child", () => {
+    const laidOut = computeCoreRadialLayout(d3, buildCoreHierarchy(d3, rockCore.slice(1)), 0, 200, 500, POP_TREE_DEPTH_RADIAL_SPACING);
+    const angleOf = (d: d3.HierarchyNode<GenreTreeNode>) => Math.atan2(d.x!, -d.y!);
+    const [first, last] = [laidOut.children![0], laidOut.children![1]];
+    expect(angleOf(laidOut)).toBeCloseTo((angleOf(first) + angleOf(last)) / 2, 6);
   });
 });
 

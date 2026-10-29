@@ -70,12 +70,15 @@ import {
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
   REGION_LABEL_TARGET_PX,
+  NODE_LAYOUT_SLOT_RADIUS,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
   ZOOM_FOCUS_SCALE,
   shadeSurface,
   UNDERGROUND_DARKEN_RATIO,
+  UNDERGROUND_SECTOR_FILL_OPACITY,
+  SCENE_SECTOR_OUTER_RADIUS,
 } from "./constants";
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
@@ -285,6 +288,7 @@ export function WheelRadialPopCoreCore({
   }
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const dotRadiusMemoryRef = useRef(new Map<string, number>());
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
@@ -438,8 +442,8 @@ export function WheelRadialPopCoreCore({
             0,
             POP_TREE_DEPTH_RADIAL_SPACING,
           )
-        : centerChipDiameter / 2,
-    [centerSubtreeHierarchy, centerChipDiameter],
+        : NODE_LAYOUT_SLOT_RADIUS,
+    [centerSubtreeHierarchy],
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
@@ -478,8 +482,7 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
-          const chipWidth =
-            2 * calculateNodeDotRadius(rootItemCountById.get(group.root.id)!, wheelItemCountRange);
+          const chipWidth = 2 * NODE_LAYOUT_SLOT_RADIUS;
           return [
             group.root.id,
             {
@@ -488,7 +491,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   popRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               core: core.map((hierarchy) =>
@@ -496,7 +498,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -504,7 +505,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -684,7 +685,6 @@ export function WheelRadialPopCoreCore({
           coreRootCircleRadius,
           span,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -739,6 +739,7 @@ export function WheelRadialPopCoreCore({
           {
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
           },
         );
@@ -770,7 +771,6 @@ export function WheelRadialPopCoreCore({
           span,
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -779,6 +779,39 @@ export function WheelRadialPopCoreCore({
               ?.descendants()
               .map((d) => d.data.id) ?? [])
           : [];
+
+        const angleOf = (d: d3.HierarchyNode<GenreTreeNode>) => {
+          const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+          return angle + ((((deg - angle + 540) % 360) + 360) % 360) - 180;
+        };
+        const subtreeRange = (d: d3.HierarchyNode<GenreTreeNode>) => {
+          const angles = d.descendants().map(angleOf);
+          return { min: Math.min(...angles), max: Math.max(...angles) };
+        };
+        laidOut
+          .descendants()
+          .filter((d) => d.data.scene === "underground" && !d.ancestors().slice(1).some((a) => a.data.scene === "underground"))
+          .forEach((ug) => {
+            const mine = subtreeRange(ug);
+            const siblings = ug.parent?.children ?? [];
+            const at = siblings.indexOf(ug);
+            const prev = at > 0 ? siblings[at - 1] : undefined;
+            const next = at >= 0 ? siblings[at + 1] : undefined;
+            const startDeg = prev ? (subtreeRange(prev).max + mine.min) / 2 : angle - span / 2;
+            const endDeg = next ? (mine.max + subtreeRange(next).min) / 2 : angle + span / 2;
+            const arcPath = d3.arc()({
+              innerRadius: coreRootCircleRadius,
+              outerRadius: SCENE_SECTOR_OUTER_RADIUS,
+              startAngle: (startDeg * Math.PI) / 180,
+              endAngle: (endDeg * Math.PI) / 180,
+            });
+            sectorGroup
+              .append("path")
+              .attr("class", "gtv-wheel-scene-sector")
+              .attr("d", arcPath)
+              .attr("fill", shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO))
+              .attr("fill-opacity", UNDERGROUND_SECTOR_FILL_OPACITY);
+          });
 
         const branchGroup = sectorGroup
           .append("g")
@@ -826,6 +859,7 @@ export function WheelRadialPopCoreCore({
             isCoreSector: true,
             rootLinkOrigin,
             selectedNodeId: panel?.node.id ?? null,
+            dotRadiusMemory: dotRadiusMemoryRef.current,
             nodeFillOf: (node) => {
               const fill = getGenreNodeStyle(index, node.id).fill;
               return undergroundIds.has(node.id) ? shadeSurface(fill, UNDERGROUND_DARKEN_RATIO) : fill;
@@ -895,6 +929,7 @@ export function WheelRadialPopCoreCore({
           skipRootNode: true,
           isMainstreamSector: isCenterMainstream,
           selectedNodeId: panel?.node.id ?? null,
+          dotRadiusMemory: dotRadiusMemoryRef.current,
           nodeFillOf: (node) => getGenreNodeStyle(index, node.id).fill,
         },
       );

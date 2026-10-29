@@ -57,7 +57,10 @@ pnpm workspace with two members:
     interactive tree fanned out *inside* the wheel's own circle (in the same angular sector, one
     `.gtv-wheel-pop-branch` per child) via `pop-core-radial-layout.ts`'s pop layout. A root's wedge
     is subdivided across its own branches proportionally to each branch's subtree size
-    (`subdivideWedge` in `radial-wheel-geometry.ts`). The circle
+    (`subdivideWedge` in `radial-wheel-geometry.ts`). A core branch's layout is stretched by at most
+    `MAX_WEDGE_STRETCH`; the angle left over goes into even gaps between the first branching node's
+    children (`layoutWedge`'s `"between-children"` slack), so the subtree reaches both edges of its
+    branch's wedge instead of leaving an empty gutter at the sector border. The circle
     grows past its normal chip-clearance floor to fit the largest developed core or pop subtree,
     whichever reaches deepest. Unlike the other three renderers (which take an optional `centerLabel`
     string), its wheel's pivot point renders a full interactive chip — the same
@@ -154,7 +157,8 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
-  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); layout is unaffected.
+  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); a darker background slice (`gtv-wheel-scene-sector`, `SCENE_SECTOR_OUTER_RADIUS`) runs behind the subtree out to the wheel's edge; layout is unaffected.
+- **Layout vs. size metric**: radial layouts (wedge measurement, ring radius, root sectors, positions) depend on tree topology only, every node reserving the fixed `NODE_LAYOUT_SLOT_RADIUS`. `itemCount` drives rendering only (dot radius, fonts, border widths, label rank), so switching the size metric never moves nodes.
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
   outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.
