@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-10-29
+
+### Changed
+
+- Pop-core wheel: `scene` children are drawn as ordinary siblings again (no radial stacking, bands or one-of-each requirement); underground subtrees are drawn darker.
+
 ## [5.1.0] - 2026-10-29
 
 ### Added
