@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -42,6 +41,7 @@ import {
   solveRingRadius,
   subdivideWedge,
 } from "./radial-wheel-geometry";
+import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
@@ -186,6 +186,7 @@ export function WheelRadialPopCoreCore({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  floatingControlsLeading,
   allowWheelRotation = true,
   selectedNodeId,
   focusNodeId: requestedFocusNodeId = null,
@@ -1461,58 +1462,15 @@ export function WheelRadialPopCoreCore({
         />
       )}
 
-      <div
-        className={[
-          "gtv-wheel-floating-controls",
-          controlsOrientation === "horizontal" && "gtv-wheel-floating-controls--horizontal",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <div className="gtv-zoom-controls">
-          <button
-            type="button"
-            className={[
-              "gtv-zoom-btn",
-              !panZoom.canZoomIn && "gtv-zoom-btn--disabled",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            disabled={!panZoom.canZoomIn}
-            onClick={panZoom.zoomIn}
-            aria-label="Zoom in"
-          >
-            <MdZoomIn className="gtv-icon" size={18} />
-          </button>
-          <button
-            type="button"
-            className={[
-              "gtv-zoom-btn",
-              !panZoom.canZoomOut && "gtv-zoom-btn--disabled",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            disabled={!panZoom.canZoomOut}
-            onClick={panZoom.zoomOut}
-            aria-label="Zoom out"
-          >
-            <MdZoomOut className="gtv-icon" size={18} />
-          </button>
-          <button
-            type="button"
-            className="gtv-zoom-btn"
-            onClick={() =>
-              panZoom.fitToFrame([
+      <FloatingControls
+        panZoom={panZoom}
+        orientation={controlsOrientation}
+        leading={floatingControlsLeading}
+        onFit={() => panZoom.fitToFrame([
                 wheelCircleRef.current,
                 ...queryTreeContentElements(popSvgRef.current),
-              ])
-            }
-            aria-label="Fit to frame"
-          >
-            <MdFitScreen className="gtv-icon" size={18} />
-          </button>
-        </div>
-      </div>
+              ])}
+      />
     </div>
   );
 }

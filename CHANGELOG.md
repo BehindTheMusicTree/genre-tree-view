@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `floatingControlsLeading` prop: host content rendered in the floating controls box, beside the zoom buttons (above them when `controlsOrientation` is vertical, and in containers under 768px). Not available on the outline.
+
 ## [5.2.0] - 2026-10-29
 
 ### Changed
