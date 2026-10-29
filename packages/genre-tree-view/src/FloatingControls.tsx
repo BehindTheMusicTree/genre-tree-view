@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
 
+import { BusyIndicator } from "./BusyIndicator";
 import type { ControlsOrientation } from "./types";
 import type { UsePanZoomResult } from "./use-pan-zoom";
 
@@ -10,10 +11,11 @@ interface FloatingControlsProps {
   orientation: ControlsOrientation;
   /** Host content laid out beside (horizontal) or above (vertical) the zoom buttons. */
   leading?: ReactNode;
+  busy?: boolean;
 }
 
 /** The bottom-right zoom in / zoom out / fit-to-frame buttons, shared by every tree layout. */
-export function FloatingControls({ panZoom, onFit, orientation, leading }: FloatingControlsProps) {
+export function FloatingControls({ panZoom, onFit, orientation, leading, busy }: FloatingControlsProps) {
   return (
     <div
       className={[
@@ -23,6 +25,7 @@ export function FloatingControls({ panZoom, onFit, orientation, leading }: Float
         .filter(Boolean)
         .join(" ")}
     >
+      {busy && <BusyIndicator />}
       {leading && <div className="gtv-floating-controls-leading">{leading}</div>}
       <div className="gtv-zoom-controls">
         <button

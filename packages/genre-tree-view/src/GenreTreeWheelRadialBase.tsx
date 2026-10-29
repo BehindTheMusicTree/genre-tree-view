@@ -132,6 +132,7 @@ export function WheelRadialCore({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
   selectedNodeId,
 }: WheelRadialCoreProps) {
   const index = useTreeIndex(nodes);
@@ -517,6 +518,7 @@ export function WheelRadialCore({
   return (
     <div
       ref={viewportRef}
+      aria-busy={busy}
       className={[
         "gtv-wheel-container",
         "gtv-wheel-container--radial",
@@ -745,6 +747,7 @@ export function WheelRadialCore({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}
       />
     </div>

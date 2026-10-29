@@ -169,6 +169,9 @@ export interface GenreTreeProps {
   /** Host content rendered in the floating controls box, beside the zoom buttons ("horizontal")
    * or above them ("vertical"); stacked above them in narrow containers. */
   floatingControlsLeading?: ReactNode;
+  /** Shows a small spinner beside the zoom buttons (after a short delay, so fast operations don't
+   * flash) and marks the tree `aria-busy`. Use it while the host is updating the tree in place. */
+  busy?: boolean;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;

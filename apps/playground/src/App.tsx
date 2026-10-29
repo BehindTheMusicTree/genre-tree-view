@@ -646,6 +646,7 @@ export function App() {
   const [log, setLog] = useState<string[]>([]);
   const [sizeMetric, setSizeMetric] = useState<SizeMetric>("songs");
   const [showToolbar, setShowToolbar] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
@@ -728,6 +729,10 @@ export function App() {
         showToolbar
       </label>
 
+      <label style={{ display: "block", marginBottom: 12 }}>
+        <input type="checkbox" checked={busy} onChange={(e) => setBusy(e.target.checked)} /> busy
+      </label>
+
       {(activeTab === "wheel" || activeTab === "wheel-right" || activeTab === "wheel-radial-pop-core") && (
         <label style={{ display: "block", marginBottom: 12 }}>
           <input
@@ -771,6 +776,7 @@ export function App() {
           <GenreTreeWheel
             controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
+            busy={busy}
             itemCountLabel="Track count"
             nodes={metricWheelNodes}
             {...wheelCallbacks}
@@ -793,6 +799,7 @@ export function App() {
           }}
         >
           <GenreTreeWheelRight
+            busy={busy}
             itemCountLabel="Track count"
             nodes={metricWheelNodes}
             {...wheelCallbacks}
@@ -817,6 +824,7 @@ export function App() {
           <GenreTreeWheelRadial
             controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
+            busy={busy}
             itemCountLabel="Track count"
             nodes={metricPlainRadialNodes}
             {...wheelCallbacks}
@@ -840,6 +848,7 @@ export function App() {
           <GenreTreeWheelRadialPopCore
             controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
+            busy={busy}
             itemCountLabel="Track count"
             nodes={metricPopCoreNodes}
             {...popCoreCallbacks}
@@ -891,7 +900,7 @@ export function App() {
                 background: "#f4f4f5",
               }}
             >
-              <GenreTree itemCountLabel="Track count" nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} />
+              <GenreTree itemCountLabel="Track count" nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} busy={busy} />
             </div>
           ))}
         </div>
