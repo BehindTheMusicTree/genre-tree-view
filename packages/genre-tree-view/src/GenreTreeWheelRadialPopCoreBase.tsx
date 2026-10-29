@@ -77,6 +77,8 @@ import {
   ZOOM_FOCUS_SCALE,
   shadeSurface,
   UNDERGROUND_DARKEN_RATIO,
+  UNDERGROUND_SECTOR_FILL_OPACITY,
+  SCENE_SECTOR_OUTER_RADIUS,
 } from "./constants";
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
@@ -777,6 +779,39 @@ export function WheelRadialPopCoreCore({
               ?.descendants()
               .map((d) => d.data.id) ?? [])
           : [];
+
+        const angleOf = (d: d3.HierarchyNode<GenreTreeNode>) => {
+          const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+          return angle + ((((deg - angle + 540) % 360) + 360) % 360) - 180;
+        };
+        const subtreeRange = (d: d3.HierarchyNode<GenreTreeNode>) => {
+          const angles = d.descendants().map(angleOf);
+          return { min: Math.min(...angles), max: Math.max(...angles) };
+        };
+        laidOut
+          .descendants()
+          .filter((d) => d.data.scene === "underground" && !d.ancestors().slice(1).some((a) => a.data.scene === "underground"))
+          .forEach((ug) => {
+            const mine = subtreeRange(ug);
+            const siblings = ug.parent?.children ?? [];
+            const at = siblings.indexOf(ug);
+            const prev = at > 0 ? siblings[at - 1] : undefined;
+            const next = at >= 0 ? siblings[at + 1] : undefined;
+            const startDeg = prev ? (subtreeRange(prev).max + mine.min) / 2 : angle - span / 2;
+            const endDeg = next ? (mine.max + subtreeRange(next).min) / 2 : angle + span / 2;
+            const arcPath = d3.arc()({
+              innerRadius: coreRootCircleRadius,
+              outerRadius: SCENE_SECTOR_OUTER_RADIUS,
+              startAngle: (startDeg * Math.PI) / 180,
+              endAngle: (endDeg * Math.PI) / 180,
+            });
+            sectorGroup
+              .append("path")
+              .attr("class", "gtv-wheel-scene-sector")
+              .attr("d", arcPath)
+              .attr("fill", shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO))
+              .attr("fill-opacity", UNDERGROUND_SECTOR_FILL_OPACITY);
+          });
 
         const branchGroup = sectorGroup
           .append("g")

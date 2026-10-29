@@ -5,8 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Pop-core wheel: the background slice behind an underground subtree is drawn darker, from the pop-core circle out to the wheel's edge.
+
 ### Changed
 
+- Pop-core wheel: core subtrees spread to their sector's edges; spare angle goes between sub-branches instead of an empty gutter at the sector border.
 - `GenreTreeWheelRadialPopCore`: dot radius now scales with area (not diameter) of the size metric, dots animate to their new size when the metric changes (skipped under `prefers-reduced-motion`), and smaller dots are painted above larger ones so overlaps never hide them.
 
 ### Fixed

@@ -412,6 +412,15 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(dotFill("a-ug-child")).not.toBe(dotFill("a-edm-child"));
     expect(radius("a-ug")).toBeCloseTo(radius("a-edm"));
     expect(container.querySelector(".gtv-wheel-scene-band")).toBeNull();
+
+    const sectors = container.querySelectorAll(".gtv-wheel-scene-sector");
+    expect(sectors).toHaveLength(1);
+    expect(sectors[0]!.nextElementSibling?.classList.contains("gtv-wheel-core-branch")).toBe(true);
+  });
+
+  it("draws no underground background slice when no node is underground", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />);
+    expect(container.querySelector(".gtv-wheel-scene-sector")).toBeNull();
   });
 
   it("develops every root's core branch and renders its pop branch inside the wheel's own circle", () => {

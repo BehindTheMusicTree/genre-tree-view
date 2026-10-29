@@ -52,6 +52,7 @@ export function computeCoreRadialLayout(
     wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
     coreRadiusOfDepth(coreRootCircleRadius, depthSpacing),
+    "between-children",
   );
 }
 
