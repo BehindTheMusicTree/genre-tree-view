@@ -100,6 +100,7 @@ export function WheelCore({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
   selectedNodeId,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation =
@@ -304,6 +305,7 @@ export function WheelCore({
   return (
     <div
       ref={viewportRef}
+      aria-busy={busy}
       className={[
         "gtv-wheel-container",
         direction === "left" && "gtv-wheel-container--left",
@@ -583,6 +585,7 @@ export function WheelCore({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame([
                 wheelCircleRef.current,
                 ...queryTreeContentElements(treeAnchorRef.current),

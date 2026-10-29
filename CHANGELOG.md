@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `busy` prop on `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`: shows a spinner at the start of the floating controls (fading in after 150 ms so fast operations don't flash), sets `aria-busy` on the tree and announces "Updating genre tree…". The ring spins on the compositor, so it keeps turning while the SVG rebuilds; under `prefers-reduced-motion` it pulses instead. Color: `--gtv-busy-color`, falling back to `--color-primary`.
+
+### Fixed
+
+- `.gtv-icon--spin` no longer animates under `prefers-reduced-motion`.
+
 ## [6.0.0] - 2026-10-29
 
 ### Removed
