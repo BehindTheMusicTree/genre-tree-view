@@ -24,7 +24,7 @@ import {
   LINK_TO_NODE_HEIGHT_RATIO,
   MAX_NODE_HEIGHT,
   getItemCountRange,
-  NODE_DOT_MAX_RADIUS,
+  NODE_LAYOUT_SLOT_RADIUS,
   RADIAL_CORE_LINK_TINT_RATIO,
   RADIAL_POP_LINK_TINT_RATIO,
   TEXT_COLOR,
@@ -998,7 +998,7 @@ describe("renderPopSubtree dot + label nodes", () => {
     laidOut.each((d) => {
       const r = Math.hypot(d.x!, d.y!);
       const angle = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
-      const halfWidth = (Math.asin(NODE_DOT_MAX_RADIUS / r) * 180) / Math.PI;
+      const halfWidth = (Math.asin(NODE_LAYOUT_SLOT_RADIUS / r) * 180) / Math.PI;
       expect(angle - halfWidth).toBeGreaterThanOrEqual(center - span / 2 - 1e-9);
       expect(angle + halfWidth).toBeLessThanOrEqual(center + span / 2 + 1e-9);
     });
@@ -1014,7 +1014,7 @@ describe("measureWedge", () => {
   it("needs at least one full dot slot per sibling on their ring", () => {
     const ringRadius = 2000;
     const need = measureWedge(d3, buildPopHierarchy(d3, fan(10)), () => ringRadius);
-    expect(need * ringRadius).toBeGreaterThanOrEqual(10 * 2 * NODE_DOT_MAX_RADIUS);
+    expect(need * ringRadius).toBeGreaterThanOrEqual(10 * 2 * NODE_LAYOUT_SLOT_RADIUS);
   });
 
   it("needs more angle when the same siblings sit on a smaller ring", () => {
@@ -1038,7 +1038,7 @@ describe("measureWedge", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
     measureWedge(d3, hierarchy, () => ringRadius);
     const x = (id: string) => hierarchy.find((d) => d.data.id === id)!.x!;
-    const slot = (2 * NODE_DOT_MAX_RADIUS + MIN_DOT_GAP) / ringRadius;
+    const slot = (2 * NODE_LAYOUT_SLOT_RADIUS + MIN_DOT_GAP) / ringRadius;
     expect(x("l1") - x("l0")).toBeCloseTo(slot, 9);
     expect(x("l2") - x("l1")).toBeCloseTo(slot, 9);
   });

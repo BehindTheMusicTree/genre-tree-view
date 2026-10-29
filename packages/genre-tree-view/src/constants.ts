@@ -348,6 +348,10 @@ export function calculateRootLabelFontSize(layoutFontSize: number, zoomScale: nu
 export const NODE_DOT_MIN_RADIUS = 3;
 export const NODE_DOT_MAX_RADIUS = 50;
 export const NODE_DOT_LABEL_GAP = 6;
+// Half-width every node reserves on its ring when the radial wheels measure a subtree's angular
+// width: identical for all nodes, so layout depends on tree topology only and never on the size
+// metric (itemCount) that drives how big a dot actually renders.
+export const NODE_LAYOUT_SLOT_RADIUS = 8;
 
 /** Radius of a radial-wheel subgenre dot, on the same log scale as its label's font size
  * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */

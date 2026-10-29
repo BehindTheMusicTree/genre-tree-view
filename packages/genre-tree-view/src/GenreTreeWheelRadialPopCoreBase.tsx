@@ -70,6 +70,7 @@ import {
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
   REGION_LABEL_TARGET_PX,
+  NODE_LAYOUT_SLOT_RADIUS,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -438,8 +439,8 @@ export function WheelRadialPopCoreCore({
             0,
             POP_TREE_DEPTH_RADIAL_SPACING,
           )
-        : centerChipDiameter / 2,
-    [centerSubtreeHierarchy, centerChipDiameter],
+        : NODE_LAYOUT_SLOT_RADIUS,
+    [centerSubtreeHierarchy],
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
@@ -478,8 +479,7 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
-          const chipWidth =
-            2 * calculateNodeDotRadius(rootItemCountById.get(group.root.id)!, wheelItemCountRange);
+          const chipWidth = 2 * NODE_LAYOUT_SLOT_RADIUS;
           return [
             group.root.id,
             {
@@ -488,7 +488,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   popRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               core: core.map((hierarchy) =>
@@ -496,7 +495,6 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
-                  wheelItemCountRange,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -504,7 +502,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId, rootItemCountById, wheelItemCountRange],
+    [groups, branchHierarchiesByRootId],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -684,7 +682,6 @@ export function WheelRadialPopCoreCore({
           coreRootCircleRadius,
           span,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -770,7 +767,6 @@ export function WheelRadialPopCoreCore({
           span,
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut

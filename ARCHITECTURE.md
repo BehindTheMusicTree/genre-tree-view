@@ -155,6 +155,7 @@ pnpm workspace with two members:
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
   - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); layout is unaffected.
+- **Layout vs. size metric**: radial layouts (wedge measurement, ring radius, root sectors, positions) depend on tree topology only, every node reserving the fixed `NODE_LAYOUT_SLOT_RADIUS`. `itemCount` drives rendering only (dot radius, fonts, border widths, label rank), so switching the size metric never moves nodes.
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
   outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.

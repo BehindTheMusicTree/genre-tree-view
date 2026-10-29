@@ -11,7 +11,7 @@ import {
   ItemCountRange,
   MAX_NODE_WIDTH,
   NODE_DOT_LABEL_GAP,
-  NODE_DOT_MAX_RADIUS,
+  NODE_LAYOUT_SLOT_RADIUS,
   POP_SECTOR_TINT_RATIO,
   POP_TREE_DEPTH_RADIAL_SPACING,
   RADIAL_CORE_LINK_TINT_RATIO,
@@ -149,7 +149,6 @@ export function computePopRadialLayout(
   coreRootCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
   depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
-  itemCountRange?: ItemCountRange,
 ): D3Node {
   return layoutWedge(
     d3Lib,
@@ -157,7 +156,6 @@ export function computePopRadialLayout(
     wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
     popRadiusOfDepth(coreRootCircleRadius, depthSpacing),
-    itemCountRange,
   );
 }
 
@@ -190,10 +188,8 @@ export function measureWedge(
   _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
-  itemCountRange?: ItemCountRange,
 ): number {
-  const dotRadius = (d: D3Node) =>
-    itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
+  const dotRadius = () => NODE_LAYOUT_SLOT_RADIUS;
   const offsetFromParent = new Map<D3Node, number>();
   const shiftLevel = (level: Contour[number], by: number) => ({
     left: { ...level.left, x: level.left.x + by },
@@ -201,7 +197,7 @@ export function measureWedge(
   });
 
   const pack = (node: D3Node): Contour => {
-    const own = { x: 0, dotRadius: dotRadius(node) };
+    const own = { x: 0, dotRadius: dotRadius() };
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
@@ -235,7 +231,7 @@ export function measureWedge(
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {
-    const inset = (dotRadius(d) + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
+    const inset = (dotRadius() + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
     min = Math.min(min, d.x! - inset);
     max = Math.max(max, d.x! + inset);
   });
@@ -259,9 +255,8 @@ export function layoutWedge(
   wedgeCenterAngleDegrees: number,
   wedgeSpanDegrees: number,
   radiusOfDepth: (depth: number) => number,
-  itemCountRange?: ItemCountRange,
 ): D3Node {
-  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
   const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - (neededRad * scale) / 2;

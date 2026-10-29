@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeWheelRadialPopCore` and `GenreTreeWheelRadial`: wheel radius, root sectors and node positions no longer change with the size metric (`itemCount`). Layout is measured from tree topology with a fixed per-node slot (`NODE_LAYOUT_SLOT_RADIUS`); `itemCount` only drives dot size, fonts and label ranking.
+
 ## [6.1.0] - 2026-10-29
 
 ### Added
