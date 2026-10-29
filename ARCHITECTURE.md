@@ -154,7 +154,7 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
-  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); layout is unaffected.
+  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); a darker background slice (`gtv-wheel-scene-sector`, `SCENE_SECTOR_OUTER_RADIUS`) runs behind the subtree out to the wheel's edge; layout is unaffected.
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
   outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.

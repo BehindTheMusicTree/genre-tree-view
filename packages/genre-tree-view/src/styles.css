@@ -1674,3 +1674,9 @@
 .gtv-stage--moving * {
   pointer-events: none;
 }
+
+/* GenreTreeWheelRadialPopCore only: darker background slice behind an underground-scene subtree
+   (an svg path inside the pop layer, painted under that branch's links and nodes). */
+.gtv-wheel-scene-sector {
+  pointer-events: none;
+}

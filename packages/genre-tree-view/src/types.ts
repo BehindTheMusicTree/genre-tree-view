@@ -23,7 +23,7 @@ export interface GenreTreeNode {
    * and the stacked/wheel node labels (italic); the pop-core labels ignore it. */
   umbrella?: boolean;
   /** Which scene a genre belongs to. GenreTreeWheelRadialPopCore draws an "underground" node and its
-   * descendants in a darker shade of their usual color. */
+   * descendants in a darker shade of their usual color, over a darker background slice. */
   scene?: "commercial" | "underground";
 }
 
