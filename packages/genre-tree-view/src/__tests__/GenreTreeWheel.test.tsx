@@ -290,7 +290,6 @@ describe("GenreTreeWheel", () => {
     }
 
     expect(zoomInButton.disabled).toBe(true);
-    expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("disables the zoom-out button once the minimum scale is reached", () => {
@@ -302,7 +301,6 @@ describe("GenreTreeWheel", () => {
     }
 
     expect(zoomOutButton.disabled).toBe(true);
-    expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("draws the wheel's circle outline", () => {

@@ -467,7 +467,6 @@ describe("GenreTreeWheelRadial", () => {
     }
 
     expect(zoomInButton.disabled).toBe(true);
-    expect(zoomInButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("disables the zoom-out button once the minimum scale is reached", () => {
@@ -479,7 +478,6 @@ describe("GenreTreeWheelRadial", () => {
     }
 
     expect(zoomOutButton.disabled).toBe(true);
-    expect(zoomOutButton.className).toContain("gtv-zoom-btn--disabled");
   });
 
   it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The zoom in / zoom out / fit buttons render through `ZoomControls` from `@behindthemusictree/ui`, now a peer dependency (`^0.10.0`). The `gtv-zoom-controls` class stays on the cluster; `gtv-zoom-btn*` classes are gone.
+
 ## [6.2.0] - 2026-10-29
 
 ### Added
