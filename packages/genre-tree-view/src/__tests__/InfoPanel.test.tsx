@@ -616,7 +616,7 @@ describe("InfoPanel", () => {
     });
   });
 
-  describe("edit mode", () => {
+  describe("danger zone", () => {
     function renderPanel(props: Partial<InfoPanelProps> = {}) {
       return render(
         <InfoPanel
@@ -630,97 +630,34 @@ describe("InfoPanel", () => {
           side="left"
           onClose={vi.fn()}
           onSelectNode={vi.fn()}
-          renderTitleEditor={(node) => <input aria-label="Genre name" defaultValue={node.name} />}
-          renderParentsEditor={() => <p>Parents editor</p>}
           renderDangerZone={() => <p>Danger zone</p>}
           {...props}
         />,
       );
     }
 
-    it("still shows the title editor in edit mode when hideTitle is set", () => {
-      renderPanel({ editMode: true, hideTitle: true });
-      expect(screen.getByLabelText("Genre name").parentElement?.classList.contains("gtv-info-panel-title--hidden")).toBe(
-        false,
-      );
-    });
-
-    it("marks the title slot as an overflow-visible editor area in edit mode", () => {
-      renderPanel({ editMode: true });
-      expect(screen.getByLabelText("Genre name").parentElement?.classList.contains("gtv-info-panel-title--editor")).toBe(
-        true,
-      );
-    });
-
-    it("has no Edit button without onEditModeChange", () => {
+    it("has no Edit button and keeps the title and Parent section", () => {
       renderPanel();
-      expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
-    });
-
-    it("has no Edit button when readOnly", () => {
-      renderPanel({ onEditModeChange: vi.fn(), readOnly: true, editMode: true });
       expect(screen.queryByRole("button", { name: /edit|done/i })).toBeNull();
-      expect(screen.queryByText("Danger zone")).toBeNull();
-    });
-
-    it("toggles via an aria-pressed Edit/Done button", () => {
-      const onEditModeChange = vi.fn();
-      const { rerender } = renderPanel({ onEditModeChange });
-      const edit = screen.getByRole("button", { name: "Edit" });
-      expect(edit.getAttribute("aria-pressed")).toBe("false");
-      fireEvent.click(edit);
-      expect(onEditModeChange).toHaveBeenCalledWith(true);
-
-      rerender(
-        <InfoPanel
-          itemCountLabel="Track count"
-          node={FULL_NODE}
-          fill="#4F46E5"
-          textColor="#FFFFFF"
-          parentNode={PARENT_NODE}
-          childNodes={[]}
-          ancestorNodes={[]}
-          side="left"
-          onClose={vi.fn()}
-          onSelectNode={vi.fn()}
-          editMode
-          onEditModeChange={onEditModeChange}
-        />,
-      );
-      const done = screen.getByRole("button", { name: "Done" });
-      expect(done.getAttribute("aria-pressed")).toBe("true");
-      fireEvent.click(done);
-      expect(onEditModeChange).toHaveBeenLastCalledWith(false);
-    });
-
-    it("renders the slots only in edit mode", () => {
-      renderPanel();
       expect(screen.getAllByText("Rock").length).toBeGreaterThan(0);
       expect(screen.getByText("Music")).toBeTruthy();
-      expect(screen.queryByLabelText("Genre name")).toBeNull();
-      expect(screen.queryByText("Parents editor")).toBeNull();
+    });
+
+    it("renders without renderDangerZone set", () => {
+      renderPanel({ renderDangerZone: undefined });
       expect(screen.queryByText("Danger zone")).toBeNull();
     });
 
-    it("replaces the title and Parent section and adds the danger zone in edit mode", () => {
-      renderPanel({ editMode: true });
-      expect(screen.getByLabelText("Genre name")).toBeTruthy();
-      expect(screen.queryByText("Music")).toBeNull();
-      expect(screen.getByText("Parents editor")).toBeTruthy();
+    it("renders whenever renderDangerZone is set, hidden when readOnly", () => {
+      const { unmount } = renderPanel();
       expect(screen.getByText("Danger zone")).toBeTruthy();
-    });
-
-    it("renders the parents editor inside the family section", () => {
-      const { container } = renderPanel({
-        editMode: true,
-        renderInfoPanelBody: (_n, s) => ({ primary: <div data-testid="family">{s.family}</div> }),
-      });
-      expect(screen.getByTestId("family").textContent).toContain("Parents editor");
-      expect(container.querySelector('[data-testid="family"] .gtv-info-panel-mini-tree')).not.toBeNull();
+      unmount();
+      renderPanel({ readOnly: true });
+      expect(screen.queryByText("Danger zone")).toBeNull();
     });
 
     it("puts the danger zone after the body when compact", () => {
-      const { container } = renderPanel({ editMode: true });
+      const { container } = renderPanel();
       const body = container.querySelector(".gtv-info-panel-body");
       expect(body?.textContent).not.toContain("Danger zone");
       expect(body?.nextElementSibling?.textContent).toBe("Danger zone");
@@ -728,7 +665,6 @@ describe("InfoPanel", () => {
 
     it("ends the aside with the danger zone when expanded, or the primary column without one", () => {
       const { container, rerender } = renderPanel({
-        editMode: true,
         expanded: true,
         renderInfoPanelBody: (_n, s) => ({ primary: s.family, aside: <p>Aside</p> }),
       });
@@ -748,7 +684,6 @@ describe("InfoPanel", () => {
           onClose={vi.fn()}
           onSelectNode={vi.fn()}
           renderDangerZone={() => <p>Danger zone</p>}
-          editMode
           expanded
         />,
       );

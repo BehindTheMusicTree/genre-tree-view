@@ -3,14 +3,14 @@
     "id": "blues-rock-grouping",
     "parentId": null,
     "name": "Blues/Rock (grouping)",
-    "itemCount": 11986,
+    "itemCount": 11383,
     "wikidataId": "LOCAL:blues-rock"
   },
   {
     "id": "rock-music",
     "parentId": "blues-rock-grouping",
     "name": "Rock music",
-    "itemCount": 8169,
+    "itemCount": 7565,
     "wikidataId": "Q11399",
     "umbrella": true
   },
@@ -179,7 +179,7 @@
     "id": "alternative-rock",
     "parentId": "rock-music",
     "name": "Alternative rock",
-    "itemCount": 2502,
+    "itemCount": 2501,
     "wikidataId": "Q11366"
   },
   {
@@ -424,7 +424,7 @@
     "id": "britpop",
     "parentId": "alternative-rock",
     "name": "Britpop",
-    "itemCount": 2442,
+    "itemCount": 2441,
     "wikidataId": "Q189045"
   },
   {
@@ -2973,7 +2973,7 @@
     "id": "british-rhythm-and-blues",
     "parentId": "rock-music",
     "name": "British rhythm and blues",
-    "itemCount": 607,
+    "itemCount": 4,
     "wikidataId": "Q4971442"
   },
   {
@@ -3563,7 +3563,7 @@
     "id": "blues",
     "parentId": "blues-rock-grouping",
     "name": "Blues",
-    "itemCount": 3084,
+    "itemCount": 3085,
     "wikidataId": "Q9759",
     "umbrella": true
   },
@@ -3599,7 +3599,7 @@
     "id": "chicago-blues",
     "parentId": "blues",
     "name": "Chicago blues",
-    "itemCount": 3054,
+    "itemCount": 3055,
     "wikidataId": "Q1071873"
   },
   {
@@ -3823,7 +3823,7 @@
     "id": "disco-funk-grouping",
     "parentId": null,
     "name": "Disco/Funk (grouping)",
-    "itemCount": 1498,
+    "itemCount": 1489,
     "wikidataId": "LOCAL:disco-funk"
   },
   {
@@ -3971,7 +3971,7 @@
     "id": "disco",
     "parentId": "disco-funk-grouping",
     "name": "Disco",
-    "itemCount": 294,
+    "itemCount": 285,
     "wikidataId": "Q58339",
     "side": "pop"
   },
@@ -4056,7 +4056,7 @@
     "id": "electro-disco",
     "parentId": "disco",
     "name": "Electro-disco",
-    "itemCount": 95,
+    "itemCount": 86,
     "wikidataId": "Q98528149"
   },
   {
@@ -4070,7 +4070,7 @@
     "id": "hi-nrg",
     "parentId": "electro-disco",
     "name": "Hi-NRG",
-    "itemCount": 95,
+    "itemCount": 86,
     "wikidataId": "Q606393"
   },
   {
@@ -5362,7 +5362,7 @@
     "id": "electronic-music",
     "parentId": null,
     "name": "Electronic music",
-    "itemCount": 7104,
+    "itemCount": 7160,
     "wikidataId": "Q9778",
     "umbrella": true
   },
@@ -5370,7 +5370,7 @@
     "id": "core-electronic",
     "parentId": "electronic-music",
     "name": "Core electronic",
-    "itemCount": 7104,
+    "itemCount": 7160,
     "wikidataId": "LOCAL:core-electronic",
     "umbrella": true
   },
@@ -5379,7 +5379,8 @@
     "parentId": "core-electronic",
     "name": "Underground electronic",
     "itemCount": 313,
-    "wikidataId": "LOCAL:underground-electronic"
+    "wikidataId": "LOCAL:underground-electronic",
+    "scene": "underground"
   },
   {
     "id": "experimental-electronic-music",
@@ -6576,7 +6577,7 @@
     "id": "bass-music-edm",
     "parentId": "core-electronic",
     "name": "Bass music (EDM)",
-    "itemCount": 264,
+    "itemCount": 320,
     "wikidataId": "Q114880130"
   },
   {
@@ -6807,7 +6808,7 @@
     "id": "edm-trap-music",
     "parentId": "bass-music-edm",
     "name": "EDM trap music",
-    "itemCount": 189,
+    "itemCount": 245,
     "wikidataId": "Q47781397"
   },
   {
@@ -8462,7 +8463,8 @@
     "parentId": "core-electronic",
     "name": "Electronic dance music",
     "itemCount": 354,
-    "wikidataId": "Q851213"
+    "wikidataId": "Q851213",
+    "scene": "commercial"
   },
   {
     "id": "budots",
@@ -9695,7 +9697,7 @@
     "id": "hip-hop",
     "parentId": null,
     "name": "Hip-hop",
-    "itemCount": 125,
+    "itemCount": 123,
     "wikidataId": "Q11401",
     "umbrella": true
   },
@@ -9703,7 +9705,7 @@
     "id": "core-hip-hop",
     "parentId": "hip-hop",
     "name": "Core hip-hop",
-    "itemCount": 125,
+    "itemCount": 123,
     "wikidataId": "LOCAL:core-hip-hop",
     "umbrella": true
   },
@@ -10488,7 +10490,7 @@
     "id": "afroswing",
     "parentId": "core-hip-hop",
     "name": "Afroswing",
-    "itemCount": 24,
+    "itemCount": 22,
     "wikidataId": "Q85740017"
   },
   {
@@ -11275,7 +11277,7 @@
     "id": "mainstream-pop",
     "parentId": null,
     "name": "Mainstream Pop",
-    "itemCount": 6037,
+    "itemCount": 6264,
     "wikidataId": "Q37073"
   },
   {
@@ -11499,14 +11501,14 @@
     "id": "pop-soul",
     "parentId": "mainstream-pop",
     "name": "Pop soul",
-    "itemCount": 2034,
+    "itemCount": 2261,
     "wikidataId": "Q11700065"
   },
   {
     "id": "motown",
     "parentId": "pop-soul",
     "name": "Motown",
-    "itemCount": 2034,
+    "itemCount": 2261,
     "wikidataId": "Q9078960"
   },
   {
@@ -11975,7 +11977,7 @@
     "id": "rhythm-and-blues",
     "parentId": null,
     "name": "Rhythm and blues",
-    "itemCount": 2006,
+    "itemCount": 2007,
     "wikidataId": "Q45981"
   },
   {
@@ -11996,7 +11998,7 @@
     "id": "soul",
     "parentId": "rhythm-and-blues",
     "name": "Soul",
-    "itemCount": 1981,
+    "itemCount": 1982,
     "wikidataId": "Q131272"
   },
   {
@@ -12024,7 +12026,7 @@
     "id": "southern-soul",
     "parentId": "soul",
     "name": "Southern soul",
-    "itemCount": 590,
+    "itemCount": 591,
     "wikidataId": "Q1567032"
   },
   {

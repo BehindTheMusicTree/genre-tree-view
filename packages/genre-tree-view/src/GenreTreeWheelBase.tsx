@@ -89,10 +89,6 @@ export function WheelCore({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -559,10 +555,6 @@ export function WheelCore({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
