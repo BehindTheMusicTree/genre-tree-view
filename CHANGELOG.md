@@ -7,7 +7,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Pop-core wheel: the background slice behind an underground subtree is drawn darker, out to the wheel's edge.
+- Pop-core wheel: the background slice behind an underground subtree is drawn darker, from the pop-core circle out to the wheel's edge.
+
+### Changed
+
+- Pop-core wheel: core subtrees spread to their sector's edges; spare angle goes between sub-branches instead of an empty gutter at the sector border.
 
 ## [5.3.0] - 2026-10-29
 

@@ -57,7 +57,10 @@ pnpm workspace with two members:
     interactive tree fanned out *inside* the wheel's own circle (in the same angular sector, one
     `.gtv-wheel-pop-branch` per child) via `pop-core-radial-layout.ts`'s pop layout. A root's wedge
     is subdivided across its own branches proportionally to each branch's subtree size
-    (`subdivideWedge` in `radial-wheel-geometry.ts`). The circle
+    (`subdivideWedge` in `radial-wheel-geometry.ts`). A core branch's layout is stretched by at most
+    `MAX_WEDGE_STRETCH`; the angle left over goes into even gaps between the first branching node's
+    children (`layoutWedge`'s `"between-children"` slack), so the subtree reaches both edges of its
+    branch's wedge instead of leaving an empty gutter at the sector border. The circle
     grows past its normal chip-clearance floor to fit the largest developed core or pop subtree,
     whichever reaches deepest. Unlike the other three renderers (which take an optional `centerLabel`
     string), its wheel's pivot point renders a full interactive chip — the same

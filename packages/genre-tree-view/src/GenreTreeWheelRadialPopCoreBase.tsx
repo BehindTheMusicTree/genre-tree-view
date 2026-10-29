@@ -804,10 +804,8 @@ export function WheelRadialPopCoreCore({
             const next = at >= 0 ? siblings[at + 1] : undefined;
             const startDeg = prev ? (subtreeRange(prev).max + mine.min) / 2 : angle - span / 2;
             const endDeg = next ? (mine.max + subtreeRange(next).min) / 2 : angle + span / 2;
-            const ringRadius = Math.hypot(ug.x!, ug.y!);
-            const parentRadius = ug.parent ? Math.hypot(ug.parent.x!, ug.parent.y!) : coreRootCircleRadius;
             const arcPath = d3.arc()({
-              innerRadius: (ringRadius + parentRadius) / 2,
+              innerRadius: coreRootCircleRadius,
               outerRadius: SCENE_SECTOR_OUTER_RADIUS,
               startAngle: (startDeg * Math.PI) / 180,
               endAngle: (endDeg * Math.PI) / 180,
