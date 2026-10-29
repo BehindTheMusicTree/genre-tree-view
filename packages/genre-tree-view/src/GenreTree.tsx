@@ -60,10 +60,6 @@ export function GenreTree({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -75,6 +71,7 @@ export function GenreTree({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
 }: GenreTreeProps) {
   const index = useTreeIndex(nodes);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -275,6 +272,7 @@ export function GenreTree({
     <div
       ref={viewportRef}
       className={className}
+      aria-busy={busy}
       style={
         {
           position: "relative",
@@ -376,10 +374,6 @@ export function GenreTree({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
@@ -407,6 +401,7 @@ export function GenreTree({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame(queryTreeContentElements(svgRef.current))}
       />
     </div>

@@ -174,10 +174,6 @@ export function WheelRadialPopCoreCore({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -189,6 +185,7 @@ export function WheelRadialPopCoreCore({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
   allowWheelRotation = true,
   selectedNodeId,
   focusNodeId: requestedFocusNodeId = null,
@@ -1196,6 +1193,7 @@ export function WheelRadialPopCoreCore({
   return (
     <div
       ref={viewportRef}
+      aria-busy={busy}
       className={[
         "gtv-wheel-container",
         "gtv-wheel-container--radial",
@@ -1448,10 +1446,6 @@ export function WheelRadialPopCoreCore({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
@@ -1501,6 +1495,7 @@ export function WheelRadialPopCoreCore({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame([
                 wheelCircleRef.current,
                 ...queryTreeContentElements(popSvgRef.current),

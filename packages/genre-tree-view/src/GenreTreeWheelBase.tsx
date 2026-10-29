@@ -89,10 +89,6 @@ export function WheelCore({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -104,6 +100,7 @@ export function WheelCore({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
   selectedNodeId,
 }: WheelCoreProps) {
   const treeOrientation: TreeOrientation =
@@ -308,6 +305,7 @@ export function WheelCore({
   return (
     <div
       ref={viewportRef}
+      aria-busy={busy}
       className={[
         "gtv-wheel-container",
         direction === "left" && "gtv-wheel-container--left",
@@ -559,10 +557,6 @@ export function WheelCore({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
@@ -591,6 +585,7 @@ export function WheelCore({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame([
                 wheelCircleRef.current,
                 ...queryTreeContentElements(treeAnchorRef.current),

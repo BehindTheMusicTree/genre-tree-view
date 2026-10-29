@@ -13,6 +13,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Pop-core wheel: core subtrees spread to their sector's edges; spare angle goes between sub-branches instead of an empty gutter at the sector border.
 
+## [6.1.0] - 2026-10-29
+
+### Added
+
+- `busy` prop on `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial` and `GenreTreeWheelRadialPopCore`: shows a spinner at the start of the floating controls (fading in after 150 ms so fast operations don't flash), sets `aria-busy` on the tree and announces "Updating genre tree…". The ring spins on the compositor, so it keeps turning while the SVG rebuilds; under `prefers-reduced-motion` it pulses instead. Color: `--gtv-busy-color`, falling back to `--color-primary`.
+
+### Fixed
+
+- `.gtv-icon--spin` no longer animates under `prefers-reduced-motion`.
+
+## [6.0.0] - 2026-10-29
+
+### Removed
+
+- **BREAKING**: info panel edit mode. Removed props `editMode`, `onEditModeChange`, `renderTitleEditor` and `renderParentsEditor` (and the Edit/Done button). The title and Parent section are always the read-only ones.
+
+### Changed
+
+- **BREAKING**: `renderDangerZone` is rendered whenever it is set (unless `readOnly`), no longer only in edit mode.
+
 ## [5.3.0] - 2026-10-29
 
 ### Added

@@ -121,10 +121,6 @@ export function WheelRadialCore({
   hideInfoPanelTitle = false,
   itemCountLabel,
   readOnly,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -136,6 +132,7 @@ export function WheelRadialCore({
   onViewportChange,
   controlsOrientation = "vertical",
   floatingControlsLeading,
+  busy,
   selectedNodeId,
 }: WheelRadialCoreProps) {
   const index = useTreeIndex(nodes);
@@ -521,6 +518,7 @@ export function WheelRadialCore({
   return (
     <div
       ref={viewportRef}
+      aria-busy={busy}
       className={[
         "gtv-wheel-container",
         "gtv-wheel-container--radial",
@@ -721,10 +719,6 @@ export function WheelRadialCore({
           hideTitle={hideInfoPanelTitle}
           itemCountLabel={itemCountLabel}
           readOnly={readOnly}
-          editMode={editMode}
-          onEditModeChange={onEditModeChange}
-          renderTitleEditor={renderTitleEditor}
-          renderParentsEditor={renderParentsEditor}
           renderDangerZone={renderDangerZone}
           expanded={expanded}
           onExpandedChange={onExpandedChange}
@@ -753,6 +747,7 @@ export function WheelRadialCore({
         panZoom={panZoom}
         orientation={controlsOrientation}
         leading={floatingControlsLeading}
+        busy={busy}
         onFit={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}
       />
     </div>

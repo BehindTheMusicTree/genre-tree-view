@@ -59,14 +59,6 @@ export interface InfoPanelProps {
   actions?: Omit<NodeToolbarProps, "node" | "className">;
   /** See GenreTreeProps.readOnly. */
   readOnly?: boolean;
-  /** See GenreTreeProps.editMode. */
-  editMode?: boolean;
-  /** See GenreTreeProps.onEditModeChange. */
-  onEditModeChange?: (on: boolean) => void;
-  /** See GenreTreeProps.renderTitleEditor. */
-  renderTitleEditor?: (node: GenreTreeNode) => ReactNode;
-  /** See GenreTreeProps.renderParentsEditor. */
-  renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
   /** See GenreTreeProps.renderDangerZone. */
   renderDangerZone?: (node: GenreTreeNode) => ReactNode;
   /** See GenreTreeProps.expanded. */
@@ -111,10 +103,6 @@ export function InfoPanel({
   onZoomIn,
   actions,
   readOnly = false,
-  editMode = false,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded = false,
   onExpandedChange,
@@ -126,10 +114,8 @@ export function InfoPanel({
   useEffect(() => {
     panelRef.current?.toggleAttribute("inert", collapsed);
   }, [collapsed]);
-  const editing = editMode && !readOnly;
-  const shownParent = editing && renderParentsEditor ? null : parentNode;
   const miniTreeRange = getItemCountRange([
-    ...(shownParent ? [shownParent.node] : []),
+    ...(parentNode ? [parentNode.node] : []),
     node,
     ...childNodes.map((child) => child.node),
   ]);
@@ -164,7 +150,7 @@ export function InfoPanel({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [expanded, onExpandedChange]);
 
-  const dangerZone = editing && renderDangerZone && (
+  const dangerZone = !readOnly && renderDangerZone && (
     <div className="gtv-info-panel-danger-zone">{renderDangerZone(node)}</div>
   );
 
@@ -190,18 +176,17 @@ export function InfoPanel({
     ) : null;
   const family = (
     <>
-      {editing && renderParentsEditor && renderParentsEditor(node)}
       <InfoPanelSection title="Family">
         <div className="gtv-info-panel-mini-tree">
-          {shownParent && (
+          {parentNode && (
             <div className="gtv-info-panel-mini-tree-parent">
               <button
                 type="button"
                 className="gtv-info-panel-child"
-                title={shownParent.node.name}
-                onClick={() => onSelectNode(shownParent.node.id)}
+                title={parentNode.node.name}
+                onClick={() => onSelectNode(parentNode.node.id)}
               >
-                {miniNodeContent(shownParent.node, shownParent.fill, miniTreeRange)}
+                {miniNodeContent(parentNode.node, parentNode.fill, miniTreeRange)}
               </button>
             </div>
           )}
@@ -270,17 +255,13 @@ export function InfoPanel({
             <MdArrowBack className="gtv-icon" size={16} />
           </button>
         )}
-        {editing && renderTitleEditor ? (
-          <div className="gtv-info-panel-title gtv-info-panel-title--editor">{renderTitleEditor(node)}</div>
-        ) : (
-          <span
-            className={`gtv-info-panel-title${hideTitle ? " gtv-info-panel-title--hidden" : ""}`}
-            style={{ color: textColor }}
-          >
-            {node.name}
-            {node.umbrella && <span className="gtv-info-panel-umbrella-badge">umbrella</span>}
-          </span>
-        )}
+        <span
+          className={`gtv-info-panel-title${hideTitle ? " gtv-info-panel-title--hidden" : ""}`}
+          style={{ color: textColor }}
+        >
+          {node.name}
+          {node.umbrella && <span className="gtv-info-panel-umbrella-badge">umbrella</span>}
+        </span>
         {onZoomIn && (
           <button
             type="button"
@@ -291,17 +272,6 @@ export function InfoPanel({
             title="Zoom in"
           >
             <MdZoomIn className="gtv-icon" size={16} />
-          </button>
-        )}
-        {onEditModeChange && !readOnly && (
-          <button
-            type="button"
-            className="gtv-info-panel-edit"
-            style={{ color: textColor }}
-            onClick={() => onEditModeChange(!editMode)}
-            aria-pressed={editMode}
-          >
-            {editMode ? "Done" : "Edit"}
           </button>
         )}
         {onExpandedChange && !hideExpandButton && (

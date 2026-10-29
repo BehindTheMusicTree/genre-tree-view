@@ -102,7 +102,7 @@ export interface InfoPanelSections {
   toolbar: ReactNode;
   /** Ancestor chips, root-first — null for a root. */
   ancestors: ReactNode;
-  /** Parent, node and children mini tree, preceded in edit mode by `renderParentsEditor`. */
+  /** Parent, node and children mini tree. */
   family: ReactNode;
   /** The `itemCountLabel` row. */
   itemCount: ReactNode;
@@ -169,6 +169,9 @@ export interface GenreTreeProps {
   /** Host content rendered in the floating controls box, beside the zoom buttons ("horizontal")
    * or above them ("vertical"); stacked above them in narrow containers. */
   floatingControlsLeading?: ReactNode;
+  /** Shows a small spinner beside the zoom buttons (after a short delay, so fast operations don't
+   * flash) and marks the tree `aria-busy`. Use it while the host is updating the tree in place. */
+  busy?: boolean;
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;
@@ -201,23 +204,11 @@ export interface GenreTreeProps {
    * (by clearing `selectedNodeId`), e.g. from its own search bar. Defaults to false. */
   hideInfoPanelClose?: boolean;
   /** Hides the info panel header's node name — for a consumer that already shows it, e.g. in its own
-   * search bar floated over the header (see `--gtv-info-panel-header-inset`). The title editor still
-   * shows in edit mode. Defaults to false. */
+   * search bar floated over the header (see `--gtv-info-panel-header-inset`). Defaults to false. */
   hideInfoPanelTitle?: boolean;
-  /** Hides the info panel's Edit/Done toggle even when `onEditModeChange` is set, and keeps the
-   * edit-mode slots below inactive. Defaults to false. */
+  /** Keeps `renderDangerZone` inactive. Defaults to false. */
   readOnly?: boolean;
-  /** Whether the info panel is in edit mode (controlled) — only then are `renderTitleEditor`,
-   * `renderParentsEditor` and `renderDangerZone` rendered. Defaults to false. */
-  editMode?: boolean;
-  /** When set (and `readOnly` is false), the info panel header shows an Edit/Done toggle firing
-   * this with the requested mode. */
-  onEditModeChange?: (on: boolean) => void;
-  /** Edit mode only: replaces the info panel header's title, e.g. with an inline rename field. */
-  renderTitleEditor?: (node: GenreTreeNode) => ReactNode;
-  /** Edit mode only: replaces the info panel's Parent section. */
-  renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
-  /** Edit mode only: rendered at the bottom of the info panel. */
+  /** Rendered at the bottom of the info panel unless `readOnly`. */
   renderDangerZone?: (node: GenreTreeNode) => ReactNode;
   /** Whether the info panel fills the tree container (controlled), splitting into a narrow left
    * column (the body's `aside`, then the danger zone) and a wide right one (its `primary`). Selecting

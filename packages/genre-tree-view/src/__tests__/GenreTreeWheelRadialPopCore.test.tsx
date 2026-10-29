@@ -828,6 +828,15 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ).toBeNull();
   });
 
+  it("shows the busy indicator and aria-busy only when busy", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} busy />);
+    expect(container.querySelector(".gtv-wheel-floating-controls [role='status']")?.textContent).toBe("Updating genre tree…");
+    expect((container.firstElementChild as HTMLElement).getAttribute("aria-busy")).toBe("true");
+    cleanup();
+    const idle = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container;
+    expect(idle.querySelector("[role='status']")).toBeNull();
+  });
+
   it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
     const selector = ".gtv-wheel-floating-controls--horizontal";
     expect(render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container.querySelector(selector)).toBeNull();
