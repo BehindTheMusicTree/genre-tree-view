@@ -99,6 +99,7 @@ export function WheelCore({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  showZoomControls = "auto",
   floatingControlsLeading,
   busy,
   selectedNodeId,
@@ -584,6 +585,7 @@ export function WheelCore({
       <FloatingControls
         panZoom={panZoom}
         orientation={controlsOrientation}
+        zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
         onFit={() => panZoom.fitToFrame([

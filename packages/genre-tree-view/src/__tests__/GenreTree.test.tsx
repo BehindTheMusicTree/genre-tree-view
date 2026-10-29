@@ -58,6 +58,18 @@ describe("GenreTree", () => {
     ).not.toBeNull();
   });
 
+  it("renders the zoom buttons per showZoomControls, hiding them on touch screens only under auto", () => {
+    const zoomControls = (showZoomControls?: "auto" | "always" | "never") =>
+      render(<GenreTree itemCountLabel="Track count" nodes={TREE} showZoomControls={showZoomControls} />).container.querySelector(
+        ".gtv-zoom-controls",
+      );
+    expect(zoomControls()?.classList.contains("gtv-zoom-controls--auto")).toBe(true);
+    cleanup();
+    expect(zoomControls("always")?.classList.contains("gtv-zoom-controls--auto")).toBe(false);
+    cleanup();
+    expect(zoomControls("never")).toBeNull();
+  });
+
   it("uses the deterministic root-seeded color when rootColor is not provided", () => {
     const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />);
     const rect = container.querySelector("#group-root .gtv-node-rect") as SVGRectElement;

@@ -815,13 +815,13 @@ export function renderPopSubtree(
     group.on("click", (event: MouseEvent) => {
       if (reparentingNodeId) return;
       const element = event.currentTarget as Element;
-      deferredClick.schedule(() => onNodeClick?.(d.data, event, element));
+      deferredClick.schedule(
+        () => onNodeClick?.(d.data, event, element),
+        () => onNodeDoubleClick?.(d.data),
+      );
     });
 
-    group.on("dblclick", () => {
-      deferredClick.cancel();
-      onNodeDoubleClick?.(d.data);
-    });
+    group.on("dblclick", () => deferredClick.doubleClick(() => onNodeDoubleClick?.(d.data)));
   });
 }
 

@@ -70,6 +70,7 @@ export function GenreTree({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  showZoomControls = "auto",
   floatingControlsLeading,
   busy,
 }: GenreTreeProps) {
@@ -400,6 +401,7 @@ export function GenreTree({
       <FloatingControls
         panZoom={panZoom}
         orientation={controlsOrientation}
+        zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
         onFit={() => panZoom.fitToFrame(queryTreeContentElements(svgRef.current))}

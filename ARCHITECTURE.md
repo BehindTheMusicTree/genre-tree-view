@@ -136,7 +136,9 @@ pnpm workspace with two members:
     "Mainstream Pop" root, or a focused node's single pop child / the focused node itself) and its
     ring nodes, so `focusNodeId` can render any subtree as its own wheel; `isZoomableNode` is the
     rule for which nodes may be that focus (any node with children and at most one pop child).
-    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel (which stays open on the zoomed node) and,
+    `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel (which stays open on the zoomed node),
+    the same zoom on a node or chip double-click — or double-tap, which `defer-click.ts` detects itself as a second
+    click on the same target within `DOUBLE_CLICK_DELAY_MS`, since touch browsers don't reliably fire `dblclick` — and,
     while focused, `WheelBreadcrumb.tsx`: one top-centre trail (bottom-left in narrow containers) of a Home crumb,
     every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. The info
     panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
@@ -167,10 +169,13 @@ pnpm workspace with two members:
   children, each as a clickable circle node filled with that node's own color — internal presentational chrome,
   like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
   the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of
-  the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); clicking a node or
-  a panel chip centers that node within the space that remains visible beside the panel rather
-  than the viewport's full width, via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s
-  `obscured` argument in `use-pan-zoom.ts`. Each top-level renderer owns exactly one
+  the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); in a container
+  `INFO_PANEL_SHEET_MAX_WIDTH` (767px) wide or narrower it docks to the bottom as a sheet instead, with a
+  grabber that snaps it between a peek (`INFO_PANEL_SHEET_PEEK_FRACTION` of the height) and full,
+  or closes it on a downward drag from peek. Clicking a node or a panel chip centers that node
+  within the space that remains visible beside (or above) the panel rather than the full viewport,
+  via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s `obscured` argument in
+  `use-pan-zoom.ts`. Each top-level renderer owns exactly one
   `useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange })` hook instance (`use-node-info-panel.ts`) — except `GenreTreeOutline`, which
   keeps the selected id in its own store — so only one panel is ever open per component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
   three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
@@ -228,7 +233,10 @@ pnpm workspace with two members:
   `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
 - **Floating controls layout**: `GenreTreeProps.controlsOrientation` (`"vertical"` default |
   `"horizontal"`) adds `gtv-wheel-floating-controls--horizontal` to each interactive renderer's
-  zoom/pop/fit controls, laying them out in a row. `GenreTreeOutline` omits the prop.
+  zoom/pop/fit controls, laying them out in a row. `GenreTreeProps.showZoomControls` (`"auto"`
+  default | `"always"` | `"never"`) shows the zoom buttons everywhere, nowhere, or only off touch
+  screens (`gtv-zoom-controls--auto`, hidden under `@media (pointer: coarse)`, where pinch replaces
+  them); the `floatingControlsLeading` slot is unaffected. `GenreTreeOutline` omits both props.
 
 ## Public surface
 
@@ -241,7 +249,7 @@ pnpm workspace with two members:
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`, `ControlsOrientation`, `GenreTreeOverlayPanel`.
+  `WheelZoomMode`, `ControlsOrientation`, `ZoomControlsVisibility`, `GenreTreeOverlayPanel`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

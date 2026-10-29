@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../defer-click", () => ({
-  createDeferredClick: () => ({ schedule: (action: () => void) => action(), cancel: () => {} }),
+  createDeferredClick: () => ({
+    schedule: (action: () => void) => action(),
+    cancel: () => {},
+    doubleClick: (onDouble: () => void) => onDouble(),
+  }),
 }));
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";

@@ -1,7 +1,7 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { PointerEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { MdArrowBack, MdClose, MdZoomIn } from "react-icons/md";
 
-import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
+import { getItemCountRange, INFO_PANEL_SHEET_DRAG_THRESHOLD_PX, ItemCountRange, logarithmicPosition } from "./constants";
 import { InfoPanelExpandButton } from "./InfoPanelExpandButton";
 import { InfoPanelSection } from "./InfoPanelSection";
 import { NodeToolbar, NodeToolbarProps } from "./NodeToolbar";
@@ -110,6 +110,29 @@ export function InfoPanel({
   hideExpandButton = false,
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // Only styled in a narrow container, where the panel docks to the bottom as a sheet: peek covers
+  // its lower part, full rises to the panel's usual top.
+  const [sheetFull, setSheetFull] = useState(false);
+  const grabberDragRef = useRef<{ startY: number; dragged: boolean } | null>(null);
+  const onGrabberPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    grabberDragRef.current = { startY: event.clientY, dragged: false };
+  };
+  const onGrabberPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = grabberDragRef.current;
+    if (!drag) return;
+    const dy = event.clientY - drag.startY;
+    if (Math.abs(dy) < INFO_PANEL_SHEET_DRAG_THRESHOLD_PX) return;
+    drag.dragged = true;
+    if (dy < 0) setSheetFull(true);
+    else if (sheetFull) setSheetFull(false);
+    else if (!hideClose) onClose();
+  };
+  const onGrabberClick = () => {
+    const dragged = grabberDragRef.current?.dragged ?? false;
+    grabberDragRef.current = null;
+    if (!dragged) setSheetFull((full) => !full);
+  };
   // `inert` is a boolean attribute in React 19 but an unknown string one in 18 (the peer range covers both).
   useEffect(() => {
     panelRef.current?.toggleAttribute("inert", collapsed);
@@ -236,9 +259,18 @@ export function InfoPanel({
 
   return (
     <div
-      className={`gtv-info-panel gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !hasAside ? " gtv-info-panel--expanded-solo" : ""}${collapsed ? " gtv-info-panel--collapsed" : ""}`}
+      className={`gtv-info-panel gtv-info-panel--sheet${sheetFull ? " gtv-info-panel--sheet-full" : ""} gtv-info-panel--${side}${expanded ? " gtv-info-panel--expanded" : ""}${expanded && !hasAside ? " gtv-info-panel--expanded-solo" : ""}${collapsed ? " gtv-info-panel--collapsed" : ""}`}
       ref={panelRef}
     >
+      <button
+        type="button"
+        className="gtv-info-panel-grabber"
+        aria-label={sheetFull ? "Lower panel" : "Raise panel"}
+        aria-expanded={sheetFull}
+        onPointerDown={onGrabberPointerDown}
+        onPointerUp={onGrabberPointerUp}
+        onClick={onGrabberClick}
+      />
       <div
         className="gtv-info-panel-header"
         style={{ background: fill, color: textColor }}

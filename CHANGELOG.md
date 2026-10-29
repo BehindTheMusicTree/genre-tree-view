@@ -5,9 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `showZoomControls` prop (`"auto"` default | `"always"` | `"never"`, type `ZoomControlsVisibility`) on every pan/zoom renderer: under `"auto"` the zoom buttons are hidden on touch screens (`pointer: coarse`), where pinch replaces them.
+- Info panel: in a container 767px wide or narrower it docks to the bottom as a sheet with a grabber — tap or drag up/down to snap between peek (40%) and full, drag down from peek to close (unless `hideInfoPanelClose`). Selecting a node centers it above the sheet.
+- Pop-core wheel: double-tap on a node or chip zooms in like a double-click (touch browsers don't reliably fire `dblclick`).
+
 ### Changed
 
 - The zoom in / zoom out / fit buttons render through `ZoomControls` from `@behindthemusictree/ui`, now a peer dependency (`^0.10.0`). The `gtv-zoom-controls` class stays on the cluster; `gtv-zoom-btn*` classes are gone.
+- Touch screens: info panel header buttons, menu rows, outline rows, info panel chips and section toggles get 44px touch targets (`--layout-touch-target`).
 
 ## [6.2.0] - 2026-10-29
 
