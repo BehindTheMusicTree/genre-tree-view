@@ -1665,6 +1665,12 @@
   pointer-events: none;
 }
 
+/* GenreTreeWheelRadialPopCore only: darker background slice behind an underground-scene subtree
+   (an svg path inside the pop layer, painted under that branch's links and nodes). */
+.gtv-wheel-scene-sector {
+  pointer-events: none;
+}
+
 /* BusyIndicator — fades in after a delay so fast operations never flash. The ring spins via
    transform only, so it keeps turning on the compositor while the main thread rebuilds the SVG. */
 .gtv-busy {

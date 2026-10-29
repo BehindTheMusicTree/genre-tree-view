@@ -250,9 +250,26 @@ export function measureWedge(
 // far apart. Unused slack stays as empty gutter around the centered layout.
 export const MAX_WEDGE_STRETCH = 1.42;
 
+/** What `layoutWedge` does with the angle left over once the layout is stretched to
+ * `MAX_WEDGE_STRETCH`: `"center"` leaves it as an empty gutter on both sides of the wedge;
+ * `"between-children"` spreads it into even gaps between the first branching node's children, so
+ * the layout reaches both edges of its wedge. */
+export type WedgeSlack = "center" | "between-children";
+
+function splitAtBranching(hierarchy: D3Node): { chain: D3Node[]; branching: D3Node; children: D3Node[] } | null {
+  let branching: D3Node = hierarchy;
+  const chain: D3Node[] = [];
+  while (branching.children?.length === 1) {
+    chain.push(branching);
+    branching = branching.children[0];
+  }
+  const children = branching.children;
+  return children && children.length > 1 ? { chain, branching, children } : null;
+}
+
 /** Measures `hierarchy` (see measureWedge), squeezes it to fit `wedgeSpanDegrees` or stretches it
- * by at most `MAX_WEDGE_STRETCH`, centered on `wedgeCenterAngleDegrees`, and projects each node to
- * cartesian x/y around the wheel's center at its depth's radius. */
+ * by at most `MAX_WEDGE_STRETCH`, places it per `slack`, and projects each node to cartesian x/y
+ * around the wheel's center at its depth's radius. */
 export function layoutWedge(
   d3Lib: typeof import("d3"),
   hierarchy: D3Node,
@@ -260,13 +277,38 @@ export function layoutWedge(
   wedgeSpanDegrees: number,
   radiusOfDepth: (depth: number) => number,
   itemCountRange?: ItemCountRange,
+  slack: WedgeSlack = "center",
 ): D3Node {
   const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
-  const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - (neededRad * scale) / 2;
+  const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
+  const centeredStartRad = wedgeCenterRad - (neededRad * scale) / 2;
+
+  const branchingSplit = slack === "between-children" ? splitAtBranching(hierarchy) : null;
+  if (!branchingSplit) {
+    hierarchy.each((d) => {
+      const angleRad = centeredStartRad + d.x! * scale;
+      const radius = radiusOfDepth(d.depth);
+      d.x = radius * Math.sin(angleRad);
+      d.y = -radius * Math.cos(angleRad);
+    });
+    return hierarchy;
+  }
+
+  const { chain, branching, children } = branchingSplit;
+  const gap = Math.max(0, wedgeSpanRad - neededRad * scale) / (children.length - 1);
+  const wedgeStartRad = wedgeCenterRad - wedgeSpanRad / 2;
+  const angleOffsetRad = new Map<D3Node, number>();
+  hierarchy.each((d) => angleOffsetRad.set(d, d.x! * scale));
+  children.forEach((child, i) => {
+    child.each((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + i * gap));
+  });
+  const recenter = (gap * (children.length - 1)) / 2;
+  [...chain, branching].forEach((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + recenter));
+
   hierarchy.each((d) => {
-    const angleRad = wedgeStartRad + d.x! * scale;
+    const angleRad = wedgeStartRad + angleOffsetRad.get(d)!;
     const radius = radiusOfDepth(d.depth);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
