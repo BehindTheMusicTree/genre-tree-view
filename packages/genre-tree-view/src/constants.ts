@@ -54,7 +54,7 @@ export const ROOT_TINT_RATIO = 0.08;
 // shade of their root's own color rather than the near-white wash the toolbar/card surfaces use.
 export const POP_SECTOR_TINT_RATIO = 0.8;
 
-// Share of its color the underground side of a scene split keeps (the rest is mixed toward black).
+// Share of its color a node in an underground-scene subtree keeps (the rest is mixed toward black).
 export const UNDERGROUND_DARKEN_RATIO = 0.62;
 
 export const DEFAULT_NODE_COLOR = "#4F46E5";
@@ -62,11 +62,6 @@ export const DEFAULT_NODE_COLOR = "#4F46E5";
 // The pop-core renderers (GenreTreeWheelRadialPopCore's wheel pivot, GenreTreeOutline's first
 // entry) single out this specific root by name and throw if it's missing.
 export const CENTER_NODE_NAME = "Mainstream Pop";
-
-// The pop-core wheel stacks the "commercial" and "underground" children of this specific core node
-// on successive rings instead of side by side, and throws if their `scene` markers aren't exactly
-// one of each.
-export const SCENE_SPLIT_PARENT_NAME = "Core electronic";
 
 // Placeholder palette cycled where no real root exists (GenreTreeWheelSkeleton); real roots use
 // ROOT_GENRE_COLORS.

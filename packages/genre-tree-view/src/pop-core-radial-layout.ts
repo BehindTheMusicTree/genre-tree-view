@@ -1,6 +1,5 @@
 import * as d3 from "d3";
 
-import { SceneStack } from "./scene-stack";
 import { createDeferredClick } from "./defer-click";
 import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 import {
@@ -192,9 +191,7 @@ export function measureWedge(
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
   itemCountRange?: ItemCountRange,
-  sceneStack?: SceneStack | null,
 ): number {
-  const ringDepthOf = (d: D3Node) => (sceneStack ? sceneStack.ringDepthOf(d) : d.depth);
   const dotRadius = (d: D3Node) =>
     itemCountRange ? calculateNodeDotRadius(d.data.itemCount, itemCountRange) : NODE_DOT_MAX_RADIUS;
   const offsetFromParent = new Map<D3Node, number>();
@@ -208,22 +205,14 @@ export function measureWedge(
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
-    const stacked = sceneStack?.parent === node;
     for (const child of node.children) {
       const contour = pack(child);
       let offset = 0;
-      if (stacked) {
-        // The scene children share the same angle: their rings are disjoint, so the second's
-        // contour just continues the first's instead of clearing it.
-        below.push(...contour);
-        childOffsets.push(0);
-        continue;
-      }
       if (childOffsets.length > 0) {
         offset = -Infinity;
         for (let k = 0; k < Math.min(below.length, contour.length); k++) {
           const gap =
-            (below[k].right.dotRadius + contour[k].left.dotRadius + MIN_DOT_GAP) / radiusOfDepth(ringDepthOf(child) + k);
+            (below[k].right.dotRadius + contour[k].left.dotRadius + MIN_DOT_GAP) / radiusOfDepth(child.depth + k);
           offset = Math.max(offset, below[k].right.x - contour[k].left.x + gap);
         }
       }
@@ -246,7 +235,7 @@ export function measureWedge(
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {
-    const inset = (dotRadius(d) + MIN_DOT_GAP / 2) / radiusOfDepth(ringDepthOf(d));
+    const inset = (dotRadius(d) + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
     min = Math.min(min, d.x! - inset);
     max = Math.max(max, d.x! + inset);
   });
@@ -271,15 +260,14 @@ export function layoutWedge(
   wedgeSpanDegrees: number,
   radiusOfDepth: (depth: number) => number,
   itemCountRange?: ItemCountRange,
-  sceneStack?: SceneStack | null,
 ): D3Node {
-  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange, sceneStack);
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, itemCountRange);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
   const wedgeStartRad = (wedgeCenterAngleDegrees * Math.PI) / 180 - (neededRad * scale) / 2;
   hierarchy.each((d) => {
     const angleRad = wedgeStartRad + d.x! * scale;
-    const radius = radiusOfDepth(sceneStack ? sceneStack.ringDepthOf(d) : d.depth);
+    const radius = radiusOfDepth(d.depth);
     d.x = radius * Math.sin(angleRad);
     d.y = -radius * Math.cos(angleRad);
   });
@@ -524,9 +512,6 @@ export function renderPopSubtree(
     // Per-node fill overriding the sector-wide one derived from rootColor, for a caller whose node
     // colors must not depend on which sector they happen to render in.
     nodeFillOf?: (node: GenreTreeNode) => string;
-    // The link into this node jumps over the rings of a sibling subtree stacked before it (see
-    // SceneStack): drawn dashed and dimmed so it doesn't read as a link to the nodes it crosses.
-    sceneCrossLinkTargetId?: string;
   } = {},
 ): void {
   const {
@@ -536,7 +521,6 @@ export function renderPopSubtree(
     isMainstreamSector = false,
     selectedNodeId = null,
     nodeFillOf,
-    sceneCrossLinkTargetId,
   } = options;
   const { onReparentTargetSelect, onNodeClick, onNodeDoubleClick, onNodeHover } = callbacks;
   const isForbidden = (d: D3Node) => reparentForbiddenIds.includes(d.data.id);
@@ -622,7 +606,6 @@ export function renderPopSubtree(
       "class",
       (d) =>
         "gtv-link" +
-        (d.targetId === sceneCrossLinkTargetId ? " gtv-wheel-link--scene-cross" : "") +
         (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
     )
     .attr("d", (d) =>
