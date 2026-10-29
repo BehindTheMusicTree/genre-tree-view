@@ -21,6 +21,20 @@ describe("GenreTree", () => {
     expect(container.querySelectorAll("path.gtv-link").length).toBe(2);
   });
 
+  it("renders the busy indicator before the zoom buttons and marks the tree aria-busy only when busy", () => {
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} busy />);
+    const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;
+    const status = controls.firstElementChild as HTMLElement;
+    expect(status.getAttribute("role")).toBe("status");
+    expect(status.textContent).toBe("Updating genre tree…");
+    expect(status.nextElementSibling?.classList.contains("gtv-zoom-controls")).toBe(true);
+    expect((container.firstElementChild as HTMLElement).getAttribute("aria-busy")).toBe("true");
+    cleanup();
+    const idle = render(<GenreTree itemCountLabel="Track count" nodes={TREE} />).container;
+    expect(idle.querySelector("[role='status']")).toBeNull();
+    expect((idle.firstElementChild as HTMLElement).hasAttribute("aria-busy")).toBe(false);
+  });
+
   it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {
     const { container } = render(
       <GenreTree itemCountLabel="Track count" nodes={TREE} floatingControlsLeading={<span data-testid="leading" />} />,

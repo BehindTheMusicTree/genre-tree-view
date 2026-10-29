@@ -38,6 +38,7 @@ export type GenreTreeOutlineProps = Omit<
   | "wheelZoom"
   | "controlsOrientation"
   | "floatingControlsLeading"
+  | "busy"
 >;
 
 interface OutlineState {
