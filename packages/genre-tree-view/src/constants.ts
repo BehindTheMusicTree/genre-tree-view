@@ -206,6 +206,8 @@ export const MAX_NODE_HEIGHT = 120;
 /** At this many nodes the current maximum card/dot sizes are retained. Above it, the available
  * size range shrinks in inverse proportion to node count, with the existing minimum as a floor. */
 export const NODE_SIZE_REFERENCE_COUNT = 100;
+/** High-density trees keep their largest node at least 50% above the configured minimum. */
+export const HIGH_DENSITY_NODE_MAX_FLOOR_SCALE = 1.5;
 /** Upper radius cap for radial nodes in sparse trees. */
 export const LOW_DENSITY_DOT_MAX_RADIUS = 70;
 
@@ -267,13 +269,15 @@ export interface ItemCountRangeOptions {
 function getDensityAdjustedMax(baseMax: number, min: number, nodeCount: number): number {
   const safeNodeCount = Number.isFinite(nodeCount) ? Math.max(1, nodeCount) : 1;
   const availableRangeScale = Math.min(1, NODE_SIZE_REFERENCE_COUNT / safeNodeCount);
-  return min + (baseMax - min) * availableRangeScale;
+  const denseTreeFloor = min * HIGH_DENSITY_NODE_MAX_FLOOR_SCALE;
+  return denseTreeFloor + (baseMax - denseTreeFloor) * availableRangeScale;
 }
 
 function getDensityAdjustedDotMax(nodeCount: number): number {
   const safeNodeCount = Number.isFinite(nodeCount) ? Math.max(1, nodeCount) : 1;
   const inverseDensityRadius = NODE_DOT_MAX_RADIUS * NODE_SIZE_REFERENCE_COUNT / safeNodeCount;
-  return Math.max(NODE_DOT_MIN_RADIUS, Math.min(LOW_DENSITY_DOT_MAX_RADIUS, inverseDensityRadius));
+  const denseTreeFloor = NODE_DOT_MIN_RADIUS * HIGH_DENSITY_NODE_MAX_FLOOR_SCALE;
+  return Math.max(denseTreeFloor, Math.min(LOW_DENSITY_DOT_MAX_RADIUS, inverseDensityRadius));
 }
 
 /** Builds the metric domain and visual size caps shared by a rendered tree. When a metric total
