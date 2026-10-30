@@ -150,6 +150,7 @@ export function computePopRadialLayout(
   coreRootCircleRadius: number,
   wedgeSpanDegrees: number = POP_WEDGE_SPAN_DEGREES,
   depthSpacing: number = POP_TREE_DEPTH_RADIAL_SPACING,
+  dotRadius: number = NODE_LAYOUT_SLOT_RADIUS,
 ): D3Node {
   return layoutWedge(
     d3Lib,
@@ -157,6 +158,8 @@ export function computePopRadialLayout(
     wedgeCenterAngleDegrees,
     wedgeSpanDegrees,
     popRadiusOfDepth(coreRootCircleRadius, depthSpacing),
+    "center",
+    dotRadius,
   );
 }
 
@@ -189,8 +192,9 @@ export function measureWedge(
   _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
+  dotRadius = NODE_LAYOUT_SLOT_RADIUS,
 ): number {
-  const dotRadius = () => NODE_LAYOUT_SLOT_RADIUS;
+  const slotRadius = () => dotRadius;
   const offsetFromParent = new Map<D3Node, number>();
   const shiftLevel = (level: Contour[number], by: number) => ({
     left: { ...level.left, x: level.left.x + by },
@@ -198,7 +202,7 @@ export function measureWedge(
   });
 
   const pack = (node: D3Node): Contour => {
-    const own = { x: 0, dotRadius: dotRadius() };
+    const own = { x: 0, dotRadius: slotRadius() };
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
@@ -232,7 +236,7 @@ export function measureWedge(
   let min = Infinity;
   let max = -Infinity;
   hierarchy.each((d) => {
-    const inset = (dotRadius() + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
+    const inset = (slotRadius() + MIN_DOT_GAP / 2) / radiusOfDepth(d.depth);
     min = Math.min(min, d.x! - inset);
     max = Math.max(max, d.x! + inset);
   });
@@ -274,8 +278,9 @@ export function layoutWedge(
   wedgeSpanDegrees: number,
   radiusOfDepth: (depth: number) => number,
   slack: WedgeSlack = "center",
+  dotRadius = NODE_LAYOUT_SLOT_RADIUS,
 ): D3Node {
-  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth);
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, dotRadius);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
