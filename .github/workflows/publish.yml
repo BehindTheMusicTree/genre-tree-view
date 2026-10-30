@@ -1,40 +1,37 @@
-name: Publish to GitHub Packages
+name: Publish to npm
 
 on:
   push:
     tags:
       - "v*"
 
-env:
-  NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5.0.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
-          registry-url: https://npm.pkg.github.com
 
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm --filter @behindthemusictree/genre-tree-view run build
 
-      - run: pnpm --filter @behindthemusictree/genre-tree-view publish --no-git-checks
-        env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # pnpm pack rewrites workspace:/catalog: specifiers. The trusted publisher only allows staging:
+      # a maintainer must approve the version with 2FA (npm stage approve) before it goes live.
+      - run: npm install -g npm@11.21.1
+      - run: pnpm --filter @behindthemusictree/genre-tree-view pack --pack-destination "$RUNNER_TEMP"
+      - run: npm stage publish "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz --provenance --access public
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.6.2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
