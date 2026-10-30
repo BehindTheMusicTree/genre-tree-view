@@ -20,7 +20,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, LOW_DENSITY_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -219,7 +219,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const radius = getWheelRadius(render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={deepCenterNodes} />).container);
 
     expect(radius).toBeGreaterThan(chipClearanceRadius);
-    expect(radius).toBeCloseTo(mainstreamRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN, 6);
+    expect(radius).toBeCloseTo(mainstreamRadius + LOW_DENSITY_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN, 6);
     expect(radius).toBeLessThan(chipClearanceRadius + mainstreamRadius);
   });
 
@@ -231,7 +231,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     ];
     const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={deepPopNodes} />);
 
-    const mainstreamRadius = NODE_LAYOUT_SLOT_RADIUS;
+    const mainstreamRadius = LOW_DENSITY_DOT_MAX_RADIUS;
     const popHierarchy = buildPopHierarchy(
       d3,
       deepPopNodes.filter((node) => node.id.startsWith("a-pop")),

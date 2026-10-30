@@ -446,8 +446,8 @@ export function WheelRadialPopCoreCore({
             0,
             POP_TREE_DEPTH_RADIAL_SPACING,
           )
-        : centerChipDiameter / 2,
-    [centerSubtreeHierarchy, centerChipDiameter],
+        : wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
+    [centerSubtreeHierarchy, wheelItemCountRange.maxDotRadius],
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
@@ -1197,7 +1197,7 @@ export function WheelRadialPopCoreCore({
         ),
       };
     });
-  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);
 
   return (
     <div
