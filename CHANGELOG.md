@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-10-30
+
 ### Added
 
 - `showZoomControls` prop (`"auto"` default | `"always"` | `"never"`, type `ZoomControlsVisibility`) on every pan/zoom renderer: under `"auto"` the zoom buttons are hidden on touch screens (`pointer: coarse`), where pinch replaces them.
