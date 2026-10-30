@@ -55,7 +55,10 @@ enforced at 95% (lines/branches/functions/statements) in
    branch (see `scripts/release.sh`).
 3. Open a PR from `release/x.y.z` into `main` and merge it.
 4. On `main`, tag the merge commit `vX.Y.Z` and push the tag — this triggers `publish.yml`, which
-   builds and publishes the package to GitHub Packages and creates a GitHub Release.
+   builds the package, stages it on npm (trusted publishing, with provenance) and creates a GitHub
+   Release. The version goes live only once an npm owner approves it with 2FA:
+   `npm stage list @behindthemusictree/genre-tree-view`, then `npm stage approve <stage-id>` (pass
+   `--registry https://registry.npmjs.org` if your `~/.npmrc` maps the scope elsewhere).
 5. Merge `release/x.y.z` (or `main`) back into `develop` so `develop` picks up the version bump.
 
 # Hotfixes

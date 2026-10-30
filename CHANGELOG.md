@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Published to the public npm registry (trusted publishing, with provenance) instead of GitHub Packages: installing `@behindthemusictree/genre-tree-view` no longer needs a token.
+
 ## [6.3.0] - 2026-10-30
 
 ### Added
