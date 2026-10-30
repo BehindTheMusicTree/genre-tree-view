@@ -206,8 +206,8 @@ export const MAX_NODE_HEIGHT = 120;
 /** At this many nodes the current maximum card/dot sizes are retained. Above it, the available
  * size range shrinks in inverse proportion to node count, with the existing minimum as a floor. */
 export const NODE_SIZE_REFERENCE_COUNT = 100;
-/** Low-density radial nodes can grow to four times the default radius range. */
-export const LOW_DENSITY_DOT_SIZE_MULTIPLIER = 4;
+/** Upper radius cap for radial nodes in sparse trees. */
+export const LOW_DENSITY_DOT_MAX_RADIUS = 70;
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
@@ -272,8 +272,8 @@ function getDensityAdjustedMax(baseMax: number, min: number, nodeCount: number):
 
 function getDensityAdjustedDotMax(nodeCount: number): number {
   const safeNodeCount = Number.isFinite(nodeCount) ? Math.max(1, nodeCount) : 1;
-  const radiusScale = Math.min(LOW_DENSITY_DOT_SIZE_MULTIPLIER, NODE_SIZE_REFERENCE_COUNT / safeNodeCount);
-  return Math.max(NODE_DOT_MIN_RADIUS, NODE_DOT_MAX_RADIUS * radiusScale);
+  const inverseDensityRadius = NODE_DOT_MAX_RADIUS * NODE_SIZE_REFERENCE_COUNT / safeNodeCount;
+  return Math.max(NODE_DOT_MIN_RADIUS, Math.min(LOW_DENSITY_DOT_MAX_RADIUS, inverseDensityRadius));
 }
 
 /** Builds the metric domain and visual size caps shared by a rendered tree. When a metric total
