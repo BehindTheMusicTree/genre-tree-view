@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Optional metric total and node count inputs let tree nodes scale relative to the filtered total and overall tree density.
+
 ## [6.3.1] - 2026-10-30
 
 ### Changed

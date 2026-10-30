@@ -64,13 +64,13 @@ import {
   INFO_PANEL_WIDTH,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
+  NODE_LAYOUT_SLOT_RADIUS,
   POP_TREE_DEPTH_RADIAL_SPACING,
   ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
   REGION_LABEL_TARGET_PX,
-  NODE_LAYOUT_SLOT_RADIUS,
   WHEEL_POP_CORE_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -174,6 +174,8 @@ export function WheelRadialPopCoreCore({
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
   itemCountLabel,
+  itemCountScaleMax,
+  nodeCountForSizing,
   readOnly,
   renderDangerZone,
   expanded,
@@ -193,6 +195,7 @@ export function WheelRadialPopCoreCore({
   focusNodeId: requestedFocusNodeId = null,
   onFocusChange,
 }: WheelRadialPopCoreProps) {
+  const fullNodeCountForSizing = nodeCountForSizing ?? nodes.length;
   const index = useTreeIndex(nodes);
   // A focus the zoom buttons couldn't have produced (stale URL, deleted node, ...) renders the
   // unfocused wheel and asks the consumer to reset it, instead of letting resolvePopCoreFrame throw.
@@ -394,8 +397,8 @@ export function WheelRadialPopCoreCore({
       getItemCountRange([
         ...nodes,
         ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
-      ]),
-    [nodes, rootItemCountById],
+      ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
+    [nodes, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
@@ -443,8 +446,8 @@ export function WheelRadialPopCoreCore({
             0,
             POP_TREE_DEPTH_RADIAL_SPACING,
           )
-        : NODE_LAYOUT_SLOT_RADIUS,
-    [centerSubtreeHierarchy],
+        : wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
+    [centerSubtreeHierarchy, wheelItemCountRange.maxDotRadius],
   );
 
   // How far past the ring roots' own circle the deepest developed root's core branch reaches —
@@ -483,7 +486,8 @@ export function WheelRadialPopCoreCore({
       new Map(
         groups.map((group) => {
           const { pop, core } = branchHierarchiesByRootId.get(group.root.id)!;
-          const chipWidth = 2 * NODE_LAYOUT_SLOT_RADIUS;
+          const dotRadius = wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS;
+          const chipWidth = 2 * dotRadius;
           return [
             group.root.id,
             {
@@ -492,6 +496,7 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   popRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
+                  dotRadius,
                 ),
               ),
               core: core.map((hierarchy) =>
@@ -499,6 +504,7 @@ export function WheelRadialPopCoreCore({
                   d3,
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
+                  dotRadius,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -506,7 +512,7 @@ export function WheelRadialPopCoreCore({
           ];
         }),
       ),
-    [groups, branchHierarchiesByRootId],
+    [groups, branchHierarchiesByRootId, wheelItemCountRange.maxDotRadius],
   );
 
   // The visual outer circle's radius (--gtv-wheel-radius) and, equally, where every ring root's
@@ -524,11 +530,11 @@ export function WheelRadialPopCoreCore({
           ),
         Math.max(
           WHEEL_POP_CORE_RADIUS,
-          mainstreamCircleRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN,
+          mainstreamCircleRadius + (wheelItemCountRange.maxDotRadius ?? NODE_DOT_MAX_RADIUS) + POP_SUBTREE_OUTER_MARGIN,
           popReachRequiredRadius,
         ),
       ),
-    [measureBranchNeedsAt, mainstreamCircleRadius, popReachRequiredRadius],
+    [measureBranchNeedsAt, mainstreamCircleRadius, popReachRequiredRadius, wheelItemCountRange.maxDotRadius],
   );
 
   const branchNeedsByRootId = useMemo(
@@ -686,6 +692,7 @@ export function WheelRadialPopCoreCore({
           coreRootCircleRadius,
           span,
           POP_TREE_DEPTH_RADIAL_SPACING,
+          wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -772,6 +779,7 @@ export function WheelRadialPopCoreCore({
           span,
           coreRootCircleRadius,
           POP_TREE_DEPTH_RADIAL_SPACING,
+          wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
         );
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
@@ -1189,7 +1197,7 @@ export function WheelRadialPopCoreCore({
         ),
       };
     });
-  }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);
 
   return (
     <div
