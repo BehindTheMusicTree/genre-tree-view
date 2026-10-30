@@ -3,7 +3,7 @@
     "id": "blues-rock-grouping",
     "parentId": null,
     "name": "Blues/Rock (grouping)",
-    "itemCount": 11383,
+    "itemCount": 11393,
     "wikidataId": "LOCAL:blues-rock"
   },
   {
@@ -3302,7 +3302,7 @@
     "id": "pop-rock",
     "parentId": "blues-rock-grouping",
     "name": "Pop rock",
-    "itemCount": 733,
+    "itemCount": 743,
     "wikidataId": "Q484641",
     "side": "pop",
     "umbrella": true
@@ -3374,7 +3374,7 @@
     "id": "new-wave",
     "parentId": "pop-rock",
     "name": "New wave",
-    "itemCount": 500,
+    "itemCount": 510,
     "wikidataId": "Q187760"
   },
   {
@@ -3423,7 +3423,7 @@
     "id": "new-romantic",
     "parentId": "new-wave",
     "name": "New Romantic",
-    "itemCount": 500,
+    "itemCount": 510,
     "wikidataId": "Q597240"
   },
   {
@@ -5362,7 +5362,7 @@
     "id": "electronic-music",
     "parentId": null,
     "name": "Electronic music",
-    "itemCount": 7160,
+    "itemCount": 7167,
     "wikidataId": "Q9778",
     "umbrella": true
   },
@@ -5370,7 +5370,7 @@
     "id": "core-electronic",
     "parentId": "electronic-music",
     "name": "Core electronic",
-    "itemCount": 7160,
+    "itemCount": 7167,
     "wikidataId": "LOCAL:core-electronic",
     "umbrella": true
   },
@@ -7299,7 +7299,7 @@
     "id": "house-music",
     "parentId": "core-electronic",
     "name": "House music",
-    "itemCount": 3733,
+    "itemCount": 3740,
     "wikidataId": "Q20502"
   },
   {
@@ -7600,7 +7600,7 @@
     "id": "eurohouse",
     "parentId": "house-music",
     "name": "Eurohouse",
-    "itemCount": 3249,
+    "itemCount": 3256,
     "wikidataId": "Q30917612"
   },
   {
@@ -8873,6 +8873,20 @@
     "name": "Indie sleaze revival",
     "itemCount": 0,
     "wikidataId": "Q139566596"
+  },
+  {
+    "id": "dance-pop",
+    "parentId": "pop-electronic",
+    "name": "Dance-pop",
+    "itemCount": 0,
+    "wikidataId": "Q211756"
+  },
+  {
+    "id": "recession-pop",
+    "parentId": "dance-pop",
+    "name": "Recession pop",
+    "itemCount": 0,
+    "wikidataId": "Q132609906"
   },
   {
     "id": "dance-music",
@@ -10536,13 +10550,6 @@
     "wikidataId": "Q55644985"
   },
   {
-    "id": "necrotrap",
-    "parentId": "trap-metal",
-    "name": "Necrotrap",
-    "itemCount": 0,
-    "wikidataId": "Q140627258"
-  },
-  {
     "id": "gangsta-rap",
     "parentId": "hardcore-hip-hop",
     "name": "Gangsta rap",
@@ -11277,7 +11284,7 @@
     "id": "mainstream-pop",
     "parentId": null,
     "name": "Mainstream Pop",
-    "itemCount": 6264,
+    "itemCount": 6884,
     "wikidataId": "Q37073"
   },
   {
@@ -11501,14 +11508,14 @@
     "id": "pop-soul",
     "parentId": "mainstream-pop",
     "name": "Pop soul",
-    "itemCount": 2261,
+    "itemCount": 2267,
     "wikidataId": "Q11700065"
   },
   {
     "id": "motown",
     "parentId": "pop-soul",
     "name": "Motown",
-    "itemCount": 2261,
+    "itemCount": 2267,
     "wikidataId": "Q9078960"
   },
   {
@@ -11608,20 +11615,6 @@
     "name": "British Invasion",
     "itemCount": 0,
     "wikidataId": "Q211418"
-  },
-  {
-    "id": "dance-pop",
-    "parentId": "mainstream-pop",
-    "name": "Dance-pop",
-    "itemCount": 0,
-    "wikidataId": "Q211756"
-  },
-  {
-    "id": "recession-pop",
-    "parentId": "dance-pop",
-    "name": "Recession pop",
-    "itemCount": 0,
-    "wikidataId": "Q132609906"
   },
   {
     "id": "sunshine-pop",
@@ -11739,7 +11732,7 @@
     "id": "europop",
     "parentId": "mainstream-pop",
     "name": "Europop",
-    "itemCount": 3873,
+    "itemCount": 4487,
     "wikidataId": "Q517415"
   },
   {
