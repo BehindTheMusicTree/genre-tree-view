@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
+
 jobs:
   build:
     runs-on: ubuntu-latest

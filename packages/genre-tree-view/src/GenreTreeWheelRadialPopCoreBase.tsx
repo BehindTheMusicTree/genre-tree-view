@@ -185,6 +185,7 @@ export function WheelRadialPopCoreCore({
   defaultViewport,
   onViewportChange,
   controlsOrientation = "vertical",
+  showZoomControls = "auto",
   floatingControlsLeading,
   busy,
   allowWheelRotation = true,
@@ -978,7 +979,7 @@ export function WheelRadialPopCoreCore({
             : viewportRef.current?.querySelector<HTMLButtonElement>(`#group-${CSS.escape(d.id)}`);
         chip?.click();
       })
-      .on("dblclick", (_event, d) => focusOnNodeRef.current(d.id));
+      .on("dblclick", (_event, d) => chipClickRef.current.doubleClick(() => focusOnNodeRef.current(d.id)));
   }, [
     centerNode,
     centerHasPopDisc,
@@ -1314,9 +1315,9 @@ export function WheelRadialPopCoreCore({
                       showNodeInfo(centerNode, chip, viewportRef.current);
                       onNodeClick?.(centerNode, nativeEvent);
                     }
-                  });
+                  }, () => focusOnNode(centerNode.id), centerNode.id);
                 }}
-                onDoubleClick={() => focusOnNode(centerNode.id)}
+                onDoubleClick={() => chipClickRef.current.doubleClick(() => focusOnNode(centerNode.id))}
                 aria-label={centerNode.name}
               />
             </div>
@@ -1385,9 +1386,9 @@ export function WheelRadialPopCoreCore({
                             showNodeInfo(root, chip, viewportRef.current);
                             onNodeClick?.(root, nativeEvent);
                           }
-                        });
+                        }, () => focusOnNode(group.root.id), group.root.id);
                       }}
-                      onDoubleClick={() => focusOnNode(group.root.id)}
+                      onDoubleClick={() => chipClickRef.current.doubleClick(() => focusOnNode(group.root.id))}
                     />
                   </div>
                 </div>
@@ -1494,6 +1495,7 @@ export function WheelRadialPopCoreCore({
       <FloatingControls
         panZoom={panZoom}
         orientation={controlsOrientation}
+        zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
         onFit={() => panZoom.fitToFrame([

@@ -12,3 +12,7 @@ overrides:
   undici: ^8.10.2
 
 engineStrict: true
+
+minimumReleaseAgeExclude:
+  - '@behindthemusictree/brand@12.7.0'
+  - '@behindthemusictree/ui@0.10.0'

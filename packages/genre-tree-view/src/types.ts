@@ -87,6 +87,9 @@ export type WheelZoomMode = "always" | "modifier";
 /** Layout of the floating zoom/pop/fit controls — see `GenreTreeProps.controlsOrientation`. */
 export type ControlsOrientation = "horizontal" | "vertical";
 
+/** When the floating zoom in / zoom out / fit buttons show — see `GenreTreeProps.showZoomControls`. */
+export type ZoomControlsVisibility = "auto" | "always" | "never";
+
 /** The pan/zoom view as the content-space point shown at the viewport's center plus the scale —
  * independent of the container's pixel size, so a saved view lands on the same spot in any window. */
 export interface GenreTreeViewport {
@@ -166,6 +169,10 @@ export interface GenreTreeProps {
   /** Stacks the floating zoom/pop/fit controls vertically ("vertical", the default) or lays them
    * out in a row ("horizontal"). */
   controlsOrientation?: ControlsOrientation;
+  /** "auto" (the default) hides the zoom in / zoom out / fit buttons on touch screens
+   * (`pointer: coarse`), where pinch and pan replace them; "always" and "never" force them. The
+   * `floatingControlsLeading` content stays visible either way. */
+  showZoomControls?: ZoomControlsVisibility;
   /** Host content rendered in the floating controls box, beside the zoom buttons ("horizontal")
    * or above them ("vertical"); stacked above them in narrow containers. */
   floatingControlsLeading?: ReactNode;

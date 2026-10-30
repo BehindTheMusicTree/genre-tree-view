@@ -691,6 +691,71 @@ describe("InfoPanel", () => {
     });
   });
 
+  describe("bottom sheet grabber", () => {
+    const renderSheet = (overrides: Partial<InfoPanelProps> = {}) => {
+      const onClose = vi.fn();
+      const utils = render(
+        <InfoPanel
+          itemCountLabel="Track count"
+          node={MINIMAL_NODE}
+          fill="#F1F0FD"
+          textColor="#18181B"
+          parentNode={null}
+          childNodes={[]}
+          ancestorNodes={[]}
+          side="left"
+          onClose={onClose}
+          onSelectNode={vi.fn()}
+          {...overrides}
+        />,
+      );
+      const panel = utils.container.firstElementChild as HTMLElement;
+      const grabber = () => panel.querySelector(".gtv-info-panel-grabber") as HTMLButtonElement;
+      const drag = (dy: number) => {
+        fireEvent.pointerDown(grabber(), { clientY: 500, pointerId: 1 });
+        fireEvent.pointerUp(grabber(), { clientY: 500 + dy, pointerId: 1 });
+        fireEvent.click(grabber());
+      };
+      return { panel, grabber, drag, onClose };
+    };
+
+    it("toggles between peek and full on tap or keyboard activation", () => {
+      const { panel, grabber, drag } = renderSheet();
+      expect(panel.classList.contains("gtv-info-panel--sheet")).toBe(true);
+      expect(grabber().getAttribute("aria-expanded")).toBe("false");
+      drag(4);
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(true);
+      expect(grabber().getAttribute("aria-label")).toBe("Lower panel");
+      fireEvent.click(grabber());
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(false);
+      expect(grabber().getAttribute("aria-label")).toBe("Raise panel");
+    });
+
+    it("snaps up to full on an upward drag, back to peek, then closes on a downward drag", () => {
+      const { panel, drag, onClose } = renderSheet();
+      drag(-80);
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(true);
+      drag(80);
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(false);
+      expect(onClose).not.toHaveBeenCalled();
+      drag(80);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays at peek on a downward drag when the close button is hidden", () => {
+      const { panel, drag, onClose } = renderSheet({ hideClose: true });
+      drag(80);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(false);
+    });
+
+    it("ignores a pointerup with no pointerdown before it", () => {
+      const { panel, grabber } = renderSheet();
+      fireEvent.pointerUp(grabber(), { clientY: 0 });
+      expect(panel.classList.contains("gtv-info-panel--sheet-full")).toBe(false);
+    });
+  });
+
   describe("expanded mode", () => {
     function renderPanel(props: Partial<InfoPanelProps> = {}) {
       return render(

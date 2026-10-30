@@ -20,6 +20,7 @@ export type {
   GenreTreeAction,
   WheelZoomMode,
   ControlsOrientation,
+  ZoomControlsVisibility,
   GenreTreeOverlayPanel,
   GenreTreeViewport,
   InfoPanelBody,

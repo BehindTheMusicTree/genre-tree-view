@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@behindthemusictree/genre-tree-view` — a reusable, presentational D3-based tree visualization component for React, published to GitHub Packages. It renders a flat `GenreTreeNode[]` as an interactive genre/hierarchy tree via callback props (`onPlayPause`, `onAddChild`, `onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `additionalActions`). All data fetching, mutations, and popups/dialogs are the consumer's responsibility — this package owns rendering only.
 
+Consumed by `app-kit-ui` (`GenreTreeView`), which grow and hear render. Ecosystem map (which repo owns what, where UI changes go): `~/git/claude-config/CONVENTIONS.md` § Ecosystem.
+
 pnpm workspace with two members:
 
 - `packages/genre-tree-view` — the published library (tsup build, Vitest tests).

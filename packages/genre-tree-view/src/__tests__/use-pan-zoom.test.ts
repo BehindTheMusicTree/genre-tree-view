@@ -912,6 +912,31 @@ describe("usePanZoom", () => {
     document.body.removeChild(element);
   });
 
+  it("centerOnElement centers above a bottom-obscuring sheet and within the strip beside a right one", async () => {
+    const viewport = document.createElement("div");
+    const element = document.createElement("div");
+    document.body.appendChild(viewport);
+    document.body.appendChild(element);
+    viewport.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 400, bottom: 800, width: 400, height: 800 }) as DOMRect;
+    element.getBoundingClientRect = () =>
+      ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+
+    act(() => {
+      result.current.centerOnElement(element, 2, { height: 320, side: "bottom" });
+    });
+
+    await waitFor(() => expect(result.current.zoomScale).toBe(2));
+    // Element's center (140, 220) at scale 2 lands mid-width and at the midpoint of the 480px
+    // left visible above the 320px sheet.
+    expect(result.current.panX + 140 * 2).toBeCloseTo(200);
+    expect(result.current.panY + 220 * 2).toBeCloseTo(240);
+
+    document.body.removeChild(viewport);
+    document.body.removeChild(element);
+  });
+
   it("keeps the viewport's pan center fixed on screen when its box is resized", () => {
     let resizeCallback: ((entries: { contentRect: { width: number; height: number } }[]) => void) | null = null;
     const observe = vi.fn();
