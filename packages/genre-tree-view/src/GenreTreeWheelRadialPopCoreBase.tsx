@@ -174,6 +174,8 @@ export function WheelRadialPopCoreCore({
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
   itemCountLabel,
+  itemCountScaleMax,
+  nodeCountForSizing,
   readOnly,
   renderDangerZone,
   expanded,
@@ -193,6 +195,7 @@ export function WheelRadialPopCoreCore({
   focusNodeId: requestedFocusNodeId = null,
   onFocusChange,
 }: WheelRadialPopCoreProps) {
+  const fullNodeCountForSizing = nodeCountForSizing ?? nodes.length;
   const index = useTreeIndex(nodes);
   // A focus the zoom buttons couldn't have produced (stale URL, deleted node, ...) renders the
   // unfocused wheel and asks the consumer to reset it, instead of letting resolvePopCoreFrame throw.
@@ -394,8 +397,8 @@ export function WheelRadialPopCoreCore({
       getItemCountRange([
         ...nodes,
         ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
-      ]),
-    [nodes, rootItemCountById],
+      ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
+    [nodes, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
@@ -524,11 +527,11 @@ export function WheelRadialPopCoreCore({
           ),
         Math.max(
           WHEEL_POP_CORE_RADIUS,
-          mainstreamCircleRadius + NODE_DOT_MAX_RADIUS + POP_SUBTREE_OUTER_MARGIN,
+          mainstreamCircleRadius + (wheelItemCountRange.maxDotRadius ?? NODE_DOT_MAX_RADIUS) + POP_SUBTREE_OUTER_MARGIN,
           popReachRequiredRadius,
         ),
       ),
-    [measureBranchNeedsAt, mainstreamCircleRadius, popReachRequiredRadius],
+    [measureBranchNeedsAt, mainstreamCircleRadius, popReachRequiredRadius, wheelItemCountRange.maxDotRadius],
   );
 
   const branchNeedsByRootId = useMemo(

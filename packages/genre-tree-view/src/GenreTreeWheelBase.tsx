@@ -88,6 +88,8 @@ export function WheelCore({
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
   itemCountLabel,
+  itemCountScaleMax,
+  nodeCountForSizing,
   readOnly,
   renderDangerZone,
   expanded,
@@ -104,6 +106,11 @@ export function WheelCore({
   busy,
   selectedNodeId,
 }: WheelCoreProps) {
+  const fullNodeCountForSizing = nodeCountForSizing ?? nodes.length;
+  const wheelSizeRange = useMemo(
+    () => getItemCountRange(nodes, { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
+    [nodes, itemCountScaleMax, fullNodeCountForSizing],
+  );
   const treeOrientation: TreeOrientation =
     direction === "left" ? "horizontal-anchored" : "vertical";
   // CSS `rotate()` + `translateY(-radius)` convention: local angle 0°=top, 90°=right, 180°=bottom,
@@ -126,16 +133,13 @@ export function WheelCore({
     return getGenreTreeColor(nodes.find((n) => n.id === rootId)?.wikidataId);
   };
 
-  // The largest a chip can ever render is MAX_NODE_WIDTH (the root with the highest itemCount in
-  // range always sits at the top of the scale — see calculateNodeDimensions), so that's the
-  // width every neighboring pair of chips needs clearance for, regardless of which root actually
-  // ends up at that size. WHEEL_RADIUS is a floor: the wheel never shrinks below its default, only
-  // grows to fit more/larger chips.
+  // Reserve the current density-adjusted chip maximum for every neighboring pair. WHEEL_RADIUS is
+  // a floor: the wheel never shrinks below its default, only grows to fit more/larger chips.
   const wheelRadius = useMemo(
-    () => calculateWheelRadius(groups.length, MAX_NODE_WIDTH, WHEEL_RADIUS),
-    [groups.length],
+    () => calculateWheelRadius(groups.length, wheelSizeRange.maxNodeWidth ?? MAX_NODE_WIDTH, WHEEL_RADIUS),
+    [groups.length, wheelSizeRange.maxNodeWidth],
   );
-  const wheelViewportHeight = wheelRadius * 2 + MAX_NODE_HEIGHT / 2;
+  const wheelViewportHeight = wheelRadius * 2 + (wheelSizeRange.maxNodeHeight ?? MAX_NODE_HEIGHT) / 2;
 
   const rootItemCountById = useMemo(
     () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
@@ -215,8 +219,9 @@ export function WheelCore({
         groups.map((group) => ({
           itemCount: rootItemCountById.get(group.root.id)!,
         })),
+        { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing },
       ),
-    [groups, rootItemCountById],
+    [groups, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   // The selected chip is centered on its wheel anchor point (translate(-50%, -50%)) so it stays
@@ -235,6 +240,7 @@ export function WheelCore({
         rootItemCountById.get(selectedGroup.root.id)!,
         rootItemCountRange,
         direction === "left" ? "WIDTH" : "HEIGHT",
+        { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing },
       )
     : 0;
 
@@ -356,6 +362,8 @@ export function WheelCore({
                 key={selectedGroup.root.id}
                 nodes={selectedGroup.nodes}
                 itemCountLabel={itemCountLabel}
+                itemCountScaleMax={itemCountScaleMax}
+                nodeCountForSizing={fullNodeCountForSizing}
                 orientation={treeOrientation}
                 hideRoot
                 interactive={false}

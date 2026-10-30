@@ -203,6 +203,9 @@ export const MIN_NODE_WIDTH = 180;
 export const MAX_NODE_WIDTH = 700;
 export const MIN_NODE_HEIGHT = 35;
 export const MAX_NODE_HEIGHT = 120;
+/** At this many nodes the current maximum card/dot sizes are retained. Above it, the available
+ * size range shrinks in inverse proportion to node count, with the existing minimum as a floor. */
+export const NODE_SIZE_REFERENCE_COUNT = 100;
 
 // Reserved space to a node's right/top/bottom for its toolbar icon row and overflow menu,
 // so the tree layout leaves room for them instead of packing nodes edge-to-edge. Width covers
@@ -224,7 +227,7 @@ export const HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES = 5;
 export const VERTICAL_SEPARATION_BETWEEN_RECTANGLES = 20;
 // 0.8x: depth-axis spacing only (see HORIZONTAL_SEPARATION_BETWEEN_NODES and
 // VERTICAL_ORIENTATION_DEPTH_SEPARATION below), tightened 20% at the consumer's request.
-const DEPTH_AXIS_SPACING_FACTOR = 0.8;
+export const DEPTH_AXIS_SPACING_FACTOR = 0.8;
 export const HORIZONTAL_SEPARATION_BETWEEN_NODES =
   (NODE_DIMENSIONS.WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES) * DEPTH_AXIS_SPACING_FACTOR;
 export const VERTICAL_SEPARATION_BETWEEN_NODES = NODE_DIMENSIONS.HEIGHT + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
@@ -246,15 +249,52 @@ export const SIBLING_SEPARATION_BETWEEN_NODES = MAX_NODE_WIDTH + HORIZONTAL_SEPA
 export interface ItemCountRange {
   min: number;
   max: number;
+  /** Density-adjusted visual caps. Omitted by hand-built ranges, which retain the legacy caps. */
+  maxNodeWidth?: number;
+  maxNodeHeight?: number;
+  maxDotRadius?: number;
 }
 
-/** The min/max itemCount across a set of nodes — the reference points calculateNodeDimensions
- * scales every node's size against, so a node's size reflects its item count relative to its
- * peers rather than an absolute, arbitrarily-chosen scale. */
-export function getItemCountRange(nodes: Array<{ itemCount: number }>): ItemCountRange {
-  if (nodes.length === 0) return { min: 0, max: 0 };
+export interface ItemCountRangeOptions {
+  /** Fixed upper bound for the metric (for example, total songs or views after filtering). */
+  itemCountScaleMax?: number;
+  /** Full dataset size for the density cap; defaults to the number of nodes in this range. */
+  nodeCountForSizing?: number;
+}
+
+function getDensityAdjustedMax(baseMax: number, min: number, nodeCount: number): number {
+  const safeNodeCount = Number.isFinite(nodeCount) ? Math.max(1, nodeCount) : 1;
+  const availableRangeScale = Math.min(1, NODE_SIZE_REFERENCE_COUNT / safeNodeCount);
+  return min + (baseMax - min) * availableRangeScale;
+}
+
+/** Builds the metric domain and visual size caps shared by a rendered tree. When a metric total
+ * is supplied, counts map against [0, total] so filtering changes their relative sizes. The
+ * maximum visual size also responds to the full node count: above NODE_SIZE_REFERENCE_COUNT, the
+ * available range above the minimum shrinks in inverse proportion to node count. */
+export function getItemCountRange(
+  nodes: Array<{ itemCount: number }>,
+  options: ItemCountRangeOptions = {},
+): ItemCountRange {
   const counts = nodes.map((node) => node.itemCount);
-  return { min: Math.min(...counts), max: Math.max(...counts) };
+  const validScaleMax =
+    options.itemCountScaleMax !== undefined &&
+    Number.isFinite(options.itemCountScaleMax) &&
+    options.itemCountScaleMax >= 0;
+  const nodeCount = options.nodeCountForSizing ?? nodes.length;
+  const observedMin = counts.length === 0 ? 0 : Math.min(...counts);
+  const observedMax = counts.length === 0 ? 0 : Math.max(...counts);
+  const includeDensityCaps = options.nodeCountForSizing !== undefined || validScaleMax;
+
+  return {
+    min: validScaleMax ? 0 : observedMin,
+    max: validScaleMax ? options.itemCountScaleMax! : observedMax,
+    ...(includeDensityCaps && {
+      maxNodeWidth: getDensityAdjustedMax(MAX_NODE_WIDTH, MIN_NODE_WIDTH, nodeCount),
+      maxNodeHeight: getDensityAdjustedMax(MAX_NODE_HEIGHT, MIN_NODE_HEIGHT, nodeCount),
+      maxDotRadius: getDensityAdjustedMax(NODE_DOT_MAX_RADIUS, NODE_DOT_MIN_RADIUS, nodeCount),
+    }),
+  };
 }
 
 /** Log-scaled position of itemCount within `range`, normalized to [0, 1] — the node with the
@@ -269,7 +309,7 @@ export function logarithmicPosition(itemCount: number, range: ItemCountRange): n
   const logMin = Math.log1p(Math.max(min, 0));
   const logMax = Math.log1p(Math.max(max, 0));
   const logValue = Math.log1p(Math.max(itemCount, 0));
-  return logMax > logMin ? (logValue - logMin) / (logMax - logMin) : 0;
+  return logMax > logMin ? Math.max(0, Math.min(1, (logValue - logMin) / (logMax - logMin))) : 0;
 }
 
 /** Maps itemCount's log-scaled position within `range` onto [MIN_NODE_*, MAX_NODE_*]. */
@@ -277,8 +317,8 @@ export function calculateNodeDimensions(itemCount: number, range: ItemCountRange
   const t = logarithmicPosition(itemCount, range);
 
   return {
-    WIDTH: Math.round(MIN_NODE_WIDTH + t * (MAX_NODE_WIDTH - MIN_NODE_WIDTH)),
-    HEIGHT: Math.round(MIN_NODE_HEIGHT + t * (MAX_NODE_HEIGHT - MIN_NODE_HEIGHT)),
+    WIDTH: Math.round(MIN_NODE_WIDTH + t * ((range.maxNodeWidth ?? MAX_NODE_WIDTH) - MIN_NODE_WIDTH)),
+    HEIGHT: Math.round(MIN_NODE_HEIGHT + t * ((range.maxNodeHeight ?? MAX_NODE_HEIGHT) - MIN_NODE_HEIGHT)),
   };
 }
 
@@ -365,7 +405,7 @@ export const NODE_LAYOUT_SLOT_RADIUS = 8;
  * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
   const minArea = NODE_DOT_MIN_RADIUS ** 2;
-  const maxArea = NODE_DOT_MAX_RADIUS ** 2;
+  const maxArea = (range.maxDotRadius ?? NODE_DOT_MAX_RADIUS) ** 2;
   return Math.sqrt(minArea + logarithmicPosition(itemCount, range) * (maxArea - minArea));
 }
 

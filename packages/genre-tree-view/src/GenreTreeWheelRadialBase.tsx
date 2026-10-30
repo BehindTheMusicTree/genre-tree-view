@@ -120,6 +120,8 @@ export function WheelRadialCore({
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
   itemCountLabel,
+  itemCountScaleMax,
+  nodeCountForSizing,
   readOnly,
   renderDangerZone,
   expanded,
@@ -136,6 +138,7 @@ export function WheelRadialCore({
   busy,
   selectedNodeId,
 }: WheelRadialCoreProps) {
+  const fullNodeCountForSizing = nodeCountForSizing ?? nodes.length;
   const index = useTreeIndex(nodes);
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (node: GenreTreeNode) =>
@@ -217,14 +220,18 @@ export function WheelRadialCore({
         groups.map((group) => ({
           itemCount: rootItemCountById.get(group.root.id)!,
         })),
+        { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing },
       ),
-    [groups, rootItemCountById],
+    [groups, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   // Node cards scale against the whole tree's item counts, not just their own subtree's — a
   // shallow root's few nodes can have a narrow itemCount spread that would otherwise get stretched
   // across the full size range and render wildly inconsistent card sizes next to deeper siblings.
-  const wheelItemCountRange = useMemo(() => getItemCountRange(nodes), [nodes]);
+  const wheelItemCountRange = useMemo(
+    () => getItemCountRange(nodes, { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
+    [nodes, itemCountScaleMax, fullNodeCountForSizing],
+  );
 
   // Real angular sector each ring root owns, proportional to its own weight (rootWeights) out of
   // the total — same widths computeRadialLayout placed chips with, so a root's wedge below is
@@ -299,10 +306,10 @@ export function WheelRadialCore({
     () =>
       calculateWheelRadiusForAngles(
         layout.map((slot) => slot.angle),
-        MAX_NODE_WIDTH,
+        wheelItemCountRange.maxNodeWidth ?? MAX_NODE_WIDTH,
         WHEEL_RADIUS,
       ),
-    [layout],
+    [layout, wheelItemCountRange.maxNodeWidth],
   );
 
   // How far past the ring roots' own circle the deepest developed root's subtree reaches —

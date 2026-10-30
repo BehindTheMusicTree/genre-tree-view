@@ -9,10 +9,9 @@ import {
   TreeOrientation,
 } from "./types";
 import {
-  HORIZONTAL_SEPARATION_BETWEEN_NODES,
-  VERTICAL_SEPARATION_BETWEEN_NODES,
-  VERTICAL_ORIENTATION_DEPTH_SEPARATION,
-  SIBLING_SEPARATION_BETWEEN_NODES,
+  HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES,
+  VERTICAL_SEPARATION_BETWEEN_RECTANGLES,
+  DEPTH_AXIS_SPACING_FACTOR,
   ACTIONS_OVERLAY_WIDTH,
   ACTIONS_OVERLAY_HEIGHT,
   SURFACE_BORDER_COLOR,
@@ -28,6 +27,7 @@ import {
   calculateNodeDimensions,
   calculateNodeFontSize,
   getItemCountRange,
+  ItemCountRange,
   tintSurface,
 } from "./constants";
 import { addGrid } from "./d3-helper/d3-grid-helper";
@@ -62,23 +62,42 @@ export interface RenderTreeCallbacks {
   playState?: GenreTreePlayState;
 }
 
+function getLayoutSpacings(itemCountRange: ItemCountRange, depthSpacingScale = 1) {
+  const maxWidth = itemCountRange.maxNodeWidth ?? MAX_NODE_WIDTH;
+  const maxHeight = itemCountRange.maxNodeHeight ?? MAX_NODE_HEIGHT;
+  const verticalSeparation = maxHeight + VERTICAL_SEPARATION_BETWEEN_RECTANGLES;
+  return {
+    horizontalDepth:
+      (maxWidth + ACTIONS_OVERLAY_WIDTH + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES) *
+      DEPTH_AXIS_SPACING_FACTOR *
+      depthSpacingScale,
+    verticalBreadth: verticalSeparation,
+    verticalDepth: verticalSeparation * 2 * DEPTH_AXIS_SPACING_FACTOR * depthSpacingScale,
+    verticalSibling: maxWidth + HORIZONTAL_SEPARATION_BETWEEN_RECTANGLES,
+  };
+}
+
 export function calculateSvgDimensions(
   d3Lib: typeof import("d3"),
   treeData: D3Node,
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
   depthSpacingScale = 1,
+  suppliedItemCountRange?: ItemCountRange,
 ): SvgDimensions {
-  const nodes = treeData.descendants();
-  const itemCountRange = getItemCountRange(nodes.map((d) => d.data));
-  // The node with the highest itemCount in range always scales to exactly MAX_NODE_*
-  // (see calculateNodeDimensions), so the layout budget can use those constants directly.
-  const maxNodeDimensions = { WIDTH: MAX_NODE_WIDTH, HEIGHT: MAX_NODE_HEIGHT };
+  const treeNodes = treeData.descendants();
+  const nodes = treeNodes;
+  const itemCountRange = suppliedItemCountRange ?? getItemCountRange(
+    treeNodes.map((d) => d.data),
+  );
+  const maxNodeDimensions = {
+    WIDTH: itemCountRange.maxNodeWidth ?? MAX_NODE_WIDTH,
+    HEIGHT: itemCountRange.maxNodeHeight ?? MAX_NODE_HEIGHT,
+  };
   const maximumLevel = d3Lib.max(nodes, (d) => d.depth)!;
-  const depthSeparation =
-    VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
-  const depthSeparationHorizontal =
-    HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale;
+  const layoutSpacings = getLayoutSpacings(itemCountRange, depthSpacingScale);
+  const depthSeparation = layoutSpacings.verticalDepth;
+  const depthSeparationHorizontal = layoutSpacings.horizontalDepth;
 
   if (isVerticalOrientation(orientation)) {
     // Root sits at the bottom edge ("vertical") or top edge ("vertical-flipped"), so only that
@@ -244,11 +263,16 @@ export function setupTreeLayout(
   rootDepthOffset = 0,
   svgWidth = 0,
   depthSpacingScale = 1,
+  suppliedItemCountRange?: ItemCountRange,
 ): D3Node {
+  const treeNodes = treeData.descendants();
+  const itemCountRange = suppliedItemCountRange ?? getItemCountRange(
+    treeNodes.map((d) => d.data),
+  );
+  const layoutSpacings = getLayoutSpacings(itemCountRange, depthSpacingScale);
   if (isVerticalOrientation(orientation)) {
     const maximumLevel = d3Lib.max(treeData.descendants(), (d) => d.depth)!;
-    const depthSeparation =
-      VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale;
+    const depthSeparation = layoutSpacings.verticalDepth;
     treeData.each(function (d) {
       d.x = d.x! + highestVerticalCoordinate;
       // "vertical": root anchored at the bottom (depthAxisSign -1), depth grows toward y=0.
@@ -305,15 +329,21 @@ export function createTreeLayout(
   root: D3Node,
   orientation: TreeOrientation = "horizontal",
   depthSpacingScale = 1,
+  suppliedItemCountRange?: ItemCountRange,
 ): D3Node {
+  const nodes = root.descendants();
+  const itemCountRange = suppliedItemCountRange ?? getItemCountRange(
+    nodes.map((d) => d.data),
+  );
+  const layoutSpacings = getLayoutSpacings(itemCountRange, depthSpacingScale);
   const nodeSize: [number, number] = isVerticalOrientation(orientation)
     ? [
-        SIBLING_SEPARATION_BETWEEN_NODES,
-        VERTICAL_ORIENTATION_DEPTH_SEPARATION * depthSpacingScale,
+        layoutSpacings.verticalSibling,
+        layoutSpacings.verticalDepth,
       ]
     : [
-        VERTICAL_SEPARATION_BETWEEN_NODES,
-        HORIZONTAL_SEPARATION_BETWEEN_NODES * depthSpacingScale,
+        layoutSpacings.verticalBreadth,
+        layoutSpacings.horizontalDepth,
       ];
   // d3's default separation() doubles the gap between same-depth nodes that don't share a
   // parent, which compounds up the tree for deeply-branching data and produces gaps several
@@ -339,6 +369,7 @@ export function renderTree(
   orientation: TreeOrientation = "horizontal",
   hideRoot = false,
   selectedNodeId: string | null = null,
+  suppliedItemCountRange?: ItemCountRange,
 ): D3Selection {
   const { onReparentTargetSelect, onNodeClick } = callbacks;
 
@@ -346,8 +377,9 @@ export function renderTree(
     throw new Error("SVG reference is null");
   }
 
-  const itemCountRange = getItemCountRange(
-    treeData.descendants().map((d) => d.data),
+  const treeNodes = treeData.descendants();
+  const itemCountRange = suppliedItemCountRange ?? getItemCountRange(
+    treeNodes.map((d) => d.data),
   );
 
   const svg = d3Lib
