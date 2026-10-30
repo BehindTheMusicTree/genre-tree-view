@@ -224,13 +224,13 @@ packages:
     engines: {node: '>=18'}
 
   '@behindthemusictree/brand@12.7.0':
-    resolution: {integrity: sha512-IgzmWaDgukuyg2e6sldxIRBPBaeSrqVUfvGcQShSDp7CopY5P4cmKHWX1rHl8V9n7LNJZeoSRqUcY9hafnNkXA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/brand/12.7.0/f8ec62a929c9fd82b663f4950bd331be629f2d0d}
+    resolution: {integrity: sha512-k80mk5+yEyyKLv1Ac4ccZxC+32BYrI7BQ3aRZwecmLtjhrJhTdPVC0vdXjM5qOCa/eDsDTn47miXv07sMCGEQg==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
   '@behindthemusictree/ui@0.10.0':
-    resolution: {integrity: sha512-2BbkifUSfDxQsuJFTI9zvObDv/IQmmcTdMYYs0L6EC3rv/UQqMd89cwpXC73nElcVL6ncXzrNMdqihH/FyCB3w==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.10.0/9469d5fdaab5e5bc6c08762d30cb00cb0bfb49f8}
+    resolution: {integrity: sha512-AYCcZpamdSy0f3bGwIs0Rofc4UKK7noCXWzrOeuT/jE+jAqbipr6vmn9CYMv8S1c25j9YUCsgf0Wg/7PFwwR6Q==}
     peerDependencies:
       '@behindthemusictree/brand': ^12.7.0
       react: '>=18.0.0'

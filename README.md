@@ -9,7 +9,7 @@ hooks, or domain types.
 
 ## Package
 
-See [`packages/genre-tree-view`](packages/genre-tree-view). Published to GitHub Packages as
+See [`packages/genre-tree-view`](packages/genre-tree-view). Published to npm as
 `@behindthemusictree/genre-tree-view` (ISC license).
 
 ```tsx
