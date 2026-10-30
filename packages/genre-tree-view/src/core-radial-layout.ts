@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 
 import { GenreTreeNode } from "./types";
-import { MAX_NODE_WIDTH } from "./constants";
+import { MAX_NODE_WIDTH, NODE_LAYOUT_SLOT_RADIUS } from "./constants";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { coreRadiusOfDepth, getRadialDepthRadius, layoutWedge } from "./pop-core-radial-layout";
 
@@ -45,6 +45,7 @@ export function computeCoreRadialLayout(
   wedgeSpanDegrees: number,
   coreRootCircleRadius: number,
   depthSpacing: number,
+  dotRadius: number = NODE_LAYOUT_SLOT_RADIUS,
 ): D3Node {
   return layoutWedge(
     d3Lib,
@@ -53,6 +54,7 @@ export function computeCoreRadialLayout(
     wedgeSpanDegrees,
     coreRadiusOfDepth(coreRootCircleRadius, depthSpacing),
     "between-children",
+    dotRadius,
   );
 }
 

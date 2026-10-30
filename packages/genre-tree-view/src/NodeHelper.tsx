@@ -31,9 +31,13 @@ export function buildTreeHierarchyStructure(d3Lib: typeof import("d3"), nodes: G
  * to predict a hidden root's rendered width/height — to reserve matching clearance for it — must
  * mirror this same local-range computation rather than reusing their own cross-root
  * scale. */
-export function calculateLocalRootDimensions(d3Lib: typeof import("d3"), nodes: GenreTreeNode[]): Dimensions {
+export function calculateLocalRootDimensions(
+  d3Lib: typeof import("d3"),
+  nodes: GenreTreeNode[],
+  options: { itemCountScaleMax?: number; nodeCountForSizing?: number } = {},
+): Dimensions {
   const root = buildTreeHierarchyStructure(d3Lib, nodes);
-  const range = getItemCountRange(root.descendants().map((d) => d.data));
+  const range = getItemCountRange(root.descendants().map((d) => d.data), options);
   return calculateNodeDimensions(root.data.itemCount, range);
 }
 
@@ -51,8 +55,9 @@ export function calculateRootAnchorClearance(
   rootItemCount: number,
   rootItemCountRange: ItemCountRange,
   axis: keyof Dimensions,
+  options: { itemCountScaleMax?: number; nodeCountForSizing?: number } = {},
 ): number {
-  const localExtent = calculateLocalRootDimensions(d3Lib, nodes)[axis];
+  const localExtent = calculateLocalRootDimensions(d3Lib, nodes, options)[axis];
   const displayExtent = calculateNodeDimensions(rootItemCount, rootItemCountRange)[axis];
   return (localExtent + displayExtent) / 2;
 }

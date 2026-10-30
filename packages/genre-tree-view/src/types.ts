@@ -124,6 +124,13 @@ export interface GenreTreeProps {
   nodes: GenreTreeNode[];
   /** Label for the info panel's `itemCount` row (e.g. "Song count"); the library can't know what unit is counted. */
   itemCountLabel: string;
+  /** Optional total for the current itemCount metric. When provided, node sizes use a fixed
+   * logarithmic domain from zero to this total, so filtering recalculates each node's size against
+   * the filtered total. The total must use the same metric as GenreTreeNode.itemCount. */
+  itemCountScaleMax?: number;
+  /** Full node count used to adapt maximum node/card/dot size to visualization density. Defaults
+   * to nodes.length; wheel renderers pass their complete dataset to their selected subtree. */
+  nodeCountForSizing?: number;
   className?: string;
   rootColor?: string;
   orientation?: TreeOrientation;

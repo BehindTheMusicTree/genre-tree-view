@@ -502,6 +502,35 @@ const largeWheelNodes: GenreTreeNode[] = withSubtreeTotals([
 // broken, and masking that with fallback demo data would hide the failure instead of surfacing it.
 const popCoreWheelNodes = realGenreTreeFixture as GenreTreeNode[];
 
+// The canonical fixture has genre counts, not artist-to-genre assignments. This small curated
+// Muse-associated subset gives the playground a deterministic filter toggle for checking that
+// both the metric domain and maximum node size respond when the visible node count changes.
+const MUSE_DEMO_GENRE_IDS = ["alternative-rock", "progressive-rock", "space-rock", "art-rock", "hard-rock"];
+
+function buildMuseDemoNodes(nodes: GenreTreeNode[]): GenreTreeNode[] {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const retainedIds = new Set<string>();
+  const centerNode = nodes.find((node) => node.name === "Mainstream Pop");
+  if (centerNode) retainedIds.add(centerNode.id);
+
+  for (const genreId of MUSE_DEMO_GENRE_IDS) {
+    let node = byId.get(genreId);
+    while (node) {
+      retainedIds.add(node.id);
+      node = node.parentId ? byId.get(node.parentId) : undefined;
+    }
+  }
+
+  const filtered = nodes
+    .filter((node) => retainedIds.has(node.id))
+    .map((node) => {
+      let hash = 0;
+      for (const char of node.id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+      return { ...node, itemCount: demoItemCount(hash) };
+    });
+  return withSubtreeTotals(filtered);
+}
+
 let nextId = 1;
 
 const TABS = [
@@ -645,6 +674,7 @@ export function App() {
   const [reparentingNodeId, setReparentingNodeId] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [sizeMetric, setSizeMetric] = useState<SizeMetric>("songs");
+  const [museFilterEnabled, setMuseFilterEnabled] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
   const [busy, setBusy] = useState(false);
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
@@ -677,9 +707,19 @@ export function App() {
     () => (sizeMetric === "views" ? withDemoViews(plainRadialWheelNodes) : plainRadialWheelNodes),
     [sizeMetric, plainRadialWheelNodes],
   );
+  const filteredPopCoreNodes = useMemo(
+    () => (museFilterEnabled ? buildMuseDemoNodes(popCoreNodes) : popCoreNodes),
+    [museFilterEnabled, popCoreNodes],
+  );
   const metricPopCoreNodes = useMemo(
-    () => (sizeMetric === "views" ? withDemoViews(popCoreNodes) : popCoreNodes),
-    [sizeMetric, popCoreNodes],
+    () => (sizeMetric === "views" ? withDemoViews(filteredPopCoreNodes) : filteredPopCoreNodes),
+    [sizeMetric, filteredPopCoreNodes],
+  );
+  const popCoreItemCountScaleMax = useMemo(
+    () => metricPopCoreNodes
+      .filter((node) => node.parentId === null)
+      .reduce((total, node) => total + node.itemCount, 0),
+    [metricPopCoreNodes],
   );
 
   const playCallbacks = {
@@ -837,6 +877,29 @@ export function App() {
       )}
 
       {activeTab === "wheel-radial-pop-core" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={museFilterEnabled}
+              onChange={(event) => {
+                setMuseFilterEnabled(event.target.checked);
+                setPopCoreSelectedNodeId(null);
+                setPopCoreFocusNodeId(null);
+                writePopCoreUrl("genre", null, "replace");
+                writePopCoreUrl("zoom", null, "replace");
+                writePopCoreUrl("view", null, "replace");
+              }}
+            />
+            Muse filter (demo)
+          </label>
+          <span style={{ color: "#71717a", fontSize: 13 }}>
+            {metricPopCoreNodes.length} nodes · total {popCoreItemCountScaleMax.toLocaleString()} {sizeMetric}
+          </span>
+        </div>
+      )}
+
+      {activeTab === "wheel-radial-pop-core" && (
         <div
           style={{
             width: "100%",
@@ -851,6 +914,7 @@ export function App() {
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
             itemCountLabel="Track count"
+            itemCountScaleMax={popCoreItemCountScaleMax}
             nodes={metricPopCoreNodes}
             {...popCoreCallbacks}
             showToolbar={showToolbar}

@@ -18,6 +18,7 @@ import {
   TEXT_COLOR,
   tintSurface,
   ZOOM_FOCUS_SCALE,
+  getItemCountRange,
 } from "./constants";
 import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
@@ -59,6 +60,8 @@ export function GenreTree({
   hideInfoPanelClose = false,
   hideInfoPanelTitle = false,
   itemCountLabel,
+  itemCountScaleMax,
+  nodeCountForSizing,
   readOnly,
   renderDangerZone,
   expanded,
@@ -80,6 +83,10 @@ export function GenreTree({
   const stageRef = useRef<HTMLDivElement>(null);
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
+  const itemCountRange = useMemo(
+    () => getItemCountRange(nodes, { itemCountScaleMax, nodeCountForSizing: nodeCountForSizing ?? nodes.length }),
+    [nodes, itemCountScaleMax, nodeCountForSizing],
+  );
   const showNodeInfoRef = useRef(showNodeInfo);
   useEffect(() => {
     showNodeInfoRef.current = showNodeInfo;
@@ -99,6 +106,7 @@ export function GenreTree({
       root,
       orientation,
       depthSpacingScale,
+      itemCountRange,
     );
     const {
       svgWidth: width,
@@ -111,6 +119,7 @@ export function GenreTree({
       orientation,
       hideRoot,
       depthSpacingScale,
+      itemCountRange,
     );
     const reshapedTreeData = setupTreeLayout(
       d3,
@@ -120,6 +129,7 @@ export function GenreTree({
       rootDepthOffset,
       width,
       depthSpacingScale,
+      itemCountRange,
     );
 
     return {
@@ -128,7 +138,7 @@ export function GenreTree({
       svgWidth: width,
       svgHeight: height,
     };
-  }, [nodes, rootColor, orientation, hideRoot, depthSpacingScale]);
+  }, [nodes, rootColor, orientation, hideRoot, depthSpacingScale, itemCountRange]);
 
   // A reparent-in-progress node can belong to a *different* GenreTree instance (a different
   // root). Only the tree that actually contains it needs to block self/descendants as targets.
@@ -190,6 +200,7 @@ export function GenreTree({
       orientation,
       hideRoot,
       effectiveSelectedNodeId,
+      itemCountRange,
     );
   }, [
     treeData,
@@ -211,6 +222,7 @@ export function GenreTree({
     orientation,
     hideRoot,
     effectiveSelectedNodeId,
+    itemCountRange,
   ]);
 
   // Mirrors the onNodeClick/onSelectNode handling: an externally-controlled selection (e.g. from a

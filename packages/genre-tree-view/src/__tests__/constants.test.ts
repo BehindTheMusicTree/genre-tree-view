@@ -265,3 +265,25 @@ describe("shadeSurface", () => {
     expect(shadeSurface("#ff8000", 0)).toBe("#000000");
   });
 });
+
+describe("density-aware item count sizing", () => {
+  it("uses the supplied total as a shared domain for filtered counts", () => {
+    const range = getItemCountRange([{ itemCount: 10 }, { itemCount: 50 }], { itemCountScaleMax: 100 });
+    expect(range.min).toBe(0);
+    expect(range.max).toBe(100);
+    expect(calculateNodeDotRadius(50, range)).toBeLessThan(calculateNodeDotRadius(100, range));
+  });
+
+  it("reduces maximum sizes for denser trees while keeping a usable floor", () => {
+    const nodes = [{ itemCount: 0 }, { itemCount: 100 }];
+    const sparse = getItemCountRange(nodes, { nodeCountForSizing: 10 });
+    const dense = getItemCountRange(nodes, { nodeCountForSizing: 10000 });
+    expect(calculateNodeDotRadius(100, sparse)).toBeGreaterThan(calculateNodeDotRadius(100, dense));
+    expect(calculateNodeDotRadius(100, dense)).toBeGreaterThan(NODE_DOT_MIN_RADIUS);
+    expect(calculateNodeDimensions(100, dense).WIDTH).toBeLessThan(calculateNodeDimensions(100, sparse).WIDTH);
+  });
+
+  it("falls back to observed counts for invalid totals", () => {
+    expect(getItemCountRange([{ itemCount: 4 }, { itemCount: 8 }], { itemCountScaleMax: -1 })).toEqual({ min: 4, max: 8 });
+  });
+});
