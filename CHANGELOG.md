@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Share project guidance across Claude and Codex and check adapter consistency in CI.
+
 ## [6.4.0] - 2026-10-30
 
 ### Added
