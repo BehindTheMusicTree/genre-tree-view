@@ -5,7 +5,7 @@ description: Guide for reviewing pull requests in this repository. Use this when
 
 This repository is `@behindthemusictree/genre-tree-view`, a presentational D3-based tree
 visualization component for React (pnpm workspace: `packages/genre-tree-view` is the published
-library, `apps/playground` is a Vite app for manual testing). See `CLAUDE.md` and `ARCHITECTURE.md`
+library, `apps/playground` is a Vite app for manual testing). See `AGENTS.md` and `ARCHITECTURE.md`
 for the module breakdown and public export surface, and `CONTRIBUTING.md` for the branching model
 and contribution conventions.
 
@@ -15,10 +15,10 @@ When reviewing a pull request, check for:
   popups/dialogs belong to the consumer via callback props (`onPlayPause`, `onAddChild`,
   `onRenameRequest`, `onDeleteRequest`, `onReparentRequest`, `onReparent`, `additionalActions`).
   Flag any change that reaches outside this boundary (e.g. direct API calls, owning dialog state).
-- **Shared layout pipeline consistency**: the five renderers (`GenreTree`, `GenreTreeWheel`,
-  `GenreTreeWheelRight`, `GenreTreeWheelRadial`, `GenreTreeWheelRadialPopCore`) share one
-  tree-building/layout pipeline. A change to shared layout math (radii, spacing, angle conventions)
-  should be checked against all renderers that consume it, not just the one being edited.
+- **Shared layout pipeline consistency**: a change to shared layout math (radii, spacing,
+  angle conventions) or tree helpers should be checked against every renderer that consumes
+  them, not just the one being edited. Consult `ARCHITECTURE.md` and the implementation for
+  the applicable rendering paths, including the outline.
 - **Radial geometry conventions**: polar-to-cartesian conversions in this codebase follow the CSS
   `rotate()` convention (`x = radius * sin(angle)`, `y = -radius * cos(angle)`). Flag any new radial
   math that silently uses the standard math convention instead.
@@ -32,6 +32,6 @@ When reviewing a pull request, check for:
   (pre-change) behavior as correct, it should be rewritten, not left passing by coincidence.
 - **Changelog**: user-facing fixes or features should add an entry under `[Unreleased]` in
   `CHANGELOG.md`.
-- **Git workflow**: per `CLAUDE.md`, no commits directly to `main` or `develop` — changes should
+- **Git workflow**: per `AGENTS.md`, no commits directly to `main` or `develop` — changes should
   land on a `feature/*`, `fix/*`, `chore/*`, `release/*`, or `hotfix/*` branch per the Gitflow model
   in `CONTRIBUTING.md`.
