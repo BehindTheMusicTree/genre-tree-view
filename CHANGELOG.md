@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Open the wheel detail panel when a host accepts a controlled root-chip selection.
+
 ## [6.5.1] - 2026-11-02
 
 ### Changed

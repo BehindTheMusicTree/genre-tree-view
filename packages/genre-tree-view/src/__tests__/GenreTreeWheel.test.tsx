@@ -414,6 +414,21 @@ describe("GenreTreeWheel", () => {
       rectSpy.mockRestore();
     });
 
+    it("waits for host acceptance of a root chip and opens its panel without echoing", () => {
+      const onSelectedNodeChange = vi.fn();
+      const props = { itemCountLabel: "Track count", nodes: NODES, onSelectedNodeChange };
+      const { container, rerender } = render(<GenreTreeWheel {...props} selectedNodeId={null} />);
+      fireEvent.click(chipFor(container, "Electronic"));
+      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+      const requested = onSelectedNodeChange.mock.calls[0][0];
+      rerender(<GenreTreeWheel {...props} selectedNodeId={requested.id} />);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
+      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
+      rerender(<GenreTreeWheel {...props} selectedNodeId={null} />);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+    });
+
     it("opens for an externally-controlled selectedNodeId, swapping in its owning root first", () => {
       const { container, rerender } = render(
         <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} />,
