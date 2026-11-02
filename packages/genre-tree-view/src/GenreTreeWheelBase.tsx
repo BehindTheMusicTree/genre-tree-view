@@ -101,7 +101,6 @@ export function WheelCore({
   defaultViewport,
   viewportRestore,
   onViewportChange,
-  controlsOrientation = "vertical",
   showZoomControls = "auto",
   floatingControlsLeading,
   busy,
@@ -592,7 +591,6 @@ export function WheelCore({
 
       <FloatingControls
         panZoom={panZoom}
-        orientation={controlsOrientation}
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}

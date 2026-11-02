@@ -23,15 +23,17 @@ describe("styles.css pointer-events", () => {
 // only catchable by asserting the stylesheet source.
 describe("styles.css floating controls", () => {
   it("keeps .gtv-wheel-floating-controls absolutely pinned bottom-right above the tree", () => {
-    // Every matching rule (not just the first), so a later override — e.g. a media query or a
-    // renderer-specific variant — can't silently move the controls back into flow.
+    // The base rule pins the wrapper; later rules (e.g. the narrow-container column stacking) may
+    // only adjust layout inside it, never take it out of flow or move it.
     const rules = [...stylesCss.matchAll(/\.gtv-wheel-floating-controls\s*{[^}]*}/g)].map((m) => m[0]);
     expect(rules.length).toBeGreaterThan(0);
-    for (const rule of rules) {
-      expect(rule).toMatch(/position:\s*absolute/);
-      expect(rule).toMatch(/bottom:\s*\d/);
-      expect(rule).toMatch(/right:\s*\d/);
-      expect(rule).toMatch(/z-index:\s*\d/);
+    const [base, ...overrides] = rules;
+    expect(base).toMatch(/position:\s*absolute/);
+    expect(base).toMatch(/bottom:\s*\d/);
+    expect(base).toMatch(/right:\s*\d/);
+    expect(base).toMatch(/z-index:\s*\d/);
+    for (const rule of overrides) {
+      expect(rule).not.toMatch(/position:|bottom:|right:|top:|left:/);
     }
   });
 });

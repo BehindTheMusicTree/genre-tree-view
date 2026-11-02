@@ -73,7 +73,6 @@ export function GenreTree({
   defaultViewport,
   viewportRestore,
   onViewportChange,
-  controlsOrientation = "vertical",
   showZoomControls = "auto",
   floatingControlsLeading,
   busy,
@@ -413,7 +412,6 @@ export function GenreTree({
       {overlayPanel && <OverlayPanel {...overlayPanel} />}
       <FloatingControls
         panZoom={panZoom}
-        orientation={controlsOrientation}
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
