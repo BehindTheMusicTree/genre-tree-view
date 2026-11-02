@@ -247,6 +247,10 @@ export interface GenreTreeProps {
    * initial `selectedNodeId`. Read once; later changes are ignored. Ignored when `interactive` is
    * false and by `GenreTreeOutline`. */
   defaultViewport?: GenreTreeViewport;
+  /** Restores a viewport silently after the target frame has measurable geometry. Change
+   * revision for each navigation, and supply its focus/selection in the same props update.
+   * User interaction supersedes pending restoration. Ignored by GenreTreeOutline. */
+  viewportRestore?: { viewport: GenreTreeViewport; revision: string | number };
   /** Fired once a user-driven pan/zoom settles (drag, wheel, pinch, zoom/fit buttons, centering on
    * a clicked node) — not for the initial fit or for applying `defaultViewport`. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;

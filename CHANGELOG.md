@@ -5,6 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [6.5.0] - 2026-11-02
+
+### Added
+
+- Restore a tree viewport after navigation without emitting another viewport change.
+
+### Fixed
+
+- Keep controlled tree selection and its detail panel in sync.
+
+### Changed
+
+- Apply stricter coverage gates to interaction modules and practical global floors, with behavior-based review requirements.
+- Share project guidance across Claude and Codex and check adapter consistency in CI.
+
 ## [6.4.0] - 2026-10-30
 
 ### Added

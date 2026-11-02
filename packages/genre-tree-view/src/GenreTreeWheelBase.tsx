@@ -99,6 +99,7 @@ export function WheelCore({
   overlayPanel,
   wheelZoom,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   controlsOrientation = "vertical",
   showZoomControls = "auto",
@@ -166,7 +167,8 @@ export function WheelCore({
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
+  const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
@@ -195,15 +197,12 @@ export function WheelCore({
   // Starts the view fit to the wheel + selected subtree instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once the tree anchor has actually rendered content, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections.
-  const hasInitialFitRef = useRef(false);
   useEffect(() => {
-    if (hasInitialFitRef.current) return;
     const elements = [
       wheelCircleRef.current,
       ...queryTreeContentElements(treeAnchorRef.current),
     ];
     if (!elements.some(Boolean)) return;
-    hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements, { silent: true });
   });
 
@@ -304,6 +303,7 @@ export function WheelCore({
       element,
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+      true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above

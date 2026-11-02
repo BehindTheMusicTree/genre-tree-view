@@ -20,9 +20,15 @@ pnpm workspace with two members:
   center `x`,`y` + `zoom`, independent of the container's pixel size — `viewToViewport` /
   `viewportToView` in `zoom-pan.ts`). `defaultViewport` is a mount-only seed: the first
   `fitToFrame` in `use-pan-zoom.ts` applies it (zoom clamped to the fitted min scale) instead of
-  fitting, and `centerOnElement` is suppressed for `DEFAULT_VIEWPORT_CENTER_GUARD_MS` afterwards so
-  initial-selection centering doesn't override it. `onViewportChange` fires from `commitView`
-  (the single settle point), but not for the mount fit or the seed.
+  fitting. `viewportRestore` queues an explicitly revisioned viewport until the target frame's
+  content and viewport are measurable. Hosts provide related focus, selection and restoration in
+  the same props update, with a new revision per navigation. A successful measurement updates
+  bounds and zoom limits, then chooses restoration, pending selection centering, initial frame
+  fit, or preservation of the current view. Repeated measurements never refit a handled frame.
+  User gestures, node clicks and explicit Fit supersede pending restoration. Automatic selection
+  synchronization does not center over the restored selection; a new selection can center normally.
+  The mount-only `defaultViewport` seed retains its existing centering guard. Restoration adds no
+  timed guard. Resize and restoration do not emit `onViewportChange`.
 - **`GenreTreeWheel.tsx`**, **`GenreTreeWheelRight.tsx`**, **`GenreTreeWheelRadial.tsx`**, and
   **`GenreTreeWheelRadialPopCore.tsx`** all distribute the root genres of a forest around a wheel
   and mount a single (or, for the two radial variants, one per root) `GenreTree` instance(s) with
@@ -183,6 +189,7 @@ pnpm workspace with two members:
   `hideInfoPanelClose`) or when a controlled `selectedNodeId` is cleared to `null`/`undefined`.
   The pop-core wheel also hides the panel at render time whenever its node isn't drawn in the
   current focus frame, so a focus change can never leave a panel pointing at an off-screen node.
+  When selection is controlled, the panel and outline wait for the selected ID from the host.
   The hook fires `onSelectedNodeChange` when a user action changes the shown node (or with `null`
   on the close button); each renderer's effect that follows `selectedNodeId` calls
   `showNodeInfo(…, { notify: false })` so a controlled selection never echoes back, and

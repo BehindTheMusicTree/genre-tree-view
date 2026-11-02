@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   CENTER_ON_ELEMENT_DURATION_MS,
+  INFO_PANEL_WIDTH,
   DEFAULT_VIEWPORT_CENTER_GUARD_MS,
   PAN_MIN_VISIBLE_PX,
   PAN_ZOOM_SETTLE_MS,
@@ -21,11 +22,14 @@ import {
   viewToViewport,
   viewportToView,
 } from "./zoom-pan";
-import type { ObscuredArea } from "./info-panel-geometry";
+import { resolveInfoPanelObscuredArea, type ObscuredArea } from "./info-panel-geometry";
 import type { GenreTreeViewport, WheelZoomMode } from "./types";
 
 export interface UsePanZoomOptions {
   defaultViewport?: GenreTreeViewport;
+  viewportRestore?: { viewport: GenreTreeViewport; revision: string | number };
+  frameKey?: unknown;
+  selectedNodeId?: string | null;
   onViewportChange?: (viewport: GenreTreeViewport) => void;
 }
 
@@ -47,7 +51,7 @@ export interface UsePanZoomResult {
    * than ZOOM_MIN_SCALE — see minScale below. The first successful call applies the hook's
    * `defaultViewport` instead of the fitted pan/scale. `silent` keeps the result from reaching
    * `onViewportChange` — for the automatic fit on mount, as opposed to the fit button. */
-  fitToFrame: (elements: (Element | null | undefined)[], options?: { silent?: boolean }) => void;
+  fitToFrame: (elements: (Element | null | undefined)[], options?: { silent?: boolean }) => boolean;
   /** Animates pan/scale so `element`'s center glides to the center of the viewport's *available*
    * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
    * to a comfortable reading scale. `targetScale` is a minimum: if the user is already zoomed in
@@ -59,6 +63,7 @@ export interface UsePanZoomResult {
     element: Element | null | undefined,
     targetScale: number,
     obscured?: ObscuredArea | null,
+    automatic?: boolean,
   ) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
   /** CSS `touch-action` for the viewport element — see the `wheelZoom` param. */
@@ -100,6 +105,16 @@ export function usePanZoom(
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageAnimationRef = useRef<Animation | null>(null);
   const defaultViewportRef = useRef(options.defaultViewport);
+  const operationRef = useRef(0);
+  const restoredSelectionRef = useRef<string | null | undefined>(undefined);
+  const restoredRevisionRef = useRef<string | number | undefined>(undefined);
+  const restoredFrameRef = useRef<unknown>(undefined);
+  const pendingRestoreRef = useRef<{ viewport: GenreTreeViewport; revision: string | number; frame: unknown; operation: number } | null>(null);
+  const measuredFrameRef = useRef<unknown>(undefined);
+  const fittedFrameRef = useRef<{ frame: unknown } | null>(null);
+  const frameElementsRef = useRef<(Element | null | undefined)[]>([]);
+  const retryFrameRef = useRef<() => void>(() => {});
+  const pendingCenterRef = useRef<(() => void) | null>(null);
   const centerGuardUntilRef = useRef(0);
   const onViewportChangeRef = useRef(options.onViewportChange);
   useEffect(() => {
@@ -219,6 +234,7 @@ export function usePanZoom(
   // scale (perceived as the zoomed point drifting during a fast pinch).
   const zoomAtPoint = useCallback(
     (computeNewScale: (currentScale: number) => number, clientX: number, clientY: number) => {
+      operationRef.current += 1;
       const viewport = viewportRef.current;
       if (!viewport) {
         return;
@@ -348,13 +364,13 @@ export function usePanZoom(
     if (!viewport) return;
 
     const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
+      const entry = entries?.[0];
+      if (!entry) { retryFrameRef.current(); return; }
       const { width, height } = entry.contentRect;
 
       const previous = viewportSizeRef.current;
       viewportSizeRef.current = { width, height };
-      if (!previous) return;
+      if (!previous || previous.width <= 0 || previous.height <= 0) { retryFrameRef.current(); return; }
 
       const dx = (width - previous.width) / 2;
       const dy = (height - previous.height) / 2;
@@ -363,7 +379,8 @@ export function usePanZoom(
       const view = viewRef.current;
       view.x = clampPanAxis(view.x + dx, view.k, "x");
       view.y = clampPanAxis(view.y + dy, view.k, "y");
-      commitView();
+      commitView(false);
+      retryFrameRef.current();
     });
     observer.observe(viewport);
     return () => observer.disconnect();
@@ -382,6 +399,7 @@ export function usePanZoom(
     }
 
     const handleWheel = (event: WheelEvent) => {
+      operationRef.current += 1;
       // Let the info panel handle its own scroll (it has overflow-y: auto) instead of panning/
       // zooming the tree underneath it — it's rendered as a child of this same viewport, so its
       // wheel events would otherwise bubble up here.
@@ -443,6 +461,7 @@ export function usePanZoom(
   // Anchored on the viewport's own center.
   const zoomByButton = useCallback(
     (direction: 1 | -1) => {
+      operationRef.current += 1;
       const viewport = viewportRef.current;
       if (!viewport) return;
       const rect = viewport.getBoundingClientRect();
@@ -462,22 +481,20 @@ export function usePanZoom(
   // svg dimensions) a second time here.
   const fitToFrame = useCallback(
     (elements: (Element | null | undefined)[], { silent = false }: { silent?: boolean } = {}) => {
+      if (!silent) operationRef.current += 1;
+      frameElementsRef.current = elements;
       const viewport = viewportRef.current;
       const present = elements.filter((el): el is Element => Boolean(el));
-      if (!viewport || present.length === 0) return;
+      if (!viewport || present.length === 0) return false;
 
       const viewportRect = viewport.getBoundingClientRect();
-      if (viewportRect.width <= 0 || viewportRect.height <= 0) return;
+      if (viewportRect.width <= 0 || viewportRect.height <= 0) return false;
 
-      // fitToFrame sets panX/panY/zoomScale directly, so any in-flight centerOnElement glide would
-      // otherwise resume overwriting it on its very next frame.
-      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
-      centerAnimationRef.current = null;
       // computeFitScale subtracts ZOOM_FIT_PADDING*2 from each dimension and deliberately never
       // clamps its lower bound (see zoom-pan.ts) — a viewport too small to hold the padding alone
       // would drive the result negative, mirroring/flinging the tree out of frame. Bail out rather
       // than fit into a viewport that can't even fit the padding.
-      if (viewportRect.width <= ZOOM_FIT_PADDING * 2 || viewportRect.height <= ZOOM_FIT_PADDING * 2) return;
+      if (viewportRect.width <= ZOOM_FIT_PADDING * 2 || viewportRect.height <= ZOOM_FIT_PADDING * 2) return false;
 
       const rects = present.map((el) => el.getBoundingClientRect());
       const contentLeft = Math.min(...rects.map((r) => r.left));
@@ -488,7 +505,7 @@ export function usePanZoom(
       const view = viewRef.current;
       const contentWidth = (contentRight - contentLeft) / view.k;
       const contentHeight = (contentBottom - contentTop) / view.k;
-      if (contentWidth <= 0 || contentHeight <= 0) return;
+      if (contentWidth <= 0 || contentHeight <= 0) return false;
 
       const contentOriginX = (contentLeft - viewportRect.left - view.x) / view.k;
       const contentOriginY = (contentTop - viewportRect.top - view.y) / view.k;
@@ -514,6 +531,42 @@ export function usePanZoom(
       // eslint-disable-next-line react-hooks/immutability -- see comment above
       minScaleRef.current = newMinScale;
       setMinScale(newMinScale);
+      measuredFrameRef.current = options.frameKey;
+      const pending = pendingRestoreRef.current;
+      if (pending && pending.operation !== operationRef.current) {
+        pendingRestoreRef.current = null;
+        pendingCenterRef.current = null;
+        fittedFrameRef.current = { frame: options.frameKey };
+        return true;
+      }
+      if (pending && pending.frame === options.frameKey && pending.operation === operationRef.current) {
+        pendingRestoreRef.current = null;
+        restoredRevisionRef.current = pending.revision;
+        restoredFrameRef.current = pending.frame;
+        restoredSelectionRef.current = options.selectedNodeId;
+        defaultViewportRef.current = undefined;
+        viewRef.current = viewportToView({ ...pending.viewport, zoom: clampZoomScale(pending.viewport.zoom, newMinScale) }, viewportRect.width, viewportRect.height);
+        fittedFrameRef.current = { frame: options.frameKey };
+        pendingCenterRef.current = null;
+        commitView(false);
+        return true;
+      }
+      if (silent && fittedFrameRef.current && fittedFrameRef.current.frame === options.frameKey) {
+        const center = pendingCenterRef.current;
+        pendingCenterRef.current = null;
+        center?.();
+        return true;
+      }
+      fittedFrameRef.current = { frame: options.frameKey };
+      const center = pendingCenterRef.current;
+      pendingCenterRef.current = null;
+      if (silent && center && !defaultViewportRef.current) {
+        center();
+        return true;
+      }
+      zoomAnimationRef.current = null;
+      // eslint-disable-next-line react-hooks/immutability -- cancel the previous viewport operation
+      centerAnimationRef.current = null;
       const seed = defaultViewportRef.current;
       if (seed) {
         defaultViewportRef.current = undefined;
@@ -527,14 +580,15 @@ export function usePanZoom(
         view.y = seeded.y;
         centerGuardUntilRef.current = performance.now() + DEFAULT_VIEWPORT_CENTER_GUARD_MS;
         commitView(false);
-        return;
+        return true;
       }
       view.k = fitScale;
       view.x = viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale;
       view.y = viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale;
       commitView(!silent);
+      return true;
     },
-    [viewportRef, commitView],
+    [viewportRef, commitView, options.frameKey, options.selectedNodeId],
   );
 
   // Tracks the eased "fly to" glide started by centerOnElement below — unlike zoomAnimationRef's
@@ -597,7 +651,22 @@ export function usePanZoom(
       element: Element | null | undefined,
       targetScale: number,
       obscured?: ObscuredArea | null,
+      automatic = false,
     ) => {
+      if (automatic && restoredRevisionRef.current !== undefined && restoredFrameRef.current === options.frameKey && restoredSelectionRef.current === options.selectedNodeId) return;
+      if (!automatic) operationRef.current += 1;
+      const viewportSize = viewportRef.current?.getBoundingClientRect();
+      if (automatic && (measuredFrameRef.current !== options.frameKey || fittedFrameRef.current === null || !viewportSize?.width || !viewportSize.height)) {
+        const operation = operationRef.current;
+        pendingCenterRef.current = () => {
+          if (operation !== operationRef.current) return;
+          const currentElement = element?.id
+            ? viewportRef.current?.querySelector(`#${CSS.escape(element.id)}`)
+            : element;
+          centerLatestRef.current(currentElement, targetScale, obscured ? resolveInfoPanelObscuredArea(currentElement, viewportRef.current, INFO_PANEL_WIDTH) : obscured, true);
+        };
+        return;
+      }
       const viewport = viewportRef.current;
       if (!viewport || !element || performance.now() < centerGuardUntilRef.current) return;
 
@@ -650,8 +719,17 @@ export function usePanZoom(
         centerAnimationFrameIdRef.current = requestAnimationFrame(() => stepCenterAnimationRef.current());
       }
     },
-    [viewportRef],
+    [viewportRef, options.frameKey, options.selectedNodeId],
   );
+
+  const centerLatestRef = useRef(centerOnElement);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- latest callback for queued reconciliation
+    centerLatestRef.current = centerOnElement;
+  }, [centerOnElement]);
+  useEffect(() => {
+    retryFrameRef.current = () => { fitToFrame(frameElementsRef.current, { silent: true }); };
+  }, [fitToFrame]);
 
   // Click-and-drag pan over empty background. Only starts outside a node/its toolbar so it
   // doesn't fight their own click/hover interactions.
@@ -761,6 +839,7 @@ export function usePanZoom(
 
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.button !== 0) return;
+    operationRef.current += 1;
     // A pointer landing on a node/toolbar/control/info panel is excluded from single-pointer pan (so
     // it doesn't fight that element's own click/hover/text-selection handling) but still tracked below — otherwise a
     // pinch that starts on top of content, the common case since the tree fills most of the screen,
@@ -791,6 +870,46 @@ export function usePanZoom(
       window.addEventListener("pointercancel", stablePointerUp);
     }
   }, [stablePointerMove, stablePointerUp, wheelZoom]);
+
+  const restore = options.viewportRestore;
+  const restoreRevision = restore?.revision;
+  const restoreX = restore?.viewport.x;
+  const restoreY = restore?.viewport.y;
+  const restoreZoom = restore?.viewport.zoom;
+  useEffect(() => {
+    if (restoreRevision === restoredRevisionRef.current || restoreRevision === undefined || restoreX === undefined || restoreY === undefined || restoreZoom === undefined) return;
+    if (!Number.isFinite(restoreX) || !Number.isFinite(restoreY) || !Number.isFinite(restoreZoom) || restoreZoom <= 0) return;
+    const viewportElement = viewportRef.current;
+    if (!viewportElement) return;
+    restoredRevisionRef.current = restoreRevision;
+    const operation = ++operationRef.current;
+    // Stop the previous interaction immediately, even while the viewport is hidden.
+    zoomAnimationRef.current = null;
+    // eslint-disable-next-line react-hooks/immutability -- cancel an in-flight animation
+    centerAnimationRef.current = null;
+    if (animationFrameIdRef.current !== null) cancelAnimationFrame(animationFrameIdRef.current);
+    if (centerAnimationFrameIdRef.current !== null) cancelAnimationFrame(centerAnimationFrameIdRef.current);
+    if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current);
+    if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+    animationFrameIdRef.current = null;
+    centerAnimationFrameIdRef.current = null;
+    frameIdRef.current = null;
+    settleTimerRef.current = null;
+    activePointersRef.current.clear();
+    suppressedPointersRef.current.clear();
+    pinchStartRef.current = null;
+    window.removeEventListener("pointermove", stablePointerMove);
+    window.removeEventListener("pointerup", stablePointerUp);
+    window.removeEventListener("pointercancel", stablePointerUp);
+    pendingRestoreRef.current = {
+      viewport: { x: restoreX, y: restoreY, zoom: restoreZoom },
+      revision: restoreRevision,
+      frame: options.frameKey,
+      operation,
+    };
+    if (measuredFrameRef.current === options.frameKey) retryFrameRef.current();
+
+  }, [restoreRevision, restoreX, restoreY, restoreZoom, options.frameKey, options.selectedNodeId, viewportRef, commitView, stablePointerMove, stablePointerUp]);
 
   // Covers the case handlePointerUp's own cleanup can't: the component unmounting mid-gesture
   // (route change, conditional render) before every pointer has lifted, which would otherwise

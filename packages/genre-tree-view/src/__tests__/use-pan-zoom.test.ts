@@ -32,6 +32,117 @@ const liveView = (stage: HTMLElement) => {
 };
 
 describe("usePanZoom", () => {
+  it("resolves a deferred selection against the replacement DOM node after reveal", async () => {
+    let width = 0;
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width, height: 800 }) as DOMRect;
+    const content = document.createElement("div");
+    content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 2000, bottom: 1600, width: 2000, height: 1600 }) as DOMRect;
+    const oldNode = document.createElement("div");
+    oldNode.id = "selected";
+    viewport.append(oldNode);
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { frameKey: "home", selectedNodeId: "a" }));
+    act(() => result.current.centerOnElement(oldNode, 1, null, true));
+    const replacement = document.createElement("div");
+    replacement.id = "selected";
+    replacement.getBoundingClientRect = () => ({ left: 200, top: 100, width: 20, height: 20 }) as DOMRect;
+    oldNode.replaceWith(replacement);
+    width = 1000;
+    await act(async () => {
+      result.current.fitToFrame([content], { silent: true });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    });
+    expect(result.current.panX).toBeCloseTo(290);
+    expect(result.current.panY).toBeCloseTo(290);
+  });
+  it("waits for target geometry and lets user input supersede pending restoration", () => {
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 800 }) as DOMRect;
+    const content = document.createElement("div");
+    content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 2000, bottom: 1600, width: 2000, height: 1600 }) as DOMRect;
+    const ref = { current: viewport };
+    const { result, rerender } = renderHook(({ frame, revision }) => usePanZoom(ref, undefined, noStage, {
+      frameKey: frame, selectedNodeId: "a",
+      viewportRestore: { revision, viewport: { x: 20, y: 30, zoom: 2 } },
+    }), { initialProps: { frame: "home", revision: 1 } });
+    expect(result.current.zoomScale).toBe(1);
+    act(() => { expect(result.current.fitToFrame([], { silent: true })).toBe(false); });
+    act(() => { expect(result.current.fitToFrame([content], { silent: true })).toBe(true); });
+    expect(result.current.zoomScale).toBe(2);
+    rerender({ frame: "focus", revision: 2 });
+    act(() => result.current.zoomOut());
+    const userZoom = result.current.zoomScale;
+    act(() => result.current.fitToFrame([content], { silent: true }));
+    expect(result.current.zoomScale).toBe(userZoom);
+  });
+  it("preserves a restored viewport when a focus frame finishes drawing late", () => {
+    const clock = vi.spyOn(performance, "now").mockReturnValue(0);
+    try {
+      const viewport = document.createElement("div");
+      const content = document.createElement("div");
+      viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 800 }) as DOMRect;
+      content.getBoundingClientRect = () =>
+        ({ left: 0, top: 0, right: 2000, bottom: 1600, width: 2000, height: 1600 }) as DOMRect;
+      const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, {
+        viewportRestore: { revision: 1, viewport: { x: 20, y: 30, zoom: 2 } },
+      }));
+      act(() => result.current.fitToFrame([content], { silent: true }));
+      const restored = { x: result.current.panX, y: result.current.panY, zoom: result.current.zoomScale };
+      expect(restored.zoom).toBe(2);
+      clock.mockReturnValue(2000);
+      act(() => result.current.fitToFrame([content], { silent: true }));
+      expect({ x: result.current.panX, y: result.current.panY, zoom: result.current.zoomScale }).toEqual(restored);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+  it("applies a pending restoration when a hidden viewport becomes measurable", () => {
+    let width = 0;
+    let notifyResize = () => {};
+    const original = global.ResizeObserver;
+    global.ResizeObserver = vi.fn().mockImplementation(function (callback) {
+      notifyResize = callback;
+      return { observe: vi.fn(), disconnect: vi.fn() };
+    }) as unknown as typeof ResizeObserver;
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => ({ width, height: 400 }) as DOMRect;
+    const content = document.createElement("div");
+    content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
+    const onViewportChange = vi.fn();
+    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, {
+      viewportRestore: { revision: 1, viewport: { x: 20, y: 30, zoom: 2 } }, onViewportChange,
+    }));
+    act(() => { result.current.fitToFrame([content], { silent: true }); });
+    expect(result.current.zoomScale).toBe(1);
+    width = 500;
+    act(() => notifyResize());
+    expect(result.current.panX).toBe(210);
+    expect(result.current.zoomScale).toBe(2);
+    expect(onViewportChange).not.toHaveBeenCalled();
+    unmount();
+    global.ResizeObserver = original;
+  });
+  it("restores a viewport silently when its revision changes", () => {
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => ({ width: 500, height: 400 }) as DOMRect;
+    const content = document.createElement("div");
+    content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
+    const onViewportChange = vi.fn();
+    const ref = { current: viewport };
+    const { result, rerender } = renderHook(
+      ({ revision }: { revision: number }) => usePanZoom(ref, undefined, noStage, {
+        viewportRestore: { revision, viewport: { x: 20, y: 30, zoom: 2 } }, onViewportChange,
+      }),
+      { initialProps: { revision: 1 } },
+    );
+    act(() => { result.current.fitToFrame([content], { silent: true }); });
+    expect(result.current.zoomScale).toBe(2);
+    expect(result.current.panX).toBe(210);
+    expect(result.current.panY).toBe(140);
+    expect(onViewportChange).not.toHaveBeenCalled();
+    rerender({ revision: 2 });
+    expect(onViewportChange).not.toHaveBeenCalled();
+  });
   it("zoomIn/zoomOut/fitToFrame no-op when the viewport ref isn't attached to a DOM node", () => {
     const { result } = renderHook(() => usePanZoom(nullRef(), undefined, noStage));
 
@@ -949,7 +1060,8 @@ describe("usePanZoom", () => {
 
     const viewport = document.createElement("div");
     document.body.appendChild(viewport);
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const onViewportChange = vi.fn();
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { onViewportChange }));
 
     expect(observe).toHaveBeenCalledWith(viewport);
 
@@ -967,6 +1079,7 @@ describe("usePanZoom", () => {
     // that was centered in the old box stays centered in the new one.
     expect(result.current.panX).toBeCloseTo(100);
     expect(result.current.panY).toBeCloseTo(-50);
+    expect(onViewportChange).not.toHaveBeenCalled();
 
     document.body.removeChild(viewport);
     global.ResizeObserver = originalResizeObserver;
@@ -1120,7 +1233,7 @@ describe("usePanZoom", () => {
         result.current.fitToFrame([content], { silent: true });
       });
       act(() => {
-        result.current.fitToFrame([content], { silent: true });
+        result.current.fitToFrame([content]);
       });
 
       expect(result.current.zoomScale).not.toBe(0.5);

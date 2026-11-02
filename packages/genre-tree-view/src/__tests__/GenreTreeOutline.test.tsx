@@ -231,6 +231,16 @@ describe("GenreTreeOutline", () => {
     expect(header.style.color).toBe("rgb(24, 24, 27)");
   });
 
+  it("waits for a controlled selection before opening the panel", () => {
+    const onSelectedNodeChange = vi.fn();
+    const { container, rerender } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} onSelectedNodeChange={onSelectedNodeChange} />);
+    fireEvent.click(nameButton(container, "root-a"));
+    expect(onSelectedNodeChange).toHaveBeenCalledWith(expect.objectContaining({ id: "root-a" }));
+    expect(container.querySelector(".gtv-info-panel")).toBeNull();
+    rerender(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} selectedNodeId="root-a" onSelectedNodeChange={onSelectedNodeChange} />);
+    expect(container.querySelector(".gtv-info-panel")).not.toBeNull();
+  });
+
   it("notifies onSelectedNodeChange on name click, chip navigation and close, without echoing a controlled selection", () => {
     const onSelectedNodeChange = vi.fn();
     const { container, rerender } = render(<GenreTreeOutline itemCountLabel="Track count" nodes={NODES} onSelectedNodeChange={onSelectedNodeChange} />);
