@@ -84,9 +84,6 @@ export interface GenreTreeAction {
  * `GenreTreeProps.wheelZoom`. */
 export type WheelZoomMode = "always" | "modifier";
 
-/** Layout of the floating zoom/pop/fit controls — see `GenreTreeProps.controlsOrientation`. */
-export type ControlsOrientation = "horizontal" | "vertical";
-
 /** When the floating zoom in / zoom out / fit buttons show — see `GenreTreeProps.showZoomControls`. */
 export type ZoomControlsVisibility = "auto" | "always" | "never";
 
@@ -173,9 +170,6 @@ export interface GenreTreeProps {
    * trackpad pinch) zooms; a plain wheel and one-finger vertical touch scroll the page instead,
    * for trees embedded in a scrolling list. Ignored when `interactive` is false. */
   wheelZoom?: WheelZoomMode;
-  /** Stacks the floating zoom/pop/fit controls vertically ("vertical", the default) or lays them
-   * out in a row ("horizontal"). */
-  controlsOrientation?: ControlsOrientation;
   /** "auto" (the default) hides the zoom in / zoom out / fit buttons on touch screens
    * (`pointer: coarse`), where pinch and pan replace them; "always" and "never" force them. The
    * `floatingControlsLeading` content stays visible either way. */

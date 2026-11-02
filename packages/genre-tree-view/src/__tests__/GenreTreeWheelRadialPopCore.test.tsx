@@ -843,15 +843,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(idle.querySelector("[role='status']")).toBeNull();
   });
 
-  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
-    const selector = ".gtv-wheel-floating-controls--horizontal";
-    expect(render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} />).container.querySelector(selector)).toBeNull();
-    cleanup();
-    expect(
-      render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} controlsOrientation="horizontal" />).container.querySelector(
-        selector,
-      ),
-    ).not.toBeNull();
+  it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
+    const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={NODES_WITH_POP} showZoomControls="always" />);
+    expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
+    expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
   it("disables the zoom-in button once the maximum scale is reached", () => {

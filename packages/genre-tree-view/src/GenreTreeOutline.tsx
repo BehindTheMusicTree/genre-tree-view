@@ -36,7 +36,6 @@ export type GenreTreeOutlineProps = Omit<
   | "interactive"
   | "depthSpacingScale"
   | "wheelZoom"
-  | "controlsOrientation"
   | "showZoomControls"
   | "floatingControlsLeading"
   | "busy"

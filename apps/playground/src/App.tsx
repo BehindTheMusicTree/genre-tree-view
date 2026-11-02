@@ -815,7 +815,6 @@ export function App() {
           }}
         >
           <GenreTreeWheel
-            controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
             itemCountLabel="Track count"
@@ -863,7 +862,6 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadial
-            controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
             itemCountLabel="Track count"
@@ -910,7 +908,6 @@ export function App() {
           }}
         >
           <GenreTreeWheelRadialPopCore
-            controlsOrientation="horizontal"
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
             itemCountLabel="Track count"
