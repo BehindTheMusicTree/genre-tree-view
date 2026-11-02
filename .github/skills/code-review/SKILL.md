@@ -26,8 +26,9 @@ When reviewing a pull request, check for:
   half-width plus outer margin) must be applied in exactly one place in the sizing chain. Watch for
   a margin being both baked into a circle's own radius calculation and re-subtracted per-node
   downstream — that double-application cancels out incorrectly for the tightest-fit case.
-- **Test coverage**: this project enforces a 95% coverage threshold (lines/branches/functions/
-  statements) in `vitest.config.ts`. A behavioral change should come with updated or new tests in
+- **Test coverage**: use the coverage policy in `CONTRIBUTING.md`: global floors and stricter
+  per-file interaction floors in `vitest.config.ts`. Check the affected behavior contracts,
+  not just the percentage. A behavioral change should come with updated or new tests in
   `packages/genre-tree-view/src/__tests__/`. If an existing test's expected value encodes the old
   (pre-change) behavior as correct, it should be rewritten, not left passing by coincidence.
 - **Changelog**: user-facing fixes or features should add an entry under `[Unreleased]` in

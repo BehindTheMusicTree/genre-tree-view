@@ -185,6 +185,7 @@ export function WheelRadialPopCoreCore({
   overlayPanel,
   wheelZoom,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   controlsOrientation = "vertical",
   showZoomControls = "auto",
@@ -293,7 +294,8 @@ export function WheelRadialPopCoreCore({
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dotRadiusMemoryRef = useRef(new Map<string, number>());
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
+  const viewportFrame = useMemo(() => JSON.stringify([focusNodeId, nodes.map(({ id, parentId, side }) => [id, parentId, side])]), [nodes, focusNodeId]);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -1116,18 +1118,12 @@ export function WheelRadialPopCoreCore({
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once popSvgRef has actually rendered content, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections/expansions.
-  const hasInitialFitRef = useRef(false);
   useEffect(() => {
-    hasInitialFitRef.current = false;
-  }, [focusNodeId]);
-  useEffect(() => {
-    if (hasInitialFitRef.current) return;
     const elements = [
       wheelCircleRef.current,
       ...queryTreeContentElements(popSvgRef.current),
     ];
     if (!elements.some(Boolean)) return;
-    hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements, { silent: true });
   });
 
@@ -1162,6 +1158,7 @@ export function WheelRadialPopCoreCore({
       element,
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+      true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the openPanel?.node.id check above

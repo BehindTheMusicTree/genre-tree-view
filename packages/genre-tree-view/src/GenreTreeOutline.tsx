@@ -327,7 +327,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
           return;
         }
         const changed = store.get().selectedId !== node.id;
-        store.set({ selectedId: node.id });
+        if (latestProps.current.selectedNodeId === undefined) store.set({ selectedId: node.id });
         if (changed) latestProps.current.onSelectedNodeChange?.(node);
         onNodeClick?.(node, event.nativeEvent);
       },
@@ -365,7 +365,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     }
     const changed = store.get().selectedId !== nodeId;
     if (changed) pendingScrollIdRef.current = nodeId;
-    store.set({ openIds, selectedId: nodeId });
+    store.set({ openIds, ...(notify && latestProps.current.selectedNodeId !== undefined ? {} : { selectedId: nodeId }) });
     if (changed && notify) latestProps.current.onSelectedNodeChange?.(index.byId.get(nodeId)!);
   };
   const selectNodeRef = useRef(selectNode);
@@ -426,7 +426,7 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
             .map((n): InfoPanelChild => ({ node: n, ...model.styleOf(n) }))}
           side="left"
           onClose={() => {
-            store.set({ selectedId: null });
+            if (latestProps.current.selectedNodeId === undefined) store.set({ selectedId: null });
             latestProps.current.onSelectedNodeChange?.(null);
           }}
           onSelectNode={(id) => selectNodeRef.current(id)}

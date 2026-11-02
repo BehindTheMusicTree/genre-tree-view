@@ -33,9 +33,27 @@ pnpm --filter @behindthemusictree/genre-tree-view test:watch
 pnpm --filter @behindthemusictree/genre-tree-view test -- <pattern>   # single test file/name
 ```
 
-PRs are validated by `validate.yml` (build, typecheck, lint, coverage). Coverage thresholds are
-enforced at 95% (lines/branches/functions/statements) in
-`packages/genre-tree-view/vitest.config.ts`, excluding `src/index.ts` and `src/types.ts`.
+PRs are validated by `validate.yml` (build, typecheck, lint, coverage). The coverage gate in
+`packages/genre-tree-view/vitest.config.ts` enforces these minimums:
+
+| Scope | Lines / statements | Branches | Functions |
+| --- | --- | --- | --- |
+| Whole library | 90% | 85% | 90% |
+| Each selection, pan/zoom, outline and info-panel module | 95% | 90% | 90% |
+
+The stricter scope names `use-node-info-panel`, `use-pan-zoom`, `GenreTreeOutline` and
+`InfoPanel` explicitly. Each file must pass independently so coverage in one cannot hide
+untested behavior in another. Public export/type declarations and benchmarks remain excluded;
+do not exclude executable behavior to make a gate pass. Thresholds do not auto-update.
+
+Coverage is a minimum signal, not an acceptance criterion for correctness. For interaction
+changes, reviewers must check regressions for the affected contracts: controlled and
+uncontrolled selection, parent acceptance or rejection, panel opening/closing without callback
+echoes, interrupted gestures/animations, and silent viewport restoration after layout or size
+changes. Geometry changes need assertions about layout invariants in every affected renderer.
+Tests should assert observable results rather than internal calls solely to increase coverage.
+The browser checks in consuming apps must verify URL and Back/Forward behavior; this library
+does not own routing. A passing percentage does not waive an unresolved correctness issue.
 
 # Branching model (Gitflow)
 

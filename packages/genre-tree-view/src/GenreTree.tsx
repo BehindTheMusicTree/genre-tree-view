@@ -71,6 +71,7 @@ export function GenreTree({
   overlayPanel,
   wheelZoom,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   controlsOrientation = "vertical",
   showZoomControls = "auto",
@@ -81,7 +82,8 @@ export function GenreTree({
   const svgRef = useRef<SVGSVGElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
+  const viewportFrame = useMemo(() => JSON.stringify([orientation, nodes.map(({ id, parentId, side }) => [id, parentId, side])]), [nodes, orientation]);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeIdProp, onViewportChange, frameKey: viewportFrame });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
   const itemCountRange = useMemo(
     () => getItemCountRange(nodes, { itemCountScaleMax, nodeCountForSizing: nodeCountForSizing ?? nodes.length }),
@@ -241,6 +243,7 @@ export function GenreTree({
       element,
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+      true,
     );
     showNodeInfoRef.current(targetNode, element, viewportRef.current, { notify: false });
   }, [interactive, selectedNodeIdProp, index, panel]);
@@ -257,12 +260,10 @@ export function GenreTree({
   // Starts the view fit to the whole tree instead of at scale 1 / pan (0, 0) — runs once the
   // tree's own draw effect above has populated svgRef, guarded so it never re-fires afterward
   // (e.g. on a subsequent nodes/layout change) and fights the user's own pan/zoom.
-  const hasInitialFitRef = useRef(false);
   useEffect(() => {
-    if (hasInitialFitRef.current || !interactive) return;
+    if (!interactive) return;
     const elements = queryTreeContentElements(svgRef.current);
     if (elements.length === 0) return;
-    hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements, { silent: true });
   });
 

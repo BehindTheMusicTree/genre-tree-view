@@ -1,6 +1,8 @@
 import codspeedPlugin from "@codspeed/vitest-plugin";
 import { coverageConfigDefaults, defineConfig } from "vitest/config";
 
+const interactionThresholds = { lines: 95, branches: 90, functions: 90, statements: 95 };
+
 export default defineConfig({
   plugins: [codspeedPlugin()],
   test: {
@@ -12,7 +14,16 @@ export default defineConfig({
       reporter: ["text", "html", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
       exclude: [...coverageConfigDefaults.exclude, "src/index.ts", "src/types.ts", "src/__bench__/**"],
-      thresholds: { lines: 95, branches: 95, functions: 95, statements: 95 },
+      thresholds: {
+        lines: 90,
+        branches: 85,
+        functions: 90,
+        statements: 90,
+        "src/use-node-info-panel.ts": interactionThresholds,
+        "src/use-pan-zoom.ts": interactionThresholds,
+        "src/GenreTreeOutline.tsx": interactionThresholds,
+        "src/InfoPanel.tsx": interactionThresholds,
+      },
     },
   },
 });

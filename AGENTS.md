@@ -18,8 +18,8 @@ Releases are staged on npm and require an owner to approve the staged package.
 From the repository root, `pnpm dev` starts the playground and a library watch
 build; `pnpm build`, `pnpm typecheck` and `pnpm lint` cover the workspace.
 `pnpm test` runs library and playground tests; `pnpm coverage` checks the library
-coverage thresholds (95%). CI runs build, typecheck, lint and coverage. See the
-package scripts and contributing guide for scoped commands.
+coverage thresholds described in `CONTRIBUTING.md`. CI runs build, typecheck, lint
+and coverage. See the package scripts and contributing guide for scoped commands.
 
 When reviewing changes, read `.github/skills/code-review/SKILL.md` for
 repository-specific correctness checks. When changing a shared layout or tree

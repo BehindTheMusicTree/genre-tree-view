@@ -43,7 +43,7 @@ export function useNodeInfoPanel({
   const [prevSelectedNodeId, setPrevSelectedNodeId] = useState(selectedNodeId);
   if (selectedNodeId !== prevSelectedNodeId) {
     setPrevSelectedNodeId(selectedNodeId);
-    if (prevSelectedNodeId != null && selectedNodeId == null) setPanel(null);
+    if (prevSelectedNodeId !== undefined) setPanel(null);
   }
 
   // Also written synchronously in show/close so two calls in one tick compare against each other.
@@ -61,20 +61,32 @@ export function useNodeInfoPanel({
       viewport: Element | null | undefined,
       { notify = true }: { notify?: boolean } = {},
     ) => {
+      if (notify && selectedNodeId !== undefined) {
+        if (node.id !== selectedNodeId) onSelectedNodeChangeRef.current?.(node);
+        return;
+      }
       if (!element || !viewport) return;
       setPanel({ node, side: resolveInfoPanelSide() });
       const changed = node.id !== shownNodeIdRef.current;
       shownNodeIdRef.current = node.id;
       if (changed && notify) onSelectedNodeChangeRef.current?.(node);
     },
-    [],
+    [selectedNodeId],
   );
 
   const closeNodeInfo = useCallback(() => {
+    if (selectedNodeId !== undefined) {
+      if (selectedNodeId !== null) onSelectedNodeChangeRef.current?.(null);
+      return;
+    }
     setPanel(null);
     shownNodeIdRef.current = null;
     onSelectedNodeChangeRef.current?.(null);
-  }, []);
+  }, [selectedNodeId]);
 
-  return { panel, showNodeInfo, closeNodeInfo };
+  return {
+    panel: selectedNodeId !== undefined && panel?.node.id !== selectedNodeId ? null : panel,
+    showNodeInfo,
+    closeNodeInfo,
+  };
 }

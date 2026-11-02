@@ -131,6 +131,7 @@ export function WheelRadialCore({
   overlayPanel,
   wheelZoom,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   controlsOrientation = "vertical",
   showZoomControls = "auto",
@@ -149,7 +150,8 @@ export function WheelRadialCore({
   );
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, onViewportChange });
+  const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
@@ -457,12 +459,9 @@ export function WheelRadialCore({
   // Starts the view fit to the wheel + rendered subtrees instead of at scale 1 / pan (0, 0) —
   // guarded so it only fires once anchored content has actually rendered, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections.
-  const hasInitialFitRef = useRef(false);
   useEffect(() => {
-    if (hasInitialFitRef.current) return;
     const elements = [wheelCircleRef.current, coreSvgRef.current];
     if (!elements.some(Boolean)) return;
-    hasInitialFitRef.current = true;
     panZoom.fitToFrame(elements, { silent: true });
   });
 
@@ -484,6 +483,7 @@ export function WheelRadialCore({
       element,
       ZOOM_FOCUS_SCALE,
       resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
+      true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the panel?.node.id check above
