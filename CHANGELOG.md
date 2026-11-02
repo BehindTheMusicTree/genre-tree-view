@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-11-02
+
 ### Removed
 
 - **Breaking:** the `controlsOrientation` prop and the `ControlsOrientation` type. The floating controls always use the former `"horizontal"` layout: one row at the bottom right, stacked in a column in containers narrower than 768px.
