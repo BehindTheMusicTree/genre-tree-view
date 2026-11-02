@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Publish to npm directly from CI (trusted publishing) instead of staging for manual approval.
+
 ### Added
 
 - Restore a tree viewport after navigation without emitting another viewport change.
