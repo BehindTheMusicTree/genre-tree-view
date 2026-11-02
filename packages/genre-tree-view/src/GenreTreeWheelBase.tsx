@@ -101,7 +101,6 @@ export function WheelCore({
   defaultViewport,
   viewportRestore,
   onViewportChange,
-  controlsOrientation = "vertical",
   showZoomControls = "auto",
   floatingControlsLeading,
   busy,
@@ -295,7 +294,7 @@ export function WheelCore({
   useEffect(() => {
     if (!selectedNodeId || panel?.node.id === selectedNodeId) return;
     const targetNode = nodes.find((node) => node.id === selectedNodeId);
-    const element = treeAnchorRef.current?.querySelector(
+    const element = viewportRef.current?.querySelector(
       `#group-${CSS.escape(selectedNodeId)}`,
     );
     if (!targetNode || !element) return;
@@ -592,7 +591,6 @@ export function WheelCore({
 
       <FloatingControls
         panZoom={panZoom}
-        orientation={controlsOrientation}
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}

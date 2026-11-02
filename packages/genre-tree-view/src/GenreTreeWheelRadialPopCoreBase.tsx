@@ -187,7 +187,6 @@ export function WheelRadialPopCoreCore({
   defaultViewport,
   viewportRestore,
   onViewportChange,
-  controlsOrientation = "vertical",
   showZoomControls = "auto",
   floatingControlsLeading,
   busy,
@@ -1499,7 +1498,6 @@ export function WheelRadialPopCoreCore({
 
       <FloatingControls
         panZoom={panZoom}
-        orientation={controlsOrientation}
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}

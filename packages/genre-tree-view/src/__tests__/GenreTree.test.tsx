@@ -49,13 +49,10 @@ describe("GenreTree", () => {
     ).toBeNull();
   });
 
-  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
-    const selector = ".gtv-wheel-floating-controls--horizontal";
-    expect(render(<GenreTree itemCountLabel="Track count" nodes={TREE} />).container.querySelector(selector)).toBeNull();
-    cleanup();
-    expect(
-      render(<GenreTree itemCountLabel="Track count" nodes={TREE} controlsOrientation="horizontal" />).container.querySelector(selector),
-    ).not.toBeNull();
+  it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
+    const { container } = render(<GenreTree itemCountLabel="Track count" nodes={TREE} showZoomControls="always" />);
+    expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
+    expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
   it("renders the zoom buttons per showZoomControls, hiding them on touch screens only under auto", () => {
