@@ -13,7 +13,7 @@ by the pipelines infrastructure.
 Read `ARCHITECTURE.md` for renderers, layout modules and the public API. Read
 `CONTRIBUTING.md` for branching, validation and releases. Branch from `develop`
 and target it for feature work; do not commit directly to `main` or `develop`.
-Releases are staged on npm and require an owner to approve the staged package.
+Releases are published directly to npm by `publish.yml` (trusted publishing).
 
 From the repository root, `pnpm dev` starts the playground and a library watch
 build; `pnpm build`, `pnpm typecheck` and `pnpm lint` cover the workspace.

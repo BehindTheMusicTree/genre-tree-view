@@ -24,11 +24,11 @@ jobs:
 
       - run: pnpm --filter @behindthemusictree/genre-tree-view run build
 
-      # pnpm pack rewrites workspace:/catalog: specifiers. The trusted publisher only allows staging:
-      # a maintainer must approve the version with 2FA (npm stage approve) before it goes live.
+      # pnpm pack rewrites workspace:/catalog: specifiers. The trusted publisher on npmjs must allow
+      # direct `npm publish` (Allow npm publish), otherwise this step fails with ENEEDAUTH.
       - run: npm install -g npm@11.21.1
       - run: pnpm --filter @behindthemusictree/genre-tree-view pack --pack-destination "$RUNNER_TEMP"
-      - run: npm stage publish "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz --provenance --access public
+      - run: npm publish "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz --provenance --access public
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
