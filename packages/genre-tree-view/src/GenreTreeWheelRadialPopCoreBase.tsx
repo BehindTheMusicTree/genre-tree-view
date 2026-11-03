@@ -657,7 +657,10 @@ export function WheelRadialPopCoreCore({
     ? coverageRadius(viewportSize.width, viewportSize.height, minScale, svgCanvasRadius)
     : null;
   const wheelCoverageRadiusRef = useRef(wheelCoverageRadius);
-  wheelCoverageRadiusRef.current = wheelCoverageRadius;
+  // Declared before the render effect that draws the arcs so effects see the current value.
+  useEffect(() => {
+    wheelCoverageRadiusRef.current = wheelCoverageRadius;
+  }, [wheelCoverageRadius]);
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
