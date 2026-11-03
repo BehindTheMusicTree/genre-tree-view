@@ -24,6 +24,7 @@ import {
   RadialSlot,
   subdivideWedge,
 } from "./radial-wheel-geometry";
+import { coverageRadius } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";
@@ -339,6 +340,13 @@ export function WheelRadialCore({
     [chipClearanceFloor, maxCoreExtentDelta],
   );
 
+  // Reach of the dividers and sector washes: bounded by what can be on screen rather than
+  // "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
+  const { viewportSize, minScale } = panZoom;
+  const wheelCoverageRadius = viewportSize
+    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, wheelRadius)
+    : null;
+
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
   const onRootSelectRef = useRef(onRootSelect);
@@ -536,6 +544,7 @@ export function WheelRadialCore({
       style={
         {
           "--gtv-wheel-radius": `${wheelRadius}px`,
+          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
           touchAction: panZoom.touchAction,

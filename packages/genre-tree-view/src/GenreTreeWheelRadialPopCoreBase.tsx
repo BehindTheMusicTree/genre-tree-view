@@ -35,6 +35,7 @@ import {
   buildSectorClipPathPolygon,
   computeRadialLayout,
   computeSectorWidths,
+  coverageRadius,
   findSectorAtAngle,
   pickEmptyLabelSpot,
   RadialSlot,
@@ -78,7 +79,6 @@ import {
   shadeSurface,
   UNDERGROUND_DARKEN_RATIO,
   UNDERGROUND_SECTOR_FILL_OPACITY,
-  SCENE_SECTOR_OUTER_RADIUS,
 } from "./constants";
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
@@ -650,6 +650,16 @@ export function WheelRadialPopCoreCore({
     [coreRootCircleRadius, maxCoreExtentDelta],
   );
 
+  // Reach of the dividers, sector washes and underground arcs: bounded by what can be on screen,
+  // not "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
+  // Null until the viewport is first measured (those elements then wait to be drawn/sized).
+  const { viewportSize, minScale } = panZoom;
+  const wheelCoverageRadius = viewportSize
+    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, svgCanvasRadius)
+    : null;
+  const wheelCoverageRadiusRef = useRef(wheelCoverageRadius);
+  wheelCoverageRadiusRef.current = wheelCoverageRadius;
+
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
   // while every root's pop wedges fan outward from it toward coreRootCircleRadius.
@@ -810,16 +820,19 @@ export function WheelRadialPopCoreCore({
             const next = at >= 0 ? siblings[at + 1] : undefined;
             const startDeg = prev ? (subtreeRange(prev).max + mine.min) / 2 : angle - span / 2;
             const endDeg = next ? (mine.max + subtreeRange(next).min) / 2 : angle + span / 2;
-            const arcPath = d3.arc()({
-              innerRadius: coreRootCircleRadius,
-              outerRadius: SCENE_SECTOR_OUTER_RADIUS,
-              startAngle: (startDeg * Math.PI) / 180,
-              endAngle: (endDeg * Math.PI) / 180,
-            });
+            const startAngle = (startDeg * Math.PI) / 180;
+            const endAngle = (endDeg * Math.PI) / 180;
             sectorGroup
               .append("path")
               .attr("class", "gtv-wheel-scene-sector")
-              .attr("d", arcPath)
+              .attr("data-start-angle", startAngle)
+              .attr("data-end-angle", endAngle)
+              .attr("d", d3.arc()({
+                innerRadius: coreRootCircleRadius,
+                outerRadius: wheelCoverageRadiusRef.current ?? svgCanvasRadius,
+                startAngle,
+                endAngle,
+              }))
               .attr("fill", shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO))
               .attr("fill-opacity", UNDERGROUND_SECTOR_FILL_OPACITY);
           });
@@ -1021,6 +1034,22 @@ export function WheelRadialPopCoreCore({
     panel?.node.id,
   ]);
 
+  // Re-sizes the underground arcs when the coverage radius changes (viewport resize, relaxed
+  // min scale) without re-mounting the tree in the render effect above.
+  useEffect(() => {
+    if (!popSvgRef.current || wheelCoverageRadius === null) return;
+    d3.select(popSvgRef.current)
+      .selectAll<SVGPathElement, unknown>("path.gtv-wheel-scene-sector")
+      .attr("d", function () {
+        return d3.arc()({
+          innerRadius: coreRootCircleRadius,
+          outerRadius: wheelCoverageRadius,
+          startAngle: Number(this.getAttribute("data-start-angle")),
+          endAngle: Number(this.getAttribute("data-end-angle")),
+        });
+      });
+  }, [wheelCoverageRadius, coreRootCircleRadius]);
+
   // Re-places dot labels once a zoom gesture settles, so the set of named nodes follows the zoom
   // like place names on a map — kept out of the render effect above, which must not re-mount on zoom.
   useEffect(() => {
@@ -1211,6 +1240,7 @@ export function WheelRadialPopCoreCore({
         {
           "--gtv-wheel-radius": `${coreRootCircleRadius}px`,
           "--gtv-wheel-svg-radius": `${svgCanvasRadius}px`,
+          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
           touchAction: panZoom.touchAction,

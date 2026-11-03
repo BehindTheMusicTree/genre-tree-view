@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep wheel borders (dividers, root sector washes, underground sector arcs) crisp while dragging the map: they are now sized to a radius bounded by the viewport and minimum zoom (`--gtv-wheel-coverage-radius`) instead of a fixed 100000px/200000px, so the dragged layer stays small enough to rasterize at full resolution.
+
 ## [6.5.1] - 2026-11-02
 
 ### Changed

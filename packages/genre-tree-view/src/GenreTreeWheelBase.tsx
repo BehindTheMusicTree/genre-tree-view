@@ -13,6 +13,7 @@ import {
   getChipAngle,
   getWheelDividerAngle,
 } from "./wheel-geometry";
+import { coverageRadius } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
@@ -169,6 +170,13 @@ export function WheelCore({
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
+
+  // Reach of the dividers and sector washes: bounded by what can be on screen rather than
+  // "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
+  const { viewportSize, minScale } = panZoom;
+  const wheelCoverageRadius = viewportSize
+    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, wheelRadius)
+    : null;
   const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
@@ -323,6 +331,7 @@ export function WheelCore({
       style={
         {
           "--gtv-wheel-radius": `${wheelRadius}px`,
+          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-viewport-height": `${wheelViewportHeight}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,

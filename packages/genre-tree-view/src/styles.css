@@ -1133,7 +1133,7 @@
   top: 50%;
   left: 50%;
   width: 1px;
-  height: 100000px;
+  height: var(--gtv-wheel-coverage-radius, 100000px);
   background: var(--gtv-border, var(--color-border, #e4e4e7));
   transform-origin: top center;
   transform: rotate(var(--gtv-divider-angle, 0deg));
@@ -1150,10 +1150,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 200000px;
-  height: 200000px;
-  margin-left: -100000px;
-  margin-top: -100000px;
+  width: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
+  height: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
+  margin-left: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
+  margin-top: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
   background: var(--gtv-sector-fill-gradient, none);
   pointer-events: none;
 }
@@ -1168,10 +1168,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 200000px;
-  height: 200000px;
-  margin-left: -100000px;
-  margin-top: -100000px;
+  width: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
+  height: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
+  margin-left: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
+  margin-top: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
   background: var(--gtv-sector-color, transparent);
   transform: rotate(var(--gtv-sector-angle, 0deg));
   pointer-events: none;

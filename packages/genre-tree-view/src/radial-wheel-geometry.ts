@@ -86,6 +86,22 @@ export function bisectAngles(a: number, b: number): number {
   return (a + adjustedB) / 2;
 }
 
+/** Radius (px, in stage coordinates) the wheel's boundary elements (dividers, sector washes,
+ * underground arc) must reach from the pivot to cover everything that can ever be on screen:
+ * the pan clamp keeps some content visible, so the pivot can sit at most `contentRadius` away from
+ * the visible area, and at `minScale` the viewport spans `hypot(width, height) / minScale` stage
+ * pixels. Sizing these elements to that bound instead of a fixed "infinity" keeps the stage's
+ * composited layer small enough to be rasterized at full resolution while it is dragged. */
+export function coverageRadius(
+  viewportWidth: number,
+  viewportHeight: number,
+  minScale: number,
+  contentRadius: number,
+): number {
+  if (!(minScale > 0)) throw new Error("coverageRadius: minScale must be positive");
+  return Math.ceil(contentRadius + Math.hypot(viewportWidth, viewportHeight) / minScale);
+}
+
 /** `clip-path: polygon(...)` value for a filled circular-sector fan spanning `[0, sweepDeg]`,
  * measured clockwise from local "up" (CSS `rotate()` convention) — meant for a huge square element
  * centered on the wheel's pivot (same oversized-element + `.gtv-wheel-container` overflow: hidden

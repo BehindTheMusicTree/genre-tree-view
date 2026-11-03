@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bisectAngles,
   buildSectorClipPathPolygon,
+  coverageRadius,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
   computeSectorBounds,
@@ -499,5 +500,23 @@ describe("placeLabels grid index", () => {
       };
     });
     expect([...placeLabels(items)]).toEqual([...naive(items)]);
+  });
+});
+
+describe("coverageRadius", () => {
+  it("adds the viewport diagonal at min scale to the content radius", () => {
+    expect(coverageRadius(300, 400, 0.05, 1000)).toBe(1000 + 500 / 0.05);
+  });
+
+  it("grows as the min scale shrinks", () => {
+    expect(coverageRadius(800, 600, 0.02, 0)).toBeGreaterThan(coverageRadius(800, 600, 0.05, 0));
+  });
+
+  it("rounds up to a whole pixel", () => {
+    expect(Number.isInteger(coverageRadius(333, 777, 0.07, 12.3))).toBe(true);
+  });
+
+  it("rejects a non-positive min scale", () => {
+    expect(() => coverageRadius(100, 100, 0, 0)).toThrow();
   });
 });

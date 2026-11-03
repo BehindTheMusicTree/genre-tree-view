@@ -37,6 +37,10 @@ export interface UsePanZoomResult {
   panX: number;
   panY: number;
   zoomScale: number;
+  /** Lowest scale manual zoom-out can currently reach (ZOOM_MIN_SCALE, relaxed by a fit). */
+  minScale: number;
+  /** Last measured viewport box; null until the first ResizeObserver callback. */
+  viewportSize: { width: number; height: number } | null;
   /** CSS transform implementing both pan and zoom as one shared coordinate system — apply this
    * to a single "stage" element and everything inside it (however many DOM subtrees) moves and
    * scales together with no separate synchronization step. */
@@ -359,6 +363,7 @@ export function usePanZoom(
   // middle of the old box is still in the middle of the new one, then get re-clamped in case the
   // resize shrank the viewport below what the current pan allows.
   const viewportSizeRef = useRef<{ width: number; height: number } | null>(null);
+  const [viewportSize, setViewportSize] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -370,6 +375,7 @@ export function usePanZoom(
 
       const previous = viewportSizeRef.current;
       viewportSizeRef.current = { width, height };
+      if (width > 0 && height > 0) setViewportSize({ width, height });
       if (!previous || previous.width <= 0 || previous.height <= 0) { retryFrameRef.current(); return; }
 
       const dx = (width - previous.width) / 2;
@@ -935,6 +941,8 @@ export function usePanZoom(
     panX,
     panY,
     zoomScale,
+    minScale,
+    viewportSize,
     transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
     canZoomIn: zoomScale < ZOOM_MAX_SCALE,
     canZoomOut: zoomScale > minScale,

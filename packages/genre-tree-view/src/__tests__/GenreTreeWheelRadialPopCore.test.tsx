@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../defer-click", () => ({
   createDeferredClick: () => ({
@@ -22,6 +22,8 @@ import {
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, LOW_DENSITY_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
+import { coverageRadius } from "../radial-wheel-geometry";
+import { ZOOM_MIN_SCALE } from "../constants";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
 afterEach(() => {
@@ -420,6 +422,56 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const sectors = container.querySelectorAll(".gtv-wheel-scene-sector");
     expect(sectors).toHaveLength(1);
     expect(sectors[0]!.nextElementSibling?.classList.contains("gtv-wheel-core-branch")).toBe(true);
+  });
+
+  describe("coverage radius", () => {
+    const UNDERGROUND_NODES: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
+    ];
+    let resizeCallback: ResizeObserverCallback = () => {};
+    const original = global.ResizeObserver;
+
+    function resizeTo(width: number, height: number) {
+      act(() => {
+        resizeCallback([{ contentRect: { width, height } } as ResizeObserverEntry], {} as ResizeObserver);
+      });
+    }
+    function arcOuterRadius(container: HTMLElement) {
+      // d3.arc starts its path at the outer radius: "M<x>,<y>A<outer>,<outer>,..."
+      const d = container.querySelector(".gtv-wheel-scene-sector")!.getAttribute("d")!;
+      return Number(/A([\d.]+),/.exec(d)![1]);
+    }
+
+    beforeEach(() => {
+      global.ResizeObserver = vi.fn().mockImplementation(function (callback) {
+        resizeCallback = callback;
+        return { observe: vi.fn(), disconnect: vi.fn() };
+      }) as unknown as typeof ResizeObserver;
+    });
+    afterEach(() => {
+      global.ResizeObserver = original;
+    });
+
+    it("sizes the CSS var and the underground arc from the measured viewport", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={UNDERGROUND_NODES} />);
+      resizeTo(800, 600);
+      const expected = coverageRadius(800, 600, ZOOM_MIN_SCALE, getSvgCanvasRadius(container));
+      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
+      expect(wheelContainer.style.getPropertyValue("--gtv-wheel-coverage-radius")).toBe(`${expected}px`);
+      expect(arcOuterRadius(container)).toBe(expected);
+      expect(expected).toBeLessThan(100000);
+    });
+
+    it("re-sizes the arc on viewport resize without re-mounting it", () => {
+      const { container } = render(<GenreTreeWheelRadialPopCore itemCountLabel="Track count" nodes={UNDERGROUND_NODES} />);
+      resizeTo(800, 600);
+      const arc = container.querySelector(".gtv-wheel-scene-sector");
+      const before = arcOuterRadius(container);
+      resizeTo(1600, 1200);
+      expect(container.querySelector(".gtv-wheel-scene-sector")).toBe(arc);
+      expect(arcOuterRadius(container)).toBeGreaterThan(before);
+    });
   });
 
   it("draws no underground background slice when no node is underground", () => {
