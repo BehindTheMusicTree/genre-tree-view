@@ -231,7 +231,7 @@
   right: 0.75rem;
   z-index: 10;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-end;
   gap: 0.5rem;
 }
@@ -297,13 +297,20 @@
   }
 }
 
-.gtv-wheel-floating-controls--horizontal {
-  flex-direction: row;
+/* The reserve above is 12px left inset + 140px: the zoom card is ~108px wide (3 x 32px buttons,
+   2px gaps, 3px padding, 1px border) plus the 12px right inset. With `showZoomControls="always"`
+   on a touch screen the buttons grow to the 44px touch target (~144px card), so widen the strip. */
+@container (max-width: 767px) {
+  @media (pointer: coarse) {
+    .gtv-wheel-breadcrumb {
+      max-width: calc(100% - 176px);
+    }
+  }
 }
 
-/* The breadcrumb reserves a fixed strip beside the controls, so a wider box stacks instead. */
+/* The breadcrumb reserves a fixed strip beside the controls, so a narrow box stacks them. */
 @container (max-width: 767px) {
-  .gtv-wheel-floating-controls--horizontal {
+  .gtv-wheel-floating-controls {
     flex-direction: column;
   }
 }

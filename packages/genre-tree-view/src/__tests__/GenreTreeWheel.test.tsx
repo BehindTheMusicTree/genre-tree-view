@@ -121,13 +121,10 @@ describe("GenreTreeWheel", () => {
     expect(idle.querySelector("[role='status']")).toBeNull();
   });
 
-  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
-    const selector = ".gtv-wheel-floating-controls--horizontal";
-    expect(render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />).container.querySelector(selector)).toBeNull();
-    cleanup();
-    expect(
-      render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} controlsOrientation="horizontal" />).container.querySelector(selector),
-    ).not.toBeNull();
+  it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
+    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} showZoomControls="always" />);
+    expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
+    expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
   it("lists the wheel node's ancestors up to and including its parent in the info panel", () => {
@@ -412,6 +409,21 @@ describe("GenreTreeWheel", () => {
       expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
 
       rectSpy.mockRestore();
+    });
+
+    it("waits for host acceptance of a root chip and opens its panel without echoing", () => {
+      const onSelectedNodeChange = vi.fn();
+      const props = { itemCountLabel: "Track count", nodes: NODES, onSelectedNodeChange };
+      const { container, rerender } = render(<GenreTreeWheel {...props} selectedNodeId={null} />);
+      fireEvent.click(chipFor(container, "Electronic"));
+      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
+      const requested = onSelectedNodeChange.mock.calls[0][0];
+      rerender(<GenreTreeWheel {...props} selectedNodeId={requested.id} />);
+      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
+      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
+      rerender(<GenreTreeWheel {...props} selectedNodeId={null} />);
+      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
     });
 
     it("opens for an externally-controlled selectedNodeId, swapping in its owning root first", () => {

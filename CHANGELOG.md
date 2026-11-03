@@ -5,9 +5,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### CI
+
+- `scripts/release.sh` no longer tells the maintainer to approve a staged npm version: `publish.yml` publishes directly.
+
 ### Fixed
 
 - Keep wheel borders (dividers, root sector washes, underground sector arcs) crisp while dragging the map: they are now sized to a radius bounded by the viewport and minimum zoom (`--gtv-wheel-coverage-radius`) instead of a fixed 100000px/200000px, so the dragged layer stays small enough to rasterize at full resolution.
+
+## [7.0.0] - 2026-11-02
+
+### Removed
+
+- **Breaking:** the `controlsOrientation` prop and the `ControlsOrientation` type. The floating controls always use the former `"horizontal"` layout: one row at the bottom right, stacked in a column in containers narrower than 768px.
+
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.11.0 (`ZoomControls` is horizontal by default).
+- On touch screens with `showZoomControls="always"`, the narrow-container breadcrumb reserves more room so it no longer overlaps the 44px-button zoom card.
+
+### Fixed
+
+- Open the wheel detail panel when a host accepts a controlled root-chip selection.
 
 ## [6.5.1] - 2026-11-02
 

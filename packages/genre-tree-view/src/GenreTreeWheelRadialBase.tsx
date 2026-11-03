@@ -134,7 +134,6 @@ export function WheelRadialCore({
   defaultViewport,
   viewportRestore,
   onViewportChange,
-  controlsOrientation = "vertical",
   showZoomControls = "auto",
   floatingControlsLeading,
   busy,
@@ -761,7 +760,6 @@ export function WheelRadialCore({
 
       <FloatingControls
         panZoom={panZoom}
-        orientation={controlsOrientation}
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}

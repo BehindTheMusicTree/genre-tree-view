@@ -238,12 +238,13 @@ pnpm workspace with two members:
   `preventDefault`s whenever two or more fingers are down, so the browser can't claim a
   vertically-drifting pinch as page scroll (cooperative gestures, like Google Maps).
   `GenreTreeOutline` has no pan/zoom viewport and omits the prop.
-- **Floating controls layout**: `GenreTreeProps.controlsOrientation` (`"vertical"` default |
-  `"horizontal"`) adds `gtv-wheel-floating-controls--horizontal` to each interactive renderer's
-  zoom/pop/fit controls, laying them out in a row. `GenreTreeProps.showZoomControls` (`"auto"`
+- **Floating controls layout**: the busy indicator, the `floatingControlsLeading` slot and the zoom
+  card share one bottom-right row (`.gtv-wheel-floating-controls`); in containers narrower than
+  768px they stack in a column, since the breadcrumb takes the bottom-left. There is no
+  orientation prop. `GenreTreeProps.showZoomControls` (`"auto"`
   default | `"always"` | `"never"`) shows the zoom buttons everywhere, nowhere, or only off touch
   screens (`gtv-zoom-controls--auto`, hidden under `@media (pointer: coarse)`, where pinch replaces
-  them); the `floatingControlsLeading` slot is unaffected. `GenreTreeOutline` omits both props.
+  them); the `floatingControlsLeading` slot is unaffected. `GenreTreeOutline` omits that prop.
 
 ## Public surface
 
@@ -256,7 +257,7 @@ pnpm workspace with two members:
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`, `ControlsOrientation`, `ZoomControlsVisibility`, `GenreTreeOverlayPanel`.
+  `WheelZoomMode`, `ZoomControlsVisibility`, `GenreTreeOverlayPanel`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

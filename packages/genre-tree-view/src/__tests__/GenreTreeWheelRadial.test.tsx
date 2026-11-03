@@ -507,13 +507,10 @@ describe("GenreTreeWheelRadial", () => {
     expect(idle.querySelector("[role='status']")).toBeNull();
   });
 
-  it("adds the horizontal modifier to the floating controls only when controlsOrientation is horizontal", () => {
-    const selector = ".gtv-wheel-floating-controls--horizontal";
-    expect(render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />).container.querySelector(selector)).toBeNull();
-    cleanup();
-    expect(
-      render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} controlsOrientation="horizontal" />).container.querySelector(selector),
-    ).not.toBeNull();
+  it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
+    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} showZoomControls="always" />);
+    expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
+    expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
   it("renders an optional center label, and omits it when not provided", () => {
