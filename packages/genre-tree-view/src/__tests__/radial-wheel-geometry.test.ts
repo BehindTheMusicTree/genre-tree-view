@@ -504,8 +504,8 @@ describe("placeLabels grid index", () => {
 });
 
 describe("coverageRadius", () => {
-  it("adds the viewport diagonal at min scale to the content radius", () => {
-    expect(coverageRadius(300, 400, 0.05, 1000)).toBe(1000 + 500 / 0.05);
+  it("adds the viewport diagonal at min scale to the content bounding-box corner distance", () => {
+    expect(coverageRadius(300, 400, 0.05, 1000)).toBe(Math.ceil(1000 * Math.SQRT2 + 500 / 0.05));
   });
 
   it("grows as the min scale shrinks", () => {

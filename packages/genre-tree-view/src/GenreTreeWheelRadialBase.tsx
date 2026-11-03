@@ -20,11 +20,11 @@ import {
   buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
+  coverageRadius,
   computeSectorWidths,
   RadialSlot,
   subdivideWedge,
 } from "./radial-wheel-geometry";
-import { coverageRadius } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";

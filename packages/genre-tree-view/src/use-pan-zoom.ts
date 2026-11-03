@@ -375,7 +375,9 @@ export function usePanZoom(
 
       const previous = viewportSizeRef.current;
       viewportSizeRef.current = { width, height };
-      if (width > 0 && height > 0) setViewportSize({ width, height });
+      if (width > 0 && height > 0) {
+        setViewportSize((prev) => (prev?.width === width && prev.height === height ? prev : { width, height }));
+      }
       if (!previous || previous.width <= 0 || previous.height <= 0) { retryFrameRef.current(); return; }
 
       const dx = (width - previous.width) / 2;
