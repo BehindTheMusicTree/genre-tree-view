@@ -61,10 +61,6 @@ export const UNDERGROUND_DARKEN_RATIO = 0.62;
 // the root's own sector wash.
 export const UNDERGROUND_SECTOR_FILL_OPACITY = 0.15;
 
-// Outer radius (px) of that slice — matches the half-size of the 200000px root sector wash, so it
-// reads as running out to infinity.
-export const SCENE_SECTOR_OUTER_RADIUS = 100000;
-
 export const DEFAULT_NODE_COLOR = "#4F46E5";
 
 // The pop-core renderers (GenreTreeWheelRadialPopCore's wheel pivot, GenreTreeOutline's first
