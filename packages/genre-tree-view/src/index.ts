@@ -8,7 +8,16 @@ export { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 export { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
 export { GenreTreeOutlineSkeleton } from "./GenreTreeOutlineSkeleton";
 export { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
-export { getGenreTreeColor, DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT } from "./constants";
+export {
+  getGenreTreeColor,
+  tintSurface,
+  ROOT_TINT_RATIO,
+  TEXT_COLOR,
+  ACCENT_TEXT_COLOR,
+  DEFAULT_FRAME_WIDTH,
+  DEFAULT_FRAME_HEIGHT,
+} from "./constants";
+export { InfoPanel } from "./InfoPanel";
 export { groupNodesByRoot } from "./root-grouping";
 export { isZoomableNode } from "./pop-core-frame";
 export type {
@@ -25,6 +34,7 @@ export type {
   InfoPanelBody,
   InfoPanelSections,
 } from "./types";
+export type { InfoPanelProps, InfoPanelChild } from "./InfoPanel";
 export type { GenreTreeViewSkeletonProps } from "./GenreTreeViewSkeleton";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";
 export type { GenreTreeWheelRightProps } from "./GenreTreeWheelRight";

@@ -5,6 +5,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.0] - 2026-11-04
+
+### Added
+
+- Exports `InfoPanel` (with `InfoPanelProps`, `InfoPanelChild`) and the styling helpers `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, so a host can render a genre detail panel without a tree. Covered by `public-exports.test.ts`.
+
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.12.0: dot-label placement, zoom-rank thresholds and log scaling now come from its shared `label-layout` instead of local copies (no behavior change).
+
+### CI
+
+- `scripts/release.sh` no longer tells the maintainer to approve a staged npm version: `publish.yml` publishes directly.
+
+### Fixed
+
+- Keep wheel borders (dividers, root sector washes, underground sector arcs) crisp while dragging the map: they are now sized to a radius bounded by the viewport and minimum zoom (`--gtv-wheel-coverage-radius`) instead of a fixed 100000px/200000px, so the dragged layer stays small enough to rasterize at full resolution.
+
 ## [7.0.0] - 2026-11-02
 
 ### Removed
