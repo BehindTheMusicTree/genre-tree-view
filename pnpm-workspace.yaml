@@ -16,3 +16,4 @@ engineStrict: true
 minimumReleaseAgeExclude:
   - '@behindthemusictree/brand@12.7.0'
   - '@behindthemusictree/ui@0.11.0'
+  - '@behindthemusictree/ui@0.12.0'

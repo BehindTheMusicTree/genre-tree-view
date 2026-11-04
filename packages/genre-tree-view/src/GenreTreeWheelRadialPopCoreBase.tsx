@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LABEL_CHAR_WIDTH_RATIO } from "@behindthemusictree/ui";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -22,7 +23,6 @@ import {
   coreRadiusOfDepth,
   getRadialPointOnCircle,
   hideCollidingLabels,
-  LABEL_CHAR_WIDTH_RATIO,
   renderRootLabels,
   measureWedge,
   popRadiusOfDepth,

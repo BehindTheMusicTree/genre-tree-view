@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.12.0: dot-label placement, zoom-rank thresholds and log scaling now come from its shared `label-layout` instead of local copies (no behavior change).
+
 ### CI
 
 - `scripts/release.sh` no longer tells the maintainer to approve a staged npm version: `publish.yml` publishes directly.
