@@ -302,7 +302,6 @@ export function GenreTree({
           // force this div larger than a smaller explicit-sized ancestor for any tree bigger than it,
           // which broke fitToFrame's viewport measurement and left content clipped against that
           // ancestor's actual (smaller) visible bounds.
-          cursor: "grab",
           // Never "auto": a touchscreen two-finger pinch would otherwise never reach JS at all — the
           // browser consumes it as native page zoom before usePanZoom's pointer handlers see it.
           touchAction: panZoom.touchAction,
