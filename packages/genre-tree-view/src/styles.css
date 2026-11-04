@@ -502,7 +502,7 @@
     border: none;
     background: transparent;
     color: inherit;
-    cursor: grab;
+    cursor: pointer;
     touch-action: none;
   }
 
@@ -973,7 +973,6 @@
   height: 100%;
   overflow: hidden;
   container-type: inline-size;
-  cursor: grab;
   /* Otherwise a touchscreen two-finger pinch never reaches JS at all — the browser consumes it as
      native page zoom before usePanZoom's pointer handlers see either touch point. */
   touch-action: none;

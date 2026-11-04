@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.1] - 2026-11-04
+
+### Changed
+
+- The tree background shows the default arrow cursor instead of the open hand; only interactive elements (nodes, buttons, the bottom-sheet grabber) show the pointer.
+
 ## [7.1.0] - 2026-11-04
 
 ### Added
