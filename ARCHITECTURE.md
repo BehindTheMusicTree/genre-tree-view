@@ -251,11 +251,13 @@ pnpm workspace with two members:
 `index.ts` is the sole export boundary:
 
 - Components: `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
-  `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`.
-- Helpers: `getGenreTreeColor`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
+  `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`, `InfoPanel` (the detail panel shell, usable
+  without a tree: pass `node`, `fill`/`textColor` and relatives; the host must be
+  `position: relative; container-type: inline-size` and load `styles.css`).
+- Helpers: `getGenreTreeColor`, `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
   `groupNodesByRoot`, `isZoomableNode`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
-  `GenreTreeAction`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
+  `GenreTreeAction`, `InfoPanelProps`, `InfoPanelChild`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
   `WheelZoomMode`, `ZoomControlsVisibility`, `GenreTreeOverlayPanel`.
 
