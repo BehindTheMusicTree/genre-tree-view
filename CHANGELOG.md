@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Exports `InfoPanel` (with `InfoPanelProps`, `InfoPanelChild`) and the styling helpers `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, so a host can render a genre detail panel without a tree. Covered by `public-exports.test.ts`.
+
 ### Changed
 
 - Requires `@behindthemusictree/ui` ^0.12.0: dot-label placement, zoom-rank thresholds and log scaling now come from its shared `label-layout` instead of local copies (no behavior change).
