@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { placeLabels } from "@behindthemusictree/ui";
 import {
   bisectAngles,
   buildSectorClipPathPolygon,
@@ -10,7 +11,6 @@ import {
   computeSectorWidths,
   findSectorAtAngle,
   pickEmptyLabelSpot,
-  placeLabels,
   solveRingRadius,
   subdivideWedge,
 } from "../radial-wheel-geometry";

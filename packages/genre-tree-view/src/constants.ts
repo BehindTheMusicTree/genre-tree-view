@@ -1,3 +1,4 @@
+import { isRankShownAtZoom, logScalePosition } from "@behindthemusictree/ui";
 import { hsl } from "d3";
 import type { TreeIndex } from "./tree-index";
 
@@ -313,11 +314,7 @@ export function getItemCountRange(
  * is computed on a log scale instead — equal *ratios* of item count grow a node by roughly
  * equal amounts, not equal absolute differences. log1p (not log) so an itemCount of 0 is finite. */
 export function logarithmicPosition(itemCount: number, range: ItemCountRange): number {
-  const { min, max } = range;
-  const logMin = Math.log1p(Math.max(min, 0));
-  const logMax = Math.log1p(Math.max(max, 0));
-  const logValue = Math.log1p(Math.max(itemCount, 0));
-  return logMax > logMin ? Math.max(0, Math.min(1, (logValue - logMin) / (logMax - logMin))) : 0;
+  return logScalePosition(itemCount, range);
 }
 
 /** Maps itemCount's log-scaled position within `range` onto [MIN_NODE_*, MAX_NODE_*]. */
@@ -391,8 +388,11 @@ export function calculateLabelRank(itemCount: number, range: ItemCountRange, dep
  * LABEL_MIN_RANK_AT_MIN_ZOOM); the threshold falls linearly in log-zoom from ZOOM_MIN_SCALE to
  * ZOOM_FOCUS_SCALE, and below 0 past it so deep levels keep appearing while zooming further in. */
 export function isLabelRankedForZoom(rank: number, zoomScale: number): boolean {
-  const zoomOut = Math.log(ZOOM_FOCUS_SCALE / zoomScale) / Math.log(ZOOM_FOCUS_SCALE / ZOOM_MIN_SCALE);
-  return rank >= Math.min(1, zoomOut) * LABEL_MIN_RANK_AT_MIN_ZOOM;
+  return isRankShownAtZoom(rank, zoomScale, {
+    minScale: ZOOM_MIN_SCALE,
+    focusScale: ZOOM_FOCUS_SCALE,
+    minRankAtMinZoom: LABEL_MIN_RANK_AT_MIN_ZOOM,
+  });
 }
 
 /** Root chip label size: its own layout size, floored so it never renders below

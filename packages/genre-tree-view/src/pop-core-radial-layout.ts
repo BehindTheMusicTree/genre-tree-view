@@ -1,3 +1,4 @@
+import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate } from "@behindthemusictree/ui";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -30,10 +31,6 @@ import {
   isLabelRankedForZoom,
   tintSurface,
 } from "./constants";
-import {
-  Box,
-  placeLabels,
-} from "./radial-wheel-geometry";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -388,17 +385,6 @@ export function getRadialPointOnCircle(
   return { x: radius * Math.sin(angleRad), y: -radius * Math.cos(angleRad) };
 }
 
-// Average glyph advance as a fraction of font size — a DOM-free label width estimate, so layout
-// and collision culling stay deterministic (happy-dom has no getBBox).
-export const LABEL_CHAR_WIDTH_RATIO = 0.6;
-
-export interface DotLabelCandidate {
-  x: number;
-  y: number;
-  anchor: "start" | "middle" | "end";
-  box: Box;
-}
-
 /** A radial dot node's label placement and boxes, local to the node's own center. `candidates` are
  * the label's possible spots in preference order (see hideCollidingLabels): beside the dot facing
  * away from the wheel's vertical axis (right of the dot when `x >= 0`, left otherwise, so it never
@@ -426,7 +412,7 @@ export function getDotLabelGeometry(
     zoomScale === undefined
       ? calculateNodeFontSize(itemCount, itemCountRange)
       : calculateLabelFontSizeAtZoom(itemCount, itemCountRange, zoomScale);
-  const candidates = getLabelCandidates(x, name, dotRadius, fontSize);
+  const candidates = dotLabelCandidates(name, dotRadius, fontSize, { gap: NODE_DOT_LABEL_GAP, preferRight: x >= 0 });
   const { x: labelX, box: label } = candidates[0];
   const dot = { x0: -dotRadius, x1: dotRadius, y0: -dotRadius, y1: dotRadius };
   const halfHeight = Math.max(dotRadius, fontSize / 2);
@@ -445,26 +431,6 @@ export function getDotLabelGeometry(
     },
     candidates,
   };
-}
-
-function getLabelCandidates(x: number, name: string, dotRadius: number, fontSize: number): DotLabelCandidate[] {
-  const width = name.length * fontSize * LABEL_CHAR_WIDTH_RATIO;
-  const halfFont = fontSize / 2;
-  const side = (right: boolean): DotLabelCandidate => {
-    const labelX = (right ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP);
-    return {
-      x: labelX,
-      y: 0,
-      anchor: right ? "start" : "end",
-      box: { x0: right ? labelX : labelX - width, x1: right ? labelX + width : labelX, y0: -halfFont, y1: halfFont },
-    };
-  };
-  const stacked = (below: boolean): DotLabelCandidate => {
-    const y = (below ? 1 : -1) * (dotRadius + NODE_DOT_LABEL_GAP + halfFont);
-    return { x: 0, y, anchor: "middle", box: { x0: -width / 2, x1: width / 2, y0: y - halfFont, y1: y + halfFont } };
-  };
-  const right = x >= 0;
-  return [side(right), side(!right), stacked(false), stacked(true)];
 }
 
 /** A root chip's label, drawn in the SVG (see renderRootLabels) so it shares the dot labels' look
@@ -864,7 +830,7 @@ export function hideCollidingLabels<E extends SVGElement>(
         calculateLabelFontSizeAtZoom(d.itemCount, itemCountRange, zoomScale),
         zoomScale,
       );
-      return [d.id, { fontSize, candidates: getLabelCandidates(d.x, d.name, d.radius, fontSize) }];
+      return [d.id, { fontSize, candidates: dotLabelCandidates(d.name, d.radius, fontSize, { gap: NODE_DOT_LABEL_GAP, preferRight: d.x >= 0 }) }];
     }),
   );
   const placement = placeLabels([
