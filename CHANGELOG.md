@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.0] - 2026-11-04
+
 ### Added
 
 - Exports `InfoPanel` (with `InfoPanelProps`, `InfoPanelChild`) and the styling helpers `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, so a host can render a genre detail panel without a tree. Covered by `public-exports.test.ts`.
