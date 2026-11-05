@@ -37,3 +37,11 @@ describe("styles.css floating controls", () => {
     }
   });
 });
+
+// jsdom can't compute styles, and SVG <text> shows the I-beam unless the selectable group says otherwise.
+describe("styles.css selectable cursor", () => {
+  it("shows the hand on selectable nodes and root labels, and not-allowed on forbidden nodes", () => {
+    expect(stylesCss).toMatch(/\.node,\s*\.gtv-root-label\s*{[^}]*cursor:\s*pointer/);
+    expect(stylesCss).toMatch(/\.node\.gtv-node--forbidden\s*{[^}]*cursor:\s*not-allowed/);
+  });
+});

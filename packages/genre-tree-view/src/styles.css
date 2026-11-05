@@ -29,8 +29,35 @@
 }
 
 /* --gtv-node-fill is set inline on each pop-subtree node group (see pop-core-radial-layout.ts). */
-.node:hover > text.gtv-node-label {
+.node:hover > text.gtv-node-label,
+.gtv-root-label:hover > text.gtv-node-label:not(.gtv-node-label--hidden) {
   fill: var(--gtv-node-fill);
+  stroke: var(--gtv-node-hover-halo);
+}
+
+/* Halo behind SVG labels: stroke color/width are set per label (see label-halo-style.ts); painting
+   the stroke first keeps it from eating into the glyphs. */
+text.gtv-node-label {
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+/* A root's label forwards clicks to its chip (see GenreTreeWheelRadialPopCoreBase); a label hidden
+   by collision culling must not stay hit-testable. */
+.gtv-root-label > text.gtv-node-label:not(.gtv-node-label--hidden) {
+  pointer-events: all;
+}
+
+/* Selectable chart items: every painted part, label included, shows the hand. SVG text would
+   otherwise show the text I-beam. */
+.node,
+.gtv-root-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.node.gtv-node--forbidden {
+  cursor: not-allowed;
 }
 
 .gtv-node-label--root {
@@ -220,7 +247,8 @@
   white-space: nowrap;
   color: var(--gtv-region-label-color);
   opacity: 0.85;
-  text-shadow: 0 0 0.15em #fff, 0 0 0.3em #fff;
+  -webkit-text-stroke: var(--gtv-region-label-halo-width) var(--gtv-region-label-halo);
+  paint-order: stroke fill;
   pointer-events: none;
   user-select: none;
 }
