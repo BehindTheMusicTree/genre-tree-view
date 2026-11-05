@@ -9,6 +9,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - ISC LICENSE file matching the license declared in `package.json`.
 
+## [7.1.2] - 2026-11-04
+
+### Changed
+
+- Accepts `@behindthemusictree/ui` 0.13 as a peer (`^0.12.0 || ^0.13.0`), so consumers can adopt the floating `SegmentedControl`.
+
 ## [7.1.1] - 2026-11-04
 
 ### Changed
