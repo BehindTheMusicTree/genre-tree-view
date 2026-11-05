@@ -22,7 +22,6 @@ export default defineConfig({
         "src/use-node-info-panel.ts": interactionThresholds,
         "src/use-pan-zoom.ts": interactionThresholds,
         "src/GenreTreeOutline.tsx": interactionThresholds,
-        "src/InfoPanel.tsx": interactionThresholds,
       },
     },
   },

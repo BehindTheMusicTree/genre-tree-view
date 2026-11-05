@@ -8,7 +8,6 @@ import {
   GenreTreeWheelRight,
   groupNodesByRoot,
   type GenreTreeNode,
-  type InfoPanelSections,
   type GenreTreePlayState,
   type GenreTreeViewport,
 } from "@behindthemusictree/genre-tree-view";
@@ -615,34 +614,6 @@ function createNodeCallbacks(
         },
       },
     ],
-    // Demonstrates GenreTreeProps.renderInfoPanelBody: the library knows nothing about "essential
-    // tracks" — this is entirely playground-owned mock content/loading state. It also reorders the
-    // built-in sections (Ancestors in the aside, no count row).
-    renderInfoPanelBody: (node: GenreTreeNode, sections: InfoPanelSections) => {
-      const isRoot = node.parentId === null;
-      const trackCount = isRoot ? 20 : Math.min(3, node.itemCount);
-      return {
-        primary: (
-          <>
-            {sections.toolbar}
-            <div style={{ padding: "12px 16px", borderTop: "1px solid #e4e4e7" }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Essential tracks</div>
-              {trackCount === 0 ? (
-                <div style={{ color: "#71717a" }}>No tracks yet.</div>
-              ) : (
-                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                  {Array.from({ length: trackCount }, (_, i) => (
-                    <li key={i}>{`${node.name} essential track #${i + 1}`}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {sections.family}
-          </>
-        ),
-        aside: sections.ancestors,
-      };
-    },
   };
 }
 
@@ -675,7 +646,6 @@ export function App() {
   const [log, setLog] = useState<string[]>([]);
   const [sizeMetric, setSizeMetric] = useState<SizeMetric>("songs");
   const [museFilterEnabled, setMuseFilterEnabled] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(false);
   const [busy, setBusy] = useState(false);
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
@@ -761,15 +731,6 @@ export function App() {
       )}
 
       <label style={{ display: "block", marginBottom: 12 }}>
-        <input
-          type="checkbox"
-          checked={showToolbar}
-          onChange={(e) => setShowToolbar(e.target.checked)}
-        />{" "}
-        showToolbar
-      </label>
-
-      <label style={{ display: "block", marginBottom: 12 }}>
         <input type="checkbox" checked={busy} onChange={(e) => setBusy(e.target.checked)} /> busy
       </label>
 
@@ -817,10 +778,8 @@ export function App() {
           <GenreTreeWheel
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
-            itemCountLabel="Track count"
             nodes={metricWheelNodes}
             {...wheelCallbacks}
-            showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel selected root ${rootId}`)}
@@ -840,10 +799,8 @@ export function App() {
         >
           <GenreTreeWheelRight
             busy={busy}
-            itemCountLabel="Track count"
             nodes={metricWheelNodes}
             {...wheelCallbacks}
-            showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-right selected root ${rootId}`)}
@@ -864,10 +821,8 @@ export function App() {
           <GenreTreeWheelRadial
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
-            itemCountLabel="Track count"
             nodes={metricPlainRadialNodes}
             {...wheelCallbacks}
-            showToolbar={showToolbar}
             centerLabel="TheMusicTree"
             onRootSelect={(rootId) => appendLog(`wheel-radial selected root ${rootId}`)}
           />
@@ -910,11 +865,9 @@ export function App() {
           <GenreTreeWheelRadialPopCore
             floatingControlsLeading={<SizeMetricToggle value={sizeMetric} onChange={setSizeMetric} />}
             busy={busy}
-            itemCountLabel="Track count"
             itemCountScaleMax={popCoreItemCountScaleMax}
             nodes={metricPopCoreNodes}
             {...popCoreCallbacks}
-            showToolbar={showToolbar}
             allowWheelRotation={allowWheelRotation}
             onRootSelect={(rootId) => appendLog(`wheel-radial-pop-core selected root ${rootId}`)}
             selectedNodeId={popCoreSelectedNodeId}
@@ -946,7 +899,7 @@ export function App() {
             marginBottom: 32,
           }}
         >
-          <GenreTreeOutline itemCountLabel="Track count" nodes={popCoreNodes} {...popCoreCallbacks} showToolbar={showToolbar} />
+          <GenreTreeOutline nodes={popCoreNodes} {...popCoreCallbacks} />
         </div>
       )}
 
@@ -962,7 +915,7 @@ export function App() {
                 background: "#f4f4f5",
               }}
             >
-              <GenreTree itemCountLabel="Track count" nodes={group.nodes} {...sharedCallbacks} showToolbar={showToolbar} busy={busy} />
+              <GenreTree nodes={group.nodes} {...sharedCallbacks} busy={busy} />
             </div>
           ))}
         </div>

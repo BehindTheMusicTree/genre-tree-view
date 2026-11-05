@@ -14,20 +14,17 @@ import {
 import {
   ACCENT_TEXT_COLOR,
   getGenreTreeColor,
-  INFO_PANEL_WIDTH,
   TEXT_COLOR,
   tintSurface,
   ZOOM_FOCUS_SCALE,
   getItemCountRange,
 } from "./constants";
 import { FloatingControls } from "./FloatingControls";
+import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { useTreeIndex } from "./use-tree-index";
-import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
-import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { OverlayPanel } from "./OverlayPanel";
 
 /**
  * Renders one connected hierarchy of `GenreTreeNode`s as an interactive D3/SVG tree.
@@ -53,22 +50,12 @@ export function GenreTree({
   additionalActions,
   interactive = true,
   depthSpacingScale = 1,
-  showToolbar = true,
   selectedNodeId: selectedNodeIdProp,
-  renderInfoPanelBody,
   onSelectedNodeChange,
-  hideInfoPanelClose = false,
-  hideInfoPanelTitle = false,
-  itemCountLabel,
+  obscuredInset,
+  onNodeStyleResolverChange,
   itemCountScaleMax,
   nodeCountForSizing,
-  readOnly,
-  renderDangerZone,
-  expanded,
-  onExpandedChange,
-  collapsed,
-  hideExpandButton,
-  overlayPanel,
   wheelZoom,
   defaultViewport,
   viewportRestore,
@@ -82,8 +69,8 @@ export function GenreTree({
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify([orientation, nodes.map(({ id, parentId, side }) => [id, parentId, side])]), [nodes, orientation]);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeIdProp, onViewportChange, frameKey: viewportFrame });
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeIdProp, obscuredInset, onViewportChange, frameKey: viewportFrame });
+  const { panel, showNodeInfo } = useNodeInfoPanel({ selectedNodeId: selectedNodeIdProp, onSelectedNodeChange });
   const itemCountRange = useMemo(
     () => getItemCountRange(nodes, { itemCountScaleMax, nodeCountForSizing: nodeCountForSizing ?? nodes.length }),
     [nodes, itemCountScaleMax, nodeCountForSizing],
@@ -140,6 +127,10 @@ export function GenreTree({
       svgHeight: height,
     };
   }, [nodes, rootColor, orientation, hideRoot, depthSpacingScale, itemCountRange]);
+  useExposeNodeStyleResolver(onNodeStyleResolverChange, () => ({
+    fill: hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor),
+    textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+  }));
 
   // A reparent-in-progress node can belong to a *different* GenreTree instance (a different
   // root). Only the tree that actually contains it needs to block self/descendants as targets.
@@ -185,7 +176,6 @@ export function GenreTree({
           centerOnElementRef.current(
             clickedElement,
             ZOOM_FOCUS_SCALE,
-            resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
           );
           showNodeInfoRef.current(
             data,
@@ -241,7 +231,6 @@ export function GenreTree({
     centerOnElementRef.current(
       element,
       ZOOM_FOCUS_SCALE,
-      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
       true,
     );
     showNodeInfoRef.current(targetNode, element, viewportRef.current, { notify: false });
@@ -323,92 +312,6 @@ export function GenreTree({
       >
         {svg}
       </div>
-      {panel && (
-        <InfoPanel
-          node={panel.node}
-          // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1. panel.node is
-          // only ever set from a click on a rendered node, and the root (depth 0) is excluded from
-          // rendering entirely when hideRoot is true, so panel.node is guaranteed to have a parent
-          // whenever hideRoot is true — leaving hideRoot as the only variable, as with the children
-          // below.
-          fill={hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor)}
-          textColor={hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR}
-          parentNode={
-            index.byId.get(panel.node.parentId ?? "")
-              ? {
-                  node: index.byId.get(panel.node.parentId!)!,
-                  fill: hideRoot
-                    ? resolvedRootColor
-                    : tintSurface(resolvedRootColor),
-                  textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
-                }
-              : null
-          }
-          childNodes={(index.childrenByParentId.get(panel.node.id) ?? [])
-            .map((n) => ({
-              node: n,
-              // Mirrors tree-renderer.ts's isSubtreeCore(d) = hideRoot && d.depth >= 1 — every
-              // direct child here has a parent, so depth >= 1 always holds, leaving hideRoot as
-              // the only variable.
-              fill: hideRoot
-                ? resolvedRootColor
-                : tintSurface(resolvedRootColor),
-              textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
-            }))}
-          ancestorNodes={index.ancestorsOf(panel.node.id).map(
-            (n): InfoPanelChild => ({
-              node: n,
-              // Same fill/textColor expression as parentNode/childNodes above, including for
-              // the root itself when the chain reaches it.
-              fill: hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor),
-              textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
-            }),
-          )}
-          side={panel.side}
-          onClose={closeNodeInfo}
-          onSelectNode={(id) => {
-            const targetNode = index.byId.get(id)!;
-            const element = svgRef.current!.querySelector(
-              `#group-${CSS.escape(id)}`,
-            );
-            panZoom.centerOnElement(
-              element,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfo(
-              targetNode,
-              element ?? viewportRef.current,
-              viewportRef.current,
-            );
-          }}
-          hideClose={hideInfoPanelClose}
-          hideTitle={hideInfoPanelTitle}
-          itemCountLabel={itemCountLabel}
-          readOnly={readOnly}
-          renderDangerZone={renderDangerZone}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          collapsed={collapsed}
-          hideExpandButton={hideExpandButton}
-          renderInfoPanelBody={renderInfoPanelBody}
-          actions={
-            showToolbar && !reparentingNodeId
-              ? {
-                  playingNodeId,
-                  playState,
-                  onPlayPause,
-                  onAddChild,
-                  onRenameRequest,
-                  onDeleteRequest,
-                  onReparentRequest,
-                  additionalActions,
-                }
-              : undefined
-          }
-        />
-      )}
-      {overlayPanel && <OverlayPanel {...overlayPanel} />}
       <FloatingControls
         panZoom={panZoom}
         zoomControls={showZoomControls}

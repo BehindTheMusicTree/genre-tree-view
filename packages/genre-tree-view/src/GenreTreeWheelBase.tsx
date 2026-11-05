@@ -5,7 +5,7 @@ import * as d3 from "d3";
 
 import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
-import { computeAncestorChain, findRootId, groupNodesByRoot } from "./root-grouping";
+import { findRootId, groupNodesByRoot } from "./root-grouping";
 import {
   buildWheelSectorGradient,
   calculateWheelRadius,
@@ -15,12 +15,10 @@ import {
 } from "./wheel-geometry";
 import { coverageRadius } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
+import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
-import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { OverlayPanel } from "./OverlayPanel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -29,7 +27,6 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
-  INFO_PANEL_WIDTH,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
@@ -83,21 +80,11 @@ export function WheelCore({
   onReparent,
   onNodeClick,
   additionalActions,
-  showToolbar = true,
-  renderInfoPanelBody,
   onSelectedNodeChange,
-  hideInfoPanelClose = false,
-  hideInfoPanelTitle = false,
-  itemCountLabel,
+  obscuredInset,
+  onNodeStyleResolverChange,
   itemCountScaleMax,
   nodeCountForSizing,
-  readOnly,
-  renderDangerZone,
-  expanded,
-  onExpandedChange,
-  collapsed,
-  hideExpandButton,
-  overlayPanel,
   wheelZoom,
   defaultViewport,
   viewportRestore,
@@ -133,6 +120,10 @@ export function WheelCore({
     const rootId = findRootId(nodeId, nodes) ?? nodeId;
     return getGenreTreeColor(nodes.find((n) => n.id === rootId)?.wikidataId);
   };
+  useExposeNodeStyleResolver(onNodeStyleResolverChange, (node) => ({
+    fill: rootColorOf(node.id),
+    textColor: ACCENT_TEXT_COLOR,
+  }));
 
   // Reserve the current density-adjusted chip maximum for every neighboring pair. WHEEL_RADIUS is
   // a floor: the wheel never shrinks below its default, only grows to fit more/larger chips.
@@ -168,7 +159,7 @@ export function WheelCore({
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
 
   // Reach of the dividers and sector washes: bounded by what can be on screen rather than
   // "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
@@ -176,7 +167,7 @@ export function WheelCore({
   const wheelCoverageRadius = viewportSize
     ? coverageRadius(viewportSize.width, viewportSize.height, minScale, wheelRadius)
     : null;
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
+  const { panel, showNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
   const wheelCircleRef = useRef<HTMLDivElement>(null);
@@ -309,7 +300,6 @@ export function WheelCore({
     panZoom.centerOnElement(
       element,
       ZOOM_FOCUS_SCALE,
-      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
       true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
@@ -369,7 +359,6 @@ export function WheelCore({
               <GenreTree
                 key={selectedGroup.root.id}
                 nodes={selectedGroup.nodes}
-                itemCountLabel={itemCountLabel}
                 itemCountScaleMax={itemCountScaleMax}
                 nodeCountForSizing={fullNodeCountForSizing}
                 orientation={treeOrientation}
@@ -390,7 +379,6 @@ export function WheelCore({
                   panZoom.centerOnElement(
                     clickedElement,
                     ZOOM_FOCUS_SCALE,
-                    resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
                   );
                   showNodeInfo(
                     data,
@@ -400,7 +388,6 @@ export function WheelCore({
                   onNodeClick?.(data, event);
                 }}
                 additionalActions={additionalActions}
-                showToolbar={showToolbar}
                 selectedNodeId={panel?.node.id ?? null}
               />
             </div>
@@ -491,7 +478,6 @@ export function WheelCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
-                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id, angle);
                         if (!reparentingNodeId) {
@@ -522,81 +508,6 @@ export function WheelCore({
         </div>
       </div>
 
-      {panel && (
-        <InfoPanel
-          node={panel.node}
-          fill={rootColorOf(panel.node.id)}
-          textColor={ACCENT_TEXT_COLOR}
-          parentNode={(() => {
-            const parent = nodes.find((n) => n.id === panel.node.parentId);
-            return parent
-              ? {
-                  node: parent,
-                  fill: rootColorOf(parent.id),
-                  textColor: ACCENT_TEXT_COLOR,
-                }
-              : null;
-          })()}
-          childNodes={nodes
-            .filter((n) => n.parentId === panel.node.id)
-            .map((n) => {
-              const rootColor = rootColorOf(n.id);
-              // This wheel's inner subtree always renders via <GenreTree hideRoot ... />, so every
-              // visible node — including every child listed here — gets a solid rootColor fill.
-              return { node: n, fill: rootColor, textColor: ACCENT_TEXT_COLOR };
-            })}
-          ancestorNodes={computeAncestorChain(nodes, panel.node.id).map(
-            (n): InfoPanelChild => ({
-              node: n,
-              fill: rootColorOf(n.id),
-              textColor: ACCENT_TEXT_COLOR,
-            }),
-          )}
-          side={panel.side}
-          onClose={closeNodeInfo}
-          onSelectNode={(id) => {
-            const targetNode = nodes.find((n) => n.id === id)!;
-            const element = viewportRef.current!.querySelector(
-              `#group-${CSS.escape(id)}`,
-            );
-            panZoom.centerOnElement(
-              element,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfo(
-              targetNode,
-              element ?? viewportRef.current,
-              viewportRef.current,
-            );
-          }}
-          hideClose={hideInfoPanelClose}
-          hideTitle={hideInfoPanelTitle}
-          itemCountLabel={itemCountLabel}
-          readOnly={readOnly}
-          renderDangerZone={renderDangerZone}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          collapsed={collapsed}
-          hideExpandButton={hideExpandButton}
-          renderInfoPanelBody={renderInfoPanelBody}
-          actions={
-            showToolbar && !reparentingNodeId
-              ? {
-                  playingNodeId,
-                  playState,
-                  onPlayPause,
-                  onAddChild,
-                  onRenameRequest,
-                  onDeleteRequest,
-                  onReparentRequest,
-                  additionalActions,
-                }
-              : undefined
-          }
-        />
-      )}
-      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       <FloatingControls
         panZoom={panZoom}

@@ -135,7 +135,7 @@ describe("GenreTreeWheelRadial", () => {
       ...NODES_UNDER_FOUR,
       { id: "root-d", parentId: null, name: "Folk", itemCount: 0 },
     ];
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodesWithChildlessRoot} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={nodesWithChildlessRoot} />);
 
     expect(coreSectors(container).length).toBe(3);
     const svg = container.querySelector("svg") as SVGSVGElement;
@@ -143,7 +143,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("develops every root when there are fewer than 4, one core sector per root", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_UNDER_FOUR} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNDER_FOUR} />);
 
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
     expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
@@ -165,7 +165,7 @@ describe("GenreTreeWheelRadial", () => {
       { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
       { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
     ];
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
     expect(coreSectors(container).length).toBe(1);
     expect(container.querySelector("#group-a-child")).toBeTruthy();
@@ -178,8 +178,8 @@ describe("GenreTreeWheelRadial", () => {
       { id: "a-pop-child", parentId: "root-a", name: "Pop Rock", itemCount: 2, side: "pop" },
     ];
 
-    expect(() => render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />)).not.toThrow();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />);
+    expect(() => render(<GenreTreeWheelRadial nodes={nodes} />)).not.toThrow();
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
     expect(coreSectors(container).length).toBe(1);
     expect(container.querySelector("#group-a-core-child")).toBeTruthy();
@@ -192,8 +192,8 @@ describe("GenreTreeWheelRadial", () => {
       { id: "rock-music", parentId: "root-a", name: "Rock Music", itemCount: 2 },
     ];
 
-    expect(() => render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />)).not.toThrow();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />);
+    expect(() => render(<GenreTreeWheelRadial nodes={nodes} />)).not.toThrow();
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
     expect(coreSectors(container).length).toBe(1);
     const branches = coreSectorForRoot(container, "root-a")!.querySelectorAll(".gtv-wheel-core-branch");
@@ -209,7 +209,7 @@ describe("GenreTreeWheelRadial", () => {
       { id: "root-b", parentId: null, name: "Big", itemCount: 500 },
       { id: "b-child", parentId: "root-b", name: "BigChild", itemCount: 500 },
     ];
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
     const wheelRadius = getWheelRadius(container);
     const aChild = container.querySelector("#group-a-child") as SVGGElement;
@@ -222,7 +222,7 @@ describe("GenreTreeWheelRadial", () => {
       ...nodes,
       { id: "a-grandchild", parentId: "a-child", name: "SmallGrandchild", itemCount: 1 },
     ];
-    const { container: deepContainer } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={deepNodes} />);
+    const { container: deepContainer } = render(<GenreTreeWheelRadial nodes={deepNodes} />);
     expect(getWheelRadius(deepContainer)).toBeGreaterThan(wheelRadius);
   });
 
@@ -231,7 +231,7 @@ describe("GenreTreeWheelRadial", () => {
       { id: "root-a", parentId: null, name: "Rock", itemCount: 5 },
       { id: "a-child", parentId: "root-a", name: "Punk", itemCount: 3 },
     ];
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={nodes} />);
 
     const wheelRadius = getWheelRadius(container);
     // root-a is the only (and default top) root, landing at 90deg (LANDING_ANGLE).
@@ -255,7 +255,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("develops every root when there are 5 or more, one core sector per root", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(5);
     expect(coreSectors(container).length).toBe(5);
@@ -266,7 +266,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("the just-clicked root lands on the right, at the sector for its own root id", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     const rightSector = coreSectorForRoot(container, "root-a");
     expect(rightSector?.querySelector("#group-a-child")).toBeTruthy();
@@ -277,7 +277,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("clicking a chip re-lays-out the ring so it lands on the right", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     expect(coreSectorForRoot(container, "root-c")?.querySelector("#group-c-child")).toBeTruthy();
 
@@ -293,7 +293,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("carries a chip's angle across the wrap point so it transitions the short way, not the raw re-wrapped angle", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_SIX} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_SIX} />);
 
     // Initial layout (topIndex 0): Blues (f) sits at raw/continuous angle 30deg.
     expect(
@@ -310,7 +310,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("weights each root's angular slice by its rendered core branch, not its hidden pop branch's node count", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_UNEQUAL_POP_CORE_WEIGHT} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNEQUAL_POP_CORE_WEIGHT} />);
 
     // root-a (the default top root) always centers on the 90deg landing angle regardless of its
     // own weight, so it can't reveal the bug — root-b and root-c can, since their angles shift
@@ -333,7 +333,7 @@ describe("GenreTreeWheelRadial", () => {
 
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
 
     fireEvent.click(chipFor(container, "Jazz"));
 
@@ -344,7 +344,7 @@ describe("GenreTreeWheelRadial", () => {
   it("does not fire onNodeClick on its chip while a reparent is in progress", () => {
     const onNodeClick = vi.fn();
     const { container } = render(
-      <GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} reparentingNodeId="root-c" onNodeClick={onNodeClick} />,
+      <GenreTreeWheelRadial nodes={NODES_FIVE} reparentingNodeId="root-c" onNodeClick={onNodeClick} />,
     );
 
     fireEvent.click(chipFor(container, "Jazz"));
@@ -354,7 +354,7 @@ describe("GenreTreeWheelRadial", () => {
 
   it("fires onNodeClick with a descendant node's data when its body is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onNodeClick={onNodeClick} />);
 
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
     fireEvent.click(nodeGroup);
@@ -365,7 +365,7 @@ describe("GenreTreeWheelRadial", () => {
 
   it("fires onRootSelect on mount with the default root and again on click", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} onRootSelect={onRootSelect} />);
     expect(onRootSelect).toHaveBeenCalledWith("root-a");
 
     fireEvent.click(chipFor(container, "Jazz"));
@@ -373,12 +373,12 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("falls back to the first remaining root when the top root disappears from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     fireEvent.click(chipFor(container, "Metal"));
     expect(chipFor(container, "Metal").className).toContain("gtv-wheel-chip--selected");
 
     const withoutMetal = NODES_FIVE.filter((n) => n.id !== "root-e" && n.id !== "e-child");
-    rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={withoutMetal} />);
+    rerender(<GenreTreeWheelRadial nodes={withoutMetal} />);
 
     expect(chipFor(container, "Metal")).toBeUndefined();
     const rightSector = coreSectorForRoot(container, "root-a");
@@ -387,21 +387,21 @@ describe("GenreTreeWheelRadial", () => {
 
   it("renders no chips and mounts no anchors when nodes is empty", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={[]} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={[]} onRootSelect={onRootSelect} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(coreSectors(container).length).toBe(0);
     expect(onRootSelect).not.toHaveBeenCalled();
   });
 
   it("falls back to no selection when every root is removed from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
-    rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={[]} />);
+    const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
+    rerender(<GenreTreeWheelRadial nodes={[]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(coreSectors(container).length).toBe(0);
   });
 
   it("ctrl+wheel scales the shared stage that anchors both the core sectors and the wheel", async () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
@@ -412,7 +412,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("drag-panning the container moves the shared stage that the trees and wheel sit inside", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
@@ -427,7 +427,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("does not start a pan drag from a pointerdown on a wheel chip", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const transformDiv = getTransformDiv(container);
     const chip = chipFor(container, "Electronic");
 
@@ -439,7 +439,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("zoom-in button scales the shared stage", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -449,12 +449,12 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("draws the wheel's circle outline", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
   });
 
   it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
 
     for (const name of ["Zoom in", "Zoom out", "Fit to frame"]) {
       const button = within(container).getByRole("button", { name });
@@ -463,7 +463,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("disables the zoom-in button once the maximum scale is reached", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const zoomInButton = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
 
     for (let i = 0; i < 30; i++) {
@@ -474,7 +474,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("disables the zoom-out button once the minimum scale is reached", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const zoomOutButton = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
 
     for (let i = 0; i < 30; i++) {
@@ -486,7 +486,7 @@ describe("GenreTreeWheelRadial", () => {
 
   it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {
     const { container } = render(
-      <GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} floatingControlsLeading={<span data-testid="leading" />} />,
+      <GenreTreeWheelRadial nodes={NODES_FIVE} floatingControlsLeading={<span data-testid="leading" />} />,
     );
     const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;
     const leading = controls.querySelector(".gtv-floating-controls-leading") as HTMLElement;
@@ -494,30 +494,30 @@ describe("GenreTreeWheelRadial", () => {
     expect(leading.nextElementSibling?.classList.contains("gtv-zoom-controls")).toBe(true);
     cleanup();
     expect(
-      render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />).container.querySelector(".gtv-floating-controls-leading"),
+      render(<GenreTreeWheelRadial nodes={NODES_FIVE} />).container.querySelector(".gtv-floating-controls-leading"),
     ).toBeNull();
   });
 
   it("shows the busy indicator and aria-busy only when busy", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} busy />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} busy />);
     expect(container.querySelector(".gtv-wheel-floating-controls [role='status']")?.textContent).toBe("Updating genre tree…");
     expect((container.firstElementChild as HTMLElement).getAttribute("aria-busy")).toBe("true");
     cleanup();
-    const idle = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />).container;
+    const idle = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />).container;
     expect(idle.querySelector("[role='status']")).toBeNull();
   });
 
   it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} showZoomControls="always" />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} showZoomControls="always" />);
     expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
     expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
   it("renders an optional center label, and omits it when not provided", () => {
-    const { container, rerender } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container, rerender } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();
 
-    rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} centerLabel="TheMusicTree" />);
+    rerender(<GenreTreeWheelRadial nodes={NODES_FIVE} centerLabel="TheMusicTree" />);
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
@@ -528,7 +528,7 @@ describe("GenreTreeWheelRadial", () => {
       { id: "a-grandchild", parentId: "a-child", name: "Oi", itemCount: 0 },
     ];
     const { container } = render(
-      <GenreTreeWheelRadial itemCountLabel="Track count" nodes={nodes} reparentingNodeId="a-child" onReparent={onReparent} />,
+      <GenreTreeWheelRadial nodes={nodes} reparentingNodeId="a-child" onReparent={onReparent} />,
     );
 
     const grandchildGroup = container.querySelector("#group-a-grandchild") as SVGGElement;
@@ -546,7 +546,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and every mounted anchor", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
@@ -568,7 +568,7 @@ describe("GenreTreeWheelRadial", () => {
   });
 
   it("fit-to-frame is a no-op when no target element is measurable", () => {
-    const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
+    const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -577,106 +577,4 @@ describe("GenreTreeWheelRadial", () => {
     expect(getScale(transformDiv)).toBe(baseScale);
   });
 
-  describe("node info panel", () => {
-    it("hides the panel actions once a reparent starts with the panel open", () => {
-      const onPlayPause = vi.fn();
-      const { container, rerender } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} onPlayPause={onPlayPause} />);
-      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-      const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
-
-      rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} onPlayPause={onPlayPause} reparentingNodeId="root-c" />);
-
-      expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
-    });
-
-    it("opens on the left, switches nodes without closing, and closes via its own button", () => {
-      const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-      const chip = chipFor(container, "Electronic");
-
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        if (this === nodeGroup || this === chip) return makeRect(400, 0, 10, 10);
-        return makeRect(0, 0, 0, 0);
-      });
-
-      fireEvent.click(nodeGroup);
-      let panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
-      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
-
-      fireEvent.click(chip);
-      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
-      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
-      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
-
-      fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
-      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
-
-      rectSpy.mockRestore();
-    });
-
-    it("opens for an externally-controlled selectedNodeId in any sector, no root swap needed", () => {
-      const { container, rerender } = render(
-        <GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} selectedNodeId={null} />,
-      );
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-
-      rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} selectedNodeId="d-child" />);
-
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bluegrass");
-
-      rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} selectedNodeId="d-child" />);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Bluegrass");
-
-      rerender(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} selectedNodeId={null} />);
-      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
-
-      rectSpy.mockRestore();
-    });
-
-    it("switches to the parent node when its chip is clicked", () => {
-      const { container } = render(<GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_FIVE} />);
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-
-      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
-
-      const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
-
-      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
-        "Rock",
-      );
-      fireEvent.click(parentChip);
-      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Rock");
-
-      qsSpy.mockRestore();
-      rectSpy.mockRestore();
-    });
-  });
-  it("renders overlayPanel with no node selected", () => {
-    const { getByText } = render(
-      <GenreTreeWheelRadial itemCountLabel="Track count" nodes={NODES_SIX} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
-    );
-    expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
-    expect(getByText("Overlay body")).toBeTruthy();
-  });
 });

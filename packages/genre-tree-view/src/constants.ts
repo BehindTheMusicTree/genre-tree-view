@@ -526,16 +526,3 @@ export const PAN_ZOOM_SETTLE_MS = 100;
 // After usePanZoom applies a `defaultViewport`, centerOnElement is ignored for this long so the
 // initial `selectedNodeId` (which centers on mount) doesn't glide away from the restored view.
 export const DEFAULT_VIEWPORT_CENTER_GUARD_MS = 1000;
-
-// Fixed width (px) of the node info panel (see InfoPanel.tsx) — also the collision threshold
-// resolveInfoPanelSide compares a clicked node's screen rect against, so the panel never renders
-// directly on top of the node that opened it.
-export const INFO_PANEL_WIDTH = 280;
-// At or below this container width (px) the info panel docks to the bottom as a sheet — mirrors
-// the `@container (max-width: 767px)` rule in styles.css.
-export const INFO_PANEL_SHEET_MAX_WIDTH = 767;
-// Share of the container's height the sheet covers at its peek snap — mirrors the sheet's
-// `height: 40%` in styles.css.
-export const INFO_PANEL_SHEET_PEEK_FRACTION = 0.4;
-// Vertical drag (px) on the sheet's grabber past which it snaps instead of treating it as a tap.
-export const INFO_PANEL_SHEET_DRAG_THRESHOLD_PX = 32;

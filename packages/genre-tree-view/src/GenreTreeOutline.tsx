@@ -11,12 +11,11 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { OverlayPanel } from "./OverlayPanel";
 import { PopCoreSplit, splitRootGroupBySide } from "./pop-core-split";
 import { groupNodesByRoot } from "./root-grouping";
 import { TreeIndex } from "./tree-index";
-import { GenreTreeAction, GenreTreeNode, GenreTreeProps } from "./types";
+import { GenreTreeNode, GenreTreeProps } from "./types";
+import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { useTreeIndex } from "./use-tree-index";
 import {
   ACCENT_TEXT_COLOR,
@@ -131,12 +130,6 @@ interface OutlineCallbacks {
   onNameClick: (event: ReactMouseEvent<HTMLButtonElement>, node: GenreTreeNode) => void;
   onHover: (node: GenreTreeNode) => void;
   toggleOpen: (key: string) => void;
-  onPlayPause: (nodeId: string) => void;
-  onAddChild: (parentId: string) => void;
-  onRenameRequest: (node: GenreTreeNode) => void;
-  onDeleteRequest: (node: GenreTreeNode) => void;
-  onReparentRequest: (node: GenreTreeNode) => void;
-  additionalActions: (node: GenreTreeNode) => GenreTreeAction[];
 }
 
 interface OutlineItemProps {
@@ -266,26 +259,15 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
   const {
     nodes,
     className,
-    playingNodeId = null,
-    playState,
     reparentingNodeId = null,
-    showToolbar = true,
     selectedNodeId,
-    renderInfoPanelBody,
-      hideInfoPanelClose = false,
-    hideInfoPanelTitle = false,
-    itemCountLabel,
-    readOnly,
-    renderDangerZone,
-    expanded,
-    onExpandedChange,
-    collapsed,
-    hideExpandButton,
-    overlayPanel,
+    obscuredInset,
+    onNodeStyleResolverChange,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const index = useTreeIndex(nodes);
   const model = useMemo(() => buildOutlineModel(nodes, index), [nodes, index]);
+  useExposeNodeStyleResolver(onNodeStyleResolverChange, model.styleOf);
 
   const reparentForbiddenIds = useMemo(() => {
     const ids = new Set<string>();
@@ -336,12 +318,6 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
         if (!openIds.delete(key)) openIds.add(key);
         store.set({ openIds });
       },
-      onPlayPause: (nodeId) => latestProps.current.onPlayPause?.(nodeId),
-      onAddChild: (parentId) => latestProps.current.onAddChild?.(parentId),
-      onRenameRequest: (node) => latestProps.current.onRenameRequest?.(node),
-      onDeleteRequest: (node) => latestProps.current.onDeleteRequest?.(node),
-      onReparentRequest: (node) => latestProps.current.onReparentRequest?.(node),
-      additionalActions: (node) => latestProps.current.additionalActions?.(node) ?? [],
     }),
     [store],
   );
@@ -391,11 +367,13 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
     prevSelectedNodeIdRef.current = selectedNodeId;
   }, [selectedNodeId, store]);
 
-  const selectedNode = selectedId === null ? undefined : index.byId.get(selectedId);
   const itemProps = { model, store, callbacks };
 
   return (
-    <div className={["gtv-outline", selectedNode && "gtv-outline--panel-open", className].filter(Boolean).join(" ")}>
+    <div
+      className={["gtv-outline", className].filter(Boolean).join(" ")}
+      style={{ paddingLeft: obscuredInset?.left, paddingRight: obscuredInset?.right, paddingBottom: obscuredInset?.bottom }}
+    >
       <div className="gtv-outline-scroll" ref={scrollRef}>
         <ul className="gtv-outline-list gtv-outline-list--roots">
           {[model.centerRoot, ...model.ringRoots].map((root) => (
@@ -411,51 +389,6 @@ export function GenreTreeOutline(props: GenreTreeOutlineProps) {
         )}
       </div>
 
-      {selectedNode && (
-        <InfoPanel
-          node={selectedNode}
-          {...model.styleOf(selectedNode)}
-          parentNode={(() => {
-            const parent = index.byId.get(selectedNode.parentId ?? "");
-            return parent ? { node: parent, ...model.styleOf(parent) } : null;
-          })()}
-          childNodes={(index.childrenByParentId.get(selectedNode.id) ?? []).map((n) => ({ node: n, ...model.styleOf(n) }))}
-          ancestorNodes={index
-            .ancestorsOf(selectedNode.id)
-            .map((n): InfoPanelChild => ({ node: n, ...model.styleOf(n) }))}
-          side="left"
-          onClose={() => {
-            if (latestProps.current.selectedNodeId === undefined) store.set({ selectedId: null });
-            latestProps.current.onSelectedNodeChange?.(null);
-          }}
-          onSelectNode={(id) => selectNodeRef.current(id)}
-          hideClose={hideInfoPanelClose}
-          hideTitle={hideInfoPanelTitle}
-          itemCountLabel={itemCountLabel}
-          readOnly={readOnly}
-          renderDangerZone={renderDangerZone}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          collapsed={collapsed}
-          hideExpandButton={hideExpandButton}
-          renderInfoPanelBody={renderInfoPanelBody}
-          actions={
-            showToolbar && !reparentingNodeId
-              ? {
-                  playingNodeId,
-                  playState,
-                  onPlayPause: callbacks.onPlayPause,
-                  onAddChild: callbacks.onAddChild,
-                  onRenameRequest: callbacks.onRenameRequest,
-                  onDeleteRequest: callbacks.onDeleteRequest,
-                  onReparentRequest: callbacks.onReparentRequest,
-                  additionalActions: callbacks.additionalActions,
-                }
-              : undefined
-          }
-        />
-      )}
-      {overlayPanel && <OverlayPanel {...overlayPanel} />}
     </div>
   );
 }
