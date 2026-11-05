@@ -138,7 +138,7 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={nodesWithChildlessRoot} />);
 
     expect(coreSectors(container).length).toBe(3);
-    const svg = container.querySelector(".gtv-wheel-stage svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 
@@ -153,7 +153,7 @@ describe("GenreTreeWheelRadial", () => {
 
     // Each root's own card is hidden from the SVG tree (it grows out of its chip, which now
     // carries the same "#group-<id>" id for InfoPanel navigation) but its descendants render there.
-    const svg = container.querySelector(".gtv-wheel-stage svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-a")).toBeFalsy();
     expect(svg.querySelector("#group-a-child")).toBeTruthy();
     expect(svg.querySelector("#group-b-child")).toBeTruthy();

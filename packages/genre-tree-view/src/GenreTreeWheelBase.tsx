@@ -157,7 +157,6 @@ export function WheelCore({
   // One shared pan/zoom transform, applied to the stage below that anchors both the tree and the
   // wheel to the same point — so panning/zooming moves them together with no JS sync required.
   const stageRef = useRef<HTMLDivElement>(null);
-  const stageAnchorRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
 
@@ -334,15 +333,6 @@ export function WheelCore({
           absolutely-positioned child, this wrapper's height collapses to 0 and the stage's anchor
           point would land at the container's top instead of its bottom. The transform is purely
           visual and doesn't affect this box-model sizing. */}
-      <WheelBackdrop
-        subscribeView={panZoom.subscribeView}
-        viewportSize={panZoom.viewportSize}
-        pivotRef={stageAnchorRef}
-        sectors={backdropSectors}
-        dividers={dividers}
-        rotationDeg={rotationDeg}
-        layoutKey={wheelViewportHeight}
-      />
       <div
         ref={stageRef}
         style={{
@@ -357,13 +347,20 @@ export function WheelCore({
       >
         <div
           className="gtv-wheel-stage"
-          ref={stageAnchorRef}
           style={
             {
               [chipHalfExtentVar]: `${rootChipHalfExtent}px`,
             } as React.CSSProperties
           }
         >
+          <WheelBackdrop
+            subscribeView={panZoom.subscribeView}
+            viewportSize={panZoom.viewportSize}
+            sectors={backdropSectors}
+            dividers={dividers}
+            rotationDeg={rotationDeg}
+            layoutKey={`${wheelViewportHeight}:${wheelRadius}`}
+          />
           {selectedGroup && (
             <div className="gtv-wheel-tree-anchor" ref={treeAnchorRef}>
               <GenreTree

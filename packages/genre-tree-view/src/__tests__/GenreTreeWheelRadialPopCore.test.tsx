@@ -415,12 +415,12 @@ describe("GenreTreeWheelRadialPopCore", () => {
       { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
     ];
 
-    it("draws the underground ring inside the viewport-sized backdrop, not the stage", () => {
+    it("draws the underground ring in the backdrop, not the D3-rendered node svg", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={UNDERGROUND_NODES} />);
       const backdrop = container.querySelector(".gtv-wheel-backdrop")!;
       const arc = backdrop.querySelector(".gtv-wheel-scene-sector");
       expect(arc).not.toBeNull();
-      expect(container.querySelector(".gtv-wheel-stage .gtv-wheel-scene-sector")).toBeNull();
+      expect(container.querySelectorAll(".gtv-wheel-scene-sector")).toHaveLength(1);
       expect(Number(arc!.getAttribute("data-end-angle"))).toBeGreaterThan(Number(arc!.getAttribute("data-start-angle")));
     });
 
@@ -497,7 +497,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChildlessRoot} />);
 
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(3);
-    const svg = container.querySelector(".gtv-wheel-stage svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 

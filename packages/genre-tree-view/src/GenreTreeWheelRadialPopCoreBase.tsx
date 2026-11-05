@@ -664,7 +664,6 @@ export function WheelRadialPopCoreCore({
   );
 
   const { viewportSize, subscribeView } = panZoom;
-  const stageAnchorRef = useRef<HTMLDivElement>(null);
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
@@ -1197,16 +1196,6 @@ export function WheelRadialPopCoreCore({
       }
       onPointerDown={panZoom.handlePointerDown}
     >
-      <WheelBackdrop
-        subscribeView={subscribeView}
-        viewportSize={viewportSize}
-        pivotRef={stageAnchorRef}
-        sectors={backdropSectors}
-        scenes={undergroundScenes}
-        innerSceneRadius={coreRootCircleRadius}
-        dividers={dividers}
-        layoutKey={coreRootCircleRadius}
-      />
       <div
         ref={stageRef}
         style={{
@@ -1219,7 +1208,16 @@ export function WheelRadialPopCoreCore({
           transformOrigin: "0 0",
         }}
       >
-        <div className="gtv-wheel-stage" ref={stageAnchorRef}>
+        <div className="gtv-wheel-stage">
+          <WheelBackdrop
+            subscribeView={subscribeView}
+            viewportSize={viewportSize}
+            sectors={backdropSectors}
+            scenes={undergroundScenes}
+            innerSceneRadius={coreRootCircleRadius}
+            dividers={dividers}
+            layoutKey={coreRootCircleRadius}
+          />
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
           {isPopExpanded && (
@@ -1235,7 +1233,7 @@ export function WheelRadialPopCoreCore({
 
           {/* Inner/middle tints sit in their own .gtv-wheel layer, rendered before the node svg
               below, so they paint under the developed nodes instead of dulling them. The sector
-              washes, underground rings and dividers live in the WheelBackdrop behind the stage. */}
+              washes, underground rings and dividers are the WheelBackdrop, first in the stage. */}
           <div className="gtv-wheel">
             <div className="gtv-wheel-inner-tint" />
 

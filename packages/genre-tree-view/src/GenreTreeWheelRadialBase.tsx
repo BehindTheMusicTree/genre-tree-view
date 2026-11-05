@@ -140,7 +140,6 @@ export function WheelRadialCore({
   );
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const stageAnchorRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
   const { panel, showNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
@@ -534,13 +533,6 @@ export function WheelRadialCore({
     >
       {/* height: 100% (not just width) so this is the containing block the radial stage's own
           top/left: 50% measure against — see the equivalent comment on GenreTreeWheelBase. */}
-      <WheelBackdrop
-        subscribeView={panZoom.subscribeView}
-        viewportSize={panZoom.viewportSize}
-        pivotRef={stageAnchorRef}
-        sectors={backdropSectors}
-        dividers={dividers}
-      />
       <div
         ref={stageRef}
         style={{
@@ -553,7 +545,13 @@ export function WheelRadialCore({
           transformOrigin: "0 0",
         }}
       >
-        <div className="gtv-wheel-stage" ref={stageAnchorRef}>
+        <div className="gtv-wheel-stage">
+          <WheelBackdrop
+            subscribeView={panZoom.subscribeView}
+            viewportSize={panZoom.viewportSize}
+            sectors={backdropSectors}
+            dividers={dividers}
+          />
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
           <svg
