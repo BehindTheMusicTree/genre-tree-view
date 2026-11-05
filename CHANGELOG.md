@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+
 ### Removed
 
 - The generic section CSS `.gtv-info-panel-fields*`, `.gtv-info-panel-toolbar` (unused) and `.gtv-info-panel-children-title`. The section frame belongs to `PanelSection` and `FieldList` from `@behindthemusictree/ui`; this package only styles the tree and its chips.
