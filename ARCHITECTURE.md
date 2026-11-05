@@ -13,9 +13,6 @@ pnpm workspace with two members:
 - **`GenreTree.tsx`** renders one connected hierarchy as an interactive D3/SVG tree. It owns
   pan/zoom (`use-pan-zoom.ts`) and zoom buttons when `interactive` is true (the default); when
   `false`, it renders the bare SVG at natural size with no viewport/listeners of its own.
-  `showToolbar` (default true) suppresses the hover toolbar and hover name-label on every node,
-  and the wheel renderers' root/center chips' own inner toolbar and hover name-label, when false —
-  the chips themselves (name label, click-to-select/expand) stay visible.
   `defaultViewport` / `onViewportChange` expose the pan/zoom as a `GenreTreeViewport` (content-space
   center `x`,`y` + `zoom`, independent of the container's pixel size — `viewToViewport` /
   `viewportToView` in `zoom-pan.ts`). `defaultViewport` is a mount-only seed: the first
@@ -94,7 +91,7 @@ pnpm workspace with two members:
   first, then each other root with its direct children split into "Core" and "Pop" sections via
   `splitRootGroupBySide`. Roots flagged `detached` (`GenreTreeNode.detached`) are left out of
   that list and rendered in a separate `.gtv-outline-list--detached` list after it, neutral gray
-  and without Core/Pop sections. It reuses the React `NodeToolbar` and `InfoPanel`. Selection, open
+  and without Core/Pop sections. Selection, open
   sections, play state and reparent mode live in a small external store created once per
   instance; each row is a memoized recursive `OutlineNode` that subscribes to its own slice via
   `useSyncExternalStore`, and receives only stable props (node id, a model memoized on `nodes`,
@@ -146,9 +143,7 @@ pnpm workspace with two members:
     the same zoom on a node or chip double-click — or double-tap, which `defer-click.ts` detects itself as a second
     click on the same target within `DOUBLE_CLICK_DELAY_MS`, since touch browsers don't reliably fire `dblclick` — and,
     while focused, `WheelBreadcrumb.tsx`: one top-centre trail (bottom-left in narrow containers) of a Home crumb,
-    every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. The info
-    panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
-    `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
+    every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. A selection outside the current frame refocuses on its top-level root (the whole tree
     for Mainstream Pop's lineage or a root itself).
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and
@@ -170,59 +165,23 @@ pnpm workspace with two members:
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,
   outline row and the info panel reads `itemCount` as-is — nothing rolls counts up.
-- **Node info panel**: clicking any node opens a read-only panel showing that node's item count
-  (row label supplied by the required `itemCountLabel` prop) and side, its ancestors root-first (including the parent) as a vertical chain, and its direct
-  children, each as a clickable circle node filled with that node's own color — internal presentational chrome,
-  like `NodeHelper.tsx`'s reparent drop-target overlay, not exposed to consumers and independent of
-  the `onNodeClick` callback, which keeps firing unchanged. It always anchors to the left edge of
-  the renderer's viewport (`resolveInfoPanelSide` in `info-panel-geometry.ts`); in a container
-  `INFO_PANEL_SHEET_MAX_WIDTH` (767px) wide or narrower it docks to the bottom as a sheet instead, with a
-  grabber that snaps it between a peek (`INFO_PANEL_SHEET_PEEK_FRACTION` of the height) and full,
-  or closes it on a downward drag from peek. Clicking a node or a panel chip centers that node
-  within the space that remains visible beside (or above) the panel rather than the full viewport,
-  via `resolveInfoPanelObscuredArea` feeding `centerOnElement`'s `obscured` argument in
-  `use-pan-zoom.ts`. Each top-level renderer owns exactly one
-  `useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange })` hook instance (`use-node-info-panel.ts`) — except `GenreTreeOutline`, which
-  keeps the selected id in its own store — so only one panel is ever open per component instance; `GenreTreeWheelRadialPopCoreBase.tsx` shares its single instance across all
-  three of its D3 click sites (a root's pop branch, its core branch, the center "Mainstream Pop"
-  subtree) plus its ring chip buttons. The panel closes via its own close button (hidden by
-  `hideInfoPanelClose`) or when a controlled `selectedNodeId` is cleared to `null`/`undefined`.
-  The pop-core wheel also hides the panel at render time whenever its node isn't drawn in the
-  current focus frame, so a focus change can never leave a panel pointing at an off-screen node.
-  When selection is controlled, the panel and outline wait for the selected ID from the host.
-  The hook fires `onSelectedNodeChange` when a user action changes the shown node (or with `null`
-  on the close button); each renderer's effect that follows `selectedNodeId` calls
-  `showNodeInfo(…, { notify: false })` so a controlled selection never echoes back, and
-  re-selecting the node already shown never fires. `GenreTreeOutline` applies the same rules to
-  its store's `selectedId`. The panel's top offset is the `--gtv-info-panel-top` CSS variable
-  (default `12px`). Rendered by
-  `InfoPanel.tsx`, a dumb `{ node, side, onClose }` component mounted as a sibling after the
-  pan/zoom-transformed content so it never scales or pans with the tree. Its Ancestors and Family
-  sections each wrap `InfoPanelSection.tsx`, which owns the section's chevron collapse toggle.
-  `GenreTreeProps.renderInfoPanelBody`
-  (an optional `(node, sections) => { primary, aside? }`, threaded through all six renderers to
-  `InfoPanel`) composes the panel body: `InfoPanel` builds its sections from tree data (`toolbar`,
-  `ancestors`, `family` — preceded in edit mode by the parents editor — and `itemCount`, each `null`
-  when empty) and the consumer places them among its own content (e.g. a consumer-fetched detail like
-  essential tracks), so the order is the same in every panel mode and the library stays agnostic of
-  what it renders, mirroring `additionalActions`. Omitted, the body is the four sections in one column.
-  `InfoPanel` keeps the frame: `.gtv-info-panel-primary` precedes `.gtv-info-panel-aside` in the DOM
-  (the compact stack), the expanded grid puts the aside left via `grid-template-areas`, a missing aside
-  makes it single-column (`--expanded-solo`), and the edit-mode danger zone ends the left column when
-  expanded and follows the body when compact.
-  `GenreTreeProps.overlayPanel` (`{ title, content, onClose }`, threaded through all six renderers) mounts
-  `OverlayPanel.tsx` with the expanded info panel's CSS classes, so a consumer panel (e.g. About) covers the
-  identical area; it renders independent of node selection, and Escape / its ✕ fire `onClose`. Setting
-  `onExpandedChange` (with `expanded`, `extraContent`, `collapsed`, `hideExpandButton`, same semantics as the
-  info panel's) makes it an info-panel peer instead: compact in the info panel's left slot, expanding to the
-  expanded info panel's area, Escape collapsing it before closing. The expand toggle is the shared
-  `InfoPanelExpandButton.tsx`.
-  A host with left / center / right columns sets `--gtv-center-left`, `--gtv-center-right` and `--gtv-center-top`
-  (lengths with a unit, default `12px` / `12px` / the panel top): the overlay fills the center column and an
-  expanded info panel spans the left and center columns. A host that floats its own control over the panels'
-  top edge (e.g. a search bar) sets `--gtv-info-panel-header-inset` (default `0px`) to that control's height plus
-  its margins: every panel header's fill extends behind the control and its content starts below it, and
-  `GenreTreeOutline`'s list is pushed down by the same amount.
+- **Node selection and the host-owned detail panel**: the library no longer draws a panel. Each
+  top-level renderer owns one `useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange })` instance
+  (`use-node-info-panel.ts`; `GenreTreeOutline` keeps the id in its store), so a click, a controlled
+  `selectedNodeId` or a cleared one (`null`/`undefined`) drives selection, and `onSelectedNodeChange`
+  fires only for user actions — a controlled selection never echoes back. The pop-core wheel drops a
+  selection whose node isn't drawn in the current focus frame.
+  The detail panel is the single `DetailPanel` shell from `@behindthemusictree/ui`, mounted by the host
+  as a sibling of the tree. Two contracts connect them:
+  - `obscuredInset` (`{ left?, right?, bottom? }`, px): the area the host's panel covers. `usePanZoom`
+    centers a clicked node in the remaining space (`centerOnElement`), the pop-core region label avoids
+    it, and `GenreTreeOutline` pads its list by it. Hosts should pass a stable or last-open inset.
+  - `onNodeStyleResolverChange`: each renderer publishes once a stable `(node) => { fill, textColor }`
+    (`use-expose-node-style.ts`) so the host's panel colors a node exactly like the tree does.
+  Content-only pieces for the host's panel live in `GenreNodePanelContent.tsx`:
+  `useGenreNodeRelations(nodes, nodeId, resolver)` (node, parent, children, root-first ancestors, each
+  styled), `GenreNodeAncestors`, `GenreNodeFamily` (the mini tree) and `GenreNodeItemCount`, built on
+  the ui package's `PanelSection`. `NodeToolbar` is exported for the actions row.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
@@ -251,15 +210,14 @@ pnpm workspace with two members:
 `index.ts` is the sole export boundary:
 
 - Components: `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
-  `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`, `InfoPanel` (the detail panel shell, usable
-  without a tree: pass `node`, `fill`/`textColor` and relatives; the host must be
-  `position: relative; container-type: inline-size` and load `styles.css`).
+  `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`, `GenreNodeAncestors`, `GenreNodeFamily`,
+  `GenreNodeItemCount`, `NodeToolbar` (content only; the shell is ui's `DetailPanel`; load `styles.css`).
 - Helpers: `getGenreTreeColor`, `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
-  `groupNodesByRoot`, `isZoomableNode`.
+  `groupNodesByRoot`, `isZoomableNode`, `useGenreNodeRelations`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
-  `GenreTreeAction`, `InfoPanelProps`, `InfoPanelChild`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
+  `GenreTreeAction`, `InfoPanelChild`, `GenreNodeRelations`, `GenreNodeStyle`, `GenreNodeStyleResolver`, `ObscuredInset`, `GenreNodeAncestorsProps`, `GenreNodeFamilyProps`, `GenreNodeItemCountProps`, `NodeToolbarProps`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,
   `GenreTreeWheelRadialProps`, `GenreTreeWheelRadialPopCoreProps`, `FocusChangeReason`, `GenreTreeOutlineProps`, `GenreTreeRootGroup`,
-  `WheelZoomMode`, `ZoomControlsVisibility`, `GenreTreeOverlayPanel`.
+  `WheelZoomMode`, `ZoomControlsVisibility`.
 
 Anything not re-exported here is a private implementation detail — treat new internals as private
 unless a consumer need is established.

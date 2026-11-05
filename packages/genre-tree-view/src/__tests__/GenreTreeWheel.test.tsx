@@ -50,7 +50,7 @@ const makeRect = (left: number, top: number, width: number, height: number): DOM
 
 describe("GenreTreeWheel", () => {
   it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
     expect(chipFor(container, "Rock")).toBeTruthy();
     expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--selected");
@@ -68,7 +68,7 @@ describe("GenreTreeWheel", () => {
 
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} onNodeClick={onNodeClick} />);
 
     fireEvent.click(chipFor(container, "Electronic"));
 
@@ -79,7 +79,7 @@ describe("GenreTreeWheel", () => {
   it("does not fire onNodeClick on its chip while a reparent is in progress", () => {
     const onNodeClick = vi.fn();
     const { container } = render(
-      <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} reparentingNodeId="root-b" onNodeClick={onNodeClick} />,
+      <GenreTreeWheel nodes={NODES} reparentingNodeId="root-b" onNodeClick={onNodeClick} />,
     );
 
     fireEvent.click(chipFor(container, "Electronic"));
@@ -89,7 +89,7 @@ describe("GenreTreeWheel", () => {
 
   it("fires onNodeClick with a descendant node's data when its body is clicked", () => {
     const onNodeClick = vi.fn();
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onNodeClick={onNodeClick} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} onNodeClick={onNodeClick} />);
 
     const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
     fireEvent.click(nodeGroup);
@@ -100,7 +100,7 @@ describe("GenreTreeWheel", () => {
 
   it("renders floatingControlsLeading before the zoom buttons, and no slot without it", () => {
     const { container } = render(
-      <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} floatingControlsLeading={<span data-testid="leading" />} />,
+      <GenreTreeWheel nodes={NODES} floatingControlsLeading={<span data-testid="leading" />} />,
     );
     const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;
     const leading = controls.querySelector(".gtv-floating-controls-leading") as HTMLElement;
@@ -108,55 +108,34 @@ describe("GenreTreeWheel", () => {
     expect(leading.nextElementSibling?.classList.contains("gtv-zoom-controls")).toBe(true);
     cleanup();
     expect(
-      render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />).container.querySelector(".gtv-floating-controls-leading"),
+      render(<GenreTreeWheel nodes={NODES} />).container.querySelector(".gtv-floating-controls-leading"),
     ).toBeNull();
   });
 
   it("shows the busy indicator and aria-busy only when busy", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} busy />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} busy />);
     expect(container.querySelector(".gtv-wheel-floating-controls [role='status']")?.textContent).toBe("Updating genre tree…");
     expect((container.firstElementChild as HTMLElement).getAttribute("aria-busy")).toBe("true");
     cleanup();
-    const idle = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />).container;
+    const idle = render(<GenreTreeWheel nodes={NODES} />).container;
     expect(idle.querySelector("[role='status']")).toBeNull();
   });
 
   it("lays the floating zoom controls out in a row, with no orientation modifier", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} showZoomControls="always" />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} showZoomControls="always" />);
     expect(container.querySelector('[role="group"][aria-label="Zoom controls"]')?.classList.contains("flex-row")).toBe(true);
     expect(container.querySelector(".gtv-wheel-floating-controls--horizontal")).toBeNull();
   });
 
-  it("lists the wheel node's ancestors up to and including its parent in the info panel", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
-    fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-    const section = within(container.querySelector(".gtv-info-panel") as HTMLElement)
-      .getByText("Ancestors")
-      .closest(".gtv-info-panel-children") as HTMLElement;
-    expect(Array.from(section.querySelectorAll("li")).map((li) => li.textContent)).toEqual(["Rock"]);
-  });
-
-  it("hides the panel actions once a reparent starts with the panel open", () => {
-    const onPlayPause = vi.fn();
-    const { container, rerender } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onPlayPause={onPlayPause} />);
-    fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-    const panel = () => container.querySelector(".gtv-info-panel") as HTMLElement;
-    expect(within(panel()).getByRole("button", { name: /play/i })).toBeTruthy();
-
-    rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onPlayPause={onPlayPause} reparentingNodeId="b-child" />);
-
-    expect(within(panel()).queryByRole("button", { name: /play/i })).toBeNull();
-  });
-
   it("fires onRootSelect on mount with the default root", () => {
     const onRootSelect = vi.fn();
-    render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} />);
+    render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);
     expect(onRootSelect).toHaveBeenCalledWith("root-a");
   });
 
   it("swaps the visible subtree and fires onRootSelect when a different chip is clicked", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} />);
 
     fireEvent.click(chipFor(container, "Electronic"));
 
@@ -170,7 +149,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("updates the wheel's rotation custom property after a click", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
     expect(wheel.style.getPropertyValue("--gtv-wheel-rotation")).toBe("0deg");
 
@@ -182,7 +161,7 @@ describe("GenreTreeWheel", () => {
   it("still swaps the selected root but leaves the wheel's rotation unchanged when allowWheelRotation is false", () => {
     const onRootSelect = vi.fn();
     const { container } = render(
-      <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
+      <GenreTreeWheel nodes={NODES} onRootSelect={onRootSelect} allowWheelRotation={false} />,
     );
     const wheel = container.querySelector(".gtv-wheel") as HTMLElement;
     const initialRotation = wheel.style.getPropertyValue("--gtv-wheel-rotation");
@@ -195,12 +174,12 @@ describe("GenreTreeWheel", () => {
   });
 
   it("falls back to the first remaining root when the selected root disappears from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
     fireEvent.click(chipFor(container, "Jazz"));
     expect(chipFor(container, "Jazz").className).toContain("gtv-wheel-chip--selected");
 
     const withoutRootC = NODES.filter((n) => n.id !== "root-c");
-    rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={withoutRootC} />);
+    rerender(<GenreTreeWheel nodes={withoutRootC} />);
 
     expect(chipFor(container, "Jazz")).toBeUndefined();
     expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
@@ -208,21 +187,21 @@ describe("GenreTreeWheel", () => {
 
   it("renders no chips and mounts no subtree when nodes is empty", () => {
     const onRootSelect = vi.fn();
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={[]} onRootSelect={onRootSelect} />);
+    const { container } = render(<GenreTreeWheel nodes={[]} onRootSelect={onRootSelect} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(container.querySelectorAll("g.node").length).toBe(0);
     expect(onRootSelect).not.toHaveBeenCalled();
   });
 
   it("falls back to no selection when every root is removed from nodes", () => {
-    const { container, rerender } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
-    rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={[]} />);
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
+    rerender(<GenreTreeWheel nodes={[]} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(0);
     expect(container.querySelectorAll("g.node").length).toBe(0);
   });
 
   it("ctrl+wheel scales the shared stage that anchors both the tree and the wheel", async () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
@@ -233,7 +212,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("drag-panning the container moves the shared stage that both the tree and wheel sit inside", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const transformDiv = getTransformDiv(container);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
@@ -248,7 +227,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("does not start a pan drag from a pointerdown on a wheel chip", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const chip = chipFor(container, "Electronic");
 
@@ -260,7 +239,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("zoom-in button scales the shared stage, keeping the tree and wheel visually linked", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -270,7 +249,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("renders the zoom buttons inside the floating bottom-right wrapper, out of the host's top-left corner", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
 
     for (const name of ["Zoom in", "Zoom out", "Fit to frame"]) {
       const button = within(container).getByRole("button", { name });
@@ -279,7 +258,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("disables the zoom-in button once the maximum scale is reached", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const zoomInButton = container.querySelector('[aria-label="Zoom in"]') as HTMLButtonElement;
 
     for (let i = 0; i < 30; i++) {
@@ -290,7 +269,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("disables the zoom-out button once the minimum scale is reached", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const zoomOutButton = container.querySelector('[aria-label="Zoom out"]') as HTMLButtonElement;
 
     for (let i = 0; i < 30; i++) {
@@ -301,15 +280,15 @@ describe("GenreTreeWheel", () => {
   });
 
   it("draws the wheel's circle outline", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-circle")).toBeTruthy();
   });
 
   it("renders an optional center label, and omits it when not provided", () => {
-    const { container, rerender } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container, rerender } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelector(".gtv-wheel-center-label")).toBeFalsy();
 
-    rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} centerLabel="TheMusicTree" />);
+    rerender(<GenreTreeWheel nodes={NODES} centerLabel="TheMusicTree" />);
     expect(container.querySelector(".gtv-wheel-center-label")?.textContent).toBe("TheMusicTree");
   });
 
@@ -319,7 +298,7 @@ describe("GenreTreeWheel", () => {
       { id: "big-child", parentId: "root-big", name: "Filled", itemCount: 9 },
       { id: "root-flat", parentId: null, name: "Flat", itemCount: 0 },
     ];
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={nodesWithTotals} />);
+    const { container } = render(<GenreTreeWheel nodes={nodesWithTotals} />);
 
     expect(parseFloat(chipFor(container, "Big").style.width)).toBeGreaterThan(parseFloat(chipFor(container, "Flat").style.width));
   });
@@ -337,7 +316,7 @@ describe("GenreTreeWheel", () => {
       { id: "root-b", parentId: null, name: "Big", itemCount: 500 },
       { id: "b-child", parentId: "root-b", name: "BigChild", itemCount: 500 },
     ];
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={nodes} />);
+    const { container } = render(<GenreTreeWheel nodes={nodes} />);
     const stage = container.querySelector(".gtv-wheel-stage") as HTMLElement;
 
     const rootItemCountRange = getItemCountRange([{ itemCount: 2 }, { itemCount: 1000 }]);
@@ -347,7 +326,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("fit-to-frame button rescales the shared transform to fit the circle and tree anchor", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
     const circle = container.querySelector(".gtv-wheel-circle") as HTMLElement;
     const transformDiv = getTransformDiv(container);
@@ -370,7 +349,7 @@ describe("GenreTreeWheel", () => {
   });
 
   it("fit-to-frame is a no-op when no target element is measurable", () => {
-    const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
+    const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const baseScale = getScale(transformDiv);
 
@@ -380,169 +359,18 @@ describe("GenreTreeWheel", () => {
   });
 
   describe("node info panel", () => {
-    it("opens on the left, switches nodes without closing, and closes via its own button", () => {
-      const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const nodeGroup = container.querySelector("#group-a-child") as SVGGElement;
-      const chip = chipFor(container, "Electronic");
-
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        if (this === nodeGroup || this === chip) return makeRect(400, 0, 10, 10);
-        return makeRect(0, 0, 0, 0);
-      });
-
-      fireEvent.click(nodeGroup);
-      let panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
-      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
-
-      fireEvent.click(chip);
-      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
-      panel = container.querySelector(".gtv-info-panel") as HTMLElement;
-      expect(panel.classList.contains("gtv-info-panel--left")).toBe(true);
-      expect(panel.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
-
-      fireEvent.click(container.querySelector(".gtv-info-panel-close") as HTMLButtonElement);
-      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
-
-      rectSpy.mockRestore();
-    });
-
-    it("waits for host acceptance of a root chip and opens its panel without echoing", () => {
-      const onSelectedNodeChange = vi.fn();
-      const props = { itemCountLabel: "Track count", nodes: NODES, onSelectedNodeChange };
-      const { container, rerender } = render(<GenreTreeWheel {...props} selectedNodeId={null} />);
-      fireEvent.click(chipFor(container, "Electronic"));
-      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
-      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
-      const requested = onSelectedNodeChange.mock.calls[0][0];
-      rerender(<GenreTreeWheel {...props} selectedNodeId={requested.id} />);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Electronic");
-      expect(onSelectedNodeChange).toHaveBeenCalledTimes(1);
-      rerender(<GenreTreeWheel {...props} selectedNodeId={null} />);
-      expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
-    });
-
-    it("opens for an externally-controlled selectedNodeId, swapping in its owning root first", () => {
-      const { container, rerender } = render(
-        <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} />,
-      );
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
-
-      rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId="b-child" />);
-
-      expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Techno");
-
-      rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} />);
-      expect(chipFor(container, "Electronic").className).toContain("gtv-wheel-chip--selected");
-
-      rectSpy.mockRestore();
-    });
-
-    it("does not swap roots for an externally-controlled selectedNodeId already in the active root", () => {
-      const { container, rerender } = render(
-        <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} />,
-      );
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-
-      rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId="a-child" />);
-
-      expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
-
-      rectSpy.mockRestore();
-    });
 
     it("ignores an externally-controlled selectedNodeId that matches no node", () => {
       const { container, rerender } = render(
-        <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId={null} />,
+        <GenreTreeWheel nodes={NODES} selectedNodeId={null} />,
       );
 
-      rerender(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} selectedNodeId="does-not-exist" />);
+      rerender(<GenreTreeWheel nodes={NODES} selectedNodeId="does-not-exist" />);
 
       expect(container.querySelector(".gtv-info-panel")).toBeFalsy();
       expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--selected");
     });
 
-    it("switches to the parent node when its chip is clicked", () => {
-      const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-
-      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Punk");
-
-      const qsSpy = vi.spyOn(wheelContainer, "querySelector").mockReturnValueOnce(null);
-
-      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
-        "Rock",
-      );
-      fireEvent.click(parentChip);
-      expect(container.querySelectorAll(".gtv-info-panel").length).toBe(1);
-      expect(container.querySelector(".gtv-info-panel-title")?.textContent).toBe("Rock");
-
-      qsSpy.mockRestore();
-      rectSpy.mockRestore();
-    });
-
-    it("dims unrelated nodes in the nested tree when a node is selected via the info panel's parent chip", () => {
-      const { container } = render(<GenreTreeWheel itemCountLabel="Track count" nodes={NODES} />);
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      const rectSpy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
-        this: Element,
-      ) {
-        if (this === wheelContainer) return makeRect(0, 0, 800, 600);
-        return makeRect(400, 0, 10, 10);
-      });
-
-      fireEvent.click(container.querySelector("#group-a-child") as SVGGElement);
-      expect(container.querySelector("#group-a-child")?.getAttribute("class")).not.toMatch(
-        /gtv-node--dimmed/,
-      );
-
-      const parentChip = within(container.querySelector(".gtv-info-panel-mini-tree-parent") as HTMLElement).getByText(
-        "Rock",
-      );
-      fireEvent.click(parentChip);
-
-      // "Rock" (root-a) is the wheel's own root chip, hidden from the nested tree's rendered
-      // groups (hideRoot) — so its only visible descendant, "Punk" (a-child), is related to the
-      // selection (its parent) rather than the selection itself.
-      expect(container.querySelector("#group-a-child")?.getAttribute("class")).toMatch(
-        /gtv-node--dimmed-related/,
-      );
-
-      rectSpy.mockRestore();
-    });
   });
 
-  it("renders overlayPanel with no node selected", () => {
-    const { getByText } = render(
-      <GenreTreeWheel itemCountLabel="Track count" nodes={NODES} overlayPanel={{ title: "About", content: "Overlay body", onClose: () => {} }} />,
-    );
-    expect(getByText("About").closest(".gtv-info-panel--expanded")).not.toBeNull();
-    expect(getByText("Overlay body")).toBeTruthy();
-  });
 });

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   CENTER_ON_ELEMENT_DURATION_MS,
-  INFO_PANEL_WIDTH,
   DEFAULT_VIEWPORT_CENTER_GUARD_MS,
   PAN_MIN_VISIBLE_PX,
   PAN_ZOOM_SETTLE_MS,
@@ -22,14 +21,15 @@ import {
   viewToViewport,
   viewportToView,
 } from "./zoom-pan";
-import { resolveInfoPanelObscuredArea, type ObscuredArea } from "./info-panel-geometry";
-import type { GenreTreeViewport, WheelZoomMode } from "./types";
+import type { GenreTreeViewport, ObscuredInset, WheelZoomMode } from "./types";
 
 export interface UsePanZoomOptions {
   defaultViewport?: GenreTreeViewport;
   viewportRestore?: { viewport: GenreTreeViewport; revision: string | number };
   frameKey?: unknown;
   selectedNodeId?: string | null;
+  /** See GenreTreeProps.obscuredInset. Read when centering, so a change never re-centers. */
+  obscuredInset?: ObscuredInset;
   onViewportChange?: (viewport: GenreTreeViewport) => void;
 }
 
@@ -60,15 +60,10 @@ export interface UsePanZoomResult {
    * space at `targetScale` (clamped to [minScale, ZOOM_MAX_SCALE]) — used to bring a clicked node
    * to a comfortable reading scale. `targetScale` is a minimum: if the user is already zoomed in
    * past it, the current scale is kept so selecting a node never zooms out. Pass
-   * `obscured` when an overlay (e.g. the info panel) will cover part of the viewport, so the
-   * element centers within the space that remains visible beside or above it rather than the full
-   * viewport. No-ops if the element/viewport isn't present/measurable. */
-  centerOnElement: (
-    element: Element | null | undefined,
-    targetScale: number,
-    obscured?: ObscuredArea | null,
-    automatic?: boolean,
-  ) => void;
+   * the hook's `obscuredInset` option is set, the element centers within the space that remains
+   * visible beside or above the host's panel rather than the full viewport. No-ops if the
+   * element/viewport isn't present/measurable. */
+  centerOnElement: (element: Element | null | undefined, targetScale: number, automatic?: boolean) => void;
   handlePointerDown: (event: React.PointerEvent) => void;
   /** CSS `touch-action` for the viewport element — see the `wheelZoom` param. */
   touchAction: "none" | "pan-y";
@@ -120,6 +115,10 @@ export function usePanZoom(
   const retryFrameRef = useRef<() => void>(() => {});
   const pendingCenterRef = useRef<(() => void) | null>(null);
   const centerGuardUntilRef = useRef(0);
+  const obscuredInsetRef = useRef(options.obscuredInset);
+  useEffect(() => {
+    obscuredInsetRef.current = options.obscuredInset;
+  }, [options.obscuredInset]);
   const onViewportChangeRef = useRef(options.onViewportChange);
   useEffect(() => {
     onViewportChangeRef.current = options.onViewportChange;
@@ -408,12 +407,6 @@ export function usePanZoom(
 
     const handleWheel = (event: WheelEvent) => {
       operationRef.current += 1;
-      // Let the info panel handle its own scroll (it has overflow-y: auto) instead of panning/
-      // zooming the tree underneath it — it's rendered as a child of this same viewport, so its
-      // wheel events would otherwise bubble up here.
-      if ((event.target as Element).closest(".gtv-info-panel") !== null) {
-        return;
-      }
       if (wheelZoom === "modifier" && !event.ctrlKey && !event.metaKey) {
         // A horizontal-dominant swipe has no page scroll to yield to — passing it through would
         // leave the tree un-pannable sideways and let macOS turn it into back/forward navigation.
@@ -655,12 +648,7 @@ export function usePanZoom(
   // comfortable reading scale, centered" instead of "fit everything on screen". Glides there via
   // stepCenterAnimation rather than jumping instantly.
   const centerOnElement = useCallback(
-    (
-      element: Element | null | undefined,
-      targetScale: number,
-      obscured?: ObscuredArea | null,
-      automatic = false,
-    ) => {
+    (element: Element | null | undefined, targetScale: number, automatic = false) => {
       if (automatic && restoredRevisionRef.current !== undefined && restoredFrameRef.current === options.frameKey && restoredSelectionRef.current === options.selectedNodeId) return;
       if (!automatic) operationRef.current += 1;
       const viewportSize = viewportRef.current?.getBoundingClientRect();
@@ -671,7 +659,7 @@ export function usePanZoom(
           const currentElement = element?.id
             ? viewportRef.current?.querySelector(`#${CSS.escape(element.id)}`)
             : element;
-          centerLatestRef.current(currentElement, targetScale, obscured ? resolveInfoPanelObscuredArea(currentElement, viewportRef.current, INFO_PANEL_WIDTH) : obscured, true);
+          centerLatestRef.current(currentElement, targetScale, true);
         };
         return;
       }
@@ -691,17 +679,12 @@ export function usePanZoom(
       const newScale = clampZoomScale(Math.max(targetScale, currentScale), minScaleRef.current);
       const centerX = (rect.left + rect.width / 2 - viewportRect.left - view.x) / currentScale;
       const centerY = (rect.top + rect.height / 2 - viewportRect.top - view.y) / currentScale;
-      // With an overlay obscuring one side, "centered on screen" means centered in the strip that
-      // remains visible beside (or above) it, not the full viewport — otherwise the element ends
-      // up right where the overlay covers it.
-      const availableCenterX =
-        obscured?.side === "left"
-          ? obscured.width + (viewportRect.width - obscured.width) / 2
-          : obscured?.side === "right"
-            ? (viewportRect.width - obscured.width) / 2
-            : viewportRect.width / 2;
-      const availableCenterY =
-        obscured?.side === "bottom" ? (viewportRect.height - obscured.height) / 2 : viewportRect.height / 2;
+      // With the host's panel covering part of the viewport, "centered on screen" means centered in
+      // the strip that remains visible, not the full viewport — otherwise the element ends up right
+      // where the panel covers it.
+      const { left = 0, right = 0, bottom = 0 } = obscuredInsetRef.current ?? {};
+      const availableCenterX = left + (viewportRect.width - left - right) / 2;
+      const availableCenterY = (viewportRect.height - bottom) / 2;
       const targetPanX = availableCenterX - centerX * newScale;
       const targetPanY = availableCenterY - centerY * newScale;
 
@@ -852,7 +835,7 @@ export function usePanZoom(
     // it doesn't fight that element's own click/hover/text-selection handling) but still tracked below — otherwise a
     // pinch that starts on top of content, the common case since the tree fills most of the screen,
     // would never be recognized as a pinch at all.
-    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip, .gtv-info-panel") !== null;
+    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip") !== null;
     // In "modifier" mode one finger scrolls the page, so a touch pointer must neither pan (which
     // nudges the tree until the browser fires pointercancel) nor preventDefault the scroll.
     const isPageScrollTouch = wheelZoom === "modifier" && event.pointerType === "touch";

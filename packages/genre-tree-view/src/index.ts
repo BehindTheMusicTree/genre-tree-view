@@ -17,7 +17,13 @@ export {
   DEFAULT_FRAME_WIDTH,
   DEFAULT_FRAME_HEIGHT,
 } from "./constants";
-export { InfoPanel } from "./InfoPanel";
+export {
+  GenreNodeAncestors,
+  GenreNodeFamily,
+  GenreNodeItemCount,
+  useGenreNodeRelations,
+} from "./GenreNodePanelContent";
+export { NodeToolbar } from "./NodeToolbar";
 export { groupNodesByRoot } from "./root-grouping";
 export { isZoomableNode } from "./pop-core-frame";
 export type {
@@ -29,12 +35,19 @@ export type {
   GenreTreeAction,
   WheelZoomMode,
   ZoomControlsVisibility,
-  GenreTreeOverlayPanel,
+  GenreNodeStyle,
+  GenreNodeStyleResolver,
+  ObscuredInset,
   GenreTreeViewport,
-  InfoPanelBody,
-  InfoPanelSections,
 } from "./types";
-export type { InfoPanelProps, InfoPanelChild } from "./InfoPanel";
+export type {
+  GenreNodeAncestorsProps,
+  GenreNodeFamilyProps,
+  GenreNodeItemCountProps,
+  GenreNodeRelations,
+  InfoPanelChild,
+} from "./GenreNodePanelContent";
+export type { NodeToolbarProps } from "./NodeToolbar";
 export type { GenreTreeViewSkeletonProps } from "./GenreTreeViewSkeleton";
 export type { GenreTreeWheelProps } from "./GenreTreeWheel";
 export type { GenreTreeWheelRightProps } from "./GenreTreeWheelRight";

@@ -42,7 +42,7 @@ describe("usePanZoom", () => {
     oldNode.id = "selected";
     viewport.append(oldNode);
     const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { frameKey: "home", selectedNodeId: "a" }));
-    act(() => result.current.centerOnElement(oldNode, 1, null, true));
+    act(() => result.current.centerOnElement(oldNode, 1, true));
     const replacement = document.createElement("div");
     replacement.id = "selected";
     replacement.getBoundingClientRect = () => ({ left: 200, top: 100, width: 20, height: 20 }) as DOMRect;
@@ -1007,10 +1007,10 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { obscuredInset: { left: 300 } }));
 
     act(() => {
-      result.current.centerOnElement(element, 2, { width: 300, side: "left" });
+      result.current.centerOnElement(element, 2);
     });
 
     await waitFor(() => expect(result.current.zoomScale).toBe(2));
@@ -1032,10 +1032,10 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 400, bottom: 800, width: 400, height: 800 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { obscuredInset: { bottom: 320 } }));
 
     act(() => {
-      result.current.centerOnElement(element, 2, { height: 320, side: "bottom" });
+      result.current.centerOnElement(element, 2);
     });
 
     await waitFor(() => expect(result.current.zoomScale).toBe(2));
@@ -1137,13 +1137,13 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage, { obscuredInset: { right: 300 } }));
 
     act(() => {
       viewport.dispatchEvent(
         new WheelEvent("wheel", { ctrlKey: true, deltaY: -(WHEEL_TICK_DELTA * 3), clientX: 50, clientY: 50, bubbles: true }),
       );
-      result.current.centerOnElement(element, 2, { width: 300, side: "right" });
+      result.current.centerOnElement(element, 2);
     });
 
     await waitFor(() => expect(result.current.zoomScale).toBe(2));

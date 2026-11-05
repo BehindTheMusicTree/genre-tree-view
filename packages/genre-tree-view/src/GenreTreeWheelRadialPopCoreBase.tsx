@@ -43,14 +43,11 @@ import {
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
+import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { useFocusHistory } from "./use-focus-history";
 import { WheelBreadcrumb } from "./WheelBreadcrumb";
-import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
-import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { OverlayPanel } from "./OverlayPanel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -62,7 +59,6 @@ import {
   getGenreNodeStyle,
   getItemCountRange,
   hexToRgba,
-  INFO_PANEL_WIDTH,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
   NODE_LAYOUT_SLOT_RADIUS,
@@ -168,21 +164,11 @@ export function WheelRadialPopCoreCore({
   onNodeClick,
   onNodeHover,
   additionalActions,
-  showToolbar = true,
-  renderInfoPanelBody,
   onSelectedNodeChange,
-  hideInfoPanelClose = false,
-  hideInfoPanelTitle = false,
-  itemCountLabel,
+  obscuredInset,
+  onNodeStyleResolverChange,
   itemCountScaleMax,
   nodeCountForSizing,
-  readOnly,
-  renderDangerZone,
-  expanded,
-  onExpandedChange,
-  collapsed,
-  hideExpandButton,
-  overlayPanel,
   wheelZoom,
   defaultViewport,
   viewportRestore,
@@ -273,6 +259,7 @@ export function WheelRadialPopCoreCore({
     (node: GenreTreeNode) => getGenreNodeStyle(index, node.id),
     [index],
   );
+  useExposeNodeStyleResolver(onNodeStyleResolverChange, getNodeVisualStyle);
 
   const [topRootId, setTopRootId] = useState<string | null>(
     groups[0]?.root.id ?? null,
@@ -294,7 +281,7 @@ export function WheelRadialPopCoreCore({
   const stageRef = useRef<HTMLDivElement>(null);
   const dotRadiusMemoryRef = useRef(new Map<string, number>());
   const viewportFrame = useMemo(() => JSON.stringify([focusNodeId, nodes.map(({ id, parentId, side }) => [id, parentId, side])]), [nodes, focusNodeId]);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -305,20 +292,6 @@ export function WheelRadialPopCoreCore({
   // node zoomed into from its panel isn't drawn but its panel should stay open.
   const isInFrame = (id: string) => id === focusNodeId || centerSubtreeNodeIds.has(id) || ringRootById.has(id);
   const panel = openPanel && isInFrame(openPanel.node.id) ? openPanel : null;
-  const { previous: previousSelectedId, markPreviousRequested } = useFocusHistory(
-    panel?.node.id ?? null,
-    isInFrame,
-  );
-  const selectNodeFromPanel = (id: string) => {
-    const targetNode = index.byId.get(id)!;
-    const element = viewportRef.current!.querySelector(`#group-${CSS.escape(id)}`);
-    panZoom.centerOnElement(
-      element,
-      ZOOM_FOCUS_SCALE,
-      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-    );
-    showNodeInfo(targetNode, element ?? viewportRef.current, viewportRef.current);
-  };
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -742,7 +715,6 @@ export function WheelRadialPopCoreCore({
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
-                resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
               );
               showNodeInfoRef.current(
                 data,
@@ -865,7 +837,6 @@ export function WheelRadialPopCoreCore({
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
-                resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
               );
               showNodeInfoRef.current(
                 data,
@@ -935,7 +906,6 @@ export function WheelRadialPopCoreCore({
             centerOnElementRef.current(
               clickedElement,
               ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
             );
             showNodeInfoRef.current(
               data,
@@ -1110,7 +1080,7 @@ export function WheelRadialPopCoreCore({
       const name = index.byId.get(rootId)?.name ?? "";
       const obstacles = Array.from(
         viewport.querySelectorAll(
-          ".gtv-node-dot, .gtv-node-label:not(.gtv-node-label--hidden), .gtv-root-label, .gtv-wheel-chip, .gtv-wheel-floating-controls, .gtv-info-panel",
+          ".gtv-node-dot, .gtv-node-label:not(.gtv-node-label--hidden), .gtv-root-label, .gtv-wheel-chip, .gtv-wheel-floating-controls",
         ),
       )
         .map((element) => element.getBoundingClientRect())
@@ -1118,7 +1088,12 @@ export function WheelRadialPopCoreCore({
         .map((r) => ({ x0: r.left, y0: r.top, x1: r.right, y1: r.bottom }));
       const inset = REGION_LABEL_TARGET_PX / 2;
       const spot = pickEmptyLabelSpot(
-        { x0: vp.left + inset, y0: vp.top + inset, x1: vp.right - inset, y1: vp.bottom - inset },
+        {
+          x0: vp.left + inset + (obscuredInset?.left ?? 0),
+          y0: vp.top + inset,
+          x1: vp.right - inset - (obscuredInset?.right ?? 0),
+          y1: vp.bottom - inset - (obscuredInset?.bottom ?? 0),
+        },
         name.length * REGION_LABEL_TARGET_PX * LABEL_CHAR_WIDTH_RATIO,
         REGION_LABEL_TARGET_PX,
         obstacles,
@@ -1144,6 +1119,7 @@ export function WheelRadialPopCoreCore({
     mainstreamCircleRadius,
     index,
     regionLabel,
+    obscuredInset,
   ]);
 
   // Starts the view fit to the wheel + rendered pop sectors instead of at scale 1 / pan (0, 0) —
@@ -1188,7 +1164,6 @@ export function WheelRadialPopCoreCore({
     panZoom.centerOnElement(
       element,
       ZOOM_FOCUS_SCALE,
-      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
       true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
@@ -1346,7 +1321,6 @@ export function WheelRadialPopCoreCore({
                     panZoom.centerOnElement(
                       chip,
                       ZOOM_FOCUS_SCALE,
-                      resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                     );
                     if (!reparentingNodeId) {
                       showNodeInfo(centerNode, chip, viewportRef.current);
@@ -1416,7 +1390,6 @@ export function WheelRadialPopCoreCore({
                           panZoom.centerOnElement(
                             chip,
                             ZOOM_FOCUS_SCALE,
-                            resolveInfoPanelObscuredArea(chip, viewportRef.current, INFO_PANEL_WIDTH),
                           );
                           handleChipClick(group.root.id);
                           if (!reparentingNodeId) {
@@ -1452,66 +1425,6 @@ export function WheelRadialPopCoreCore({
         )}
       </div>
 
-      {panel && (
-        <InfoPanel
-          node={panel.node}
-          {...getNodeVisualStyle(panel.node)}
-          parentNode={(() => {
-            const parent = index.byId.get(index.byId.get(panel.node.id)?.parentId ?? "");
-            return parent
-              ? { node: parent, ...getNodeVisualStyle(parent) }
-              : null;
-          })()}
-          childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
-            (n) => ({ node: n, ...getNodeVisualStyle(n) }),
-          )}
-          ancestorNodes={index.ancestorsOf(panel.node.id).map(
-            (n): InfoPanelChild => ({ node: n, ...getNodeVisualStyle(n) }),
-          )}
-          side={panel.side}
-          onClose={closeNodeInfo}
-          onSelectNode={selectNodeFromPanel}
-          onPrevious={
-            typeof previousSelectedId === "string"
-              ? () => {
-                  markPreviousRequested(previousSelectedId);
-                  selectNodeFromPanel(previousSelectedId);
-                }
-              : undefined
-          }
-          previousLabel={typeof previousSelectedId === "string" ? index.byId.get(previousSelectedId)?.name : undefined}
-          hideClose={hideInfoPanelClose}
-          hideTitle={hideInfoPanelTitle}
-          itemCountLabel={itemCountLabel}
-          readOnly={readOnly}
-          renderDangerZone={renderDangerZone}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          collapsed={collapsed}
-          hideExpandButton={hideExpandButton}
-          actions={
-            showToolbar && !reparentingNodeId
-              ? {
-                  playingNodeId,
-                  playState,
-                  onPlayPause,
-                  onAddChild,
-                  onRenameRequest,
-                  onDeleteRequest,
-                  onReparentRequest,
-                  additionalActions,
-                }
-              : undefined
-          }
-          renderInfoPanelBody={renderInfoPanelBody}
-          onZoomIn={
-            onFocusChange && panel.node.id !== focusNodeId && isZoomableNode(nodes, panel.node.id)
-              ? () => onFocusChange(panel.node.id, "zoom-in")
-              : undefined
-          }
-        />
-      )}
-      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       {onFocusChange && focusNodeId !== null && (
         <WheelBreadcrumb

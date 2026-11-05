@@ -39,10 +39,10 @@ PRs are validated by `validate.yml` (build, typecheck, lint, coverage). The cove
 | Scope | Lines / statements | Branches | Functions |
 | --- | --- | --- | --- |
 | Whole library | 90% | 85% | 90% |
-| Each selection, pan/zoom, outline and info-panel module | 95% | 90% | 90% |
+| Each selection, pan/zoom, outline and node-selection module | 95% | 90% | 90% |
 
-The stricter scope names `use-node-info-panel`, `use-pan-zoom`, `GenreTreeOutline` and
-`InfoPanel` explicitly. Each file must pass independently so coverage in one cannot hide
+The stricter scope names `use-node-info-panel`, `use-pan-zoom`, and
+`GenreTreeOutline` explicitly. Each file must pass independently so coverage in one cannot hide
 untested behavior in another. Public export/type declarations and benchmarks remain excluded;
 do not exclude executable behavior to make a gate pass. Thresholds do not auto-update.
 

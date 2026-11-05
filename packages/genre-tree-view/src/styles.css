@@ -322,270 +322,6 @@
   }
 }
 
-/* Node info panel — shows a clicked node's own fields, anchored to the left of the tree
-   viewport by default, flipped to the right when it would cover the clicked node itself (see
-   info-panel-geometry.ts). Positioned absolutely against the same viewport as .gtv-zoom-controls,
-   so it stays fixed regardless of pan/zoom state. */
-.gtv-info-panel {
-  position: absolute;
-  top: var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem));
-  bottom: 0.75rem;
-  width: var(--layout-detail-panel-w, 25.5rem);
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 10;
-  background: var(--gtv-surface, var(--color-surface, #ffffff));
-  border-radius: var(--radius-panel, 1rem);
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
-  transition: transform 200ms ease-out, visibility 0s linear 0s;
-  cursor: default;
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: var(--gtv-text, var(--color-text, #18181b));
-}
-
-.gtv-info-panel--left {
-  left: 0.75rem;
-}
-
-.gtv-info-panel--right {
-  right: 0.75rem;
-}
-
-.gtv-info-panel--collapsed {
-  transform: translateX(calc(-100% - var(--layout-gutter, 0.75rem)));
-  visibility: hidden;
-  transition: transform 200ms ease-out, visibility 0s linear 200ms;
-}
-
-.gtv-info-panel--collapsed.gtv-info-panel--right {
-  transform: translateX(calc(100% + var(--layout-gutter, 0.75rem)));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gtv-info-panel {
-    transition: none;
-  }
-}
-
-/* Fills the tree container (still absolute, not fixed/Fullscreen API, so the host page's nav and
-   player stay visible); the header stays on top while the body splits into two independently
-   scrolling columns. */
-.gtv-info-panel--expanded {
-  inset: 0.75rem;
-  top: var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem));
-  right: var(--gtv-center-right, 0.75rem);
-  width: auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 20;
-}
-
-.gtv-info-panel--expanded .gtv-info-panel-body {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  grid-template-areas: "aside primary";
-}
-
-.gtv-info-panel--expanded .gtv-info-panel-primary,
-.gtv-info-panel--expanded .gtv-info-panel-aside {
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.gtv-info-panel--expanded .gtv-info-panel-primary {
-  grid-area: primary;
-}
-
-.gtv-info-panel--expanded .gtv-info-panel-aside {
-  grid-area: aside;
-  border-right: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-}
-
-/* Sized by the tree container (container-type on .gtv-wheel-container / .gtv-outline and
-   GenreTree's own viewport), not the browser viewport. */
-.gtv-info-panel--expanded-solo .gtv-info-panel-body {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: none;
-}
-
-.gtv-info-panel--expanded-solo .gtv-info-panel-primary,
-.gtv-info-panel--expanded-solo .gtv-info-panel-aside {
-  grid-area: auto;
-  border-right: none;
-}
-
-/* A host with left / center / right columns sets --gtv-center-left and --gtv-center-right (insets from the
-   container's edges) and --gtv-center-top: the overlay fills the center column and an expanded panel spans
-   the left and center columns. Unset, both fill the container. */
-.gtv-info-panel--overlay {
-  top: var(--gtv-center-top, var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem)));
-  left: var(--gtv-center-left, 0.75rem);
-}
-
-.gtv-overlay-content > * + *,
-.gtv-info-panel:not(.gtv-info-panel--expanded) .gtv-overlay-content + .gtv-overlay-content {
-  border-top: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-}
-
-@container (max-width: 767px) {
-  .gtv-info-panel--expanded .gtv-info-panel-body {
-    display: block;
-    overflow-y: auto;
-  }
-
-  .gtv-info-panel--expanded .gtv-info-panel-primary,
-  .gtv-info-panel--expanded .gtv-info-panel-aside {
-    overflow-y: visible;
-  }
-
-  .gtv-info-panel--expanded .gtv-info-panel-aside {
-    border-right: none;
-  }
-
-  .gtv-info-panel--expanded .gtv-overlay-content + .gtv-overlay-content {
-    border-top: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  }
-}
-
-.gtv-info-panel-grabber {
-  display: none;
-}
-
-/* A side column would leave no room for the tree in a narrow container, so the node panel docks
-   to the bottom as a sheet within thumb reach: peek covers INFO_PANEL_SHEET_PEEK_FRACTION of the
-   container (see constants.ts), full rises to the panel's usual top. */
-@container (max-width: 767px) {
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) {
-    --gtv-info-panel-header-inset: 0px;
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: auto;
-    height: 40%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    border-radius: var(--radius-panel, 1rem) var(--radius-panel, 1rem) 0 0;
-    transition: transform 200ms ease-out, visibility 0s linear 0s, height 200ms ease-out;
-  }
-
-  .gtv-info-panel--sheet-full:not(.gtv-info-panel--expanded) {
-    height: calc(100% - var(--gtv-info-panel-top, var(--layout-gutter, 0.75rem)));
-  }
-
-  .gtv-info-panel--sheet.gtv-info-panel--collapsed:not(.gtv-info-panel--expanded) {
-    transform: translateY(100%);
-    transition: transform 200ms ease-out, visibility 0s linear 200ms;
-  }
-
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) > .gtv-info-panel-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) .gtv-info-panel-grabber {
-    display: flex;
-    flex: none;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: var(--layout-touch-target, 2.75rem);
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    touch-action: none;
-  }
-
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) > .gtv-info-panel-header {
-    flex: none;
-    border-radius: 0;
-  }
-
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded) .gtv-info-panel-grabber::before {
-    content: "";
-    width: 2.25rem;
-    height: 0.25rem;
-    border-radius: 9999px;
-    background: currentColor;
-    opacity: 0.4;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gtv-info-panel--sheet:not(.gtv-info-panel--expanded),
-  .gtv-info-panel--sheet.gtv-info-panel--collapsed:not(.gtv-info-panel--expanded) {
-    transition: none;
-  }
-}
-
-.gtv-info-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  /* A host that floats its own control (e.g. a search bar) over the panel's top edge sets
-     --gtv-info-panel-header-inset to that control's height plus its margins, so the header's
-     fill extends behind the control and its own content starts below it. */
-  padding: calc(0.625rem + var(--gtv-info-panel-header-inset, 0px)) 1rem 0.625rem 1.5rem;
-  border-bottom: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  /* Matches .gtv-info-panel's own radius on the two corners it shares with the panel — the
-     header's own background (the clicked node's fill, set inline by InfoPanel.tsx) would
-     otherwise square them off against the panel's rounded outline. */
-  border-top-left-radius: var(--radius-panel, 1rem);
-  border-top-right-radius: var(--radius-panel, 1rem);
-}
-
-.gtv-info-panel-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* visibility (not display) keeps the title's flex: 1, so the header's buttons keep their places. */
-.gtv-info-panel-title--hidden {
-  visibility: hidden;
-}
-
-.gtv-info-panel-close,
-.gtv-info-panel-previous,
-.gtv-info-panel-zoom-in {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 0.375rem;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-/* A neutral dark overlay rather than a fixed light background/text pair — the header's own
-   background now varies with the clicked node's fill (light tint or solid saturated color), and
-   this reads as a hover on either. */
-.gtv-info-panel-close:hover,
-.gtv-info-panel-previous:hover,
-.gtv-info-panel-zoom-in:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
 .gtv-info-panel-fields {
   margin: 0;
   padding: 0.625rem 1.5rem;
@@ -618,11 +354,6 @@
   background: transparent;
 }
 
-.gtv-info-panel-children {
-  padding: 0 1.5rem 0.625rem;
-  border-top: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-}
-
 .gtv-info-panel-children-title {
   display: block;
   font-size: 0.6875rem;
@@ -630,32 +361,6 @@
   text-transform: uppercase;
   color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
   margin-top: 0.625rem;
-}
-
-.gtv-info-panel-section-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 0.625rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
-  cursor: pointer;
-}
-
-.gtv-info-panel-section-toggle .gtv-info-panel-children-title {
-  margin-top: 0;
-}
-
-.gtv-info-panel-section-chevron {
-  transition: transform 150ms;
-}
-
-.gtv-info-panel-section-toggle[aria-expanded="false"] .gtv-info-panel-section-chevron {
-  transform: rotate(-90deg);
 }
 
 .gtv-info-panel-children-list {
@@ -1532,9 +1237,8 @@
   margin-top: calc(var(--gtv-wheel-radius, 16.25rem) * -1);
 }
 
-/* GenreTreeOutline — nested collapsible lists (native <details>) instead of an SVG tree. The info
-   panel is absolutely positioned against .gtv-outline (not the scrolling list), so it stays put
-   while the list scrolls; the list pads itself clear of the panel while it's open. */
+/* GenreTreeOutline — nested collapsible lists (native <details>) instead of an SVG tree. The list
+   pads itself clear of the host's detail panel through `obscuredInset`. */
 .gtv-outline {
   position: relative;
   width: 100%;
@@ -1549,10 +1253,6 @@
   overflow-y: auto;
   box-sizing: border-box;
   padding: calc(0.75rem + var(--gtv-info-panel-header-inset, 0px)) 1rem 0.75rem;
-}
-
-.gtv-outline--panel-open .gtv-outline-scroll {
-  padding-left: 19rem;
 }
 
 .gtv-outline-list {

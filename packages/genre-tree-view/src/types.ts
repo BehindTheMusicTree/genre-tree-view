@@ -95,32 +95,25 @@ export interface GenreTreeViewport {
   zoom: number;
 }
 
-/** The info panel's built-in sections, handed to `renderInfoPanelBody` for placement. Each is
- * `null` when it has nothing to show. */
-export interface InfoPanelSections {
-  /** The node's action toolbar — null when `showToolbar` is off or a reparent is in progress. */
-  toolbar: ReactNode;
-  /** Ancestor chips, root-first — null for a root. */
-  ancestors: ReactNode;
-  /** Parent, node and children mini tree. */
-  family: ReactNode;
-  /** The `itemCountLabel` row. */
-  itemCount: ReactNode;
+/** Fill and text color of a node as the tree draws it. */
+export interface GenreNodeStyle {
+  fill: string;
+  textColor: string;
 }
 
-/** The info panel body a `renderInfoPanelBody` returns. */
-export interface InfoPanelBody {
-  /** The wide column when expanded; on top when compact. */
-  primary: ReactNode;
-  /** The narrow left column when expanded; below `primary` when compact. Omit (or null) for a
-   * single column. */
-  aside?: ReactNode;
+/** Resolves how the tree draws `node` — see `GenreTreeProps.onNodeStyleResolverChange`. */
+export type GenreNodeStyleResolver = (node: GenreTreeNode) => GenreNodeStyle;
+
+/** Screen area (in px, from the tree viewport's edges) that a host-owned panel covers. Centering a
+ * selected node targets the rest of the viewport. */
+export interface ObscuredInset {
+  left?: number;
+  right?: number;
+  bottom?: number;
 }
 
 export interface GenreTreeProps {
   nodes: GenreTreeNode[];
-  /** Label for the info panel's `itemCount` row (e.g. "Song count"); the library can't know what unit is counted. */
-  itemCountLabel: string;
   /** Optional total for the current itemCount metric. When provided, node sizes use a fixed
    * logarithmic domain from zero to this total, so filtering recalculates each node's size against
    * the filtered total. The total must use the same metric as GenreTreeNode.itemCount. */
@@ -183,9 +176,6 @@ export interface GenreTreeProps {
   /** Multiplies the spacing between depth levels along the tree's growth axis. Defaults to 1
    * (no change). */
   depthSpacingScale?: number;
-  /** When false, the info panel omits the node actions (play/pause, add-child, rename, reparent,
-   * delete, extra actions). Defaults to true. */
-  showToolbar?: boolean;
   /** Overrides which node is shown highlighted (with unrelated nodes/links dimmed) instead of
    * GenreTree's own internally-tracked clicked node — used by `interactive={false}` instances
    * (e.g. GenreTreeWheel's nested tree) whose own info panel, and thus own selection, is owned
@@ -195,48 +185,21 @@ export interface GenreTreeProps {
    * info panel for that node — the same effect a direct click on it would have — swapping in its
    * owning root/sector first if needed. Leave unset to use the internal selection. */
   selectedNodeId?: string | null;
-  /** Composes the info panel body for the clicked node: places the built-in `sections` (any
-   * omitted one is not rendered) among the consumer's own content — e.g. a consumer-fetched detail
-   * like essential tracks. The library has no knowledge of what this renders (loading state, data
-   * fetching, etc. are entirely the consumer's responsibility, mirroring `additionalActions`).
-   * Omitted, the body is the built-in sections in one column. The panel frame (header, columns,
-   * scrolling, edit-mode danger zone) stays the library's. */
-  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
-  /** Fired when a user action changes the node shown in the info panel (a click on the tree, or on
-   * a parent/child/ancestor chip in the panel), or with `null` when the user closes it (its header
-   * ✕) — so a consumer driving `selectedNodeId` stays in sync. Not fired when re-selecting the node
-   * already shown, when the panel follows the consumer's own `selectedNodeId`, nor when the
-   * consumer clears `selectedNodeId` to `null`/`undefined` (which closes the panel). */
+  /** Fired when a click on the tree changes the selected node, or with `null` when the selection is
+   * cleared inside the tree (the host owns the panel's close button, so closing it does not fire this) — so a consumer driving `selectedNodeId` stays in sync. Not fired when
+   * re-selecting the selected node, when following the consumer's own `selectedNodeId`, nor when the
+   * consumer clears `selectedNodeId` to `null`/`undefined`. The detail panel itself is the host's. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
-  /** Hides the info panel header's close button — for a consumer that closes the panel itself
-   * (by clearing `selectedNodeId`), e.g. from its own search bar. Defaults to false. */
-  hideInfoPanelClose?: boolean;
-  /** Hides the info panel header's node name — for a consumer that already shows it, e.g. in its own
-   * search bar floated over the header (see `--gtv-info-panel-header-inset`). Defaults to false. */
-  hideInfoPanelTitle?: boolean;
-  /** Keeps `renderDangerZone` inactive. Defaults to false. */
-  readOnly?: boolean;
-  /** Rendered at the bottom of the info panel unless `readOnly`. */
-  renderDangerZone?: (node: GenreTreeNode) => ReactNode;
-  /** Whether the info panel fills the tree container (controlled), splitting into a narrow left
-   * column (the body's `aside`, then the danger zone) and a wide right one (its `primary`). Selecting
-   * another node from the panel keeps it expanded. Defaults to false. */
-  expanded?: boolean;
-  /** When set, the info panel header shows an expand/collapse toggle firing this with the
-   * requested state, and Escape fires it with `false` while expanded (unless focus is in an
-   * input/textarea/select or a dialog is open). */
-  onExpandedChange?: (on: boolean) => void;
-  /** Slides the info panel out of view and makes it inert, keeping it mounted. Defaults to false. */
-  collapsed?: boolean;
-  /** Drops the header's expand/collapse toggle when the host draws its own control for it. */
-  hideExpandButton?: boolean;
-  /** Consumer content shown over the tree independent of node selection — at the expanded info
-   * panel's size (e.g. an About page), or as an expandable info-panel peer when it sets
-   * `onExpandedChange` (e.g. an artist). Its header ✕ and Escape (same exceptions as
-   * `onExpandedChange`) fire `onClose`; Escape collapses an expanded panel first. Showing it
-   * alongside the info panel is the consumer's call — close one before opening the other to keep
-   * them exclusive. */
-  overlayPanel?: GenreTreeOverlayPanel;
+  /** Area the host's detail panel covers over the viewport, so a selected node is centered in what
+   * stays visible. Supply the panel's stable (last-open) inset: the panel mounts after the click,
+   * so a measurement taken then would arrive too late for the first centering. */
+  obscuredInset?: ObscuredInset;
+  /** Hands the host the function that styles a node exactly as this renderer draws it (solid vs.
+   * tinted fill, text color), for the host's panel header and family chips. The reference is
+   * stable and always reads the renderer's current state, so it does not change when styling inputs
+   * do: recompute anything derived from it on selection change. Do not pass a `useState` setter
+   * directly (React would call it as an updater); wrap it: `(r) => setResolver(() => r)`. */
+  onNodeStyleResolverChange?: (resolver: GenreNodeStyleResolver) => void;
   /** Seeds the pan/zoom on mount, replacing the initial fit-to-frame and the centering on an
    * initial `selectedNodeId`. Read once; later changes are ignored. Ignored when `interactive` is
    * false and by `GenreTreeOutline`. */
@@ -248,29 +211,4 @@ export interface GenreTreeProps {
   /** Fired once a user-driven pan/zoom settles (drag, wheel, pinch, zoom/fit buttons, centering on
    * a clicked node) — not for the initial fit or for applying `defaultViewport`. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
-}
-
-export interface GenreTreeOverlayPanel {
-  title: string;
-  /** Its top-level children (and `extraContent`'s) are separated by a divider, as is `extraContent`
-   * from `content` when stacked — blocks must not draw their own. */
-  content: ReactNode;
-  onClose: () => void;
-  /** With `onExpandedChange`, the panel behaves like the info panel: compact in its left slot,
-   * expanding to its expanded size (controlled). Without it, the panel always covers the center
-   * column at the expanded size, with no toggle. */
-  expanded?: boolean;
-  /** Adds the header's expand/collapse toggle; Escape fires it with `false` while expanded. */
-  onExpandedChange?: (on: boolean) => void;
-  /** Stacked below `content` when compact, the right column when expanded — same as the info
-   * panel body's `primary`. */
-  extraContent?: ReactNode;
-  /** See GenreTreeProps.collapsed. */
-  collapsed?: boolean;
-  /** See GenreTreeProps.hideExpandButton. */
-  hideExpandButton?: boolean;
-  /** See GenreTreeProps.hideInfoPanelTitle. */
-  hideTitle?: boolean;
-  /** See GenreTreeProps.hideInfoPanelClose; Escape still closes. */
-  hideClose?: boolean;
 }
