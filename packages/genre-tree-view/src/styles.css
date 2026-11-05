@@ -29,7 +29,8 @@
 }
 
 /* --gtv-node-fill is set inline on each pop-subtree node group (see pop-core-radial-layout.ts). */
-.node:hover > text.gtv-node-label {
+.node:hover > text.gtv-node-label,
+.gtv-root-label:hover > text.gtv-node-label:not(.gtv-node-label--hidden) {
   fill: var(--gtv-node-fill);
   stroke: var(--gtv-node-hover-halo);
 }
@@ -39,6 +40,12 @@
 text.gtv-node-label {
   paint-order: stroke;
   stroke-linejoin: round;
+}
+
+/* A root's label forwards clicks to its chip (see GenreTreeWheelRadialPopCoreBase); a label hidden
+   by collision culling must not stay hit-testable. */
+.gtv-root-label > text.gtv-node-label:not(.gtv-node-label--hidden) {
+  pointer-events: all;
 }
 
 /* Selectable chart items: every painted part, label included, shows the hand. SVG text would

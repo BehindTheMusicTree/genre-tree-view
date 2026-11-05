@@ -1080,3 +1080,17 @@ describe("computePopRadialLayout stretch cap", () => {
     expect(((Math.max(...a) + Math.min(...a)) / 2) * (180 / Math.PI)).toBeCloseTo(90, 6);
   });
 });
+
+describe("renderRootLabels hover colors", () => {
+  it("exposes the chip color and its contrast halo for the hover rule, like dot labels", () => {
+    const svg = createSvg();
+    renderRootLabels(svg, [
+      { id: "a", name: "A", x: 0, y: 0, radius: 5, itemCount: 1, fill: "#1d4ed8" },
+      { id: "b", name: "B", x: 0, y: 0, radius: 5, itemCount: 1 },
+    ]);
+    const [a, b] = svg.selectAll<SVGGElement, unknown>("g.gtv-root-label").nodes();
+    expect(a.style.getPropertyValue("--gtv-node-fill")).toBe("#1d4ed8");
+    expect(a.style.getPropertyValue("--gtv-node-hover-halo")).toBe("#ffffff");
+    expect(b.style.getPropertyValue("--gtv-node-fill")).toBe("#18181B");
+  });
+});

@@ -445,6 +445,8 @@ export interface RootLabelDatum {
   itemCount: number;
   /** Named even when no candidate spot is free (the wheel's center); other roots hide like dot labels. */
   alwaysShown?: boolean;
+  /** The chip's color: the label takes it, with its contrast halo, on hover like a dot label does. */
+  fill?: string;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -459,6 +461,8 @@ export function renderRootLabels<E extends SVGElement>(
     .join("g")
     .attr("class", "gtv-root-label")
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+    .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
+    .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)
     .append("text")
     .attr("class", "gtv-node-label")
     .attr("dominant-baseline", "middle")

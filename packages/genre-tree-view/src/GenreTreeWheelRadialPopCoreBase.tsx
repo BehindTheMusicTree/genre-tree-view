@@ -958,6 +958,7 @@ export function WheelRadialPopCoreCore({
           y,
           radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
           itemCount,
+          fill: getGenreNodeStyle(index, group.root.id).fill,
         };
       }),
     ]);
@@ -966,8 +967,6 @@ export function WheelRadialPopCoreCore({
     originGroup
       .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
       .select("text")
-      .style("pointer-events", "all")
-      .style("cursor", "pointer")
       .on("click", (_event, d) => {
         const chip =
           d.id === centerNode.id
