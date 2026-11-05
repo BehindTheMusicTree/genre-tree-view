@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LABEL_CHAR_WIDTH_RATIO, labelHaloColor } from "@behindthemusictree/ui";
+import { Breadcrumb, LABEL_CHAR_WIDTH_RATIO, labelHaloColor } from "@behindthemusictree/ui";
 import { LABEL_HALO_STROKE_EM } from "./label-halo-style";
 import * as d3 from "d3";
 
@@ -48,7 +48,6 @@ import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { WheelBreadcrumb } from "./WheelBreadcrumb";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -1139,17 +1138,27 @@ export function WheelRadialPopCoreCore({
     if (allowWheelRotation) setRotationTopRootId(rootId);
   };
 
+  // The center (and the focus node, which isn't drawn when its pop child is the center) has no
+  // `#group-` element: its chip stands in for it.
+  const nodeElement = (id: string) =>
+    id === centerNode.id || id === focusNodeId
+      ? centerChipRef.current
+      : viewportRef.current?.querySelector(`#group-${CSS.escape(id)}`);
+
+  // Centers the viewport on a drawn node and opens its info panel, as a direct click would.
+  const selectNode = (id: string, { automatic = false, notify = true } = {}) => {
+    const node = index.byId.get(id);
+    const element = nodeElement(id);
+    if (!node || !element) return;
+    panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE, automatic);
+    showNodeInfo(node, element, viewportRef.current, { notify });
+  };
+
   // Mirrors the onNodeClick/onSelectNode handling below: once the node's sector is mounted, center the viewport on the
   // externally-selected node and open its info panel exactly as a direct click would.
   useEffect(() => {
     if (!selectedNodeId || openPanel?.node.id === selectedNodeId) return;
-    const targetNode = index.byId.get(selectedNodeId);
-    if (
-      targetNode &&
-      onFocusChange &&
-      !centerSubtreeNodeIds.has(selectedNodeId) &&
-      !ringRootById.has(selectedNodeId)
-    ) {
+    if (onFocusChange && index.byId.has(selectedNodeId) && !isInFrame(selectedNodeId)) {
       // Outside the current zoom (e.g. a search result): refocus on its top-level root, whose frame
       // holds its whole subtree (the whole tree for Mainstream Pop's lineage or a root itself);
       // this effect re-runs once the new frame is drawn.
@@ -1157,18 +1166,9 @@ export function WheelRadialPopCoreCore({
       onFocusChange(root && root.name !== CENTER_NODE_NAME && isZoomableNode(nodes, root.id) ? root.id : null, "search");
       return;
     }
-    const element = viewportRef.current?.querySelector(
-      `#group-${CSS.escape(selectedNodeId)}`,
-    );
-    if (!targetNode || !element) return;
-    panZoom.centerOnElement(
-      element,
-      ZOOM_FOCUS_SCALE,
-      true,
-    );
-    showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
+    selectNode(selectedNodeId, { automatic: true, notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the openPanel?.node.id check above
-  }, [selectedNodeId, index, openPanel, showNodeInfo, centerSubtreeNodeIds, ringRootById]);
+  }, [selectedNodeId, index, openPanel, showNodeInfo, centerSubtreeNodeIds, ringRootById, focusNodeId]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its
@@ -1308,7 +1308,7 @@ export function WheelRadialPopCoreCore({
                     width: centerChipDiameter,
                     "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
                     "--gtv-chip-color": centerNodeColor,
-                    ...(panel?.node.id === centerNode.id && {
+                    ...((panel?.node.id === centerNode.id || panel?.node.id === focusNodeId) && {
                       borderColor: ACCENT_COLOR,
                       borderWidth: calculateSelectedNodeBorderWidth(centerChipDiameter / 2),
                     }),
@@ -1429,18 +1429,24 @@ export function WheelRadialPopCoreCore({
 
 
       {onFocusChange && focusNodeId !== null && (
-        <WheelBreadcrumb
-          key={focusNodeId}
-          ancestors={index.ancestorsOf(focusNodeId).filter((ancestor) => isZoomableNode(nodes, ancestor.id))}
-          currentName={index.byId.get(focusNodeId)?.name}
-          onHome={() => {
-            closeNodeInfo();
-            onFocusChange(null, "root");
+        <Breadcrumb
+          className="gtv-wheel-breadcrumb"
+          home={{
+            label: "All genres",
+            onSelect: () => {
+              closeNodeInfo();
+              onFocusChange(null, "root");
+            },
           }}
-          onAncestor={(id) => {
+          items={[
+            ...index.ancestorsOf(focusNodeId).filter((ancestor) => isZoomableNode(nodes, ancestor.id)),
+            ...(index.byId.has(focusNodeId) ? [index.byId.get(focusNodeId)!] : []),
+          ].map(({ id, name }) => ({ id, label: name }))}
+          onSelect={(id) => {
             closeNodeInfo();
             onFocusChange(id, "back");
           }}
+          onSelectCurrent={reparentingNodeId ? undefined : () => selectNode(focusNodeId)}
         />
       )}
 

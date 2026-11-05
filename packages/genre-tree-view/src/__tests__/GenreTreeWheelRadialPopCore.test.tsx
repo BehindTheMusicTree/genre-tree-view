@@ -1172,8 +1172,9 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(crumbs.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent)).toEqual([
         "All genres",
         "Rock",
+        "Punk",
       ]);
-      expect(crumbs.getByText("Punk").getAttribute("aria-current")).toBe("page");
+      expect(crumbs.getByRole("button", { name: "Punk" }).getAttribute("aria-current")).toBe("page");
       fireEvent.click(crumbs.getByRole("button", { name: "Rock" }));
       expect(onFocusChange).toHaveBeenLastCalledWith("root-a", "back");
       fireEvent.click(crumbs.getByRole("button", { name: "All genres" }));
@@ -1181,6 +1182,45 @@ describe("GenreTreeWheelRadialPopCore", () => {
 
       rerender(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} focusNodeId={null} onFocusChange={onFocusChange} />);
       expect(queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
+    });
+
+    it("selects the focused node from the breadcrumb's current item, even when its pop child is the center", () => {
+      const onSelectedNodeChange = vi.fn();
+      const { getByRole, rerender } = render(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="a-core"
+          onFocusChange={vi.fn()}
+          onSelectedNodeChange={onSelectedNodeChange}
+        />,
+      );
+      const crumbs = () => within(getByRole("navigation", { name: "Breadcrumb" }));
+      fireEvent.click(crumbs().getByRole("button", { name: "Punk" }));
+      expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "a-core" }));
+
+      const onFocusChange = vi.fn();
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-a"
+          onFocusChange={onFocusChange}
+          selectedNodeId={null}
+          onSelectedNodeChange={onSelectedNodeChange}
+        />,
+      );
+      fireEvent.click(crumbs().getByRole("button", { name: "Rock" }));
+      expect(onSelectedNodeChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "root-a" }));
+
+      rerender(
+        <GenreTreeWheelRadialPopCore
+          nodes={NODES_WITH_POP}
+          focusNodeId="root-a"
+          onFocusChange={onFocusChange}
+          selectedNodeId="root-a"
+          onSelectedNodeChange={onSelectedNodeChange}
+        />,
+      );
+      expect(onFocusChange).not.toHaveBeenCalled();
     });
 
     it("leaves out ancestors that can't be a focus", () => {
@@ -1192,7 +1232,10 @@ describe("GenreTreeWheelRadialPopCore", () => {
         <GenreTreeWheelRadialPopCore nodes={nodes} focusNodeId="a-core" onFocusChange={vi.fn()} />,
       );
       const crumbs = within(getByRole("navigation", { name: "Breadcrumb" }));
-      expect(crumbs.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(["All genres"]);
+      expect(crumbs.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent)).toEqual([
+        "All genres",
+        "Punk",
+      ]);
     });
 
     it("collapses a long trail behind a button that expands it until the focus changes", () => {

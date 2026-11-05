@@ -74,8 +74,8 @@ importers:
         version: 5.7.0(react@18.3.1)
     devDependencies:
       '@behindthemusictree/ui':
-        specifier: 0.16.0
-        version: 0.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 0.17.0
+        version: 0.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@codspeed/vitest-plugin':
         specifier: 6.0.1
         version: 6.0.1(tinybench@2.9.0)(vite@7.3.2(@types/node@22.20.1))(vitest@4.1.11)
@@ -223,8 +223,8 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@behindthemusictree/ui@0.16.0':
-    resolution: {integrity: sha512-N+TnOElSHVlYuLq7jszc27Ch+d/SrSuhvxeyQWlRcRp1E6i5avG9hDDhG1D852yY3A3GJ4uXUC8WuSZLVCPJ5A==}
+  '@behindthemusictree/ui@0.17.0':
+    resolution: {integrity: sha512-zSuLgxmIuSVHVumZwSY1Zwxbk0+ektam5or2H/u9Pknf7KKlcbEgffct+95wJrftBpoxcakluB7zMnhgQ3e5rg==}
     peerDependencies:
       '@behindthemusictree/brand': ^12.10.0
       react: '>=18.0.0'
@@ -2286,7 +2286,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@behindthemusictree/ui@0.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/ui@0.17.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
