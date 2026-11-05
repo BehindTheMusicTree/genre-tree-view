@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [8.1.0] - 2026-11-05
+
 ### Added
 
 - Labels get a contrast halo: black behind light text, white behind dark text, with a thickness proportional to the font size. Requires `@behindthemusictree/ui` with `labelHalo` (>=0.16.0).
