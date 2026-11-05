@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [8.3.0] - 2026-11-05
+
 ### Fixed
 
 - Sector boundaries (notably the electronic underground/EDM edge) no longer stair-step while panning or zooming.
