@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: BehindTheMusicTree/github-workflows
-          ref: 84a73457403e20021217fe52ee650bd8de3cdca5
+          ref: 7857565a0fbbf7a4569147044d14eb7350df82c3
           path: .release-foundation
           persist-credentials: false
 
