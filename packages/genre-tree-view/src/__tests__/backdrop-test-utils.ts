@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, vi } from "vitest";
 
 /** happy-dom does no layout, so the backdrop's pivot measurement and viewport size need stubs. Call
- * inside a describe: installs them per test and restores afterwards. Every element reports a
- * 100×100 box at the origin, i.e. the pivot sits at (0, 0) in an unscaled stage. */
+ * inside a describe: installs them per test and restores afterwards. Every HTML element reports a
+ * 100×100 box at the origin (an unscaled stage) and SVGs a zero box there, so the pivot is (0, 0). */
 export function stubBackdropLayout(viewport = { width: 800, height: 600 }) {
   const originals: Array<() => void> = [];
   beforeEach(() => {
