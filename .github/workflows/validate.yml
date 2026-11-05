@@ -19,6 +19,12 @@ jobs:
           node-version-file: .nvmrc
 
       - run: pnpm install --frozen-lockfile
+      - name: Release preparation fixtures
+        run: |
+          node --test scripts/release-utils.test.cjs
+          bash scripts/tests/release.sh
+          shellcheck scripts/release.sh scripts/tests/release.sh
+
       - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm lint
