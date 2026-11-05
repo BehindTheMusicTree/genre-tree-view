@@ -26,11 +26,9 @@ import {
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
+import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { resolveInfoPanelObscuredArea } from "./info-panel-geometry";
-import { InfoPanel, InfoPanelChild } from "./InfoPanel";
-import { OverlayPanel } from "./OverlayPanel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
   ACCENT_TEXT_COLOR,
@@ -39,7 +37,6 @@ import {
   getGenreTreeColor,
   getItemCountRange,
   hexToRgba,
-  INFO_PANEL_WIDTH,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
@@ -115,21 +112,11 @@ export function WheelRadialCore({
   onReparent,
   onNodeClick,
   additionalActions,
-  showToolbar = true,
-  renderInfoPanelBody,
   onSelectedNodeChange,
-  hideInfoPanelClose = false,
-  hideInfoPanelTitle = false,
-  itemCountLabel,
+  obscuredInset,
+  onNodeStyleResolverChange,
   itemCountScaleMax,
   nodeCountForSizing,
-  readOnly,
-  renderDangerZone,
-  expanded,
-  onExpandedChange,
-  collapsed,
-  hideExpandButton,
-  overlayPanel,
   wheelZoom,
   defaultViewport,
   viewportRestore,
@@ -144,6 +131,10 @@ export function WheelRadialCore({
   const groups = useMemo(() => groupNodesByRoot(nodes), [nodes]);
   const rootColorOf = (node: GenreTreeNode) =>
     getGenreTreeColor(index.byId.get(index.rootIdById.get(node.id) ?? node.id)?.wikidataId);
+  useExposeNodeStyleResolver(onNodeStyleResolverChange, (node) => ({
+    fill: rootColorOf(node),
+    textColor: ACCENT_TEXT_COLOR,
+  }));
 
   const [topRootId, setTopRootId] = useState<string | null>(
     groups[0]?.root.id ?? null,
@@ -151,8 +142,8 @@ export function WheelRadialCore({
   const viewportRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, onViewportChange, frameKey: viewportFrame });
-  const { panel, showNodeInfo, closeNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
+  const { panel, showNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Read via a ref inside the D3 render effect below rather than depending on `panZoom` directly —
   // its identity changes every render, which would otherwise re-run (and re-mount the whole D3
   // tree) on every pan/zoom, exactly what that effect's own dependency list is designed to avoid.
@@ -421,7 +412,6 @@ export function WheelRadialCore({
               centerOnElementRef.current(
                 clickedElement,
                 ZOOM_FOCUS_SCALE,
-                resolveInfoPanelObscuredArea(clickedElement, viewportRef.current, INFO_PANEL_WIDTH),
               );
               showNodeInfoRef.current(
                 data,
@@ -489,7 +479,6 @@ export function WheelRadialCore({
     panZoom.centerOnElement(
       element,
       ZOOM_FOCUS_SCALE,
-      resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
       true,
     );
     showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
@@ -654,7 +643,6 @@ export function WheelRadialCore({
                         panZoom.centerOnElement(
                           event.currentTarget,
                           ZOOM_FOCUS_SCALE,
-                          resolveInfoPanelObscuredArea(event.currentTarget, viewportRef.current, INFO_PANEL_WIDTH),
                         );
                         handleChipClick(group.root.id);
                         if (!reparentingNodeId) {
@@ -685,78 +673,6 @@ export function WheelRadialCore({
         </div>
       </div>
 
-      {panel && (
-        <InfoPanel
-          node={panel.node}
-          fill={rootColorOf(panel.node)}
-          textColor={ACCENT_TEXT_COLOR}
-          parentNode={(() => {
-            const parent = index.byId.get(panel.node.parentId ?? "");
-            return parent
-              ? {
-                  node: parent,
-                  fill: rootColorOf(parent),
-                  textColor: ACCENT_TEXT_COLOR,
-                }
-              : null;
-          })()}
-          // renderPopSubtree is always called here with isCoreSector: true (no pop/core split in
-          // this renderer), so every node gets a solid rootColor fill.
-          childNodes={(index.childrenByParentId.get(panel.node.id) ?? []).map(
-            (n) => ({ node: n, fill: rootColorOf(n), textColor: ACCENT_TEXT_COLOR }),
-          )}
-          ancestorNodes={index.ancestorsOf(panel.node.id).map(
-            (n): InfoPanelChild => ({
-              node: n,
-              fill: rootColorOf(n),
-              textColor: ACCENT_TEXT_COLOR,
-            }),
-          )}
-          side={panel.side}
-          onClose={closeNodeInfo}
-          onSelectNode={(id) => {
-            const targetNode = index.byId.get(id)!;
-            const element = viewportRef.current!.querySelector(
-              `#group-${CSS.escape(id)}`,
-            );
-            panZoom.centerOnElement(
-              element,
-              ZOOM_FOCUS_SCALE,
-              resolveInfoPanelObscuredArea(element, viewportRef.current, INFO_PANEL_WIDTH),
-            );
-            showNodeInfo(
-              targetNode,
-              element ?? viewportRef.current,
-              viewportRef.current,
-            );
-          }}
-          hideClose={hideInfoPanelClose}
-          hideTitle={hideInfoPanelTitle}
-          itemCountLabel={itemCountLabel}
-          readOnly={readOnly}
-          renderDangerZone={renderDangerZone}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          collapsed={collapsed}
-          hideExpandButton={hideExpandButton}
-          renderInfoPanelBody={renderInfoPanelBody}
-          actions={
-            showToolbar && !reparentingNodeId
-              ? {
-                  playingNodeId,
-                  playState,
-                  onPlayPause,
-                  onAddChild,
-                  onRenameRequest,
-                  onDeleteRequest,
-                  onReparentRequest,
-                  additionalActions,
-                }
-              : undefined
-          }
-        />
-      )}
-      {overlayPanel && <OverlayPanel {...overlayPanel} />}
 
       <FloatingControls
         panZoom={panZoom}

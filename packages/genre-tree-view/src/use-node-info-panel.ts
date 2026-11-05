@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GenreTreeNode } from "./types";
-import { resolveInfoPanelSide } from "./info-panel-geometry";
 
 export interface NodeInfoPanelState {
   node: GenreTreeNode;
-  side: "left";
 }
 
 export interface UseNodeInfoPanelOptions {
@@ -66,7 +64,7 @@ export function useNodeInfoPanel({
         return;
       }
       if (!element || !viewport) return;
-      setPanel({ node, side: resolveInfoPanelSide() });
+      setPanel({ node });
       const changed = node.id !== shownNodeIdRef.current;
       shownNodeIdRef.current = node.id;
       if (changed && notify) onSelectedNodeChangeRef.current?.(node);

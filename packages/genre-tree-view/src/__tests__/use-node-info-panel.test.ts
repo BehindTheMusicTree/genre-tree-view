@@ -18,33 +18,6 @@ describe("useNodeInfoPanel", () => {
     expect(result.current.panel).toBeNull();
   });
 
-  it("opens the panel for a clicked node, resolving its side from the element/viewport rects", () => {
-    const { result } = renderHook(() => useNodeInfoPanel());
-    const viewport = elementAt(0);
-    const element = elementAt(400);
-
-    act(() => {
-      result.current.showNodeInfo(nodeA, element, viewport);
-    });
-
-    expect(result.current.panel).toEqual({ node: nodeA, side: "left" });
-  });
-
-  it("switches to a different node's content without closing", () => {
-    const { result } = renderHook(() => useNodeInfoPanel());
-    const viewport = elementAt(0);
-
-    act(() => {
-      result.current.showNodeInfo(nodeA, elementAt(400), viewport);
-    });
-    expect(result.current.panel).toEqual({ node: nodeA, side: "left" });
-
-    act(() => {
-      result.current.showNodeInfo(nodeB, elementAt(100), viewport);
-    });
-    expect(result.current.panel).toEqual({ node: nodeB, side: "left" });
-  });
-
   it("closes only via closeNodeInfo", () => {
     const { result } = renderHook(() => useNodeInfoPanel());
     const viewport = elementAt(0);
