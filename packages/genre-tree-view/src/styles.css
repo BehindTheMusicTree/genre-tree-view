@@ -264,59 +264,22 @@ text.gtv-node-label {
   gap: 0.5rem;
 }
 
-/* Top-centre: the top corners belong to the host (search + panel on the left, app chrome on the
-   right), and the trail sits right above the wheel it describes. */
-.gtv-wheel-breadcrumb {
+/* Placement only: the card itself is `Breadcrumb` from @behindthemusictree/ui. Top-centre: the
+   top corners belong to the host (search + panel on the left, app chrome on the right), and the
+   trail sits right above the wheel it describes. `nav.` outranks the card's own `max-w-full`. */
+nav.gtv-wheel-breadcrumb {
   position: absolute;
   top: 0.75rem;
   left: 50%;
   z-index: 10;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
   max-width: calc(100% - 24px);
-  box-sizing: border-box;
-  overflow: hidden;
-  white-space: nowrap;
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-  color: var(--gtv-text-muted, var(--color-text-muted, #52525b));
-  background: var(--gtv-surface, var(--color-surface, #ffffff));
-  border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
-  border-radius: 0.5rem;
-  filter: drop-shadow(0 2px 6px rgba(24, 24, 27, 0.16));
-}
-
-.gtv-wheel-breadcrumb-crumb {
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.gtv-wheel-breadcrumb-crumb:hover {
-  text-decoration: underline;
-}
-
-.gtv-wheel-breadcrumb-home {
-  display: flex;
-  align-items: center;
-}
-
-.gtv-wheel-breadcrumb-current {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-  color: var(--gtv-text, var(--color-text, #18181b));
 }
 
 /* Narrow hosts float their own controls over the top edge, so the trail moves to the bottom-left,
    clear of the bottom-right zoom controls and within thumb reach. */
 @container (max-width: 767px) {
-  .gtv-wheel-breadcrumb {
+  nav.gtv-wheel-breadcrumb {
     top: auto;
     bottom: 0.75rem;
     left: 0.75rem;
@@ -330,7 +293,7 @@ text.gtv-node-label {
    on a touch screen the buttons grow to the 44px touch target (~144px card), so widen the strip. */
 @container (max-width: 767px) {
   @media (pointer: coarse) {
-    .gtv-wheel-breadcrumb {
+    nav.gtv-wheel-breadcrumb {
       max-width: calc(100% - 176px);
     }
   }
