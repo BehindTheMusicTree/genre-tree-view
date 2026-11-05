@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Requires `@behindthemusictree/ui` ^0.17.0 (was ^0.16.0).
 - The wheel breadcrumb is now the shared `Breadcrumb` from `@behindthemusictree/ui` (>=0.17.0), so the tree and the region map share one trail. Clicking its current item centers on the focused genre and opens its info panel (notifying `onSelectedNodeChange`). `.gtv-wheel-breadcrumb` now only places the trail.
 
 ### Fixed

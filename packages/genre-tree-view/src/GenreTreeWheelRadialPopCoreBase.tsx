@@ -1308,7 +1308,7 @@ export function WheelRadialPopCoreCore({
                     width: centerChipDiameter,
                     "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
                     "--gtv-chip-color": centerNodeColor,
-                    ...(panel?.node.id === centerNode.id && {
+                    ...((panel?.node.id === centerNode.id || panel?.node.id === focusNodeId) && {
                       borderColor: ACCENT_COLOR,
                       borderWidth: calculateSelectedNodeBorderWidth(centerChipDiameter / 2),
                     }),
