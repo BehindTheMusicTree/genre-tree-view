@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [8.0.0] - 2026-11-05
+
 ### Breaking
 
 - The tree no longer renders a detail panel: `InfoPanel`, `OverlayPanel` and the props `renderInfoPanelBody`, `hideInfoPanelClose`, `hideInfoPanelTitle`, `readOnly`, `renderDangerZone`, `expanded`, `onExpandedChange`, `collapsed`, `hideExpandButton`, `overlayPanel`, `itemCountLabel`, `showToolbar` are removed, along with the `GenreTreeOverlayPanel`, `InfoPanelBody`, `InfoPanelSections` and `InfoPanelProps` types and the focus-history ("Previous") hook. Hosts mount `DetailPanel` from `@behindthemusictree/ui` as a sibling.
