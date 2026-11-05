@@ -610,6 +610,19 @@ describe("renderPopSubtree onNodeClick", () => {
     );
   });
 
+  it("gives dot labels a contrast halo that follows the font size and the hover fill", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    const label = svg.select<SVGTextElement>("text.gtv-node-label");
+    expect(label.attr("stroke")).toBe("#ffffff");
+    expect(label.style("stroke-width")).toBe("0.16em");
+    expect(svg.select<SVGGElement>("g.node").style("--gtv-node-hover-halo")).toBe("#ffffff");
+  });
+
   // A click's pan/zoom glide would otherwise move the label before the second click lands.
   it("skips the click action when a double-click follows it", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);
@@ -1065,5 +1078,19 @@ describe("computePopRadialLayout stretch cap", () => {
   it("keeps the capped layout centered on the wedge center", () => {
     const a = angles(170);
     expect(((Math.max(...a) + Math.min(...a)) / 2) * (180 / Math.PI)).toBeCloseTo(90, 6);
+  });
+});
+
+describe("renderRootLabels hover colors", () => {
+  it("exposes the chip color and its contrast halo for the hover rule, like dot labels", () => {
+    const svg = createSvg();
+    renderRootLabels(svg, [
+      { id: "a", name: "A", x: 0, y: 0, radius: 5, itemCount: 1, fill: "#1d4ed8" },
+      { id: "b", name: "B", x: 0, y: 0, radius: 5, itemCount: 1 },
+    ]);
+    const [a, b] = svg.selectAll<SVGGElement, unknown>("g.gtv-root-label").nodes();
+    expect(a.style.getPropertyValue("--gtv-node-fill")).toBe("#1d4ed8");
+    expect(a.style.getPropertyValue("--gtv-node-hover-halo")).toBe("#ffffff");
+    expect(b.style.getPropertyValue("--gtv-node-fill")).toBe("#18181B");
   });
 });

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildWheelSectorGradient,
   calculateWheelRadius,
   computeRotationForSelection,
   getChipAngle,
@@ -34,25 +33,6 @@ describe("getWheelDividerAngle", () => {
 
   it("wraps the last divider back toward the first chip", () => {
     expect(getWheelDividerAngle(2, 3)).toBe(300);
-  });
-});
-
-describe("buildWheelSectorGradient", () => {
-  it("returns an empty string for fewer than 2 colors, matching the no-dividers-for-1-root rule", () => {
-    expect(buildWheelSectorGradient([])).toBe("");
-    expect(buildWheelSectorGradient(["red"])).toBe("");
-  });
-
-  it("builds hard color stops spanning the full circle, starting from the last divider", () => {
-    const gradient = buildWheelSectorGradient(["red", "green", "blue", "yellow"]);
-    expect(gradient).toBe(
-      "conic-gradient(from 315deg, red 0deg 90deg, green 90deg 180deg, blue 180deg 270deg, yellow 270deg 360deg)",
-    );
-  });
-
-  it("starts at the divider bisecting the last and first chips regardless of count", () => {
-    const gradient = buildWheelSectorGradient(["a", "b", "c"]);
-    expect(gradient).toContain(`from ${getWheelDividerAngle(2, 3)}deg`);
   });
 });
 

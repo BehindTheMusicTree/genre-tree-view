@@ -142,8 +142,9 @@ pnpm workspace with two members:
     `GenreTreeWheelRadialPopCoreBase.tsx` offers "Zoom in" on every zoomable node's info panel (which stays open on the zoomed node),
     the same zoom on a node or chip double-click — or double-tap, which `defer-click.ts` detects itself as a second
     click on the same target within `DOUBLE_CLICK_DELAY_MS`, since touch browsers don't reliably fire `dblclick` — and,
-    while focused, `WheelBreadcrumb.tsx`: one top-centre trail (bottom-left in narrow containers) of a Home crumb,
-    every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. A selection outside the current frame refocuses on its top-level root (the whole tree
+    while focused, the `@behindthemusictree/ui` `Breadcrumb` (placed by `.gtv-wheel-breadcrumb`): one top-centre trail
+    (bottom-left in narrow containers) of a Home crumb, every zoomable ancestor view (the middle collapses behind "…" past
+    three) and the current view, which opens its info panel. A selection outside the current frame refocuses on its top-level root (the whole tree
     for Mainstream Pop's lineage or a root itself).
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and

@@ -1,18 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LABEL_CHAR_WIDTH_RATIO } from "@behindthemusictree/ui";
+import { Breadcrumb, LABEL_CHAR_WIDTH_RATIO, labelHaloColor } from "@behindthemusictree/ui";
+import { LABEL_HALO_STROKE_EM } from "./label-halo-style";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
 import { GenreTreeRootGroup, groupNodesByRoot } from "./root-grouping";
 import { useTreeIndex } from "./use-tree-index";
+import { WheelBackdrop } from "./WheelBackdrop";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
   buildCoreHierarchy,
   calculateCoreSubtreeRadialExtent,
   computeCoreRadialLayout,
+  computeUndergroundSceneSpans,
 } from "./core-radial-layout";
 import {
   buildPopHierarchy,
@@ -32,10 +35,8 @@ import {
   type RootLabelDatum,
 } from "./pop-core-radial-layout";
 import {
-  buildSectorClipPathPolygon,
   computeRadialLayout,
   computeSectorWidths,
-  coverageRadius,
   findSectorAtAngle,
   pickEmptyLabelSpot,
   RadialSlot,
@@ -47,7 +48,6 @@ import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
-import { WheelBreadcrumb } from "./WheelBreadcrumb";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -622,18 +622,49 @@ export function WheelRadialPopCoreCore({
     [coreRootCircleRadius, maxCoreExtentDelta],
   );
 
-  // Reach of the dividers, sector washes and underground arcs: bounded by what can be on screen,
-  // not "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
-  // Null until the viewport is first measured (those elements then wait to be drawn/sized).
-  const { viewportSize, minScale } = panZoom;
-  const wheelCoverageRadius = viewportSize
-    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, svgCanvasRadius)
-    : null;
-  const wheelCoverageRadiusRef = useRef(wheelCoverageRadius);
-  // Declared before the render effect that draws the arcs so effects see the current value.
-  useEffect(() => {
-    wheelCoverageRadiusRef.current = wheelCoverageRadius;
-  }, [wheelCoverageRadius]);
+  // Each core branch laid out once: the render effect draws it, and the backdrop's underground
+  // scenes read their angular spans from the same layout.
+  const coreLayoutsByRootId = useMemo(() => {
+    const map = new Map<string, { laidOut: ReturnType<typeof computeCoreRadialLayout>; angle: number; span: number }[]>();
+    coreHierarchyByRootId.forEach((branches, rootId) => {
+      map.set(
+        rootId,
+        branches.map(({ hierarchy, angle, span }) => ({
+          laidOut: computeCoreRadialLayout(
+            d3,
+            hierarchy,
+            angle,
+            span,
+            coreRootCircleRadius,
+            POP_TREE_DEPTH_RADIAL_SPACING,
+            wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
+          ),
+          angle,
+          span,
+        })),
+      );
+    });
+    return map;
+  }, [coreHierarchyByRootId, coreRootCircleRadius, wheelItemCountRange.maxDotRadius]);
+
+  const undergroundScenes = useMemo(
+    () =>
+      [...coreLayoutsByRootId].flatMap(([rootId, branches]) =>
+        branches.flatMap(({ laidOut, angle, span }) =>
+          computeUndergroundSceneSpans(laidOut, angle, span).map(({ id, startDeg, endDeg }) => ({
+            key: `${rootId}-${id}`,
+            startDeg,
+            endDeg,
+            fill: shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO),
+            fillOpacity: UNDERGROUND_SECTOR_FILL_OPACITY,
+          })),
+        ),
+      ),
+    [coreLayoutsByRootId, index],
+  );
+
+  const { viewportSize, subscribeView } = panZoom;
+  const stageAnchorRef = useRef<HTMLDivElement>(null);
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
   // marker — the subtree itself renders inside this circle (see computeCenterRadialLayout below),
@@ -751,22 +782,15 @@ export function WheelRadialPopCoreCore({
         .attr("class", "gtv-wheel-core-sector")
         .attr("data-gtv-root-id", rootId);
 
-      branches.forEach(({ hierarchy, angle, span }, branchIndex) => {
+      const coreBranches = coreLayoutsByRootId.get(rootId) ?? [];
+      branches.forEach(({ hierarchy }, branchIndex) => {
         const undergroundIds = new Set(
           hierarchy
             .descendants()
             .filter((d) => d.ancestors().some((a) => a.data.scene === "underground"))
             .map((d) => d.data.id),
         );
-        const laidOut = computeCoreRadialLayout(
-          d3,
-          hierarchy,
-          angle,
-          span,
-          coreRootCircleRadius,
-          POP_TREE_DEPTH_RADIAL_SPACING,
-          wheelItemCountRange.maxDotRadius ?? NODE_LAYOUT_SLOT_RADIUS,
-        );
+        const { laidOut } = coreBranches[branchIndex]!;
         const reparentForbiddenIds = reparentingNodeId
           ? (laidOut
               .descendants()
@@ -774,42 +798,6 @@ export function WheelRadialPopCoreCore({
               ?.descendants()
               .map((d) => d.data.id) ?? [])
           : [];
-
-        const angleOf = (d: d3.HierarchyNode<GenreTreeNode>) => {
-          const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
-          return angle + ((((deg - angle + 540) % 360) + 360) % 360) - 180;
-        };
-        const subtreeRange = (d: d3.HierarchyNode<GenreTreeNode>) => {
-          const angles = d.descendants().map(angleOf);
-          return { min: Math.min(...angles), max: Math.max(...angles) };
-        };
-        laidOut
-          .descendants()
-          .filter((d) => d.data.scene === "underground" && !d.ancestors().slice(1).some((a) => a.data.scene === "underground"))
-          .forEach((ug) => {
-            const mine = subtreeRange(ug);
-            const siblings = ug.parent?.children ?? [];
-            const at = siblings.indexOf(ug);
-            const prev = at > 0 ? siblings[at - 1] : undefined;
-            const next = at >= 0 ? siblings[at + 1] : undefined;
-            const startDeg = prev ? (subtreeRange(prev).max + mine.min) / 2 : angle - span / 2;
-            const endDeg = next ? (mine.max + subtreeRange(next).min) / 2 : angle + span / 2;
-            const startAngle = (startDeg * Math.PI) / 180;
-            const endAngle = (endDeg * Math.PI) / 180;
-            sectorGroup
-              .append("path")
-              .attr("class", "gtv-wheel-scene-sector")
-              .attr("data-start-angle", startAngle)
-              .attr("data-end-angle", endAngle)
-              .attr("d", d3.arc()({
-                innerRadius: coreRootCircleRadius,
-                outerRadius: wheelCoverageRadiusRef.current ?? svgCanvasRadius,
-                startAngle,
-                endAngle,
-              }))
-              .attr("fill", shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO))
-              .attr("fill-opacity", UNDERGROUND_SECTOR_FILL_OPACITY);
-          });
 
         const branchGroup = sectorGroup
           .append("g")
@@ -957,6 +945,7 @@ export function WheelRadialPopCoreCore({
           y,
           radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
           itemCount,
+          fill: getGenreNodeStyle(index, group.root.id).fill,
         };
       }),
     ]);
@@ -965,8 +954,6 @@ export function WheelRadialPopCoreCore({
     originGroup
       .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
       .select("text")
-      .style("pointer-events", "all")
-      .style("cursor", "pointer")
       .on("click", (_event, d) => {
         const chip =
           d.id === centerNode.id
@@ -984,6 +971,7 @@ export function WheelRadialPopCoreCore({
     index,
     popHierarchyByRootId,
     coreHierarchyByRootId,
+    coreLayoutsByRootId,
     coreRootCircleRadius,
     svgCanvasRadius,
     mainstreamCircleRadius,
@@ -1005,22 +993,6 @@ export function WheelRadialPopCoreCore({
     wheelItemCountRange,
     panel?.node.id,
   ]);
-
-  // Re-sizes the underground arcs when the coverage radius changes (viewport resize, relaxed
-  // min scale) without re-mounting the tree in the render effect above.
-  useEffect(() => {
-    if (!popSvgRef.current || wheelCoverageRadius === null) return;
-    d3.select(popSvgRef.current)
-      .selectAll<SVGPathElement, unknown>("path.gtv-wheel-scene-sector")
-      .attr("d", function () {
-        return d3.arc()({
-          innerRadius: coreRootCircleRadius,
-          outerRadius: wheelCoverageRadius,
-          startAngle: Number(this.getAttribute("data-start-angle")),
-          endAngle: Number(this.getAttribute("data-end-angle")),
-        });
-      });
-  }, [wheelCoverageRadius, coreRootCircleRadius]);
 
   // Re-places dot labels once a zoom gesture settles, so the set of named nodes follows the zoom
   // like place names on a map — kept out of the render effect above, which must not re-mount on zoom.
@@ -1139,17 +1111,27 @@ export function WheelRadialPopCoreCore({
     if (allowWheelRotation) setRotationTopRootId(rootId);
   };
 
+  // The center (and the focus node, which isn't drawn when its pop child is the center) has no
+  // `#group-` element: its chip stands in for it.
+  const nodeElement = (id: string) =>
+    id === centerNode.id || id === focusNodeId
+      ? centerChipRef.current
+      : viewportRef.current?.querySelector(`#group-${CSS.escape(id)}`);
+
+  // Centers the viewport on a drawn node and opens its info panel, as a direct click would.
+  const selectNode = (id: string, { automatic = false, notify = true } = {}) => {
+    const node = index.byId.get(id);
+    const element = nodeElement(id);
+    if (!node || !element) return;
+    panZoom.centerOnElement(element, ZOOM_FOCUS_SCALE, automatic);
+    showNodeInfo(node, element, viewportRef.current, { notify });
+  };
+
   // Mirrors the onNodeClick/onSelectNode handling below: once the node's sector is mounted, center the viewport on the
   // externally-selected node and open its info panel exactly as a direct click would.
   useEffect(() => {
     if (!selectedNodeId || openPanel?.node.id === selectedNodeId) return;
-    const targetNode = index.byId.get(selectedNodeId);
-    if (
-      targetNode &&
-      onFocusChange &&
-      !centerSubtreeNodeIds.has(selectedNodeId) &&
-      !ringRootById.has(selectedNodeId)
-    ) {
+    if (onFocusChange && index.byId.has(selectedNodeId) && !isInFrame(selectedNodeId)) {
       // Outside the current zoom (e.g. a search result): refocus on its top-level root, whose frame
       // holds its whole subtree (the whole tree for Mainstream Pop's lineage or a root itself);
       // this effect re-runs once the new frame is drawn.
@@ -1157,44 +1139,35 @@ export function WheelRadialPopCoreCore({
       onFocusChange(root && root.name !== CENTER_NODE_NAME && isZoomableNode(nodes, root.id) ? root.id : null, "search");
       return;
     }
-    const element = viewportRef.current?.querySelector(
-      `#group-${CSS.escape(selectedNodeId)}`,
-    );
-    if (!targetNode || !element) return;
-    panZoom.centerOnElement(
-      element,
-      ZOOM_FOCUS_SCALE,
-      true,
-    );
-    showNodeInfo(targetNode, element, viewportRef.current, { notify: false });
+    selectNode(selectedNodeId, { automatic: true, notify: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom re-created on pan/zoom; guarded by the openPanel?.node.id check above
-  }, [selectedNodeId, index, openPanel, showNodeInfo, centerSubtreeNodeIds, ringRootById]);
+  }, [selectedNodeId, index, openPanel, showNodeInfo, centerSubtreeNodeIds, ringRootById, focusNodeId]);
 
   // One divider per boundary between two angularly-adjacent ring roots — see WheelRadialCore's own
   // copy of this computation for why each root's own continuous angle plus half its
   // weight-proportional width (sectorSpanByRootId) lands exactly on the boundary with its next
   // neighbor.
-  const dividerAngles = useMemo(() => {
+  const dividers = useMemo(() => {
     if (groups.length <= 1) return [];
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
       const width = sectorSpanByRootId.get(group.root.id) ?? 0;
-      return angle + width / 2;
+      return { key: group.root.id, angleDeg: angle + width / 2 };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
   // One tinted sector fan per root, bounded by its own weight-proportional width — see
   // WheelRadialCore's own copy of this computation, and computeSectorWidths's doc comment.
-  const sectorFills = useMemo(() => {
+  const backdropSectors = useMemo(() => {
     if (groups.length <= 1) return [];
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
       const width = sectorSpanByRootId.get(group.root.id) ?? 0;
       return {
-        rootId: group.root.id,
-        start: angle - width / 2,
-        clipPath: buildSectorClipPathPolygon(width),
-        color: hexToRgba(
+        key: group.root.id,
+        startDeg: angle - width / 2,
+        endDeg: angle + width / 2,
+        fill: hexToRgba(
           getGenreNodeColor(index, group.root.id),
           ROOT_SECTOR_FILL_OPACITY,
         ),
@@ -1217,7 +1190,6 @@ export function WheelRadialPopCoreCore({
         {
           "--gtv-wheel-radius": `${coreRootCircleRadius}px`,
           "--gtv-wheel-svg-radius": `${svgCanvasRadius}px`,
-          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
           touchAction: panZoom.touchAction,
@@ -1225,6 +1197,16 @@ export function WheelRadialPopCoreCore({
       }
       onPointerDown={panZoom.handlePointerDown}
     >
+      <WheelBackdrop
+        subscribeView={subscribeView}
+        viewportSize={viewportSize}
+        pivotRef={stageAnchorRef}
+        sectors={backdropSectors}
+        scenes={undergroundScenes}
+        innerSceneRadius={coreRootCircleRadius}
+        dividers={dividers}
+        layoutKey={coreRootCircleRadius}
+      />
       <div
         ref={stageRef}
         style={{
@@ -1237,7 +1219,7 @@ export function WheelRadialPopCoreCore({
           transformOrigin: "0 0",
         }}
       >
-        <div className="gtv-wheel-stage">
+        <div className="gtv-wheel-stage" ref={stageAnchorRef}>
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
 
           {isPopExpanded && (
@@ -1251,25 +1233,10 @@ export function WheelRadialPopCoreCore({
             />
           )}
 
-          {/* Sector wash + inner tint sit in their own .gtv-wheel layer, rendered before the node
-              svg below, so they paint under the developed nodes instead of dulling them — see the
-              second .gtv-wheel layer (after the svg) for the dividers/chips, which stay above the
-              nodes. */}
+          {/* Inner/middle tints sit in their own .gtv-wheel layer, rendered before the node svg
+              below, so they paint under the developed nodes instead of dulling them. The sector
+              washes, underground rings and dividers live in the WheelBackdrop behind the stage. */}
           <div className="gtv-wheel">
-            {sectorFills.map((sector) => (
-              <div
-                key={`sector-${sector.rootId}`}
-                className="gtv-wheel-sector"
-                style={
-                  {
-                    "--gtv-sector-angle": `${sector.start}deg`,
-                    "--gtv-sector-color": sector.color,
-                    clipPath: sector.clipPath,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-
             <div className="gtv-wheel-inner-tint" />
 
             {isPopExpanded && (
@@ -1308,7 +1275,7 @@ export function WheelRadialPopCoreCore({
                     width: centerChipDiameter,
                     "--gtv-wheel-chip-base-height": `${centerChipDiameter}px`,
                     "--gtv-chip-color": centerNodeColor,
-                    ...(panel?.node.id === centerNode.id && {
+                    ...((panel?.node.id === centerNode.id || panel?.node.id === focusNodeId) && {
                       borderColor: ACCENT_COLOR,
                       borderWidth: calculateSelectedNodeBorderWidth(centerChipDiameter / 2),
                     }),
@@ -1335,18 +1302,6 @@ export function WheelRadialPopCoreCore({
           </div>
 
           <div className="gtv-wheel">
-            {dividerAngles.map((angle, index) => (
-              <div
-                key={`divider-${groups[index].root.id}`}
-                className="gtv-wheel-divider"
-                style={
-                  {
-                    "--gtv-divider-angle": `${angle}deg`,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-
             {groups.map((group, groupIndex) => {
               const slot = layout[groupIndex];
               const root = index.byId.get(group.root.id)!;
@@ -1417,6 +1372,8 @@ export function WheelRadialPopCoreCore({
                 "--gtv-region-label-y": `${regionLabel.y}px`,
                 "--gtv-region-label-size": `${regionLabel.fontSize}px`,
                 "--gtv-region-label-color": getGenreNodeColor(index, regionLabel.rootId),
+                "--gtv-region-label-halo-width": LABEL_HALO_STROKE_EM,
+                "--gtv-region-label-halo": labelHaloColor(getGenreNodeColor(index, regionLabel.rootId)),
               } as React.CSSProperties
             }
           >
@@ -1427,18 +1384,24 @@ export function WheelRadialPopCoreCore({
 
 
       {onFocusChange && focusNodeId !== null && (
-        <WheelBreadcrumb
-          key={focusNodeId}
-          ancestors={index.ancestorsOf(focusNodeId).filter((ancestor) => isZoomableNode(nodes, ancestor.id))}
-          currentName={index.byId.get(focusNodeId)?.name}
-          onHome={() => {
-            closeNodeInfo();
-            onFocusChange(null, "root");
+        <Breadcrumb
+          className="gtv-wheel-breadcrumb"
+          home={{
+            label: "All genres",
+            onSelect: () => {
+              closeNodeInfo();
+              onFocusChange(null, "root");
+            },
           }}
-          onAncestor={(id) => {
+          items={[
+            ...index.ancestorsOf(focusNodeId).filter((ancestor) => isZoomableNode(nodes, ancestor.id)),
+            ...(index.byId.has(focusNodeId) ? [index.byId.get(focusNodeId)!] : []),
+          ].map(({ id, name }) => ({ id, label: name }))}
+          onSelect={(id) => {
             closeNodeInfo();
             onFocusChange(id, "back");
           }}
+          onSelectCurrent={reparentingNodeId ? undefined : () => selectNode(focusNodeId)}
         />
       )}
 

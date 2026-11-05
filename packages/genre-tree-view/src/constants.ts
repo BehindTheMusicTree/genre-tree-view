@@ -91,8 +91,7 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
   return `#${toHex(mix(channel(1)))}${toHex(mix(channel(3)))}${toHex(mix(channel(5)))}`;
 }
 
-// Opacity of a wheel view's per-root background sector fill (see buildWheelSectorGradient /
-// buildSectorClipPathPolygon) — light enough to read as a wash behind chips/dividers/subtrees
+// Opacity of a wheel view's per-root background sector fill (drawn by WheelBackdrop) — light enough to read as a wash behind chips/dividers/subtrees
 // rather than competing with them for attention.
 export const ROOT_SECTOR_FILL_OPACITY = 0.15;
 

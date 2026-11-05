@@ -5,9 +5,41 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Sector boundaries (notably the electronic underground/EDM edge) no longer stair-step while panning or zooming.
+
 ### Changed
 
 - Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+
+- Sector washes, underground scenes and dividers are drawn in one viewport-sized SVG (`.gtv-wheel-backdrop`) outside the pan/zoom stage, so no compositing layer exceeds the screen at any zoom. Dividers now sit under the nodes and run along the sector edge (the old CSS ones pointed 180° off).
+- Removed `.gtv-wheel-sector`, `.gtv-wheel-sector-fill`, `.gtv-wheel-divider` and the `--gtv-wheel-coverage-radius` variable.
+
+## [8.2.0] - 2026-11-05
+
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.17.0 (was ^0.16.0).
+- The wheel breadcrumb is now the shared `Breadcrumb` from `@behindthemusictree/ui` (>=0.17.0), so the tree and the region map share one trail. Clicking its current item centers on the focused genre and opens its info panel (notifying `onSelectedNodeChange`). `.gtv-wheel-breadcrumb` now only places the trail.
+
+### Fixed
+
+- Selecting the focused genre or the center genre through `selectedNodeId` opens its info panel instead of refocusing the wheel or doing nothing.
+
+### Removed
+
+- `.gtv-wheel-breadcrumb-crumb`, `-home` and `-current`, and the breadcrumb's `--gtv-*` colour overrides: the card's look now comes from `@behindthemusictree/ui`.
+
+## [8.1.0] - 2026-11-05
+
+### Added
+
+- Labels get a contrast halo: black behind light text, white behind dark text, with a thickness proportional to the font size. Requires `@behindthemusictree/ui` with `labelHalo` (>=0.16.0).
+
+### Fixed
+
+- Hovering a node, a node label or a root label now shows the pointer cursor (`not-allowed` on forbidden reparent targets) instead of the text cursor or arrow.
 
 ### Removed
 

@@ -30,6 +30,7 @@ import {
   ItemCountRange,
   tintSurface,
 } from "./constants";
+import { htmlLabelHaloStyle } from "./label-halo-style";
 import { addGrid } from "./d3-helper/d3-grid-helper";
 import {
   appendPaths,
@@ -601,7 +602,7 @@ export function renderTree(
           ? ACCENT_TEXT_COLOR
           : TEXT_COLOR;
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
-      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px">${d.data.name}</div>`;
+      return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px;${htmlLabelHaloStyle(color)}">${d.data.name}</div>`;
     });
 
   nodes.each(function (d: D3Node) {

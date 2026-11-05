@@ -88,46 +88,6 @@ export function bisectAngles(a: number, b: number): number {
   return (a + adjustedB) / 2;
 }
 
-/** Radius (px, in stage coordinates) the wheel's boundary elements (dividers, sector washes,
- * underground arc) must reach from the pivot to cover everything that can ever be on screen:
- * the pan clamp keeps some of the content's axis-aligned bounding box visible, whose far corner is
- * up to `contentRadius * SQRT2` from the pivot, so the pivot can sit at most that far from the
- * visible area, and at `minScale` the viewport spans `hypot(width, height) / minScale` stage
- * pixels. Sizing these elements to that bound instead of a fixed "infinity" keeps the stage's
- * composited layer small enough to be rasterized at full resolution while it is dragged. */
-export function coverageRadius(
-  viewportWidth: number,
-  viewportHeight: number,
-  minScale: number,
-  contentRadius: number,
-): number {
-  if (!(minScale > 0)) throw new Error("coverageRadius: minScale must be positive");
-  return Math.ceil(contentRadius * Math.SQRT2 + Math.hypot(viewportWidth, viewportHeight) / minScale);
-}
-
-/** `clip-path: polygon(...)` value for a filled circular-sector fan spanning `[0, sweepDeg]`,
- * measured clockwise from local "up" (CSS `rotate()` convention) — meant for a huge square element
- * centered on the wheel's pivot (same oversized-element + `.gtv-wheel-container` overflow: hidden
- * clipping trick as `.gtv-wheel-divider`), then rotated to its sector's own start angle via
- * `transform: rotate()`, same as a divider line. Interpolates a point every `stepDeg` (default 10)
- * around the arc rather than just the two end rays: a naive 3-point triangle (center + two far
- * points) chord-clips away the middle of any sector wider than ~180 degrees, which every root gets
- * when there are only 2. Radius 50% (of the element's own box) reaches that huge element's edge,
- * same as the box being exactly 2x oversized in every direction from center. Empty string (no
- * shape / nothing rendered) for a non-positive sweep. */
-export function buildSectorClipPathPolygon(sweepDeg: number, stepDeg = 10): string {
-  if (sweepDeg <= 0) return "";
-  const points: string[] = ["50% 50%"];
-  const steps = Math.max(1, Math.ceil(sweepDeg / stepDeg));
-  for (let i = 0; i <= steps; i++) {
-    const theta = (Math.min(i * stepDeg, sweepDeg) * Math.PI) / 180;
-    const x = 50 + 50 * Math.sin(theta);
-    const y = 50 - 50 * Math.cos(theta);
-    points.push(`${x}% ${y}%`);
-  }
-  return `polygon(${points.join(", ")})`;
-}
-
 /** Start/end angle (continuous, CSS `rotate()` convention — may exceed 360 or go negative, same as
  * `continuousAngleByRootId`) of the sector belonging to the root at `index` in `continuousAngles`
  * (ring order). Both bounds are computed anchored on that root's own continuous angle (`bisectAngles(mine, neighbor)`,
