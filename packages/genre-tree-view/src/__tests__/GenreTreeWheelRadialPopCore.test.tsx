@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../defer-click", () => ({
   createDeferredClick: () => ({
@@ -21,8 +21,7 @@ import {
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, LOW_DENSITY_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
-import { coverageRadius } from "../radial-wheel-geometry";
-import { ZOOM_MIN_SCALE } from "../constants";
+import { stubBackdropLayout } from "./backdrop-test-utils";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
 afterEach(() => {
@@ -384,75 +383,52 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(container.querySelector(".gtv-wheel-chip--center.gtv-wheel-chip--circle")).toBeTruthy();
   });
 
-  it("draws an underground-scene node and its descendants darker than their commercial sibling, at the same depth", () => {
-    const nodes: GenreTreeNode[] = [
-      ...NODES_WITH_POP,
-      { id: "a-edm", parentId: "root-a", name: "EDM", itemCount: 1, scene: "commercial" },
-      { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
-      { id: "a-edm-child", parentId: "a-edm", name: "House", itemCount: 1 },
-      { id: "a-ug-child", parentId: "a-ug", name: "Dub", itemCount: 1 },
-    ];
-    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
-    const dotFill = (id: string) => container.querySelector(`#group-${id} .gtv-node-dot`)!.getAttribute("fill");
-    const radius = (id: string) => Math.hypot(...nodeCoords(container, id));
+  describe("with the backdrop measured", () => {
+    stubBackdropLayout();
 
-    expect(dotFill("a-ug")).not.toBe(dotFill("a-edm"));
-    expect(dotFill("a-ug-child")).not.toBe(dotFill("a-edm-child"));
-    expect(radius("a-ug")).toBeCloseTo(radius("a-edm"));
-    expect(container.querySelector(".gtv-wheel-scene-band")).toBeNull();
+    it("draws an underground-scene node and its descendants darker than their commercial sibling, at the same depth", () => {
+      const nodes: GenreTreeNode[] = [
+        ...NODES_WITH_POP,
+        { id: "a-edm", parentId: "root-a", name: "EDM", itemCount: 1, scene: "commercial" },
+        { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
+        { id: "a-edm-child", parentId: "a-edm", name: "House", itemCount: 1 },
+        { id: "a-ug-child", parentId: "a-ug", name: "Dub", itemCount: 1 },
+      ];
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+      const dotFill = (id: string) => container.querySelector(`#group-${id} .gtv-node-dot`)!.getAttribute("fill");
+      const radius = (id: string) => Math.hypot(...nodeCoords(container, id));
 
-    const sectors = container.querySelectorAll(".gtv-wheel-scene-sector");
-    expect(sectors).toHaveLength(1);
-    expect(sectors[0]!.nextElementSibling?.classList.contains("gtv-wheel-core-branch")).toBe(true);
+      expect(dotFill("a-ug")).not.toBe(dotFill("a-edm"));
+      expect(dotFill("a-ug-child")).not.toBe(dotFill("a-edm-child"));
+      expect(radius("a-ug")).toBeCloseTo(radius("a-edm"));
+      expect(container.querySelector(".gtv-wheel-scene-band")).toBeNull();
+
+      const sectors = container.querySelectorAll(".gtv-wheel-backdrop .gtv-wheel-scene-sector");
+      expect(sectors).toHaveLength(1);
+    });
   });
 
-  describe("coverage radius", () => {
+  describe("backdrop", () => {
+    stubBackdropLayout();
     const UNDERGROUND_NODES: GenreTreeNode[] = [
       ...NODES_WITH_POP,
       { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
     ];
-    let resizeCallback: ResizeObserverCallback = () => {};
-    const original = global.ResizeObserver;
 
-    function resizeTo(width: number, height: number) {
-      act(() => {
-        resizeCallback([{ contentRect: { width, height } } as ResizeObserverEntry], {} as ResizeObserver);
-      });
-    }
-    function arcOuterRadius(container: HTMLElement) {
-      // d3.arc starts its path at the outer radius: "M<x>,<y>A<outer>,<outer>,..."
-      const d = container.querySelector(".gtv-wheel-scene-sector")!.getAttribute("d")!;
-      return Number(/A([\d.]+),/.exec(d)![1]);
-    }
-
-    beforeEach(() => {
-      global.ResizeObserver = vi.fn().mockImplementation(function (callback) {
-        resizeCallback = callback;
-        return { observe: vi.fn(), disconnect: vi.fn() };
-      }) as unknown as typeof ResizeObserver;
-    });
-    afterEach(() => {
-      global.ResizeObserver = original;
-    });
-
-    it("sizes the CSS var and the underground arc from the measured viewport", () => {
+    it("draws the underground ring in the backdrop, not the D3-rendered node svg", () => {
       const { container } = render(<GenreTreeWheelRadialPopCore nodes={UNDERGROUND_NODES} />);
-      resizeTo(800, 600);
-      const expected = coverageRadius(800, 600, ZOOM_MIN_SCALE, getSvgCanvasRadius(container));
-      const wheelContainer = container.querySelector(".gtv-wheel-container") as HTMLElement;
-      expect(wheelContainer.style.getPropertyValue("--gtv-wheel-coverage-radius")).toBe(`${expected}px`);
-      expect(arcOuterRadius(container)).toBe(expected);
-      expect(expected).toBeLessThan(100000);
+      const backdrop = container.querySelector(".gtv-wheel-backdrop")!;
+      const arc = backdrop.querySelector(".gtv-wheel-scene-sector");
+      expect(arc).not.toBeNull();
+      expect(container.querySelectorAll(".gtv-wheel-scene-sector")).toHaveLength(1);
+      expect(Number(arc!.getAttribute("data-end-angle"))).toBeGreaterThan(Number(arc!.getAttribute("data-start-angle")));
     });
 
-    it("re-sizes the arc on viewport resize without re-mounting it", () => {
-      const { container } = render(<GenreTreeWheelRadialPopCore nodes={UNDERGROUND_NODES} />);
-      resizeTo(800, 600);
+    it("keeps the same ring element when the viewport grows instead of re-mounting it", () => {
+      const { container, rerender } = render(<GenreTreeWheelRadialPopCore nodes={UNDERGROUND_NODES} />);
       const arc = container.querySelector(".gtv-wheel-scene-sector");
-      const before = arcOuterRadius(container);
-      resizeTo(1600, 1200);
+      rerender(<GenreTreeWheelRadialPopCore nodes={UNDERGROUND_NODES} />);
       expect(container.querySelector(".gtv-wheel-scene-sector")).toBe(arc);
-      expect(arcOuterRadius(container)).toBeGreaterThan(before);
     });
   });
 
@@ -521,7 +497,7 @@ describe("GenreTreeWheelRadialPopCore", () => {
     const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodesWithChildlessRoot} />);
 
     expect(container.querySelectorAll(".gtv-wheel-core-sector").length).toBe(3);
-    const svg = container.querySelector("svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 

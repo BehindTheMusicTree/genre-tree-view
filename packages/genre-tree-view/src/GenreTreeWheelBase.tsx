@@ -7,16 +7,15 @@ import { GenreTree } from "./GenreTree";
 import { calculateRootAnchorClearance } from "./NodeHelper";
 import { findRootId, groupNodesByRoot } from "./root-grouping";
 import {
-  buildWheelSectorGradient,
   calculateWheelRadius,
   computeRotationForSelection,
   getChipAngle,
   getWheelDividerAngle,
 } from "./wheel-geometry";
-import { coverageRadius } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
+import { WheelBackdrop } from "./WheelBackdrop";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
@@ -161,12 +160,6 @@ export function WheelCore({
   const viewportFrame = useMemo(() => JSON.stringify(nodes.map(({ id, parentId, side }) => [id, parentId, side])), [nodes]);
   const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
 
-  // Reach of the dividers and sector washes: bounded by what can be on screen rather than
-  // "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
-  const { viewportSize, minScale } = panZoom;
-  const wheelCoverageRadius = viewportSize
-    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, wheelRadius)
-    : null;
   const { panel, showNodeInfo } = useNodeInfoPanel({ selectedNodeId, onSelectedNodeChange });
   // Fit-to-frame targets: the circle (not .gtv-wheel, which rotates and would inflate its own
   // axis-aligned bounding box) and the tree anchor (only mounted once a root is selected).
@@ -241,17 +234,24 @@ export function WheelCore({
       )
     : 0;
 
-  // Colors every root's chip index (i.e. getChipAngle(i, n)'s ordering) matches groups' own order,
-  // so each color stop lines up with the sector buildWheelSectorGradient carves out for it.
-  const sectorFillGradient = useMemo(
-    () =>
-      buildWheelSectorGradient(
-        groups.map((group) =>
-          hexToRgba(getGenreTreeColor(group.root.wikidataId), ROOT_SECTOR_FILL_OPACITY),
-        ),
-      ),
-    [groups],
-  );
+  // Chip i owns the sector between the dividers on either side of it (getWheelDividerAngle(i - 1)
+  // to getWheelDividerAngle(i)); no sectors or dividers below 2 roots.
+  const { backdropSectors, dividers } = useMemo(() => {
+    const n = groups.length;
+    if (n < 2) return { backdropSectors: [], dividers: [] };
+    return {
+      backdropSectors: groups.map((group, i) => ({
+        key: group.root.id,
+        startDeg: getWheelDividerAngle(i - 1, n),
+        endDeg: getWheelDividerAngle(i, n),
+        fill: hexToRgba(getGenreTreeColor(group.root.wikidataId), ROOT_SECTOR_FILL_OPACITY),
+      })),
+      dividers: groups.map((group, i) => ({
+        key: group.root.id,
+        angleDeg: getWheelDividerAngle(i, n),
+      })),
+    };
+  }, [groups]);
 
   const handleChipClick = (rootId: string, angle: number) => {
     setSelectedRootId(rootId);
@@ -320,7 +320,6 @@ export function WheelCore({
       style={
         {
           "--gtv-wheel-radius": `${wheelRadius}px`,
-          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-viewport-height": `${wheelViewportHeight}px`,
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
@@ -354,6 +353,14 @@ export function WheelCore({
             } as React.CSSProperties
           }
         >
+          <WheelBackdrop
+            subscribeView={panZoom.subscribeView}
+            viewportSize={panZoom.viewportSize}
+            sectors={backdropSectors}
+            dividers={dividers}
+            rotationDeg={rotationDeg}
+            layoutKey={`${wheelViewportHeight}:${wheelRadius}`}
+          />
           {selectedGroup && (
             <div className="gtv-wheel-tree-anchor" ref={treeAnchorRef}>
               <GenreTree
@@ -407,30 +414,6 @@ export function WheelCore({
               } as React.CSSProperties
             }
           >
-            {sectorFillGradient && (
-              <div
-                className="gtv-wheel-sector-fill"
-                style={
-                  {
-                    "--gtv-sector-fill-gradient": sectorFillGradient,
-                  } as React.CSSProperties
-                }
-              />
-            )}
-
-            {groups.length > 1 &&
-              groups.map((group, index) => (
-                <div
-                  key={`divider-${group.root.id}`}
-                  className="gtv-wheel-divider"
-                  style={
-                    {
-                      "--gtv-divider-angle": `${getWheelDividerAngle(index, groups.length)}deg`,
-                    } as React.CSSProperties
-                  }
-                />
-              ))}
-
             {groups.map((group, index) => {
               const angle = getChipAngle(index, groups.length);
               const selected = group.root.id === effectiveRootId;

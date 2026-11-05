@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -13,6 +17,22 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout release foundation
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: BehindTheMusicTree/github-workflows
+          ref: 7857565a0fbbf7a4569147044d14eb7350df82c3
+          path: .release-foundation
+          persist-credentials: false
+
+      - name: Validate tag and release notes
+        run: python3 .release-foundation/release/github-release.py notes "$RUNNER_TEMP/release-notes.md"
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
@@ -28,12 +48,17 @@ jobs:
       # direct `npm publish` (Allow npm publish), otherwise this step fails with ENEEDAUTH.
       - run: npm install -g npm@11.21.1
       - run: pnpm --filter @behindthemusictree/genre-tree-view pack --pack-destination "$RUNNER_TEMP"
-      - run: npm publish "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz --provenance --access public
+      - name: Check existing npm artifact
+        id: registry
+        run: node .release-foundation/release/npm-artifact.cjs @behindthemusictree/genre-tree-view "$(node -p "require('./packages/genre-tree-view/package.json').version")" "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz
+      - if: steps.registry.outputs.exists != 'true'
+        run: npm publish "$RUNNER_TEMP"/behindthemusictree-genre-tree-view-*.tgz --provenance --access public
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/release-notes.md
+          overwrite_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,7 +11,7 @@ import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/re
 import { GenreTreeWheelRadial } from "../GenreTreeWheelRadial";
 import { POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import { getRadialPointOnCircle } from "../pop-core-radial-layout";
-import { buildSectorClipPathPolygon } from "../radial-wheel-geometry";
+import { stubBackdropLayout } from "./backdrop-test-utils";
 import type { GenreTreeNode } from "../types";
 import { linkPathEndpoints } from "./link-path-test-utils";
 
@@ -138,7 +138,7 @@ describe("GenreTreeWheelRadial", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={nodesWithChildlessRoot} />);
 
     expect(coreSectors(container).length).toBe(3);
-    const svg = container.querySelector("svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-d")).toBeFalsy();
   });
 
@@ -153,7 +153,7 @@ describe("GenreTreeWheelRadial", () => {
 
     // Each root's own card is hidden from the SVG tree (it grows out of its chip, which now
     // carries the same "#group-<id>" id for InfoPanel navigation) but its descendants render there.
-    const svg = container.querySelector("svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg:not(.gtv-wheel-backdrop)") as SVGSVGElement;
     expect(svg.querySelector("#group-root-a")).toBeFalsy();
     expect(svg.querySelector("#group-a-child")).toBeTruthy();
     expect(svg.querySelector("#group-b-child")).toBeTruthy();
@@ -309,26 +309,31 @@ describe("GenreTreeWheelRadial", () => {
     ).toBe("-30deg");
   });
 
-  it("weights each root's angular slice by its rendered core branch, not its hidden pop branch's node count", () => {
-    const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNEQUAL_POP_CORE_WEIGHT} />);
+  describe("with the backdrop measured", () => {
+    stubBackdropLayout();
 
-    // root-a (the default top root) always centers on the 90deg landing angle regardless of its
-    // own weight, so it can't reveal the bug — root-b and root-c can, since their angles shift
-    // with every root's relative weight. Weighting by group.nodes.length ([4, 4, 2], the bug)
-    // would land root-b at 234deg and root-c at 342deg; weighting by rendered core nodes ([2, 4,
-    // 2], the fix) lands them at 225deg and 0deg.
-    expect(
-      chipFor(container, "Rock").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
-    ).toBe("225deg");
-    expect(
-      chipFor(container, "Jazz").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
-    ).toBe("0deg");
+    it("weights each root's angular slice by its rendered core branch, not its hidden pop branch's node count", () => {
+      const { container } = render(<GenreTreeWheelRadial nodes={NODES_UNEQUAL_POP_CORE_WEIGHT} />);
 
-    // Same story for the rendered sector wash: root-b's (index 1) sector should sweep the full
-    // 180deg its weight (4 of the 8 total core nodes) proportionally earns, once root-a's
-    // inflated pop-inclusive weight no longer steals space from it.
-    const sectors = Array.from(container.querySelectorAll(".gtv-wheel-sector")) as HTMLElement[];
-    expect(sectors[1].style.clipPath).toBe(buildSectorClipPathPolygon(180));
+      // root-a (the default top root) always centers on the 90deg landing angle regardless of its
+      // own weight, so it can't reveal the bug — root-b and root-c can, since their angles shift
+      // with every root's relative weight. Weighting by group.nodes.length ([4, 4, 2], the bug)
+      // would land root-b at 234deg and root-c at 342deg; weighting by rendered core nodes ([2, 4,
+      // 2], the fix) lands them at 225deg and 0deg.
+      expect(
+        chipFor(container, "Rock").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+      ).toBe("225deg");
+      expect(
+        chipFor(container, "Jazz").parentElement?.parentElement?.style.getPropertyValue("--gtv-chip-angle"),
+      ).toBe("0deg");
+
+      // Same story for the rendered sector wash: root-b's (index 1) sector should sweep the full
+      // 180deg its weight (4 of the 8 total core nodes) proportionally earns, once root-a's
+      // inflated pop-inclusive weight no longer steals space from it.
+      const sectors = Array.from(container.querySelectorAll(".gtv-wheel-backdrop-sector"));
+      // A half-turn pie slice: one arc with the small-arc flag off... 180deg is not > 180, so 0.
+      expect(sectors[1].getAttribute("d")).toMatch(/A[\d.]+ [\d.]+ 0 0 1 .*L0 0Z$/);
+    });
   });
 
   it("fires onNodeClick with the root node's data when its chip is clicked", () => {

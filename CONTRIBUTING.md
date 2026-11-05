@@ -57,8 +57,8 @@ does not own routing. A passing percentage does not waive an unresolved correctn
 
 # Branching model (Gitflow)
 
-- **`main`** — always reflects the latest released version. Every commit on `main` is tagged
-  `vX.Y.Z` and triggers `publish.yml`. Never commit to `main` directly.
+- **`main`** — always reflects the latest released version. A validated version increase on `main` is tagged
+  `vX.Y.Z` by CI and triggers `publish.yml`. Never commit to `main` directly.
 - **`develop`** — the integration branch. Feature and fix work targets `develop`, not `main`.
 - **`feature/*`** — branch off `develop` for new work; open a PR back into `develop`.
 - **`release/*`** — branch off `develop` when preparing a release (e.g. `release/1.1.0`).
@@ -69,13 +69,18 @@ does not own routing. A passing percentage does not waive an unresolved correctn
 
 1. Branch `release/x.y.z` off `develop`.
 2. On that branch, run `pnpm release <patch|minor|major>`. This bumps the package version,
-   moves the `CHANGELOG.md` `[Unreleased]` section into a dated entry, commits, and pushes the
-   branch (see `scripts/release.sh`).
-3. Open a PR from `release/x.y.z` into `main` and merge it.
-4. On `main`, tag the merge commit `vX.Y.Z` and push the tag — this triggers `publish.yml`, which
-   builds the package, publishes it on npm (trusted publishing, with provenance) and creates a GitHub
-   Release. No manual approval is needed.
+   moves the non-empty `CHANGELOG.md` `[Unreleased]` section into a dated entry, and updates
+   the lockfile without committing, pushing or tagging (see `scripts/release.sh`).
+3. Review and commit the prepared files, push the branch and open a PR into `main`.
+4. After merge, CI validates the canonical package version and changelog, creates its annotated
+   tag and triggers `publish.yml`. Publication verifies release notes and the exact tagged commit
+   on `main`, publishes with npm provenance and creates the GitHub Release after npm succeeds.
+   A retry skips an existing npm version only when the packed artifact has identical SHA-512 integrity.
+   Do not create or push release tags locally.
 5. Merge `release/x.y.z` (or `main`) back into `develop` so `develop` picks up the version bump.
+
+Activation of the shared App credentials and tag rulesets is separate, after this contract
+reaches `main`. Initial activation does not publish the existing version.
 
 # Hotfixes
 

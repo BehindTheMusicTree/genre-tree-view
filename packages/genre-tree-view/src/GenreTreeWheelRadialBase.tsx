@@ -17,10 +17,8 @@ import {
 } from "./pop-core-radial-layout";
 import { splitRootGroupBySide } from "./pop-core-split";
 import {
-  buildSectorClipPathPolygon,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
-  coverageRadius,
   computeSectorWidths,
   RadialSlot,
   subdivideWedge,
@@ -28,6 +26,7 @@ import {
 import { FloatingControls } from "./FloatingControls";
 import { useExposeNodeStyleResolver } from "./use-expose-node-style";
 import { usePanZoom } from "./use-pan-zoom";
+import { WheelBackdrop } from "./WheelBackdrop";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
@@ -330,13 +329,6 @@ export function WheelRadialCore({
     [chipClearanceFloor, maxCoreExtentDelta],
   );
 
-  // Reach of the dividers and sector washes: bounded by what can be on screen rather than
-  // "infinity", so the dragged stage layer stays small enough to rasterize at full resolution.
-  const { viewportSize, minScale } = panZoom;
-  const wheelCoverageRadius = viewportSize
-    ? coverageRadius(viewportSize.width, viewportSize.height, minScale, wheelRadius)
-    : null;
-
   // Read via a ref rather than depending on `onRootSelect` directly — consumers commonly pass an
   // inline callback, which would otherwise re-fire this effect (and any state it sets) every render.
   const onRootSelectRef = useRef(onRootSelect);
@@ -489,28 +481,28 @@ export function WheelRadialCore({
   // (unwrapped) angle plus half its weight-proportional width (sectorSpanByRootId) lands exactly on
   // the boundary with its next neighbor, since computeRadialLayout tiled the roots' widths
   // contiguously around the circle in the first place.
-  const dividerAngles = useMemo(() => {
+  const dividers = useMemo(() => {
     if (groups.length <= 1) return [];
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
       const width = sectorSpanByRootId.get(group.root.id) ?? 0;
-      return angle + width / 2;
+      return { key: group.root.id, angleDeg: angle + width / 2 };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId]);
 
   // One tinted sector fan per root, bounded by its own weight-proportional width rather than
   // bisected neighbor angles — see computeSectorWidths's doc comment for why bisection
   // under/over-shoots a root's true sector when its neighbors' weights differ a lot from its own.
-  const sectorFills = useMemo(() => {
+  const backdropSectors = useMemo(() => {
     if (groups.length <= 1) return [];
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
       const width = sectorSpanByRootId.get(group.root.id) ?? 0;
       return {
-        rootId: group.root.id,
-        start: angle - width / 2,
-        clipPath: buildSectorClipPathPolygon(width),
-        color: hexToRgba(
+        key: group.root.id,
+        startDeg: angle - width / 2,
+        endDeg: angle + width / 2,
+        fill: hexToRgba(
           getGenreTreeColor(group.root.wikidataId),
           ROOT_SECTOR_FILL_OPACITY,
         ),
@@ -532,7 +524,6 @@ export function WheelRadialCore({
       style={
         {
           "--gtv-wheel-radius": `${wheelRadius}px`,
-          ...(wheelCoverageRadius !== null && { "--gtv-wheel-coverage-radius": `${wheelCoverageRadius}px` }),
           "--gtv-wheel-rotation-transition-ms": `${WHEEL_ROTATION_TRANSITION_MS}ms`,
           "--gtv-wheel-rotation-easing": WHEEL_ROTATION_EASING,
           touchAction: panZoom.touchAction,
@@ -555,26 +546,13 @@ export function WheelRadialCore({
         }}
       >
         <div className="gtv-wheel-stage">
+          <WheelBackdrop
+            subscribeView={panZoom.subscribeView}
+            viewportSize={panZoom.viewportSize}
+            sectors={backdropSectors}
+            dividers={dividers}
+          />
           <div className="gtv-wheel-circle" ref={wheelCircleRef} />
-
-          {/* Sector wash sits in its own .gtv-wheel layer, rendered before the node svg below, so
-              the wash paints under the developed nodes instead of dulling them — see the second
-              .gtv-wheel layer (after the svg) for the dividers/chips, which stay above the nodes. */}
-          <div className="gtv-wheel">
-            {sectorFills.map((sector) => (
-              <div
-                key={`sector-${sector.rootId}`}
-                className="gtv-wheel-sector"
-                style={
-                  {
-                    "--gtv-sector-angle": `${sector.start}deg`,
-                    "--gtv-sector-color": sector.color,
-                    clipPath: sector.clipPath,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-          </div>
 
           <svg
             ref={coreSvgRef}
@@ -588,18 +566,6 @@ export function WheelRadialCore({
           )}
 
           <div className="gtv-wheel">
-            {dividerAngles.map((angle, index) => (
-              <div
-                key={`divider-${groups[index].root.id}`}
-                className="gtv-wheel-divider"
-                style={
-                  {
-                    "--gtv-divider-angle": `${angle}deg`,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-
             {groups.map((group, index) => {
               const slot = layout[index];
               const angle =

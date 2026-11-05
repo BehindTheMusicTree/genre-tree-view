@@ -74,3 +74,50 @@ export function calculateCoreSubtreeRadialExtent(
     CORE_SUBTREE_OUTER_MARGIN
   );
 }
+
+/** Angular span (degrees, CSS `rotate()` convention, unwrapped around `wedgeCenterAngleDegrees`) of
+ * each top-most underground-scene subtree in a laid-out core wedge. A span reaches the midpoint
+ * with the neighboring sibling subtree's own angular range, or the wedge edge when it has no
+ * neighbor on that side, so adjacent scenes tile the wedge without a gap. */
+export function computeUndergroundSceneSpans(
+  laidOut: D3Node,
+  wedgeCenterAngleDegrees: number,
+  wedgeSpanDegrees: number,
+): { id: string; startDeg: number; endDeg: number }[] {
+  const angleOf = (d: D3Node) => {
+    const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+    return (
+      wedgeCenterAngleDegrees + ((((deg - wedgeCenterAngleDegrees + 540) % 360) + 360) % 360) - 180
+    );
+  };
+  const subtreeRange = (d: D3Node) => {
+    const angles = d.descendants().map(angleOf);
+    return { min: Math.min(...angles), max: Math.max(...angles) };
+  };
+  return laidOut
+    .descendants()
+    .filter(
+      (d) =>
+        d.data.scene === "underground" &&
+        !d
+          .ancestors()
+          .slice(1)
+          .some((a) => a.data.scene === "underground"),
+    )
+    .map((ug) => {
+      const mine = subtreeRange(ug);
+      const siblings = ug.parent?.children ?? [];
+      const at = siblings.indexOf(ug);
+      const prev = at > 0 ? siblings[at - 1] : undefined;
+      const next = at >= 0 ? siblings[at + 1] : undefined;
+      return {
+        id: ug.data.id,
+        startDeg: prev
+          ? (subtreeRange(prev).max + mine.min) / 2
+          : wedgeCenterAngleDegrees - wedgeSpanDegrees / 2,
+        endDeg: next
+          ? (mine.max + subtreeRange(next).min) / 2
+          : wedgeCenterAngleDegrees + wedgeSpanDegrees / 2,
+      };
+    });
+}
