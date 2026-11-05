@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LABEL_CHAR_WIDTH_RATIO } from "@behindthemusictree/ui";
+import { LABEL_CHAR_WIDTH_RATIO, labelHaloColor } from "@behindthemusictree/ui";
+import { LABEL_HALO_STROKE_EM } from "./label-halo-style";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -957,6 +958,7 @@ export function WheelRadialPopCoreCore({
           y,
           radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
           itemCount,
+          fill: getGenreNodeStyle(index, group.root.id).fill,
         };
       }),
     ]);
@@ -965,8 +967,6 @@ export function WheelRadialPopCoreCore({
     originGroup
       .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
       .select("text")
-      .style("pointer-events", "all")
-      .style("cursor", "pointer")
       .on("click", (_event, d) => {
         const chip =
           d.id === centerNode.id
@@ -1417,6 +1417,8 @@ export function WheelRadialPopCoreCore({
                 "--gtv-region-label-y": `${regionLabel.y}px`,
                 "--gtv-region-label-size": `${regionLabel.fontSize}px`,
                 "--gtv-region-label-color": getGenreNodeColor(index, regionLabel.rootId),
+                "--gtv-region-label-halo-width": LABEL_HALO_STROKE_EM,
+                "--gtv-region-label-halo": labelHaloColor(getGenreNodeColor(index, regionLabel.rootId)),
               } as React.CSSProperties
             }
           >

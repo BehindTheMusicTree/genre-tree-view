@@ -2,6 +2,7 @@ import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate } fro
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
+import { svgLabelHalo } from "./label-halo-style";
 import { GenreTreeAction, GenreTreeNode, GenreTreePlayState } from "./types";
 import {
   addReparentTargetOverlay,
@@ -444,6 +445,8 @@ export interface RootLabelDatum {
   itemCount: number;
   /** Named even when no candidate spot is free (the wheel's center); other roots hide like dot labels. */
   alwaysShown?: boolean;
+  /** The chip's color: the label takes it, with its contrast halo, on hover like a dot label does. */
+  fill?: string;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -458,10 +461,14 @@ export function renderRootLabels<E extends SVGElement>(
     .join("g")
     .attr("class", "gtv-root-label")
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+    .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
+    .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)
     .append("text")
     .attr("class", "gtv-node-label")
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
+    .attr("stroke", svgLabelHalo(TEXT_COLOR).stroke)
+    .style("stroke-width", svgLabelHalo(TEXT_COLOR).strokeWidth)
     .text((d) => d.name);
 }
 
@@ -655,7 +662,8 @@ export function renderPopSubtree(
     // with skipRootNode, depth 0 is that chip itself.
     .attr("data-gtv-depth", (d) => d.depth + (skipRootNode ? 0 : 1))
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-    .style("--gtv-node-fill", nodeFill);
+    .style("--gtv-node-fill", nodeFill)
+    .style("--gtv-node-hover-halo", (d) => svgLabelHalo(nodeFill(d)).stroke);
 
   nodes
     .append("rect")
@@ -734,6 +742,8 @@ export function renderPopSubtree(
     })
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
+    .attr("stroke", svgLabelHalo(TEXT_COLOR).stroke)
+    .style("stroke-width", svgLabelHalo(TEXT_COLOR).strokeWidth)
     // Opts back in past .gtv-wheel-pop-layer's inherited pointer-events: none — the hit area is
     // sized for the label's initial spot, and hideCollidingLabels may move the label elsewhere.
     .attr("pointer-events", "all")

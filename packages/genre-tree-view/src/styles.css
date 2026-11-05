@@ -29,8 +29,35 @@
 }
 
 /* --gtv-node-fill is set inline on each pop-subtree node group (see pop-core-radial-layout.ts). */
-.node:hover > text.gtv-node-label {
+.node:hover > text.gtv-node-label,
+.gtv-root-label:hover > text.gtv-node-label:not(.gtv-node-label--hidden) {
   fill: var(--gtv-node-fill);
+  stroke: var(--gtv-node-hover-halo);
+}
+
+/* Halo behind SVG labels: stroke color/width are set per label (see label-halo-style.ts); painting
+   the stroke first keeps it from eating into the glyphs. */
+text.gtv-node-label {
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+/* A root's label forwards clicks to its chip (see GenreTreeWheelRadialPopCoreBase); a label hidden
+   by collision culling must not stay hit-testable. */
+.gtv-root-label > text.gtv-node-label:not(.gtv-node-label--hidden) {
+  pointer-events: all;
+}
+
+/* Selectable chart items: every painted part, label included, shows the hand. SVG text would
+   otherwise show the text I-beam. */
+.node,
+.gtv-root-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.node.gtv-node--forbidden {
+  cursor: not-allowed;
 }
 
 .gtv-node-label--root {
@@ -220,7 +247,8 @@
   white-space: nowrap;
   color: var(--gtv-region-label-color);
   opacity: 0.85;
-  text-shadow: 0 0 0.15em #fff, 0 0 0.3em #fff;
+  -webkit-text-stroke: var(--gtv-region-label-halo-width) var(--gtv-region-label-halo);
+  paint-order: stroke fill;
   pointer-events: none;
   user-select: none;
 }
@@ -320,47 +348,6 @@
   .gtv-zoom-controls--auto {
     display: none;
   }
-}
-
-.gtv-info-panel-fields {
-  margin: 0;
-  padding: 0.625rem 1.5rem;
-}
-
-.gtv-info-panel-fields dt {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
-  margin-top: 0.625rem;
-}
-
-.gtv-info-panel-fields dt:first-child {
-  margin-top: 0;
-}
-
-.gtv-info-panel-fields dd {
-  margin: 0.125rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--gtv-text, var(--color-text, #18181b));
-  word-break: break-word;
-}
-
-.gtv-info-panel-toolbar {
-  justify-content: flex-start;
-  height: auto;
-  padding: 0.5rem 1.5rem 0;
-  font-size: 1rem;
-  background: transparent;
-}
-
-.gtv-info-panel-children-title {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
-  margin-top: 0.625rem;
 }
 
 .gtv-info-panel-children-list {
@@ -556,12 +543,17 @@
   min-width: 0;
 }
 
-.gtv-info-panel-mini-tree-children > .gtv-info-panel-children-title {
+.gtv-info-panel-mini-tree-children-title {
   position: absolute;
   bottom: 100%;
   left: 0.75rem;
   right: 0;
   margin: 0 0 0.25rem;
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
   text-align: center;
   white-space: nowrap;
 }
