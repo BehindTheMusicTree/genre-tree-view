@@ -1305,3 +1305,72 @@ describe("usePanZoom", () => {
     });
   });
 });
+
+describe("usePanZoom subscribeView", () => {
+  function setup() {
+    const viewport = document.createElement("div");
+    document.body.appendChild(viewport);
+    const stage = document.createElement("div");
+    const hook = renderHook(() => usePanZoom({ current: viewport }, "always", { current: stage }));
+    return { viewport, stage, ...hook };
+  }
+  const drag = (result: ReturnType<typeof setup>["result"], viewport: HTMLElement, to: { x: number; y: number }) => {
+    act(() => {
+      result.current.handlePointerDown({
+        pointerId: 1,
+        pointerType: "mouse",
+        button: 0,
+        clientX: 100,
+        clientY: 100,
+        target: viewport,
+        preventDefault: vi.fn(),
+      } as unknown as React.PointerEvent);
+    });
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: to.x, clientY: to.y }));
+    });
+  };
+
+  it("calls the listener at once with the current view", () => {
+    const { result } = setup();
+    const listener = vi.fn();
+    act(() => {
+      result.current.subscribeView(listener);
+    });
+    expect(listener).toHaveBeenCalledWith({ x: 0, y: 0, k: 1 });
+  });
+
+  it("publishes the live view on each gesture frame, in step with the stage write", async () => {
+    const { result, viewport, stage } = setup();
+    const listener = vi.fn();
+    act(() => {
+      result.current.subscribeView(listener);
+    });
+    listener.mockClear();
+    drag(result, viewport, { x: 110, y: 130 });
+    await nextFrame();
+    expect(listener).toHaveBeenLastCalledWith({ x: 10, y: 30, k: 1 });
+    expect(liveView(stage).panX).toBe(10);
+  });
+
+  it("stops notifying after unsubscribe", async () => {
+    const { result, viewport } = setup();
+    const listener = vi.fn();
+    let unsubscribe = () => {};
+    act(() => {
+      unsubscribe = result.current.subscribeView(listener);
+    });
+    unsubscribe();
+    listener.mockClear();
+    drag(result, viewport, { x: 110, y: 130 });
+    await nextFrame();
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("keeps a stable subscribeView identity across renders", () => {
+    const { result, rerender } = setup();
+    const first = result.current.subscribeView;
+    rerender();
+    expect(result.current.subscribeView).toBe(first);
+  });
+});

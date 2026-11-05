@@ -33,12 +33,23 @@ export interface UsePanZoomOptions {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
 }
 
+export interface PanZoomView {
+  x: number;
+  y: number;
+  k: number;
+}
+
 export interface UsePanZoomResult {
   panX: number;
   panY: number;
   zoomScale: number;
   /** Lowest scale manual zoom-out can currently reach (ZOOM_MIN_SCALE, relaxed by a fit). */
   minScale: number;
+  /** Subscribes to the live view (`{x, y, k}`: stage translation and scale). The listener is called
+   * at once with the current view, then on every gesture frame (same rAF as the stage write, so a
+   * viewport-sized layer driven from it stays in step with the stage) and on every commit. For
+   * layers that must follow the stage without a React render per frame. Returns the unsubscribe. */
+  subscribeView: (listener: (view: PanZoomView) => void) => () => void;
   /** Last measured viewport box; null until the first ResizeObserver callback. */
   viewportSize: { width: number; height: number } | null;
   /** CSS transform implementing both pan and zoom as one shared coordinate system — apply this
@@ -124,9 +135,27 @@ export function usePanZoom(
     onViewportChangeRef.current = options.onViewportChange;
   }, [options.onViewportChange]);
 
+  const viewListenersRef = useRef<Set<(view: PanZoomView) => void>>(new Set());
+  const notifyView = useCallback(() => {
+    const { x, y, k } = viewRef.current;
+    viewListenersRef.current.forEach((listener) => listener({ x, y, k }));
+  }, []);
+  const subscribeView = useCallback(
+    (listener: (view: PanZoomView) => void) => {
+      viewListenersRef.current.add(listener);
+      const { x, y, k } = viewRef.current;
+      listener({ x, y, k });
+      return () => {
+        viewListenersRef.current.delete(listener);
+      };
+    },
+    [],
+  );
+
   const writeStage = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return;
+    notifyView();
     const { x, y, k } = viewRef.current;
     const transform = `translate(${x}px, ${y}px) scale(${k})`;
     stage.classList.add("gtv-stage--moving");
@@ -140,7 +169,7 @@ export function usePanZoom(
     const keyframes = [{ transform }, { transform }];
     if (stageAnimationRef.current) (stageAnimationRef.current.effect as KeyframeEffect).setKeyframes(keyframes);
     else stageAnimationRef.current = stage.animate(keyframes, { duration: Infinity, fill: "forwards" });
-  }, [stageRef]);
+  }, [stageRef, notifyView]);
 
   const commitView = useCallback((notify = true) => {
     if (settleTimerRef.current !== null) {
@@ -159,6 +188,7 @@ export function usePanZoom(
     }
     stageAnimationRef.current?.cancel();
     stageAnimationRef.current = null;
+    notifyView();
     setPanX(x);
     setPanY(y);
     setZoomScale(k);
@@ -166,7 +196,7 @@ export function usePanZoom(
     if (!notify || !onViewportChangeRef.current || !viewport) return;
     const { width, height } = viewport.getBoundingClientRect();
     if (width > 0 && height > 0) onViewportChangeRef.current(viewToViewport({ x, y, k }, width, height));
-  }, [stageRef, viewportRef]);
+  }, [stageRef, viewportRef, notifyView]);
 
   // Tracks every currently-down pointer by id so a second touch landing mid-drag is recognized as
   // the start of a pinch rather than treated as an unrelated pan. Two-finger touch pinch normally
@@ -927,6 +957,7 @@ export function usePanZoom(
     panY,
     zoomScale,
     minScale,
+    subscribeView,
     viewportSize,
     transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
     canZoomIn: zoomScale < ZOOM_MAX_SCALE,
