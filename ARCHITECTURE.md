@@ -181,7 +181,7 @@ pnpm workspace with two members:
   Content-only pieces for the host's panel live in `GenreNodePanelContent.tsx`:
   `useGenreNodeRelations(nodes, nodeId, resolver)` (node, parent, children, root-first ancestors, each
   styled), `GenreNodeAncestors`, `GenreNodeFamily` (the mini tree) and `GenreNodeItemCount`, built on
-  the ui package's `PanelSection`. `NodeToolbar` is exported for the actions row.
+  the ui package's `PanelSection` and `FieldList`, which own the section frame and field rows: `styles.css` only styles the tree and its chips, never a generic section. `NodeToolbar` is exported for the actions row.
 - **Hover**: `GenreTreeProps.onNodeHover` fires when the pointer enters a node (and, in
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via

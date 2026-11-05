@@ -1,4 +1,4 @@
-import { PanelSection } from "@behindthemusictree/ui";
+import { FieldList, PanelSection } from "@behindthemusictree/ui";
 import { useMemo } from "react";
 
 import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
@@ -138,7 +138,7 @@ export function GenreNodeFamily({ node, fill, parentNode, childNodes, onSelectNo
           </span>
         </div>
         <div className="gtv-info-panel-mini-tree-children">
-          <span className="gtv-info-panel-children-title">
+          <span className="gtv-info-panel-mini-tree-children-title">
             {childNodes.length} {childNodes.length <= 1 ? "child" : "children"}
           </span>
           {childNodes.length > 0 && (
@@ -164,9 +164,6 @@ export interface GenreNodeItemCountProps {
 
 export function GenreNodeItemCount({ node, label }: GenreNodeItemCountProps) {
   return (
-    <dl className="gtv-info-panel-fields">
-      <dt>{label}</dt>
-      <dd>{node.itemCount}</dd>
-    </dl>
+    <FieldList items={[{ label, value: node.itemCount }]} />
   );
 }

@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- The generic section CSS `.gtv-info-panel-fields*`, `.gtv-info-panel-toolbar` (unused) and `.gtv-info-panel-children-title`. The section frame belongs to `PanelSection` and `FieldList` from `@behindthemusictree/ui`; this package only styles the tree and its chips.
+
+### Changed
+
+- `GenreNodeItemCount` renders through `FieldList`. The mini tree's "N children" caption uses the new `.gtv-info-panel-mini-tree-children-title` class.
+
 ## [8.0.0] - 2026-11-05
 
 ### Breaking
