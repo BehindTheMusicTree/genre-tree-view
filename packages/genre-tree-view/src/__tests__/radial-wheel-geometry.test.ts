@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { placeLabels } from "@behindthemusictree/ui";
 import {
   bisectAngles,
-  buildSectorClipPathPolygon,
-  coverageRadius,
   calculateWheelRadiusForAngles,
   computeRadialLayout,
   computeSectorBounds,
@@ -221,45 +219,6 @@ describe("bisectAngles", () => {
   it("handles continuous/unwrapped angles outside [0, 360) the same way", () => {
     expect(bisectAngles(370, 350)).toBe(360);
     expect(bisectAngles(-10, 10)).toBe(0);
-  });
-});
-
-describe("buildSectorClipPathPolygon", () => {
-  it("returns an empty string for a non-positive sweep", () => {
-    expect(buildSectorClipPathPolygon(0)).toBe("");
-    expect(buildSectorClipPathPolygon(-10)).toBe("");
-  });
-
-  it("starts and ends the fan at the pivot, with the first ray straight up", () => {
-    const polygon = buildSectorClipPathPolygon(90, 10);
-    expect(polygon.startsWith("polygon(50% 50%, 50% 0%")).toBe(true);
-  });
-
-  it("samples the arc every stepDeg and lands exactly on the sweep's end angle", () => {
-    const polygon = buildSectorClipPathPolygon(180, 10);
-    // 90 degrees clockwise from "up" is straight right, radius 50% from center (50%, 50%).
-    expect(polygon).toContain("100% 50%");
-    // 180 degrees clockwise from "up" is straight down. Math.sin(Math.PI) isn't exactly 0, so the
-    // x coordinate carries a floating-point residual (e.g. "50.00000000000001%") — compare
-    // numerically instead of matching the string exactly.
-    const lastPoint = polygon.slice(0, -1).split(", ").pop();
-    const [lastX, lastY] = (lastPoint ?? "").split(" ").map((coord) => parseFloat(coord));
-    expect(lastX).toBeCloseTo(50);
-    expect(lastY).toBeCloseTo(100);
-  });
-
-  it("clamps the last sample to the exact sweep even when it doesn't divide evenly by stepDeg", () => {
-    const polygon = buildSectorClipPathPolygon(95, 10);
-    const lastTheta = (95 * Math.PI) / 180;
-    const lastX = 50 + 50 * Math.sin(lastTheta);
-    const lastY = 50 - 50 * Math.cos(lastTheta);
-    expect(polygon.endsWith(`${lastX}% ${lastY}%)`)).toBe(true);
-  });
-
-  it("produces a robust wide (180 degree) fan instead of a 3-point chord-clipped triangle", () => {
-    const polygon = buildSectorClipPathPolygon(180, 10);
-    const pointCount = polygon.slice("polygon(".length, -1).split(", ").length;
-    expect(pointCount).toBeGreaterThan(3);
   });
 });
 
@@ -500,23 +459,5 @@ describe("placeLabels grid index", () => {
       };
     });
     expect([...placeLabels(items)]).toEqual([...naive(items)]);
-  });
-});
-
-describe("coverageRadius", () => {
-  it("adds the viewport diagonal at min scale to the content bounding-box corner distance", () => {
-    expect(coverageRadius(300, 400, 0.05, 1000)).toBe(Math.ceil(1000 * Math.SQRT2 + 500 / 0.05));
-  });
-
-  it("grows as the min scale shrinks", () => {
-    expect(coverageRadius(800, 600, 0.02, 0)).toBeGreaterThan(coverageRadius(800, 600, 0.05, 0));
-  });
-
-  it("rounds up to a whole pixel", () => {
-    expect(Number.isInteger(coverageRadius(333, 777, 0.07, 12.3))).toBe(true);
-  });
-
-  it("rejects a non-positive min scale", () => {
-    expect(() => coverageRadius(100, 100, 0, 0)).toThrow();
   });
 });

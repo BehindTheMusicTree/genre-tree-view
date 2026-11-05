@@ -59,7 +59,7 @@ describe("GenreTreeWheel", () => {
     // The selected root's own card is hidden from the SVG tree — its tree grows directly out of
     // its chip (which now carries the same "#group-<id>" id for InfoPanel navigation) — but its
     // descendants still render there.
-    const svg = container.querySelector("svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg") as SVGSVGElement;
     expect(svg.querySelector("#group-root-a")).toBeFalsy();
     expect(svg.querySelector("#group-a-child")).toBeTruthy();
     expect(svg.querySelector("#group-root-b")).toBeFalsy();
@@ -139,7 +139,7 @@ describe("GenreTreeWheel", () => {
 
     fireEvent.click(chipFor(container, "Electronic"));
 
-    const svg = container.querySelector("svg") as SVGSVGElement;
+    const svg = container.querySelector(".gtv-wheel-stage svg") as SVGSVGElement;
     expect(svg.querySelector("#group-root-a")).toBeFalsy();
     expect(svg.querySelector("#group-root-b")).toBeFalsy();
     expect(svg.querySelector("#group-b-child")).toBeTruthy();

@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { describe, expect, it } from "vitest";
-import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout } from "../core-radial-layout";
+import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout, computeUndergroundSceneSpans } from "../core-radial-layout";
 import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH } from "../constants";
 import { coreRadiusOfDepth, layoutWedge } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
@@ -144,5 +144,39 @@ describe("calculateCoreSubtreeRadialExtent", () => {
     const extentWithRadius = calculateCoreSubtreeRadialExtent(hierarchy, POP_TREE_DEPTH_RADIAL_SPACING, coreRootCircleRadius);
 
     expect(extentWithRadius).toBeCloseTo(extentWithoutRadius + coreRootCircleRadius, 5);
+  });
+});
+
+describe("computeUndergroundSceneSpans", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "core", parentId: "root-a", name: "Core", itemCount: 0 },
+    { id: "ug1", parentId: "core", name: "Underground 1", itemCount: 0, scene: "underground" },
+    { id: "ug1-child", parentId: "ug1", name: "Child", itemCount: 0, scene: "underground" },
+    { id: "mid", parentId: "core", name: "Mid", itemCount: 0 },
+    { id: "ug2", parentId: "core", name: "Underground 2", itemCount: 0, scene: "underground" },
+  ];
+  const layout = () => {
+    const root = buildCoreHierarchy(d3, nodes);
+    const laidOut = layoutWedge(d3, root, 90, 90, (depth: number) => 100 + depth * 60);
+    return computeUndergroundSceneSpans(laidOut, 90, 90);
+  };
+
+  it("returns one span per top-most underground subtree, never one for its underground descendants", () => {
+    expect(layout().map((s) => s.id).sort()).toEqual(["ug1", "ug2"]);
+  });
+
+  it("tiles each span between the wedge edge and its neighbor, without gap or inversion", () => {
+    const spans = layout();
+    const ug1 = spans.find((s) => s.id === "ug1")!;
+    const ug2 = spans.find((s) => s.id === "ug2")!;
+    expect(ug1.startDeg).toBeLessThan(ug1.endDeg);
+    expect(ug2.startDeg).toBeLessThan(ug2.endDeg);
+    expect(Math.min(ug1.startDeg, ug2.startDeg)).toBeGreaterThanOrEqual(45 - 1e-9);
+    expect(Math.max(ug1.endDeg, ug2.endDeg)).toBeLessThanOrEqual(135 + 1e-9);
+  });
+
+  it("returns nothing when no node is underground", () => {
+    const root = buildCoreHierarchy(d3, nodes.filter((n) => !n.scene));
+    expect(computeUndergroundSceneSpans(layoutWedge(d3, root, 90, 90, (depth: number) => 100 + depth * 60), 90, 90)).toEqual([]);
   });
 });

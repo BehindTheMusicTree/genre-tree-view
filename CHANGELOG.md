@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Sector boundaries (notably the electronic underground/EDM edge) no longer stair-step while panning or zooming.
+
+### Changed
+
+- Sector washes, underground scenes and dividers are drawn in one viewport-sized SVG (`.gtv-wheel-backdrop`) outside the pan/zoom stage, so no compositing layer exceeds the screen at any zoom. Dividers now sit under the nodes and run along the sector edge (the old CSS ones pointed 180° off).
+- Removed `.gtv-wheel-sector`, `.gtv-wheel-sector-fill`, `.gtv-wheel-divider` and the `--gtv-wheel-coverage-radius` variable.
+
 ## [8.2.0] - 2026-11-05
 
 ### Changed

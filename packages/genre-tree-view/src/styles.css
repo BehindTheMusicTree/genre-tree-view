@@ -789,58 +789,30 @@ nav.gtv-wheel-breadcrumb {
     translateY(calc(var(--gtv-wheel-radius, 260px) * -1));
 }
 
-/* Straight radial line separating two angularly-adjacent root subtrees, from the wheel's pivot
-   out to the frame edge. Massively overshoots any real container size on purpose — since
-   .gtv-wheel-container clips with overflow: hidden, the line always reaches the visible edge
-   without needing to react to resize/pan/zoom itself. pointer-events: none keeps it out of the
-   way of chip clicks and pan/zoom dragging, same as .gtv-wheel-circle. */
-.gtv-wheel-divider {
+/* Viewport-sized SVG behind the stage: sector washes, underground rings and dividers. It follows
+   pan/zoom through a transform written by WheelBackdrop, so no layer ever grows past the screen
+   (oversized elements inside the transformed stage leave unrasterized tiles mid-gesture).
+   pointer-events: none keeps it out of the way of chip clicks and dragging. */
+.gtv-wheel-backdrop {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1px;
-  height: var(--gtv-wheel-coverage-radius, 100000px);
-  background: var(--gtv-border, var(--color-border, #e4e4e7));
-  transform-origin: top center;
-  transform: rotate(var(--gtv-divider-angle, 0deg));
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   pointer-events: none;
 }
 
-/* GenreTreeWheel/GenreTreeWheelRight only: single element carrying a static conic-gradient (built
-   by buildWheelSectorGradient) that tints every root's angular span at once — see that function's
-   doc comment for why one gradient suffices here but not on the radial variants. Centered on the
-   same pivot as .gtv-wheel-divider and oversized the same way, so overflow: hidden on
-   .gtv-wheel-container clips it to the frame edge under any pan/zoom. Rendered first among
-   .gtv-wheel's children so every divider/chip/subtree paints on top of it. */
-.gtv-wheel-sector-fill {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
-  height: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
-  margin-left: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
-  margin-top: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
-  background: var(--gtv-sector-fill-gradient, none);
-  pointer-events: none;
+.gtv-wheel-backdrop-divider {
+  stroke: var(--gtv-border, var(--color-border, #e4e4e7));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
-/* GenreTreeWheelRadial/GenreTreeWheelRadialPopCore only: one element per root's colored sector
-   wash (see buildSectorClipPathPolygon's doc comment for why each sector needs its own shaped,
-   independently-rotated element instead of one shared conic-gradient). Unlike .gtv-wheel-divider,
-   this box is centered on the pivot by its own geometric center (not a `top center` transform
-   origin) since buildSectorClipPathPolygon's fan shape already encodes the "ray out from center"
-   extent that the divider instead gets from its transform-origin. */
-.gtv-wheel-sector {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
-  height: calc(var(--gtv-wheel-coverage-radius, 100000px) * 2);
-  margin-left: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
-  margin-top: calc(var(--gtv-wheel-coverage-radius, 100000px) * -1);
-  background: var(--gtv-sector-color, transparent);
-  transform: rotate(var(--gtv-sector-angle, 0deg));
-  pointer-events: none;
+@media (prefers-reduced-motion: no-preference) {
+  .gtv-wheel-backdrop-rotor {
+    transition: transform var(--gtv-wheel-rotation-transition-ms, 500ms)
+      var(--gtv-wheel-rotation-easing, ease);
+  }
 }
 
 /* GenreTreeWheelRadialPopCore only: whitens the pop region (inside the single ring-root circle,
