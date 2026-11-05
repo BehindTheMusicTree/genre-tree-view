@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- ISC LICENSE file matching the license declared in `package.json`.
+
 ## [7.1.2] - 2026-11-04
 
 ### Changed
