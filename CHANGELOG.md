@@ -15,6 +15,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `obscuredInset` prop: renderers center nodes (and the outline pads its list) beside the host's panel.
 - `onNodeStyleResolverChange` prop: publishes the `(node) => { fill, textColor }` resolver the tree draws with.
 - Content pieces `GenreNodeAncestors`, `GenreNodeFamily`, `GenreNodeItemCount`, `NodeToolbar` and the `useGenreNodeRelations` hook.
+- ISC LICENSE file matching the license declared in `package.json`.
 
 ## [7.1.2] - 2026-11-04
 

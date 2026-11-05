@@ -74,8 +74,8 @@ importers:
         version: 5.7.0(react@18.3.1)
     devDependencies:
       '@behindthemusictree/ui':
-        specifier: 0.13.0
-        version: 0.13.0(@behindthemusictree/brand@12.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 0.15.0
+        version: 0.15.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@codspeed/vitest-plugin':
         specifier: 6.0.1
         version: 6.0.1(tinybench@2.9.0)(vite@7.3.2(@types/node@22.20.1))(vitest@4.1.11)
@@ -223,16 +223,10 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@behindthemusictree/brand@12.7.0':
-    resolution: {integrity: sha512-k80mk5+yEyyKLv1Ac4ccZxC+32BYrI7BQ3aRZwecmLtjhrJhTdPVC0vdXjM5qOCa/eDsDTn47miXv07sMCGEQg==}
+  '@behindthemusictree/ui@0.15.0':
+    resolution: {integrity: sha512-UUyZpz0sBRD39GxP9TFUWpqMk6ImrZOJNwKG27bn/erI8wOIEKmMeMTpSsRVZPCNXmUaDatiI8pznAwdFo1u5w==}
     peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-
-  '@behindthemusictree/ui@0.13.0':
-    resolution: {integrity: sha512-JizJ2QZIa5ZlyLX2BIA0Qziqg6Go+bVKt68fSbKwTW+s12xlzvOiA0bpceylLMDXAxetSsCvuM4UyW1lmS5z3g==}
-    peerDependencies:
-      '@behindthemusictree/brand': ^12.7.0
+      '@behindthemusictree/brand': ^12.10.0
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
     peerDependenciesMeta:
@@ -2292,13 +2286,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@behindthemusictree/brand@12.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    optional: true
-
-  '@behindthemusictree/ui@0.13.0(@behindthemusictree/brand@12.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/ui@0.15.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
@@ -2307,8 +2295,6 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-icons: 5.7.0(react@18.3.1)
       tailwind-merge: 3.7.0
-    optionalDependencies:
-      '@behindthemusictree/brand': 12.7.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   '@bramus/specificity@2.4.2':
     dependencies:
