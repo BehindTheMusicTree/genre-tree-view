@@ -610,6 +610,19 @@ describe("renderPopSubtree onNodeClick", () => {
     );
   });
 
+  it("gives dot labels a contrast halo that follows the font size and the hover fill", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes));
+
+    const label = svg.select<SVGTextElement>("text.gtv-node-label");
+    expect(label.attr("stroke")).toBe("#ffffff");
+    expect(label.style("stroke-width")).toBe("0.24em");
+    expect(svg.select<SVGGElement>("g.node").style("--gtv-node-hover-halo")).toBe("#ffffff");
+  });
+
   // A click's pan/zoom glide would otherwise move the label before the second click lands.
   it("skips the click action when a double-click follows it", () => {
     const hierarchy = buildPopHierarchy(d3, nodes);

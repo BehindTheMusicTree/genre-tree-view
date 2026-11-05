@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Labels get a contrast halo: black behind light text, white behind dark text, with a thickness proportional to the font size. Requires `@behindthemusictree/ui` with `labelHalo` (>0.15.0).
+
+### Fixed
+
+- Hovering a node, a node label or a root label now shows the pointer cursor (`not-allowed` on forbidden reparent targets) instead of the text cursor or arrow.
+
 ### Removed
 
 - The generic section CSS `.gtv-info-panel-fields*`, `.gtv-info-panel-toolbar` (unused) and `.gtv-info-panel-children-title`. The section frame belongs to `PanelSection` and `FieldList` from `@behindthemusictree/ui`; this package only styles the tree and its chips.
