@@ -186,7 +186,7 @@ export interface GenreTreeProps {
    * owning root/sector first if needed. Leave unset to use the internal selection. */
   selectedNodeId?: string | null;
   /** Fired when a click on the tree changes the selected node, or with `null` when the selection is
-   * cleared by the user — so a consumer driving `selectedNodeId` stays in sync. Not fired when
+   * cleared inside the tree (the host owns the panel's close button, so closing it does not fire this) — so a consumer driving `selectedNodeId` stays in sync. Not fired when
    * re-selecting the selected node, when following the consumer's own `selectedNodeId`, nor when the
    * consumer clears `selectedNodeId` to `null`/`undefined`. The detail panel itself is the host's. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
@@ -196,7 +196,9 @@ export interface GenreTreeProps {
   obscuredInset?: ObscuredInset;
   /** Hands the host the function that styles a node exactly as this renderer draws it (solid vs.
    * tinted fill, text color), for the host's panel header and family chips. The reference is
-   * stable and always reads the renderer's current state. */
+   * stable and always reads the renderer's current state, so it does not change when styling inputs
+   * do: recompute anything derived from it on selection change. Do not pass a `useState` setter
+   * directly (React would call it as an updater); wrap it: `(r) => setResolver(() => r)`. */
   onNodeStyleResolverChange?: (resolver: GenreNodeStyleResolver) => void;
   /** Seeds the pan/zoom on mount, replacing the initial fit-to-frame and the centering on an
    * initial `selectedNodeId`. Read once; later changes are ignored. Ignored when `interactive` is

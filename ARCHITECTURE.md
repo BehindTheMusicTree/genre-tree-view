@@ -13,9 +13,6 @@ pnpm workspace with two members:
 - **`GenreTree.tsx`** renders one connected hierarchy as an interactive D3/SVG tree. It owns
   pan/zoom (`use-pan-zoom.ts`) and zoom buttons when `interactive` is true (the default); when
   `false`, it renders the bare SVG at natural size with no viewport/listeners of its own.
-  `showToolbar` (default true) suppresses the hover toolbar and hover name-label on every node,
-  and the wheel renderers' root/center chips' own inner toolbar and hover name-label, when false —
-  the chips themselves (name label, click-to-select/expand) stay visible.
   `defaultViewport` / `onViewportChange` expose the pan/zoom as a `GenreTreeViewport` (content-space
   center `x`,`y` + `zoom`, independent of the container's pixel size — `viewToViewport` /
   `viewportToView` in `zoom-pan.ts`). `defaultViewport` is a mount-only seed: the first
@@ -94,7 +91,7 @@ pnpm workspace with two members:
   first, then each other root with its direct children split into "Core" and "Pop" sections via
   `splitRootGroupBySide`. Roots flagged `detached` (`GenreTreeNode.detached`) are left out of
   that list and rendered in a separate `.gtv-outline-list--detached` list after it, neutral gray
-  and without Core/Pop sections. It reuses the React `NodeToolbar` and `InfoPanel`. Selection, open
+  and without Core/Pop sections. Selection, open
   sections, play state and reparent mode live in a small external store created once per
   instance; each row is a memoized recursive `OutlineNode` that subscribes to its own slice via
   `useSyncExternalStore`, and receives only stable props (node id, a model memoized on `nodes`,
@@ -146,9 +143,7 @@ pnpm workspace with two members:
     the same zoom on a node or chip double-click — or double-tap, which `defer-click.ts` detects itself as a second
     click on the same target within `DOUBLE_CLICK_DELAY_MS`, since touch browsers don't reliably fire `dblclick` — and,
     while focused, `WheelBreadcrumb.tsx`: one top-centre trail (bottom-left in narrow containers) of a Home crumb,
-    every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. The info
-    panel header's Previous button walks the selected-node history kept by `use-focus-history.ts`'s
-    `useFocusHistory` (in memory only; skips nodes no longer drawn). A selection outside the current frame refocuses on its top-level root (the whole tree
+    every zoomable ancestor view (the middle collapses behind "…" past three) and the current view. A selection outside the current frame refocuses on its top-level root (the whole tree
     for Mainstream Pop's lineage or a root itself).
   - `pop-core-split.ts` — `splitRootGroupBySide` partitions one root group's nodes into its core
     and pop branches (`GenreTreeWheelRadialPopCore` only); a root may have any number of core and

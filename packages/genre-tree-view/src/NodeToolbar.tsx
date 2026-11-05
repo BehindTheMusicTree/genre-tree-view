@@ -20,7 +20,7 @@ export interface NodeToolbarProps {
   className?: string;
 }
 
-/** The play/add-child/rename/reparent/delete/extra actions for a node, rendered in the info panel. */
+/** The play/add-child/rename/reparent/delete/extra actions for a node, rendered by the host in its detail panel. */
 export function NodeToolbar({
   node,
   playingNodeId,
