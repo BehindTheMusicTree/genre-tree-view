@@ -619,7 +619,7 @@ describe("renderPopSubtree onNodeClick", () => {
 
     const label = svg.select<SVGTextElement>("text.gtv-node-label");
     expect(label.attr("stroke")).toBe("#ffffff");
-    expect(label.style("stroke-width")).toBe("0.24em");
+    expect(label.style("stroke-width")).toBe("0.2em");
     expect(svg.select<SVGGElement>("g.node").style("--gtv-node-hover-halo")).toBe("#ffffff");
   });
 
