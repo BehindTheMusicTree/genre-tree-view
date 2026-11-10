@@ -1,4 +1,4 @@
-import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate } from "@behindthemusictree/ui";
+import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate, type LabelPlacementItem } from "@behindthemusictree/ui";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -28,6 +28,7 @@ import {
   calculateSelectedNodeBorderWidth,
   calculateLabelFontSizeAtZoom,
   calculateLabelRank,
+  MUTED_LABEL_TIER,
   calculateNodeFontSize,
   isLabelRankedForZoom,
   tintSurface,
@@ -447,6 +448,8 @@ export interface RootLabelDatum {
   alwaysShown?: boolean;
   /** The chip's color: the label takes it, with its contrast halo, on hover like a dot label does. */
   fill?: string;
+  /** Greys the label out like its muted chip. */
+  muted?: boolean;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -459,7 +462,7 @@ export function renderRootLabels<E extends SVGElement>(
     .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
     .data(roots)
     .join("g")
-    .attr("class", "gtv-root-label")
+    .attr("class", (d) => "gtv-root-label" + (d.muted ? " gtv-root-label--muted" : ""))
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
     .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)
@@ -577,6 +580,7 @@ export function renderPopSubtree(
           sourceId: null,
           targetId: d.data.id,
           targetItemCount: d.data.itemCount,
+          targetMuted: d.data.muted === true,
         }))
     : [];
   const links: {
@@ -585,6 +589,7 @@ export function renderPopSubtree(
     sourceId: string | null;
     targetId: string | null;
     targetItemCount: number;
+    targetMuted: boolean;
   }[] = [
     ...hierarchy.links().map((d) => ({
       source: d.source,
@@ -592,6 +597,7 @@ export function renderPopSubtree(
       sourceId: d.source.data.id,
       targetId: d.target.data.id,
       targetItemCount: d.target.data.itemCount,
+      targetMuted: d.target.data.muted === true,
     })),
     ...rootLinks,
   ];
@@ -626,6 +632,7 @@ export function renderPopSubtree(
       "class",
       (d) =>
         "gtv-link" +
+        (d.targetMuted ? " gtv-link--muted" : "") +
         (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
     )
     .attr("d", (d) =>
@@ -651,6 +658,7 @@ export function renderPopSubtree(
       (d) =>
         "node" +
         (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (d.data.muted ? " gtv-node--muted" : "") +
         (selectedNodeId && !isSelected(d)
           ? isRelatedNode(d)
             ? " gtv-node--dimmed-related"
@@ -806,6 +814,24 @@ export function renderPopSubtree(
   });
 }
 
+/** Label-placement item of a dot node. Muted nodes are faded context: no dot obstacle, so their dots
+ * never hide a focused label, and a lower tier, so their labels yield to every focused one. */
+export function nodeLabelPlacementItem({
+  id,
+  labels,
+  dot,
+  rank,
+  muted,
+}: {
+  id: string;
+  labels: Box[];
+  dot: Box;
+  rank: number;
+  muted: boolean;
+}): LabelPlacementItem {
+  return muted ? { id, labels, priority: rank, tier: MUTED_LABEL_TIER } : { id, labels, dot, priority: rank };
+}
+
 /** Places every dot label under `container` (across all rendered subtrees, so labels of
  * neighboring branches/sectors are checked against each other) on its first candidate spot (see
  * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
@@ -856,15 +882,16 @@ export function hideCollidingLabels<E extends SVGElement>(
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
       const { candidates, dot } = geometryById.get(d.data.id)!;
       const rank = calculateLabelRank(d.data.itemCount, itemCountRange, Number(element.dataset.gtvDepth));
-      return {
+      return nodeLabelPlacementItem({
         id: d.data.id,
         // An unranked node still keeps its dot as an obstacle for every other label.
         labels: isLabelRankedForZoom(rank, zoomScale)
           ? candidates.map((candidate) => offset(candidate.box, d.x!, d.y!))
           : [],
         dot: offset(dot, d.x!, d.y!),
-        priority: rank,
-      };
+        rank,
+        muted: d.data.muted === true,
+      });
     }),
   ]);
   roots.each(function (d) {

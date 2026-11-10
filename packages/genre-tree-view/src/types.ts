@@ -25,6 +25,11 @@ export interface GenreTreeNode {
   /** Which scene a genre belongs to. GenreTreeWheelRadialPopCore draws an "underground" node and its
    * descendants in a darker shade of their usual color, over a darker background slice. */
   scene?: "commercial" | "underground";
+  /** Greys the node (and the link into it) out without removing it, e.g. a genre outside the
+   * selected artist's footprint. Purely visual: a muted node stays selectable and keeps its place
+   * in the layout. Non-muted dots are drawn on their own, larger size scale, and muted dots never
+   * hide a non-muted node's label. */
+  muted?: boolean;
 }
 
 export type GenreTreePlayState = "playing" | "paused" | "loading";

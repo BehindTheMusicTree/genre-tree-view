@@ -1,3 +1,4 @@
+import { placeLabels } from "@behindthemusictree/ui";
 import * as d3 from "d3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -9,6 +10,7 @@ import {
   getRadialDepthRadius,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  nodeLabelPlacementItem,
   measureWedge,
   MIN_DOT_GAP,
   POP_WEDGE_SPAN_DEGREES,
@@ -23,7 +25,9 @@ import {
   MAX_NODE_WIDTH,
   LINK_TO_NODE_HEIGHT_RATIO,
   MAX_NODE_HEIGHT,
+  calculateLabelRank,
   getItemCountRange,
+  MUTED_LABEL_TIER,
   NODE_LAYOUT_SLOT_RADIUS,
   RADIAL_CORE_LINK_TINT_RATIO,
   RADIAL_POP_LINK_TINT_RATIO,
@@ -1092,5 +1096,116 @@ describe("renderRootLabels hover colors", () => {
     expect(a.style.getPropertyValue("--gtv-node-fill")).toBe("#1d4ed8");
     expect(a.style.getPropertyValue("--gtv-node-hover-halo")).toBe("#ffffff");
     expect(b.style.getPropertyValue("--gtv-node-fill")).toBe("#18181B");
+  });
+});
+
+describe("renderPopSubtree muted nodes", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 0, muted: true },
+    { id: "soft-rock", parentId: "pop-rock", name: "Soft Rock", itemCount: 1 },
+  ];
+
+  it("marks muted nodes and the links into them, without dimming them", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {});
+
+    const classOf = (id: string) => svg.select<SVGGElement>(`#group-${id}`).node()!.getAttribute("class");
+    expect(classOf("arena-rock")).toContain("gtv-node--muted");
+    expect(classOf("soft-rock")).not.toContain("gtv-node--muted");
+    expect(classOf("pop-rock")).not.toContain("gtv-node--muted");
+    expect(classOf("arena-rock")).not.toContain("gtv-node--dimmed");
+    expect(svg.selectAll("path.gtv-link--muted").size()).toBe(1);
+  });
+
+  it("keeps a muted node at the dimmed opacity class alongside --dimmed and mutes root labels", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      selectedNodeId: "soft-rock",
+    });
+
+    const arenaClass = svg.select<SVGGElement>("#group-arena-rock").node()!.getAttribute("class")!;
+    expect(arenaClass).toContain("gtv-node--muted");
+    expect(arenaClass).toContain("gtv-node--dimmed");
+
+    renderRootLabels(svg, [
+      { id: "a", name: "A", x: 0, y: 0, radius: 5, itemCount: 1, muted: true },
+      { id: "b", name: "B", x: 50, y: 0, radius: 5, itemCount: 1 },
+    ]);
+    expect(svg.selectAll("g.gtv-root-label--muted").size()).toBe(1);
+  });
+
+  describe("label placement of muted nodes", () => {
+    const labelHidden = (nodes: GenreTreeNode[], id: string, zoomScale = 0.3) => {
+      const range = getItemCountRange(nodes);
+      const svg = createSvg();
+      renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000, 20), "#123456", null, [], noopCallbacks, range);
+      hideCollidingLabels(d3, svg, range, zoomScale);
+      const hidden = svg.select(`#group-${id} .gtv-node-label`).classed("gtv-node-label--hidden");
+      document.body.innerHTML = "";
+      return hidden;
+    };
+    const tree = (muted: boolean): GenreTreeNode[] => [
+      { id: "reggae", parentId: null, name: "Reggae", itemCount: 1, muted },
+      ...Array.from({ length: 5 }, (_, i) => ({
+        id: `sub-${i}`,
+        parentId: "reggae",
+        name: `Alternative sub ${i}`,
+        itemCount: i === 1 ? 100 : 0,
+        muted: i === 1 ? false : muted,
+      })),
+      ...Array.from({ length: 20 }, (_, j) => ({
+        id: `leaf-${j}`,
+        parentId: `sub-${Math.floor(j / 4)}`,
+        name: `Leaf ${j}`,
+        itemCount: 0,
+        muted,
+      })),
+    ];
+
+    it("does not let muted dots hide a focused node's label", () => {
+      expect(labelHidden(tree(false), "sub-1")).toBe(true);
+      expect(labelHidden(tree(true), "sub-1")).toBe(false);
+    });
+  });
+
+  describe("nodeLabelPlacementItem", () => {
+    it("places a deep focused label before a shallow muted one that overlaps it", () => {
+      const range = { min: 1, max: 1000 };
+      const label = [{ x0: 0, y0: 0, x1: 50, y1: 10 }];
+      const deepRank = calculateLabelRank(1, range, 13);
+      const shallowRank = calculateLabelRank(1000, range, 1);
+      expect(deepRank).toBeLessThan(shallowRank - 2);
+      const placement = placeLabels([
+        nodeLabelPlacementItem({ id: "deep", labels: label, dot: { x0: 900, y0: 900, x1: 901, y1: 901 }, rank: deepRank, muted: false }),
+        nodeLabelPlacementItem({ id: "shallow", labels: label, dot: { x0: 800, y0: 800, x1: 801, y1: 801 }, rank: shallowRank, muted: true }),
+      ]);
+      expect(placement.get("deep")).toBe(0);
+      expect(placement.get("shallow")).toBe(-1);
+    });
+
+    const base = { id: "n", labels: [{ x0: 0, y0: 0, x1: 10, y1: 4 }], dot: { x0: 0, y0: 0, x1: 2, y1: 2 }, rank: 0.4 };
+
+    it("keeps a focused node's dot as an obstacle at the default tier", () => {
+      expect(nodeLabelPlacementItem({ ...base, muted: false })).toEqual({
+        id: "n",
+        labels: base.labels,
+        dot: base.dot,
+        priority: 0.4,
+      });
+    });
+
+    it("drops a muted node's dot and lowers its tier without altering its rank", () => {
+      const item = nodeLabelPlacementItem({ ...base, muted: true });
+      expect(item.dot).toBeUndefined();
+      expect(item.tier).toBe(MUTED_LABEL_TIER);
+      expect(item.priority).toBe(0.4);
+    });
   });
 });

@@ -166,7 +166,7 @@ function OutlineNodeView({
   const split = isRoot ? model.ringSplitById.get(nodeId) : undefined;
 
   const row = (
-    <span className={["gtv-outline-row", isSelected && "gtv-outline-row--selected"].filter(Boolean).join(" ")}>
+    <span className={["gtv-outline-row", isSelected && "gtv-outline-row--selected", node.muted && "gtv-outline-row--muted"].filter(Boolean).join(" ")}>
       <span className="gtv-outline-dot" style={{ background: model.styleOf(node).fill }} />
       <button
         type="button"

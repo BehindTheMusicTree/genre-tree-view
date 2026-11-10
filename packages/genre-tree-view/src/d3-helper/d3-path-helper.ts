@@ -107,6 +107,7 @@ export function appendPaths(
       "class",
       (d) =>
         "gtv-link" +
+        (d.target.data.muted ? " gtv-link--muted" : "") +
         (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
     )
     .attr("d", linkGenerator)

@@ -58,12 +58,11 @@ import {
   getGenreNodeColor,
   getGenreNodeStyle,
   getItemCountRange,
-  hexToRgba,
+  getSectorWashFill,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
   NODE_LAYOUT_SLOT_RADIUS,
   POP_TREE_DEPTH_RADIAL_SPACING,
-  ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
@@ -370,9 +369,9 @@ export function WheelRadialPopCoreCore({
     () =>
       getItemCountRange([
         ...nodes,
-        ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
+        ...groups.map((group) => ({ itemCount: group.root.itemCount, muted: group.root.muted })),
       ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
-    [nodes, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
+    [nodes, groups, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
@@ -933,6 +932,7 @@ export function WheelRadialPopCoreCore({
         radius: centerChipDiameter / 2,
         itemCount: centerNode.itemCount,
         alwaysShown: true,
+        muted: centerNode.muted,
       },
       ...groups.map((group) => {
         const itemCount = rootItemCountById.get(group.root.id)!;
@@ -945,6 +945,7 @@ export function WheelRadialPopCoreCore({
           radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
           itemCount,
           fill: getGenreNodeStyle(index, group.root.id).fill,
+          muted: group.root.muted,
         };
       }),
     ]);
@@ -1166,10 +1167,7 @@ export function WheelRadialPopCoreCore({
         key: group.root.id,
         startDeg: angle - width / 2,
         endDeg: angle + width / 2,
-        fill: hexToRgba(
-          getGenreNodeColor(index, group.root.id),
-          ROOT_SECTOR_FILL_OPACITY,
-        ),
+        fill: getSectorWashFill(getGenreNodeColor(index, group.root.id), group.root.muted),
       };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);
@@ -1265,6 +1263,7 @@ export function WheelRadialPopCoreCore({
                   "gtv-wheel-chip",
                   centerHasPopDisc && "gtv-wheel-chip--center",
                   "gtv-wheel-chip--circle",
+                  centerNode.muted && "gtv-wheel-chip--muted",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -1322,7 +1321,12 @@ export function WheelRadialPopCoreCore({
                     <button
                       type="button"
                       id={`group-${group.root.id}`}
-                      className="gtv-wheel-chip gtv-wheel-chip--selected gtv-wheel-chip--circle"
+                      className={[
+                        "gtv-wheel-chip gtv-wheel-chip--selected gtv-wheel-chip--circle",
+                        group.root.muted && "gtv-wheel-chip--muted",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       style={
                         {
                           width: diameter,
