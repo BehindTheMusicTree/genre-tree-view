@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `GenreTreeNode.muted` greys a node and the link into it out (grayscale, half opacity) in every layout and the outline, without removing it, so a host can show which genres fall outside a selection while keeping them selectable. The playground has a "muted (demo subset)" toggle.
+- When some nodes are muted, the non-muted dots are drawn on a larger size scale (up to the regular maximum dot size) so they stand out, without moving any node; muted links fade further (grayscale, 0.2 opacity) so they stay distinct from the grey Mainstream links; and muted dots no longer hide a non-muted node's label. The playground's Muse demo mutes genres outside the artist's footprint instead of removing them.
 
 ## [9.1.0] - 2026-11-10
 
