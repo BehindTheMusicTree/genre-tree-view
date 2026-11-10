@@ -12,11 +12,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Requires `@behindthemusictree/ui` `^0.21.2` (peer dependency): muted nodes now use its optional label `dot` and `tier`, so a muted node leaves no obstacle and its label is placed after every non-muted one.
-
-### Fixed
-
-- A deep non-muted node's label is no longer hidden by a shallower muted node's label: muted labels used a priority offset that a deep node's depth penalty could exceed.
+- Requires `@behindthemusictree/ui` `^0.21.2` (peer dependency): muted nodes now use its optional label `dot` and `tier`, so a muted node leaves no obstacle and its label is placed after every non-muted one, whatever its depth.
 
 ## [9.1.0] - 2026-11-10
 
