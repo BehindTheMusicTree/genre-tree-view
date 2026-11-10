@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [9.2.0] - 2026-11-10
+
 ### Added
 
 - `GenreTreeNode.muted` greys a node and the link into it out (grayscale, half opacity) in every layout and the outline, without removing it, so a host can show which genres fall outside a selection while keeping them selectable. The playground has a "muted (demo subset)" toggle.
