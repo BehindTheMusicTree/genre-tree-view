@@ -12,8 +12,8 @@ import {
   renderTree,
 } from "./tree-renderer";
 import {
-  ACCENT_TEXT_COLOR,
   getGenreTreeColor,
+  getTextColorOnFill,
   TEXT_COLOR,
   tintSurface,
   ZOOM_FOCUS_SCALE,
@@ -129,7 +129,7 @@ export function GenreTree({
   }, [nodes, rootColor, orientation, hideRoot, depthSpacingScale, itemCountRange]);
   useExposeNodeStyleResolver(onNodeStyleResolverChange, () => ({
     fill: hideRoot ? resolvedRootColor : tintSurface(resolvedRootColor),
-    textColor: hideRoot ? ACCENT_TEXT_COLOR : TEXT_COLOR,
+    textColor: hideRoot ? getTextColorOnFill(resolvedRootColor) : TEXT_COLOR,
   }));
 
   // A reparent-in-progress node can belong to a *different* GenreTree instance (a different

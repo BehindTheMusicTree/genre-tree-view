@@ -105,8 +105,8 @@ export function hexToRgba(hex: string, opacity: number): string {
 }
 
 // Fixed per-root colors keyed by the root's wikidata id (a QID or a synthetic "LOCAL:" key), so a
-// genre keeps its color across environments and renames. Mainstream Pop (Q37073) is deliberately
-// absent: the pop-core layouts render it white at the center.
+// genre keeps its color across environments and renames. Mainstream Pop (Q37073) is white, as the
+// pop-core layouts render it at the center; text on it must come from getTextColorOnFill.
 export const ROOT_GENRE_COLORS: Readonly<Record<string, string>> = {
   "LOCAL:blues-rock": "#DC2626", // Red
   "LOCAL:reggae-dub": "#16A34A", // Green
@@ -119,6 +119,7 @@ export const ROOT_GENRE_COLORS: Readonly<Record<string, string>> = {
   Q43343: "#0D9488", // Folk, teal
   Q54365: "#0891B2", // Ska, cyan
   Q1640319: "#475569", // Experimental, slate
+  Q37073: "#FFFFFF", // Mainstream Pop, white
 };
 
 export const FALLBACK_ROOT_COLOR = "#6B7280";
@@ -126,6 +127,24 @@ export const FALLBACK_ROOT_COLOR = "#6B7280";
 /** Maps a root node's wikidata id to its fixed color, or FALLBACK_ROOT_COLOR when unmapped/absent. */
 export function getGenreTreeColor(wikidataId: string | null | undefined): string {
   return (wikidataId && ROOT_GENRE_COLORS[wikidataId]) || FALLBACK_ROOT_COLOR;
+}
+
+export function isWhiteFill(fill: string): boolean {
+  return fill.toUpperCase() === "#FFFFFF";
+}
+
+/** Text color readable on `fill`, a root color or a tree card's background. */
+export function getTextColorOnFill(fill: string): string {
+  return isWhiteFill(fill) ? TEXT_COLOR : ACCENT_TEXT_COLOR;
+}
+
+/** CSS variables of a wheel chip filled with `color`; a white chip needs dark text and a visible border. */
+export function getWheelChipVars(color: string): Record<string, string> {
+  return {
+    "--gtv-chip-color": color,
+    "--gtv-chip-text-color": getTextColorOnFill(color),
+    "--gtv-chip-border-color": isWhiteFill(color) ? CONNECTOR_COLOR : color,
+  };
 }
 
 // A zoomed view's ring roots are descendants of a top-level root, so they take a variation of the

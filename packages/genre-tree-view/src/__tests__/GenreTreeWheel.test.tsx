@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/re
 import * as d3 from "d3";
 import { GenreTreeWheel } from "../GenreTreeWheel";
 import { calculateRootAnchorClearance } from "../NodeHelper";
-import { getItemCountRange } from "../constants";
+import { CONNECTOR_COLOR, getItemCountRange, TEXT_COLOR } from "../constants";
 import type { GenreTreeNode } from "../types";
 
 afterEach(() => {
@@ -49,6 +49,22 @@ const makeRect = (left: number, top: number, width: number, height: number): DOM
 });
 
 describe("GenreTreeWheel", () => {
+  it("keeps a white Mainstream Pop chip and its published style readable", () => {
+    const nodes: GenreTreeNode[] = [
+      { id: "pop", parentId: null, name: "Mainstream Pop", itemCount: 5, wikidataId: "Q37073" },
+      { id: "hyperpop", parentId: "pop", name: "Hyperpop", itemCount: 3 },
+    ];
+    const onNodeStyleResolverChange = vi.fn();
+    const { container } = render(<GenreTreeWheel nodes={nodes} onNodeStyleResolverChange={onNodeStyleResolverChange} />);
+
+    const chip = chipFor(container, "Mainstream Pop");
+    expect(chip.style.getPropertyValue("--gtv-chip-color")).toBe("#FFFFFF");
+    expect(chip.style.getPropertyValue("--gtv-chip-text-color")).toBe(TEXT_COLOR);
+    expect(chip.style.getPropertyValue("--gtv-chip-border-color")).toBe(CONNECTOR_COLOR);
+    const resolveStyle = onNodeStyleResolverChange.mock.calls.at(-1)![0];
+    expect(resolveStyle(nodes[1])).toEqual({ fill: "#FFFFFF", textColor: TEXT_COLOR });
+  });
+
   it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);

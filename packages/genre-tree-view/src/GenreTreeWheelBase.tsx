@@ -20,11 +20,12 @@ import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { GenreTreeNode, GenreTreeProps, TreeOrientation } from "./types";
 import {
-  ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  getTextColorOnFill,
+  getWheelChipVars,
   hexToRgba,
   MAX_NODE_HEIGHT,
   MAX_NODE_WIDTH,
@@ -121,7 +122,7 @@ export function WheelCore({
   };
   useExposeNodeStyleResolver(onNodeStyleResolverChange, (node) => ({
     fill: rootColorOf(node.id),
-    textColor: ACCENT_TEXT_COLOR,
+    textColor: getTextColorOnFill(rootColorOf(node.id)),
   }));
 
   // Reserve the current density-adjusted chip maximum for every neighboring pair. WHEEL_RADIUS is
@@ -454,7 +455,7 @@ export function WheelCore({
                           // (inline style beats any stylesheet rule), silently pinning the box and
                           // breaking the hover growth again, same failure mode as before.
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
-                          "--gtv-chip-color": chipColor,
+                          ...getWheelChipVars(chipColor),
                         } as React.CSSProperties
                       }
                       onClick={(event) => {
