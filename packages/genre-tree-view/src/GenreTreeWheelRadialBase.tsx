@@ -596,7 +596,12 @@ export function WheelRadialCore({
                     <button
                       type="button"
                       id={`group-${group.root.id}`}
-                      className="gtv-wheel-chip gtv-wheel-chip--selected"
+                      className={[
+                        "gtv-wheel-chip gtv-wheel-chip--selected",
+                        group.root.muted && "gtv-wheel-chip--muted",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       style={
                         {
                           width: dimensions.WIDTH,

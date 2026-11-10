@@ -577,6 +577,7 @@ export function renderPopSubtree(
           sourceId: null,
           targetId: d.data.id,
           targetItemCount: d.data.itemCount,
+          targetMuted: d.data.muted === true,
         }))
     : [];
   const links: {
@@ -585,6 +586,7 @@ export function renderPopSubtree(
     sourceId: string | null;
     targetId: string | null;
     targetItemCount: number;
+    targetMuted: boolean;
   }[] = [
     ...hierarchy.links().map((d) => ({
       source: d.source,
@@ -592,6 +594,7 @@ export function renderPopSubtree(
       sourceId: d.source.data.id,
       targetId: d.target.data.id,
       targetItemCount: d.target.data.itemCount,
+      targetMuted: d.target.data.muted === true,
     })),
     ...rootLinks,
   ];
@@ -626,6 +629,7 @@ export function renderPopSubtree(
       "class",
       (d) =>
         "gtv-link" +
+        (d.targetMuted ? " gtv-link--muted" : "") +
         (selectedNodeId && !isRelatedLink(d) ? " gtv-link--dimmed" : ""),
     )
     .attr("d", (d) =>
@@ -651,6 +655,7 @@ export function renderPopSubtree(
       (d) =>
         "node" +
         (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (d.data.muted ? " gtv-node--muted" : "") +
         (selectedNodeId && !isSelected(d)
           ? isRelatedNode(d)
             ? " gtv-node--dimmed-related"

@@ -1094,3 +1094,26 @@ describe("renderRootLabels hover colors", () => {
     expect(b.style.getPropertyValue("--gtv-node-fill")).toBe("#18181B");
   });
 });
+
+describe("renderPopSubtree muted nodes", () => {
+  const nodes: GenreTreeNode[] = [
+    { id: "pop-rock", parentId: null, name: "Pop Rock", itemCount: 1 },
+    { id: "arena-rock", parentId: "pop-rock", name: "Arena Rock", itemCount: 0, muted: true },
+    { id: "soft-rock", parentId: "pop-rock", name: "Soft Rock", itemCount: 1 },
+  ];
+
+  it("marks muted nodes and the links into them, without dimming them", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {});
+
+    const classOf = (id: string) => svg.select<SVGGElement>(`#group-${id}`).node()!.getAttribute("class");
+    expect(classOf("arena-rock")).toContain("gtv-node--muted");
+    expect(classOf("soft-rock")).not.toContain("gtv-node--muted");
+    expect(classOf("pop-rock")).not.toContain("gtv-node--muted");
+    expect(classOf("arena-rock")).not.toContain("gtv-node--dimmed");
+    expect(svg.selectAll("path.gtv-link--muted").size()).toBe(1);
+  });
+});

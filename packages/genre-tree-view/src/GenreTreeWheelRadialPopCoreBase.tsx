@@ -1265,6 +1265,7 @@ export function WheelRadialPopCoreCore({
                   "gtv-wheel-chip",
                   centerHasPopDisc && "gtv-wheel-chip--center",
                   "gtv-wheel-chip--circle",
+                  centerNode.muted && "gtv-wheel-chip--muted",
                 ]
                   .filter(Boolean)
                   .join(" ")}

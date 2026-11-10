@@ -454,6 +454,7 @@ export function renderTree(
       (d) =>
         "node" +
         (isForbidden(d) ? " gtv-node--forbidden" : "") +
+        (d.data.muted ? " gtv-node--muted" : "") +
         (selectedNodeId && !isSelected(d)
           ? isRelatedNode(d)
             ? " gtv-node--dimmed-related"
