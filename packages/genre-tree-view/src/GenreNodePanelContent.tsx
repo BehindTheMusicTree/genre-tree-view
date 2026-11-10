@@ -1,5 +1,5 @@
 import { FieldList, PanelSection } from "@behindthemusictree/ui";
-import { useMemo } from "react";
+import { CSSProperties, useMemo } from "react";
 
 import { getItemCountRange, ItemCountRange, logarithmicPosition } from "./constants";
 import { buildTreeIndex } from "./tree-index";
@@ -51,10 +51,16 @@ export function useGenreNodeRelations(
   }, [index, nodeId, resolveStyle]);
 }
 
-function miniNodeContent(target: GenreTreeNode, background: string, range: ItemCountRange) {
+function miniNodeScale(target: GenreTreeNode, range: ItemCountRange) {
   const t = logarithmicPosition(target.itemCount, range);
-  const diameter = MINI_NODE_MIN_DIAMETER + t * (MINI_NODE_MAX_DIAMETER - MINI_NODE_MIN_DIAMETER);
-  const fontSize = MINI_NODE_MIN_FONT_SIZE + t * (MINI_NODE_MAX_FONT_SIZE - MINI_NODE_MIN_FONT_SIZE);
+  return {
+    diameter: MINI_NODE_MIN_DIAMETER + t * (MINI_NODE_MAX_DIAMETER - MINI_NODE_MIN_DIAMETER),
+    fontSize: MINI_NODE_MIN_FONT_SIZE + t * (MINI_NODE_MAX_FONT_SIZE - MINI_NODE_MIN_FONT_SIZE),
+  };
+}
+
+function miniNodeContent(target: GenreTreeNode, background: string, range: ItemCountRange) {
+  const { diameter, fontSize } = miniNodeScale(target, range);
   return (
     <>
       <span className="gtv-info-panel-mini-dot" style={{ background, width: diameter, height: diameter }} />
@@ -122,9 +128,12 @@ export function GenreNodeFamily({ node, fill, parentNode, childNodes, onSelectNo
     ...childNodes.map((child) => child.node),
   ]);
   const sortedChildNodes = [...childNodes].sort((a, b) => b.node.itemCount - a.node.itemCount);
+  const parentLabelSpace = parentNode
+    ? ({ "--gtv-mini-parent-font-size": `${miniNodeScale(parentNode.node, range).fontSize}px` } as CSSProperties)
+    : undefined;
   return (
     <PanelSection title="Family">
-      <div className="gtv-info-panel-mini-tree">
+      <div className="gtv-info-panel-mini-tree" style={parentLabelSpace}>
         {parentNode && (
           <div className="gtv-info-panel-mini-tree-parent">
             <NodeChip related={parentNode} range={range} onSelectNode={onSelectNode} />
