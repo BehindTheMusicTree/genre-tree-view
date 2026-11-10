@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [9.1.0] - 2026-11-10
+
 ### Added
 
 - `getTextColorOnFill` returns the text color readable on a root color or tree card background.
