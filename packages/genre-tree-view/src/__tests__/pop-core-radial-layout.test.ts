@@ -1116,4 +1116,24 @@ describe("renderPopSubtree muted nodes", () => {
     expect(classOf("arena-rock")).not.toContain("gtv-node--dimmed");
     expect(svg.selectAll("path.gtv-link--muted").size()).toBe(1);
   });
+
+  it("keeps a muted node at the dimmed opacity class alongside --dimmed and mutes root labels", () => {
+    const hierarchy = buildPopHierarchy(d3, nodes);
+    const laidOut = computePopRadialLayout(d3, hierarchy, 0, 1000);
+    const svg = createSvg();
+
+    renderPopSubtree(d3, svg, laidOut, "#123456", null, [], noopCallbacks, getItemCountRange(nodes), {
+      selectedNodeId: "soft-rock",
+    });
+
+    const arenaClass = svg.select<SVGGElement>("#group-arena-rock").node()!.getAttribute("class")!;
+    expect(arenaClass).toContain("gtv-node--muted");
+    expect(arenaClass).toContain("gtv-node--dimmed");
+
+    renderRootLabels(svg, [
+      { id: "a", name: "A", x: 0, y: 0, radius: 5, itemCount: 1, muted: true },
+      { id: "b", name: "B", x: 50, y: 0, radius: 5, itemCount: 1 },
+    ]);
+    expect(svg.selectAll("g.gtv-root-label--muted").size()).toBe(1);
+  });
 });

@@ -447,6 +447,8 @@ export interface RootLabelDatum {
   alwaysShown?: boolean;
   /** The chip's color: the label takes it, with its contrast halo, on hover like a dot label does. */
   fill?: string;
+  /** Greys the label out like its muted chip. */
+  muted?: boolean;
 }
 
 export function renderRootLabels<E extends SVGElement>(
@@ -459,7 +461,7 @@ export function renderRootLabels<E extends SVGElement>(
     .selectAll<SVGGElement, RootLabelDatum>("g.gtv-root-label")
     .data(roots)
     .join("g")
-    .attr("class", "gtv-root-label")
+    .attr("class", (d) => "gtv-root-label" + (d.muted ? " gtv-root-label--muted" : ""))
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
     .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)

@@ -933,6 +933,7 @@ export function WheelRadialPopCoreCore({
         radius: centerChipDiameter / 2,
         itemCount: centerNode.itemCount,
         alwaysShown: true,
+        muted: centerNode.muted,
       },
       ...groups.map((group) => {
         const itemCount = rootItemCountById.get(group.root.id)!;
@@ -945,6 +946,7 @@ export function WheelRadialPopCoreCore({
           radius: calculateNodeDotRadius(itemCount, wheelItemCountRange),
           itemCount,
           fill: getGenreNodeStyle(index, group.root.id).fill,
+          muted: group.root.muted,
         };
       }),
     ]);
@@ -1323,7 +1325,12 @@ export function WheelRadialPopCoreCore({
                     <button
                       type="button"
                       id={`group-${group.root.id}`}
-                      className="gtv-wheel-chip gtv-wheel-chip--selected gtv-wheel-chip--circle"
+                      className={[
+                        "gtv-wheel-chip gtv-wheel-chip--selected gtv-wheel-chip--circle",
+                        group.root.muted && "gtv-wheel-chip--muted",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       style={
                         {
                           width: diameter,

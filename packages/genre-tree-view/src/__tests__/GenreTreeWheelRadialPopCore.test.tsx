@@ -107,6 +107,16 @@ describe("GenreTreeWheelRadialPopCore", () => {
     expect(chipFor(container, "Rock").closest(".gtv-wheel-center-node")).toBeNull();
   });
 
+  it("mutes the center chip, a ring chip and their labels when those roots are muted", () => {
+    const nodes = NODES_WITH_POP.map((n) => (n.id === "root-a" || n.id === CENTER_NODE.id ? { ...n, muted: true } : n));
+    const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+
+    expect(chipFor(container, "Rock").className).toContain("gtv-wheel-chip--muted");
+    expect(chipFor(container, "Jazz").className).not.toContain("gtv-wheel-chip--muted");
+    expect(container.querySelector(".gtv-wheel-center-node .gtv-wheel-chip")!.className).toContain("gtv-wheel-chip--muted");
+    expect(container.querySelectorAll(".gtv-root-label--muted").length).toBe(2);
+  });
+
   it("fires onNodeHover on pointerenter of a ring chip and of core, pop and center subtree nodes", () => {
     const onNodeHover = vi.fn();
     const { container } = render(

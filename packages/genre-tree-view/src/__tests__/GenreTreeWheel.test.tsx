@@ -65,6 +65,13 @@ describe("GenreTreeWheel", () => {
     expect(resolveStyle(nodes[1])).toEqual({ fill: "#FFFFFF", textColor: TEXT_COLOR });
   });
 
+  it("mutes the chip of a muted root only", () => {
+    const nodes = NODES.map((n) => (n.id === "root-a" ? { ...n, muted: true } : n));
+    const { container } = render(<GenreTreeWheel nodes={nodes} />);
+    expect(chipFor(container, "Rock")!.className).toContain("gtv-wheel-chip--muted");
+    expect(chipFor(container, "Jazz")!.className).not.toContain("gtv-wheel-chip--muted");
+  });
+
   it("renders a chip for every root, including the selected one, and only that root's descendant nodes", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     expect(container.querySelectorAll(".gtv-wheel-chip").length).toBe(3);
