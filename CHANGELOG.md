@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- "Family" and "Ancestors" panel sections keep the panel's title-to-content gap: "Ancestors" drops its extra top margin and the space above the Family mini tree now matches the parent's label. The parent's label stays on one line, truncated with an ellipsis beyond 8rem (full name in the tooltip).
+
 ## [9.0.0] - 2026-11-10
 
 ### Changed
