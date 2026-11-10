@@ -11,6 +11,8 @@ import {
   calculateNodeFontSize,
   isLabelRankedForZoom,
   calculateLabelRank,
+  getSectorWashFill,
+  ROOT_SECTOR_FILL_OPACITY,
   calculateRootLabelFontSize,
   ROOT_LABEL_MIN_SCREEN_PX,
   LABEL_SCREEN_MAX_PX,
@@ -314,5 +316,18 @@ describe("density-aware item count sizing", () => {
 
   it("falls back to observed counts for invalid totals", () => {
     expect(getItemCountRange([{ itemCount: 4 }, { itemCount: 8 }], { itemCountScaleMax: -1 })).toEqual({ min: 4, max: 8 });
+  });
+});
+
+describe("getSectorWashFill", () => {
+  it("keeps the root color for a focused root", () => {
+    expect(getSectorWashFill("#E11D48", false)).toBe(`rgba(225, 29, 72, ${ROOT_SECTOR_FILL_OPACITY})`);
+    expect(getSectorWashFill("#E11D48", undefined)).toBe(getSectorWashFill("#E11D48", false));
+  });
+
+  it("turns a muted root's wash almost grey, without removing its hue entirely", () => {
+    const [r, g, b] = getSectorWashFill("#E11D48", true).match(/\d+(?=,)/g)!.map(Number);
+    expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeGreaterThan(0);
+    expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThan(30);
   });
 });

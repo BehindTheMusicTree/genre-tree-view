@@ -58,12 +58,11 @@ import {
   getGenreNodeColor,
   getGenreNodeStyle,
   getItemCountRange,
-  hexToRgba,
+  getSectorWashFill,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
   NODE_LAYOUT_SLOT_RADIUS,
   POP_TREE_DEPTH_RADIAL_SPACING,
-  ROOT_SECTOR_FILL_OPACITY,
   LABEL_RELAYOUT_DEBOUNCE_MS,
   REGION_LABEL_MAX_PX,
   REGION_LABEL_MIN_PX,
@@ -1168,10 +1167,7 @@ export function WheelRadialPopCoreCore({
         key: group.root.id,
         startDeg: angle - width / 2,
         endDeg: angle + width / 2,
-        fill: hexToRgba(
-          getGenreNodeColor(index, group.root.id),
-          ROOT_SECTOR_FILL_OPACITY,
-        ),
+        fill: getSectorWashFill(getGenreNodeColor(index, group.root.id), group.root.muted),
       };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);

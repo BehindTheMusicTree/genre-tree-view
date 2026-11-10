@@ -36,12 +36,11 @@ import {
   getItemCountRange,
   getTextColorOnFill,
   getWheelChipVars,
-  hexToRgba,
+  getSectorWashFill,
   isWhiteFill,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
-  ROOT_SECTOR_FILL_OPACITY,
   WHEEL_RADIUS,
   WHEEL_ROTATION_EASING,
   WHEEL_ROTATION_TRANSITION_MS,
@@ -506,10 +505,7 @@ export function WheelRadialCore({
         key: group.root.id,
         startDeg: angle - width / 2,
         endDeg: angle + width / 2,
-        fill: hexToRgba(
-          getGenreTreeColor(group.root.wikidataId),
-          ROOT_SECTOR_FILL_OPACITY,
-        ),
+        fill: getSectorWashFill(getGenreTreeColor(group.root.wikidataId), group.root.muted),
       };
     });
   }, [groups, continuousAngleByRootId, sectorSpanByRootId]);

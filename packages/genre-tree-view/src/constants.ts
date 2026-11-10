@@ -95,6 +95,21 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
 // rather than competing with them for attention.
 export const ROOT_SECTOR_FILL_OPACITY = 0.15;
 
+// Share of a muted root's sector wash that is desaturated: almost grey, keeping a hint of the root
+// color so the zone still reads as that genre family.
+export const MUTED_SECTOR_GREY_RATIO = 0.9;
+
+/** Fill of a root's sector wash: the root color at ROOT_SECTOR_FILL_OPACITY, or for a muted root
+ * (no focused genre in its zone) nearly its grey equivalent. */
+export function getSectorWashFill(hex: string, muted: boolean | undefined): string {
+  if (!muted) return hexToRgba(hex, ROOT_SECTOR_FILL_OPACITY);
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  const [r, g, b] = [1, 3, 5].map(channel);
+  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+  const mix = (value: number) => Math.round(value * (1 - MUTED_SECTOR_GREY_RATIO) + luma * MUTED_SECTOR_GREY_RATIO);
+  return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, ${ROOT_SECTOR_FILL_OPACITY})`;
+}
+
 /** Converts an opaque "#RRGGBB" color (e.g. a ROOT_GENRE_COLORS entry) to an "rgba()" string at
  * `opacity` (0-1) — unlike tintSurface, which stays opaque by blending toward a fixed background,
  * this produces a true transparent fill for layering over arbitrary content (e.g. a wheel's
