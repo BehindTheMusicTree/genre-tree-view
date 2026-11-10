@@ -83,6 +83,19 @@ describe("getItemCountRange", () => {
   it("falls back to a zero/zero range for an empty node list", () => {
     expect(getItemCountRange([])).toEqual({ min: 0, max: 0 });
   });
+
+  it("draws non-muted dots against their own count while the layout cap stays the whole tree's", () => {
+    const focus = Array.from({ length: 10 }, () => ({ itemCount: 100 }));
+    const rest = Array.from({ length: 2000 }, () => ({ itemCount: 0 }));
+    const unmuted = getItemCountRange([...focus, ...rest], { itemCountScaleMax: 1000 });
+    const muted = getItemCountRange([...focus, ...rest.map((node) => ({ ...node, muted: true }))], {
+      itemCountScaleMax: 1000,
+    });
+    expect(unmuted.maxDrawnDotRadius).toBeUndefined();
+    expect(muted.maxDotRadius).toBe(unmuted.maxDotRadius);
+    expect(muted.maxDrawnDotRadius).toBe(NODE_DOT_MAX_RADIUS);
+    expect(calculateNodeDotRadius(100, muted)).toBeGreaterThan(3 * calculateNodeDotRadius(100, unmuted));
+  });
 });
 
 describe("calculateLinkWidth", () => {

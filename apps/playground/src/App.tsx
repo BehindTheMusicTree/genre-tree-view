@@ -529,14 +529,15 @@ function buildMuseDemoNodes(nodes: GenreTreeNode[]): GenreTreeNode[] {
     }
   }
 
-  const filtered = nodes
-    .filter((node) => retainedIds.has(node.id))
-    .map((node) => {
-      let hash = 0;
-      for (const char of node.id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
-      return { ...node, itemCount: demoItemCount(hash) };
-    });
-  return withSubtreeTotals(filtered);
+  // Mirrors artist selection in the app: nothing is pruned, genres outside the footprint are
+  // muted and carry no artist count (so they size at the minimum).
+  const marked = nodes.map((node) => {
+    if (!retainedIds.has(node.id)) return { ...node, muted: true, itemCount: 0 };
+    let hash = 0;
+    for (const char of node.id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+    return { ...node, itemCount: demoItemCount(hash) };
+  });
+  return withSubtreeTotals(marked);
 }
 
 let nextId = 1;

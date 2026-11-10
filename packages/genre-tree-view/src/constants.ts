@@ -272,6 +272,9 @@ export interface ItemCountRange {
   maxNodeWidth?: number;
   maxNodeHeight?: number;
   maxDotRadius?: number;
+  /** Drawn-dot cap when some nodes are muted, sized for the non-muted nodes alone so they stand out
+   * against the rest of the tree. Layout keeps using maxDotRadius, so muting never moves anything. */
+  maxDrawnDotRadius?: number;
 }
 
 export interface ItemCountRangeOptions {
@@ -300,7 +303,7 @@ function getDensityAdjustedDotMax(nodeCount: number): number {
  * maximum visual size also responds to the full node count: above NODE_SIZE_REFERENCE_COUNT, the
  * available range above the minimum shrinks in inverse proportion to node count. */
 export function getItemCountRange(
-  nodes: Array<{ itemCount: number }>,
+  nodes: Array<{ itemCount: number; muted?: boolean }>,
   options: ItemCountRangeOptions = {},
 ): ItemCountRange {
   const counts = nodes.map((node) => node.itemCount);
@@ -312,6 +315,9 @@ export function getItemCountRange(
   const observedMin = counts.length === 0 ? 0 : Math.min(...counts);
   const observedMax = counts.length === 0 ? 0 : Math.max(...counts);
   const includeDensityCaps = options.nodeCountForSizing !== undefined || validScaleMax;
+  const maxDotRadius = getDensityAdjustedDotMax(nodeCount);
+  const focusNodeCount = nodes.reduce((count, node) => (node.muted ? count : count + 1), 0);
+  const hasMutedNodes = focusNodeCount < nodes.length;
 
   return {
     min: validScaleMax ? 0 : observedMin,
@@ -319,7 +325,13 @@ export function getItemCountRange(
     ...(includeDensityCaps && {
       maxNodeWidth: getDensityAdjustedMax(MAX_NODE_WIDTH, MIN_NODE_WIDTH, nodeCount),
       maxNodeHeight: getDensityAdjustedMax(MAX_NODE_HEIGHT, MIN_NODE_HEIGHT, nodeCount),
-      maxDotRadius: getDensityAdjustedDotMax(nodeCount),
+      maxDotRadius,
+      ...(hasMutedNodes && {
+        maxDrawnDotRadius: Math.max(
+          maxDotRadius,
+          Math.min(NODE_DOT_MAX_RADIUS, getDensityAdjustedDotMax(focusNodeCount)),
+        ),
+      }),
     }),
   };
 }
@@ -431,7 +443,7 @@ export const NODE_LAYOUT_SLOT_RADIUS = 8;
  * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
   const minArea = NODE_DOT_MIN_RADIUS ** 2;
-  const maxArea = (range.maxDotRadius ?? NODE_DOT_MAX_RADIUS) ** 2;
+  const maxArea = (range.maxDrawnDotRadius ?? range.maxDotRadius ?? NODE_DOT_MAX_RADIUS) ** 2;
   return Math.sqrt(minArea + logarithmicPosition(itemCount, range) * (maxArea - minArea));
 }
 

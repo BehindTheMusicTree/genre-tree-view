@@ -370,9 +370,9 @@ export function WheelRadialPopCoreCore({
     () =>
       getItemCountRange([
         ...nodes,
-        ...[...rootItemCountById.values()].map((itemCount) => ({ itemCount })),
+        ...groups.map((group) => ({ itemCount: group.root.itemCount, muted: group.root.muted })),
       ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
-    [nodes, rootItemCountById, itemCountScaleMax, fullNodeCountForSizing],
+    [nodes, groups, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
