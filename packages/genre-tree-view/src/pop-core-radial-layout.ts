@@ -863,14 +863,17 @@ export function hideCollidingLabels<E extends SVGElement>(
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
       const { candidates, dot } = geometryById.get(d.data.id)!;
       const rank = calculateLabelRank(d.data.itemCount, itemCountRange, Number(element.dataset.gtvDepth));
+      // Muted nodes are faded context: their dots must not crowd out a focused node's label, and
+      // their labels yield to every focused one (ranks are > -2).
+      const muted = d.data.muted === true;
       return {
         id: d.data.id,
         // An unranked node still keeps its dot as an obstacle for every other label.
         labels: isLabelRankedForZoom(rank, zoomScale)
           ? candidates.map((candidate) => offset(candidate.box, d.x!, d.y!))
           : [],
-        dot: offset(dot, d.x!, d.y!),
-        priority: rank,
+        dot: muted ? { x0: d.x!, x1: d.x!, y0: d.y!, y1: d.y! } : offset(dot, d.x!, d.y!),
+        priority: muted ? rank - 2 : rank,
       };
     }),
   ]);

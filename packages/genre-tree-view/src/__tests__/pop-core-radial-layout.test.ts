@@ -1136,4 +1136,36 @@ describe("renderPopSubtree muted nodes", () => {
     ]);
     expect(svg.selectAll("g.gtv-root-label--muted").size()).toBe(1);
   });
+
+  it("does not let muted dots hide a focused node's label", () => {
+    const labelHiddenWith = (muted: boolean) => {
+      const nodes: GenreTreeNode[] = [
+        { id: "reggae", parentId: null, name: "Reggae", itemCount: 1, muted },
+        ...Array.from({ length: 5 }, (_, i) => ({
+          id: `sub-${i}`,
+          parentId: "reggae",
+          name: `Alternative sub ${i}`,
+          itemCount: i === 1 ? 100 : 0,
+          muted: i === 1 ? false : muted,
+        })),
+        ...Array.from({ length: 20 }, (_, j) => ({
+          id: `leaf-${j}`,
+          parentId: `sub-${Math.floor(j / 4)}`,
+          name: `Leaf ${j}`,
+          itemCount: 0,
+          muted,
+        })),
+      ];
+      const range = getItemCountRange(nodes);
+      const svg = createSvg();
+      renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000, 20), "#123456", null, [], noopCallbacks, range);
+      hideCollidingLabels(d3, svg, range, 0.3);
+      const hidden = svg.select("#group-sub-1 .gtv-node-label").classed("gtv-node-label--hidden");
+      document.body.innerHTML = "";
+      return hidden;
+    };
+
+    expect(labelHiddenWith(false)).toBe(true);
+    expect(labelHiddenWith(true)).toBe(false);
+  });
 });
