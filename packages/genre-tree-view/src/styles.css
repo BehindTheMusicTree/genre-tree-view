@@ -86,6 +86,27 @@ text.gtv-node-label {
   opacity: 0.35;
 }
 
+/* After the dimmed rules so a muted node keeps its own opacity instead of the brighter
+   "related" one; opacity is a single property, so muted + dimmed never compounds. */
+.gtv-node--muted,
+.gtv-root-label--muted,
+.gtv-wheel-chip--muted,
+.gtv-outline-row--muted {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.gtv-link--muted {
+  opacity: 0.5;
+}
+
+/* Under a selection a muted node must not read as more prominent than the dimmed ones. */
+.gtv-node--muted.gtv-node--dimmed,
+.gtv-node--muted.gtv-node--dimmed-related,
+.gtv-link--muted.gtv-link--dimmed {
+  opacity: 0.35;
+}
+
 .gtv-icon {
   display: block;
 }

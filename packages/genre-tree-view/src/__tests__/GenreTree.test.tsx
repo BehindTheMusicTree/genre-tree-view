@@ -21,6 +21,16 @@ describe("GenreTree", () => {
     expect(container.querySelectorAll("path.gtv-link").length).toBe(2);
   });
 
+  it("mutes a muted node and the link into it, still dimming it under a selection", () => {
+    const nodes = TREE.map((n) => (n.id === "child-b" ? { ...n, muted: true } : n));
+    const { container } = render(<GenreTree nodes={nodes} selectedNodeId="child-a" />);
+    const classOf = (id: string) => container.querySelector(`#group-${id}`)!.getAttribute("class")!;
+    expect(classOf("child-b")).toContain("gtv-node--muted");
+    expect(classOf("child-b")).toContain("gtv-node--dimmed");
+    expect(classOf("child-a")).not.toContain("gtv-node--muted");
+    expect(container.querySelectorAll("path.gtv-link--muted").length).toBe(1);
+  });
+
   it("renders the busy indicator before the zoom buttons and marks the tree aria-busy only when busy", () => {
     const { container } = render(<GenreTree nodes={TREE} busy />);
     const controls = container.querySelector(".gtv-wheel-floating-controls") as HTMLElement;

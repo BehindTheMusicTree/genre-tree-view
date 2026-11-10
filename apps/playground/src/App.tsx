@@ -66,6 +66,15 @@ function withDemoViews(nodes: GenreTreeNode[]): GenreTreeNode[] {
   });
 }
 
+/** Mutes a deterministic ~half of the nodes (roots included) to preview the greyed-out look. */
+function withDemoMuted(nodes: GenreTreeNode[]): GenreTreeNode[] {
+  return nodes.map((n) => {
+    let hash = 0;
+    for (const char of n.id) hash = (hash * 17 + char.charCodeAt(0)) % 9973;
+    return hash % 2 === 0 ? { ...n, muted: true } : n;
+  });
+}
+
 const MIN_DEMO_ITEM_COUNT = 50;
 const MAX_DEMO_ITEM_COUNT = 10000;
 
@@ -647,11 +656,13 @@ export function App() {
   const [sizeMetric, setSizeMetric] = useState<SizeMetric>("songs");
   const [museFilterEnabled, setMuseFilterEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mutedDemo, setMutedDemo] = useState(false);
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
   const appendLog = (message: string) => setLog((prev) => [message, ...prev].slice(0, 8));
 
-  const groups = groupNodesByRoot(nodes);
+  const displayNodes = useMemo(() => (mutedDemo ? withDemoMuted(nodes) : nodes), [mutedDemo, nodes]);
+  const groups = groupNodesByRoot(displayNodes);
 
   // GenreTreeWheelRadial (plain, no pop/core center node) has no special handling for the "pop"
   // fixture root below — it's only valid input for GenreTreeWheelRadialPopCore, where it's
@@ -672,15 +683,20 @@ export function App() {
     return wheelNodes.filter((node) => !excludedIds.has(node.id));
   }, [wheelNodes]);
 
-  const metricWheelNodes = useMemo(() => (sizeMetric === "views" ? withDemoViews(wheelNodes) : wheelNodes), [sizeMetric, wheelNodes]);
+  const mutedWheelNodes = useMemo(() => (mutedDemo ? withDemoMuted(wheelNodes) : wheelNodes), [mutedDemo, wheelNodes]);
+  const mutedPlainRadialNodes = useMemo(
+    () => (mutedDemo ? withDemoMuted(plainRadialWheelNodes) : plainRadialWheelNodes),
+    [mutedDemo, plainRadialWheelNodes],
+  );
+  const metricWheelNodes = useMemo(() => (sizeMetric === "views" ? withDemoViews(mutedWheelNodes) : mutedWheelNodes), [sizeMetric, mutedWheelNodes]);
   const metricPlainRadialNodes = useMemo(
-    () => (sizeMetric === "views" ? withDemoViews(plainRadialWheelNodes) : plainRadialWheelNodes),
-    [sizeMetric, plainRadialWheelNodes],
+    () => (sizeMetric === "views" ? withDemoViews(mutedPlainRadialNodes) : mutedPlainRadialNodes),
+    [sizeMetric, mutedPlainRadialNodes],
   );
-  const filteredPopCoreNodes = useMemo(
-    () => (museFilterEnabled ? buildMuseDemoNodes(popCoreNodes) : popCoreNodes),
-    [museFilterEnabled, popCoreNodes],
-  );
+  const filteredPopCoreNodes = useMemo(() => {
+    const base = museFilterEnabled ? buildMuseDemoNodes(popCoreNodes) : popCoreNodes;
+    return mutedDemo ? withDemoMuted(base) : base;
+  }, [museFilterEnabled, mutedDemo, popCoreNodes]);
   const metricPopCoreNodes = useMemo(
     () => (sizeMetric === "views" ? withDemoViews(filteredPopCoreNodes) : filteredPopCoreNodes),
     [sizeMetric, filteredPopCoreNodes],
@@ -732,6 +748,10 @@ export function App() {
 
       <label style={{ display: "block", marginBottom: 12 }}>
         <input type="checkbox" checked={busy} onChange={(e) => setBusy(e.target.checked)} /> busy
+      </label>
+
+      <label style={{ display: "block", marginBottom: 12 }}>
+        <input type="checkbox" checked={mutedDemo} onChange={(e) => setMutedDemo(e.target.checked)} /> muted (demo subset)
       </label>
 
       {(activeTab === "wheel" || activeTab === "wheel-right" || activeTab === "wheel-radial-pop-core") && (
@@ -899,7 +919,7 @@ export function App() {
             marginBottom: 32,
           }}
         >
-          <GenreTreeOutline nodes={popCoreNodes} {...popCoreCallbacks} />
+          <GenreTreeOutline nodes={filteredPopCoreNodes} {...popCoreCallbacks} />
         </div>
       )}
 

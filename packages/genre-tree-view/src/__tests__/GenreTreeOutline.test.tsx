@@ -193,3 +193,17 @@ describe("GenreTreeOutline", () => {
     expect(vi.mocked(Element.prototype.scrollIntoView).mock.contexts[0]).toBe(itemOf(container, "a-core-child"));
   });
 });
+
+describe("GenreTreeOutline muted nodes", () => {
+  it("marks the row of a muted node and leaves the name clickable", () => {
+    const onSelectedNodeChange = vi.fn();
+    const nodes = NODES.map((n) => (n.id === "root-a" ? { ...n, muted: true } : n));
+    const { container } = render(<GenreTreeOutline nodes={nodes} onSelectedNodeChange={onSelectedNodeChange} />);
+
+    expect(itemOf(container, "root-a").querySelector(".gtv-outline-row--muted")).not.toBeNull();
+    expect(itemOf(container, "root-b").querySelector(".gtv-outline-row--muted")).toBeNull();
+
+    fireEvent.click(nameButton(container, "root-a"));
+    expect(onSelectedNodeChange).toHaveBeenCalledWith(expect.objectContaining({ id: "root-a" }));
+  });
+});

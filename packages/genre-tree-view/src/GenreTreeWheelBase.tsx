@@ -443,6 +443,7 @@ export function WheelCore({
                       className={[
                         "gtv-wheel-chip",
                         selected && "gtv-wheel-chip--selected",
+                        group.root.muted && "gtv-wheel-chip--muted",
                       ]
                         .filter(Boolean)
                         .join(" ")}
