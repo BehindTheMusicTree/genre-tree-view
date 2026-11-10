@@ -1,4 +1,4 @@
-import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate } from "@behindthemusictree/ui";
+import { dotLabelCandidates, placeLabels, type Box, type DotLabelCandidate, type LabelPlacementItem } from "@behindthemusictree/ui";
 import * as d3 from "d3";
 
 import { createDeferredClick } from "./defer-click";
@@ -28,6 +28,7 @@ import {
   calculateSelectedNodeBorderWidth,
   calculateLabelFontSizeAtZoom,
   calculateLabelRank,
+  MUTED_LABEL_TIER,
   calculateNodeFontSize,
   isLabelRankedForZoom,
   tintSurface,
@@ -813,6 +814,24 @@ export function renderPopSubtree(
   });
 }
 
+/** Label-placement item of a dot node. Muted nodes are faded context: no dot obstacle, so their dots
+ * never hide a focused label, and a lower tier, so their labels yield to every focused one. */
+export function nodeLabelPlacementItem({
+  id,
+  labels,
+  dot,
+  rank,
+  muted,
+}: {
+  id: string;
+  labels: Box[];
+  dot: Box;
+  rank: number;
+  muted: boolean;
+}): LabelPlacementItem {
+  return muted ? { id, labels, priority: rank, tier: MUTED_LABEL_TIER } : { id, labels, dot, priority: rank };
+}
+
 /** Places every dot label under `container` (across all rendered subtrees, so labels of
  * neighboring branches/sectors are checked against each other) on its first candidate spot (see
  * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
@@ -863,18 +882,16 @@ export function hideCollidingLabels<E extends SVGElement>(
       const d = d3Lib.select<SVGGElement, D3Node>(element).datum();
       const { candidates, dot } = geometryById.get(d.data.id)!;
       const rank = calculateLabelRank(d.data.itemCount, itemCountRange, Number(element.dataset.gtvDepth));
-      // Muted nodes are faded context: their dots must not crowd out a focused node's label, and
-      // their labels yield to every focused one (ranks are > -2).
-      const muted = d.data.muted === true;
-      return {
+      return nodeLabelPlacementItem({
         id: d.data.id,
         // An unranked node still keeps its dot as an obstacle for every other label.
         labels: isLabelRankedForZoom(rank, zoomScale)
           ? candidates.map((candidate) => offset(candidate.box, d.x!, d.y!))
           : [],
-        dot: muted ? { x0: d.x!, x1: d.x!, y0: d.y!, y1: d.y! } : offset(dot, d.x!, d.y!),
-        priority: muted ? rank - 2 : rank,
-      };
+        dot: offset(dot, d.x!, d.y!),
+        rank,
+        muted: d.data.muted === true,
+      });
     }),
   ]);
   roots.each(function (d) {

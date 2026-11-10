@@ -529,6 +529,9 @@ export const LABEL_SCREEN_MAX_PX = 22;
 export const LABEL_MIN_RANK_AT_MIN_ZOOM = 0.6;
 // Rank (see calculateLabelRank) a label loses per hierarchy level below its root's direct children.
 export const LABEL_DEPTH_RANK_PENALTY = 0.15;
+// placeLabels tier of muted nodes' labels: below the default 0 of focused ones, so a muted label is
+// placed only after every focused one whatever the depth penalty did to their ranks.
+export const MUTED_LABEL_TIER = -1;
 export const ROOT_LABEL_MIN_SCREEN_PX = 15;
 // Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
 export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;

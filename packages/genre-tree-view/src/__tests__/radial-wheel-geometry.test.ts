@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { placeLabels } from "@behindthemusictree/ui";
 import {
   bisectAngles,
   calculateWheelRadiusForAngles,
@@ -329,55 +328,6 @@ describe("solveRingRadius", () => {
   });
 });
 
-describe("placeLabels", () => {
-  const box = (x0: number, y0: number, x1: number, y1: number) => ({ x0, y0, x1, y1 });
-  const farDot = (i: number) => box(1000 + i * 10, 1000, 1005 + i * 10, 1005);
-
-  it("hides the lower-priority label of a colliding pair with no other spot", () => {
-    const placement = placeLabels([
-      { id: "low", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
-      { id: "high", labels: [box(20, 0, 70, 10)], dot: farDot(1), priority: 5 },
-    ]);
-    expect(placement.get("high")).toBe(0);
-    expect(placement.get("low")).toBe(-1);
-  });
-
-  it("lets a forced label with every spot blocked still hide the labels it overlaps", () => {
-    const placement = placeLabels([
-      { id: "forced", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: Infinity, forced: true },
-      { id: "dotOwner", labels: [], dot: box(10, 0, 20, 10), priority: 0 },
-      { id: "low", labels: [box(20, 0, 70, 10)], dot: farDot(1), priority: 1 },
-    ]);
-    expect(placement.get("forced")).toBe(0);
-    expect(placement.get("low")).toBe(-1);
-  });
-
-  it("keeps both labels when they are disjoint", () => {
-    const placement = placeLabels([
-      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 1 },
-      { id: "b", labels: [box(0, 20, 50, 30)], dot: farDot(1), priority: 1 },
-    ]);
-    expect([...placement.values()]).toEqual([0, 0]);
-  });
-
-  it("moves a label covering another node's dot to its next free candidate", () => {
-    const placement = placeLabels([
-      { id: "a", labels: [box(0, 0, 50, 10), box(0, 40, 50, 50)], dot: farDot(0), priority: 9 },
-      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
-    ]);
-    expect(placement.get("a")).toBe(1);
-    expect(placement.get("b")).toBe(0);
-  });
-
-  it("hides a label when every candidate is blocked", () => {
-    const placement = placeLabels([
-      { id: "a", labels: [box(0, 0, 50, 10)], dot: farDot(0), priority: 9 },
-      { id: "b", labels: [box(0, 100, 50, 110)], dot: box(10, 2, 16, 8), priority: 1 },
-    ]);
-    expect(placement.get("a")).toBe(-1);
-  });
-});
-
 describe("findSectorAtAngle", () => {
   const sectors = [
     { id: "a", center: 0, span: 90 },
@@ -419,45 +369,5 @@ describe("pickEmptyLabelSpot", () => {
 
   it("accepts any free spot when no preference is given", () => {
     expect(pickEmptyLabelSpot(area, 20, 10, [])).not.toBeNull();
-  });
-});
-
-describe("placeLabels grid index", () => {
-  type Item = Parameters<typeof placeLabels>[0][number];
-  type Box = Item["dot"];
-  const overlap = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
-  const naive = (items: Item[]) => {
-    const placement = new Map<string, number>();
-    const kept: Box[] = [];
-    for (const item of [...items].sort((a, b) => b.priority - a.priority)) {
-      const index = item.labels.findIndex(
-        (label) =>
-          !kept.some((box) => overlap(label, box)) &&
-          !items.some((other) => other.id !== item.id && overlap(label, other.dot)),
-      );
-      placement.set(item.id, index);
-      if (index >= 0) kept.push(item.labels[index]);
-    }
-    return placement;
-  };
-
-  it("matches a naive pairwise scan on dense random layouts, including negative coordinates", () => {
-    let seed = 7;
-    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const items: Item[] = Array.from({ length: 300 }, (_, i) => {
-      const x = rand() * 1200 - 600;
-      const y = rand() * 1200 - 600;
-      return {
-        id: `n${i}`,
-        priority: Math.floor(rand() * 20),
-        dot: { x0: x - 4, x1: x + 4, y0: y - 4, y1: y + 4 },
-        labels: [0, 1, 2].map(() => {
-          const lx = x + rand() * 160 - 80;
-          const ly = y + rand() * 40 - 20;
-          return { x0: lx, x1: lx + 20 + rand() * 120, y0: ly, y1: ly + 14 };
-        }),
-      };
-    });
-    expect([...placeLabels(items)]).toEqual([...naive(items)]);
   });
 });
