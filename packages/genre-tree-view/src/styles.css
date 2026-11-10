@@ -96,14 +96,16 @@ text.gtv-node-label {
   opacity: 0.5;
 }
 
+/* Fainter than a dimmed link: Mainstream links are already grey, so grayscale alone would not
+   set a muted one apart. */
 .gtv-link--muted {
-  opacity: 0.5;
+  filter: grayscale(1);
+  opacity: 0.2;
 }
 
 /* Under a selection a muted node must not read as more prominent than the dimmed ones. */
 .gtv-node--muted.gtv-node--dimmed,
-.gtv-node--muted.gtv-node--dimmed-related,
-.gtv-link--muted.gtv-link--dimmed {
+.gtv-node--muted.gtv-node--dimmed-related {
   opacity: 0.35;
 }
 

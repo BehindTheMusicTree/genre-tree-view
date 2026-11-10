@@ -8,6 +8,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `GenreTreeNode.muted` greys a node and the link into it out (grayscale, half opacity) in every layout and the outline, without removing it, so a host can show which genres fall outside a selection while keeping them selectable. The playground has a "muted (demo subset)" toggle.
+- When some nodes are muted, the non-muted dots are drawn on a larger size scale (up to the regular maximum dot size) so they stand out, without moving any node; muted links fade further (grayscale, 0.2 opacity) so they stay distinct from the grey Mainstream links; and muted dots no longer hide a non-muted node's label; a muted root's sector wash in the wheels turns almost grey. The playground's Muse demo mutes genres outside the artist's footprint instead of removing them.
+
+### Changed
+
+- Requires `@behindthemusictree/ui` `^0.21.2` (peer dependency): muted nodes now use its optional label `dot` and `tier`, so a muted node leaves no obstacle and its label is placed after every non-muted one, whatever its depth.
 
 ## [9.1.0] - 2026-11-10
 

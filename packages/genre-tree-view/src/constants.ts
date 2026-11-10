@@ -95,6 +95,21 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
 // rather than competing with them for attention.
 export const ROOT_SECTOR_FILL_OPACITY = 0.15;
 
+// Share of a muted root's sector wash that is desaturated: almost grey, keeping a hint of the root
+// color so the zone still reads as that genre family.
+export const MUTED_SECTOR_GREY_RATIO = 0.9;
+
+/** Fill of a root's sector wash: the root color at ROOT_SECTOR_FILL_OPACITY, or for a muted root
+ * (no focused genre in its zone) nearly its grey equivalent. */
+export function getSectorWashFill(hex: string, muted: boolean | undefined): string {
+  if (!muted) return hexToRgba(hex, ROOT_SECTOR_FILL_OPACITY);
+  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
+  const [r, g, b] = [1, 3, 5].map(channel);
+  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+  const mix = (value: number) => Math.round(value * (1 - MUTED_SECTOR_GREY_RATIO) + luma * MUTED_SECTOR_GREY_RATIO);
+  return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, ${ROOT_SECTOR_FILL_OPACITY})`;
+}
+
 /** Converts an opaque "#RRGGBB" color (e.g. a ROOT_GENRE_COLORS entry) to an "rgba()" string at
  * `opacity` (0-1) — unlike tintSurface, which stays opaque by blending toward a fixed background,
  * this produces a true transparent fill for layering over arbitrary content (e.g. a wheel's
@@ -272,6 +287,9 @@ export interface ItemCountRange {
   maxNodeWidth?: number;
   maxNodeHeight?: number;
   maxDotRadius?: number;
+  /** Drawn-dot cap when some nodes are muted, sized for the non-muted nodes alone so they stand out
+   * against the rest of the tree. Layout keeps using maxDotRadius, so muting never moves anything. */
+  maxDrawnDotRadius?: number;
 }
 
 export interface ItemCountRangeOptions {
@@ -300,7 +318,7 @@ function getDensityAdjustedDotMax(nodeCount: number): number {
  * maximum visual size also responds to the full node count: above NODE_SIZE_REFERENCE_COUNT, the
  * available range above the minimum shrinks in inverse proportion to node count. */
 export function getItemCountRange(
-  nodes: Array<{ itemCount: number }>,
+  nodes: Array<{ itemCount: number; muted?: boolean }>,
   options: ItemCountRangeOptions = {},
 ): ItemCountRange {
   const counts = nodes.map((node) => node.itemCount);
@@ -312,6 +330,9 @@ export function getItemCountRange(
   const observedMin = counts.length === 0 ? 0 : Math.min(...counts);
   const observedMax = counts.length === 0 ? 0 : Math.max(...counts);
   const includeDensityCaps = options.nodeCountForSizing !== undefined || validScaleMax;
+  const maxDotRadius = getDensityAdjustedDotMax(nodeCount);
+  const focusNodeCount = nodes.reduce((count, node) => (node.muted ? count : count + 1), 0);
+  const hasMutedNodes = focusNodeCount < nodes.length;
 
   return {
     min: validScaleMax ? 0 : observedMin,
@@ -319,7 +340,13 @@ export function getItemCountRange(
     ...(includeDensityCaps && {
       maxNodeWidth: getDensityAdjustedMax(MAX_NODE_WIDTH, MIN_NODE_WIDTH, nodeCount),
       maxNodeHeight: getDensityAdjustedMax(MAX_NODE_HEIGHT, MIN_NODE_HEIGHT, nodeCount),
-      maxDotRadius: getDensityAdjustedDotMax(nodeCount),
+      maxDotRadius,
+      ...(hasMutedNodes && {
+        maxDrawnDotRadius: Math.max(
+          maxDotRadius,
+          Math.min(NODE_DOT_MAX_RADIUS, getDensityAdjustedDotMax(focusNodeCount)),
+        ),
+      }),
     }),
   };
 }
@@ -431,7 +458,7 @@ export const NODE_LAYOUT_SLOT_RADIUS = 8;
  * (calculateNodeFontSize) so a bigger label always sits on a bigger dot. */
 export function calculateNodeDotRadius(itemCount: number, range: ItemCountRange): number {
   const minArea = NODE_DOT_MIN_RADIUS ** 2;
-  const maxArea = (range.maxDotRadius ?? NODE_DOT_MAX_RADIUS) ** 2;
+  const maxArea = (range.maxDrawnDotRadius ?? range.maxDotRadius ?? NODE_DOT_MAX_RADIUS) ** 2;
   return Math.sqrt(minArea + logarithmicPosition(itemCount, range) * (maxArea - minArea));
 }
 
@@ -517,6 +544,9 @@ export const LABEL_SCREEN_MAX_PX = 22;
 export const LABEL_MIN_RANK_AT_MIN_ZOOM = 0.6;
 // Rank (see calculateLabelRank) a label loses per hierarchy level below its root's direct children.
 export const LABEL_DEPTH_RANK_PENALTY = 0.15;
+// placeLabels tier of muted nodes' labels: below the default 0 of focused ones, so a muted label is
+// placed only after every focused one whatever the depth penalty did to their ranks.
+export const MUTED_LABEL_TIER = -1;
 export const ROOT_LABEL_MIN_SCREEN_PX = 15;
 // Quiet time (ms) after the last zoom change before dot labels are re-placed for the new scale.
 export const LABEL_RELAYOUT_DEBOUNCE_MS = 120;
