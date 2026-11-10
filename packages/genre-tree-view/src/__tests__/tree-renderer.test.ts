@@ -9,13 +9,20 @@ import {
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import {
   ACTIONS_OVERLAY_HEIGHT,
+  ACCENT_TEXT_COLOR,
   MAX_NODE_HEIGHT,
+  TEXT_COLOR,
   NODE_MIN_BORDER_WIDTH,
   SELECTED_BORDER_WIDTH_RATIO,
   calculateNodeDimensions,
   getItemCountRange,
 } from "../constants";
 import type { GenreTreeNode } from "../types";
+
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+}
 import type { RenderTreeCallbacks } from "../tree-renderer";
 
 afterEach(() => {
@@ -679,6 +686,41 @@ describe("renderTree", () => {
     expect(rootLabel.textContent).toBe("Root");
     expect(childLabel.textContent).toBe("Child");
   });
+
+  it.each([
+    ["#FFFFFF", TEXT_COLOR],
+    ["#4F46E5", ACCENT_TEXT_COLOR],
+  ])(
+    "draws hidden-root subtree-core labels readable on a %s card",
+    (rootColor, expected) => {
+      const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
+      const svgEl = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg",
+      );
+      document.body.appendChild(svgEl);
+      const svgRef: React.RefObject<SVGSVGElement> = { current: svgEl };
+
+      renderTree(
+        d3,
+        svgRef,
+        treeData,
+        svgWidth,
+        svgHeight,
+        null,
+        [],
+        rootColor,
+        baseCallbacks(),
+        "horizontal",
+        true,
+      );
+
+      const childLabel = svgEl.querySelector(
+        "#group-child .gtv-node-label",
+      ) as HTMLDivElement;
+      expect(childLabel.style.color).toBe(hexToRgb(expected));
+    },
+  );
 
   it("does not add a toolbar on mouseover while a reparent is in progress or the node is forbidden", () => {
     const { treeData, svgWidth, svgHeight } = buildTreeData(SIMPLE_NODES);
