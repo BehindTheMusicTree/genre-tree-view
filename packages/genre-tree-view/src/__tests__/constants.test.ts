@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getGenreTreeColor,
+  getTextColorOnFill,
   getGenreNodeColor,
   calculateNodeDimensions,
   calculateNodeDotRadius,
@@ -47,14 +48,29 @@ describe("getGenreTreeColor", () => {
   });
 
   it("falls back for an unmapped or missing wikidata id", () => {
-    expect(getGenreTreeColor("Q37073")).toBe(FALLBACK_ROOT_COLOR);
+    expect(getGenreTreeColor("Q0")).toBe(FALLBACK_ROOT_COLOR);
     expect(getGenreTreeColor(null)).toBe(FALLBACK_ROOT_COLOR);
     expect(getGenreTreeColor(undefined)).toBe(FALLBACK_ROOT_COLOR);
+  });
+
+  it("paints Mainstream Pop white", () => {
+    expect(getGenreTreeColor("Q37073")).toBe("#FFFFFF");
   });
 
   it("gives every mapped root a distinct color", () => {
     const colors = Object.values(ROOT_GENRE_COLORS);
     expect(new Set(colors).size).toBe(colors.length);
+  });
+});
+
+describe("getTextColorOnFill", () => {
+  it("is dark on white, whatever the hex case", () => {
+    expect(getTextColorOnFill("#FFFFFF")).toBe(TEXT_COLOR);
+    expect(getTextColorOnFill("#ffffff")).toBe(TEXT_COLOR);
+  });
+
+  it("is the accent text on any other fill", () => {
+    expect(getTextColorOnFill(FALLBACK_ROOT_COLOR)).toBe(ACCENT_TEXT_COLOR);
   });
 });
 

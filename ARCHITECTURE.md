@@ -213,7 +213,7 @@ pnpm workspace with two members:
 - Components: `GenreTree`, `GenreTreeWheel`, `GenreTreeWheelRight`, `GenreTreeWheelRadial`,
   `GenreTreeWheelRadialPopCore`, `GenreTreeOutline`, `GenreNodeAncestors`, `GenreNodeFamily`,
   `GenreNodeItemCount`, `NodeToolbar` (content only; the shell is ui's `DetailPanel`; load `styles.css`).
-- Helpers: `getGenreTreeColor`, `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
+- Helpers: `getGenreTreeColor`, `getTextColorOnFill`, `tintSurface`, `ROOT_TINT_RATIO`, `TEXT_COLOR`, `ACCENT_TEXT_COLOR`, `DEFAULT_FRAME_WIDTH`, `DEFAULT_FRAME_HEIGHT`,
   `groupNodesByRoot`, `isZoomableNode`, `useGenreNodeRelations`.
 - Types: `GenreTreeNode`, `GenreTreeProps`, `GenreTreePlayState`, `TreeOrientation`,
   `GenreTreeAction`, `InfoPanelChild`, `GenreNodeRelations`, `GenreNodeStyle`, `GenreNodeStyleResolver`, `ObscuredInset`, `GenreNodeAncestorsProps`, `GenreNodeFamilyProps`, `GenreNodeItemCountProps`, `NodeToolbarProps`, `GenreTreeWheelProps`, `GenreTreeWheelRightProps`,

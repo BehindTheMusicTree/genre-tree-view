@@ -912,7 +912,7 @@ nav.gtv-wheel-breadcrumb {
   border-radius: 0.5rem;
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
   background: var(--gtv-chip-color, #ffffff);
-  color: #ffffff;
+  color: var(--gtv-chip-text-color, #ffffff);
   cursor: pointer;
 }
 
@@ -971,9 +971,9 @@ nav.gtv-wheel-breadcrumb {
 /* The selected root's tree grows directly out of this chip (see GenreTree's `hideRoot`) — filled
    in the root's own accent color so it reads as the tree's origin, not just another option. */
 .gtv-wheel-chip--selected {
-  border-color: var(--gtv-chip-color);
+  border-color: var(--gtv-chip-border-color, var(--gtv-chip-color));
   background: var(--gtv-chip-color);
-  color: #ffffff;
+  color: var(--gtv-chip-text-color, #ffffff);
 }
 
 .gtv-wheel-chip--selected .gtv-wheel-chip-dot {

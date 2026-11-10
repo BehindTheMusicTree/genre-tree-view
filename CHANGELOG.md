@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `getTextColorOnFill` returns the text color readable on a root color or tree card background.
+
+### Changed
+
+- Mainstream Pop (`Q37073`) now has a fixed white color in `ROOT_GENRE_COLORS`, so `getGenreTreeColor` no longer falls back to grey for it. Wheels, the published node styles and root chips keep dark text and a visible border on white.
+
 ### Fixed
 
 - "Family" and "Ancestors" panel sections keep the panel's title-to-content gap: "Ancestors" drops its extra top margin and the space above the Family mini tree now matches the parent's label. The parent's label stays on one line, truncated with an ellipsis beyond 8rem (full name in the tooltip).
