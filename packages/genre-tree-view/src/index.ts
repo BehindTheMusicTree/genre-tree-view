@@ -10,6 +10,7 @@ export { GenreTreeOutlineSkeleton } from "./GenreTreeOutlineSkeleton";
 export { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
 export {
   getGenreTreeColor,
+  getTextColorOnFill,
   tintSurface,
   ROOT_TINT_RATIO,
   TEXT_COLOR,

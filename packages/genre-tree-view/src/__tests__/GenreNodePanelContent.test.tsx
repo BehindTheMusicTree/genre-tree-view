@@ -51,6 +51,18 @@ describe("content pieces", () => {
     expect(container.textContent).toBe("");
   });
 
+  it("reserves the mini tree's label space from the parent's font size, only when there is a parent", () => {
+    const familyOf = (id: string) => {
+      const r = renderHook(() => useGenreNodeRelations(NODES, id, resolver)).result.current!;
+      const { container } = render(
+        <GenreNodeFamily node={r.node} fill={r.fill} textColor={r.textColor} parentNode={r.parentNode} childNodes={r.childNodes} onSelectNode={() => {}} />,
+      );
+      return container.querySelector<HTMLElement>(".gtv-info-panel-mini-tree")!;
+    };
+    expect(familyOf("mid").style.getPropertyValue("--gtv-mini-parent-font-size")).toMatch(/^\d+(\.\d+)?px$/);
+    expect(familyOf("root").style.getPropertyValue("--gtv-mini-parent-font-size")).toBe("");
+  });
+
   it("shows the family and selects a child on click", () => {
     const onSelectNode = vi.fn();
     const { result } = renderHook(() => useGenreNodeRelations(NODES, "mid", resolver));

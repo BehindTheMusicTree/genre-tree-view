@@ -20,13 +20,13 @@ import {
   TEXT_COLOR,
   TEXT_MUTED_COLOR,
   ACCENT_COLOR,
-  ACCENT_TEXT_COLOR,
   MAX_NODE_WIDTH,
   MAX_NODE_HEIGHT,
   calculateNodeBorderWidth,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getItemCountRange,
+  getTextColorOnFill,
   ItemCountRange,
   tintSurface,
 } from "./constants";
@@ -599,7 +599,7 @@ export function renderTree(
       const color = isForbidden(d)
         ? TEXT_MUTED_COLOR
         : isSubtreeCore(d)
-          ? ACCENT_TEXT_COLOR
+          ? getTextColorOnFill(rootColor)
           : TEXT_COLOR;
       const fontSize = calculateNodeFontSize(d.data.itemCount, itemCountRange);
       return `<div class="gtv-node-label${rootClass}" style="color:${color};font-size:${fontSize}px;${htmlLabelHaloStyle(color)}">${d.data.name}</div>`;

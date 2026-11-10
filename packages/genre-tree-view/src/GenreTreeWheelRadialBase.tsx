@@ -30,12 +30,14 @@ import { WheelBackdrop } from "./WheelBackdrop";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { GenreTreeNode, GenreTreeProps } from "./types";
 import {
-  ACCENT_TEXT_COLOR,
   calculateNodeDimensions,
   calculateNodeFontSize,
   getGenreTreeColor,
   getItemCountRange,
+  getTextColorOnFill,
+  getWheelChipVars,
   hexToRgba,
+  isWhiteFill,
   MAX_NODE_WIDTH,
   PER_TREE_ACCENT_DOT,
   POP_TREE_DEPTH_RADIAL_SPACING,
@@ -132,7 +134,7 @@ export function WheelRadialCore({
     getGenreTreeColor(index.byId.get(index.rootIdById.get(node.id) ?? node.id)?.wikidataId);
   useExposeNodeStyleResolver(onNodeStyleResolverChange, (node) => ({
     fill: rootColorOf(node),
-    textColor: ACCENT_TEXT_COLOR,
+    textColor: getTextColorOnFill(rootColorOf(node)),
   }));
 
   const [topRootId, setTopRootId] = useState<string | null>(
@@ -382,11 +384,12 @@ export function WheelRadialCore({
           .attr("class", "gtv-wheel-core-branch")
           .attr("data-gtv-branch-index", branchIndex);
 
+        const rootColor = getGenreTreeColor(index.byId.get(rootId)?.wikidataId);
         renderPopSubtree(
           d3,
           branchGroup,
           laidOut,
-          getGenreTreeColor(index.byId.get(rootId)?.wikidataId),
+          rootColor,
           reparentingNodeId,
           reparentForbiddenIds,
           {
@@ -420,6 +423,7 @@ export function WheelRadialCore({
           {
             isCoreSector: true,
             rootLinkOrigin,
+            isMainstreamSector: isWhiteFill(rootColor),
             selectedNodeId: panel?.node.id ?? null,
           },
         );
@@ -602,7 +606,7 @@ export function WheelRadialCore({
                           // (inline style beats any stylesheet rule), silently pinning the box and
                           // breaking the hover growth again, same failure mode as before.
                           "--gtv-wheel-chip-base-height": `${dimensions.HEIGHT}px`,
-                          "--gtv-chip-color": chipColor,
+                          ...getWheelChipVars(chipColor),
                         } as React.CSSProperties
                       }
                       onClick={(event) => {

@@ -352,9 +352,16 @@ nav.gtv-wheel-breadcrumb {
   padding: 0;
 }
 
-/* Room for the parent's label, which sits above its dot. */
+/* Room for the parent's one-line label, which sits above its dot: exactly its line box plus its
+   margin, so the label keeps the panel's title-to-content gap whatever its font size. */
 .gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent) {
-  padding-top: 1.625rem;
+  padding-top: calc(var(--gtv-mini-parent-font-size) * 1.15 + 0.125rem);
+}
+
+/* From three children on, the children column is the tallest and its absolute title overhangs the
+   mini tree instead of the parent's label: reserve that title's line box plus its margin. */
+.gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent):has(.gtv-info-panel-children-list > li:nth-child(3)) {
+  padding-top: calc(0.6875rem * 1.5 + 0.25rem);
 }
 
 /* No parent: size the children to their content and center the node + children as a group,
@@ -480,6 +487,10 @@ nav.gtv-wheel-breadcrumb {
   bottom: 100%;
   left: 0;
   margin-bottom: 0.125rem;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gtv-info-panel-mini-tree-current .gtv-info-panel-mini-dot {
@@ -514,6 +525,7 @@ nav.gtv-wheel-breadcrumb {
   margin: 0 0 0.25rem;
   display: block;
   font-size: 0.6875rem;
+  line-height: 1.5;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--gtv-text-muted, var(--color-text-muted, #71717a));
@@ -585,11 +597,14 @@ nav.gtv-wheel-breadcrumb {
 
 /* Ancestors as a root-first vertical chain. Dots sit centered in a fixed column as wide as the
    largest one (MINI_NODE_MAX_DIAMETER) so the connector stays straight whatever each dot's size. */
+/* The negative margin cancels the first row's padding, so the panel's title-to-content gap
+   is measured to the first ancestor. */
 .gtv-info-panel-ancestors-list {
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: 0;
+  margin-top: -0.1875rem;
 }
 
 .gtv-info-panel-ancestors-list li {
@@ -897,7 +912,7 @@ nav.gtv-wheel-breadcrumb {
   border-radius: 0.5rem;
   border: 1px solid var(--gtv-border, var(--color-border, #e4e4e7));
   background: var(--gtv-chip-color, #ffffff);
-  color: #ffffff;
+  color: var(--gtv-chip-text-color, #ffffff);
   cursor: pointer;
 }
 
@@ -956,9 +971,9 @@ nav.gtv-wheel-breadcrumb {
 /* The selected root's tree grows directly out of this chip (see GenreTree's `hideRoot`) — filled
    in the root's own accent color so it reads as the tree's origin, not just another option. */
 .gtv-wheel-chip--selected {
-  border-color: var(--gtv-chip-color);
+  border-color: var(--gtv-chip-border-color, var(--gtv-chip-color));
   background: var(--gtv-chip-color);
-  color: #ffffff;
+  color: var(--gtv-chip-text-color, #ffffff);
 }
 
 .gtv-wheel-chip--selected .gtv-wheel-chip-dot {
