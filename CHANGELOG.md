@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [9.0.0] - 2026-11-10
+
 ### Changed
 
 - **Breaking:** peer dependency `@behindthemusictree/ui` is now `^0.21.0`, where the `DetailPanel` body owns the horizontal margin and section gap. The exported panel content (`GenreNodeAncestors`, `GenreNodeFamily`, `GenreNodeItemCount`) renders bare sections, so it must be placed as direct children of the panel body (or inside a `PanelStack`).
