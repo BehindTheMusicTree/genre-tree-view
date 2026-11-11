@@ -12,6 +12,14 @@ const MINI_NODE_MAX_DIAMETER = 32;
 const MINI_NODE_MIN_FONT_SIZE = 10;
 const MINI_NODE_MAX_FONT_SIZE = 14;
 
+interface MiniNodeSize {
+  diameter: number;
+  fontSize: number;
+}
+
+// Hosts only know the selected node's real count, not its relatives', so the family compares none.
+const FAMILY_NODE_SIZE: MiniNodeSize = { diameter: MINI_NODE_MAX_DIAMETER, fontSize: MINI_NODE_MAX_FONT_SIZE };
+
 /** A related node styled to match exactly how it renders as its own `gtv-node-rect` out in the
  * tree (solid vs. tinted fill, light vs. dark text). The styling is renderer-specific (e.g.
  * `hideRoot`, pop/core sector), so renderers expose it through `onNodeStyleResolverChange`. */
@@ -51,7 +59,7 @@ export function useGenreNodeRelations(
   }, [index, nodeId, resolveStyle]);
 }
 
-function miniNodeScale(target: GenreTreeNode, range: ItemCountRange) {
+function miniNodeScale(target: GenreTreeNode, range: ItemCountRange): MiniNodeSize {
   const t = logarithmicPosition(target.itemCount, range);
   return {
     diameter: MINI_NODE_MIN_DIAMETER + t * (MINI_NODE_MAX_DIAMETER - MINI_NODE_MIN_DIAMETER),
@@ -59,8 +67,7 @@ function miniNodeScale(target: GenreTreeNode, range: ItemCountRange) {
   };
 }
 
-function miniNodeContent(target: GenreTreeNode, background: string, range: ItemCountRange) {
-  const { diameter, fontSize } = miniNodeScale(target, range);
+function miniNodeContent(target: GenreTreeNode, background: string, { diameter, fontSize }: MiniNodeSize) {
   return (
     <>
       <span className="gtv-info-panel-mini-dot" style={{ background, width: diameter, height: diameter }} />
@@ -73,11 +80,11 @@ function miniNodeContent(target: GenreTreeNode, background: string, range: ItemC
 
 interface NodeChipProps {
   related: InfoPanelChild;
-  range: ItemCountRange;
+  size: MiniNodeSize;
   onSelectNode: (nodeId: string) => void;
 }
 
-function NodeChip({ related, range, onSelectNode }: NodeChipProps) {
+function NodeChip({ related, size, onSelectNode }: NodeChipProps) {
   return (
     <button
       type="button"
@@ -85,7 +92,7 @@ function NodeChip({ related, range, onSelectNode }: NodeChipProps) {
       title={related.node.name}
       onClick={() => onSelectNode(related.node.id)}
     >
-      {miniNodeContent(related.node, related.fill, range)}
+      {miniNodeContent(related.node, related.fill, size)}
     </button>
   );
 }
@@ -104,7 +111,7 @@ export function GenreNodeAncestors({ ancestorNodes, onSelectNode }: GenreNodeAnc
       <ul className="gtv-info-panel-children-list gtv-info-panel-ancestors-list">
         {ancestorNodes.map((ancestor) => (
           <li key={ancestor.node.id}>
-            <NodeChip related={ancestor} range={range} onSelectNode={onSelectNode} />
+            <NodeChip related={ancestor} size={miniNodeScale(ancestor.node, range)} onSelectNode={onSelectNode} />
           </li>
         ))}
       </ul>
@@ -122,28 +129,23 @@ export interface GenreNodeFamilyProps extends GenreNodeStyle {
 
 /** Collapsible "Family" section: a mini tree of the node's parent, itself and its children. */
 export function GenreNodeFamily({ node, fill, parentNode, childNodes, onSelectNode }: GenreNodeFamilyProps) {
-  const range = getItemCountRange([
-    ...(parentNode ? [parentNode.node] : []),
-    node,
-    ...childNodes.map((child) => child.node),
-  ]);
   const sortedChildNodes = [...childNodes].sort((a, b) => b.node.itemCount - a.node.itemCount);
   const parentLabelSpace = parentNode
-    ? ({ "--gtv-mini-parent-font-size": `${miniNodeScale(parentNode.node, range).fontSize}px` } as CSSProperties)
+    ? ({ "--gtv-mini-parent-font-size": `${FAMILY_NODE_SIZE.fontSize}px` } as CSSProperties)
     : undefined;
   return (
     <PanelSection title="Family">
       <div className="gtv-info-panel-mini-tree" style={parentLabelSpace}>
         {parentNode && (
           <div className="gtv-info-panel-mini-tree-parent">
-            <NodeChip related={parentNode} range={range} onSelectNode={onSelectNode} />
+            <NodeChip related={parentNode} size={FAMILY_NODE_SIZE} onSelectNode={onSelectNode} />
           </div>
         )}
         <div
           className={`gtv-info-panel-mini-tree-node${childNodes.length === 0 ? " gtv-info-panel-mini-tree-node--leaf" : ""}`}
         >
           <span className="gtv-info-panel-child gtv-info-panel-mini-tree-current" title={node.name}>
-            {miniNodeContent(node, fill, range)}
+            {miniNodeContent(node, fill, FAMILY_NODE_SIZE)}
           </span>
         </div>
         <div className="gtv-info-panel-mini-tree-children">
@@ -154,7 +156,7 @@ export function GenreNodeFamily({ node, fill, parentNode, childNodes, onSelectNo
             <ul className="gtv-info-panel-children-list">
               {sortedChildNodes.map((child) => (
                 <li key={child.node.id}>
-                  <NodeChip related={child} range={range} onSelectNode={onSelectNode} />
+                  <NodeChip related={child} size={FAMILY_NODE_SIZE} onSelectNode={onSelectNode} />
                 </li>
               ))}
             </ul>
