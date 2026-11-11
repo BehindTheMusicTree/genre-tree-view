@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeWheelRadialPopCore` leaves less room between the mainstream circle and the deepest nodes on either side of it (pop branches outside, Mainstream Pop subtree inside): 17.5% of the widest card instead of half, so the wheel is smaller
+
 ## [9.2.1] - 2026-11-11
 
 ### Fixed

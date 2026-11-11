@@ -444,7 +444,7 @@ export function WheelRadialPopCoreCore({
 
   // Pins coreRootCircleRadius so the deepest node of the deepest developed pop branch (which
   // climbs inward from coreRootCircleRadius by a fixed depthSpacing per depth step — see
-  // computePopRadialLayout) has its card clear the mainstream circle by the usual half-width +
+  // computePopRadialLayout) has its card clear the mainstream circle by POP_CORE_NODE_CLEARANCE +
   // outer margin, rather than leaving that gap to whatever coreRootCircleRadius happens to be for
   // other reasons. Zero (dropped from the Math.max below) when no root has a pop branch at all.
   const popReachRequiredRadius = useMemo(
