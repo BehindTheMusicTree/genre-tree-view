@@ -63,6 +63,29 @@ describe("content pieces", () => {
     expect(familyOf("root").style.getPropertyValue("--gtv-mini-parent-font-size")).toBe("");
   });
 
+  it("draws every family dot at one size, whatever the selected node's count", () => {
+    const related = (id: string, parentId: string | null) => ({
+      node: { id, parentId, name: id, itemCount: 1 },
+      fill: "#000",
+      textColor: "#fff",
+    });
+    for (const itemCount of [0, 1, 500]) {
+      const { container, unmount } = render(
+        <GenreNodeFamily
+          node={{ id: "self", parentId: "parent", name: "self", itemCount }}
+          fill="#000"
+          textColor="#fff"
+          parentNode={related("parent", null)}
+          childNodes={[related("child", "self")]}
+          onSelectNode={() => {}}
+        />,
+      );
+      const dots = Array.from(container.querySelectorAll<HTMLElement>(".gtv-info-panel-mini-dot"));
+      expect(dots.map((dot) => dot.style.width)).toEqual(["32px", "32px", "32px"]);
+      unmount();
+    }
+  });
+
   it("shows the family and selects a child on click", () => {
     const onSelectNode = vi.fn();
     const { result } = renderHook(() => useGenreNodeRelations(NODES, "mid", resolver));
