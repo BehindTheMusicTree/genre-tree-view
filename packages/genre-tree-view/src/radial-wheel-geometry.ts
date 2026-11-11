@@ -77,6 +77,28 @@ export function subdivideWedge(
   return slices;
 }
 
+/** Axes of a ring root's sector. The chip always follows its requested offset (clamped only so it
+ * stays a chip's half-width inside the sector); the pop wedge follows the chip only as far as its
+ * measured need allows, so its span never drops below `popNeedDeg`. The far edge of the pop wedge
+ * stays on the sector edge: `popSpanDeg = sectorSpanDeg - 2 * |popOffsetDeg|`. Offsets are relative
+ * to the sector's center. */
+export function computeRootWedgeAxes({
+  chipOffsetDeg,
+  sectorSpanDeg,
+  chipHalfDeg,
+  popNeedDeg,
+}: {
+  chipOffsetDeg: number;
+  sectorSpanDeg: number;
+  chipHalfDeg: number;
+  popNeedDeg: number;
+}): { chipOffsetDeg: number; popOffsetDeg: number; popSpanDeg: number } {
+  const clampAbs = (value: number, limit: number) => Math.max(-limit, Math.min(limit, value));
+  const chip = clampAbs(chipOffsetDeg, Math.max(0, sectorSpanDeg / 2 - chipHalfDeg));
+  const popOffsetDeg = clampAbs(chip, Math.max(0, (sectorSpanDeg - popNeedDeg) / 2));
+  return { chipOffsetDeg: chip, popOffsetDeg, popSpanDeg: sectorSpanDeg - 2 * Math.abs(popOffsetDeg) };
+}
+
 /** Midpoint angle between two chip angles that may be continuous/unwrapped (e.g. from
  * computeContinuousAngles), taking the shorter arc between them rather than always going the
  * increasing-angle way — brings `b` within 180 degrees of `a` before averaging, so the divider

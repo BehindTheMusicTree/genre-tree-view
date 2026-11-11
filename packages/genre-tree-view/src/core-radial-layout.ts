@@ -3,7 +3,14 @@ import * as d3 from "d3";
 import { GenreTreeNode } from "./types";
 import { MAX_NODE_WIDTH, NODE_LAYOUT_SLOT_RADIUS } from "./constants";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
-import { coreRadiusOfDepth, getRadialDepthRadius, isUndergroundRoot, layoutWedge } from "./pop-core-radial-layout";
+import {
+  coreRadiusOfDepth,
+  getRadialDepthRadius,
+  hasSceneBoundary,
+  isUndergroundRoot,
+  layoutWedge,
+  splitAtBranching,
+} from "./pop-core-radial-layout";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
@@ -55,6 +62,7 @@ export function computeCoreRadialLayout(
     coreRadiusOfDepth(coreRootCircleRadius, depthSpacing),
     "between-children",
     dotRadius,
+    true,
   );
 }
 
@@ -83,15 +91,16 @@ export function nodeAngleDegrees(d: D3Node, aroundDegrees: number): number {
 
 /** How far (degrees) a ring root's chip moves off its sector's center so it sits at its core
  * subtree's own top node, which `layoutWedge` puts on an underground-zone boundary
- * (`sceneBoundaryAnchor`). 0 when the subtree has no underground scene or when that top node is
+ * (`sceneBoundaryAnchor`). 0 unless the branching node (the first with several children; the chain
+ * above it shares its anchor) has a scene boundary among its children, or when the top node is
  * itself underground. */
 export function computeRootChipOffsetDegrees(
   laidOut: D3Node,
   wedgeCenterAngleDegrees: number,
-  wedgeSpanDegrees: number,
 ): number {
   if (laidOut.data.scene === "underground") return 0;
-  if (computeUndergroundSceneSpans(laidOut, wedgeCenterAngleDegrees, wedgeSpanDegrees).length === 0) return 0;
+  const branching = splitAtBranching(laidOut)?.children;
+  if (!branching || !hasSceneBoundary(branching)) return 0;
   return nodeAngleDegrees(laidOut, wedgeCenterAngleDegrees) - wedgeCenterAngleDegrees;
 }
 
