@@ -592,7 +592,13 @@ export function WheelRadialPopCoreCore({
         if (hierarchies.length === 0) return;
         const slices = subdivideWedge(
           centerByRootId.get(group.root.id)!,
-          wedgeSpanForRoot(group.root.id),
+          // Shifting the center by `offset` shrinks the span by twice that, so the wedge's far edge
+          // stays on the sector's edge instead of spilling into the neighbouring root's sector.
+          Math.max(
+            1,
+            wedgeSpanForRoot(group.root.id) -
+              2 * Math.abs(centerByRootId.get(group.root.id)! - rootAngleByRootId.get(group.root.id)!),
+          ),
           branchNeedsByRootId.get(group.root.id)![side],
         );
         map.set(
@@ -606,7 +612,7 @@ export function WheelRadialPopCoreCore({
       });
       return map;
     },
-    [groups, branchHierarchiesByRootId, branchNeedsByRootId, wedgeSpanForRoot],
+    [groups, branchHierarchiesByRootId, branchNeedsByRootId, rootAngleByRootId, wedgeSpanForRoot],
   );
   const coreHierarchyByRootId = useMemo(
     () => placeBranches("core", rootAngleByRootId),
@@ -672,8 +678,8 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [groups, rootAngleByRootId, coreLayoutsByRootId, rootItemCountById, wheelItemCountRange, coreRootCircleRadius, wedgeSpanForRoot]);
 
-  // The pop wedge is centered on the same axis as the root chip, so the pop subtree and the
-  // underground boundary share one axis.
+  // The pop wedge is centered on the same axis as the root chip (narrowed to stay inside its
+  // sector), so the pop subtree and the underground boundary share one axis.
   const popHierarchyByRootId = useMemo(
     () => placeBranches("pop", rootChipAngleByRootId),
     [placeBranches, rootChipAngleByRootId],
