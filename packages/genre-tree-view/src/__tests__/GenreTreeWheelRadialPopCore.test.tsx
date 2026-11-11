@@ -418,6 +418,30 @@ describe("GenreTreeWheelRadialPopCore", () => {
     });
   });
 
+  describe("root chip on the scene boundary", () => {
+    stubBackdropLayout();
+    const angleOfNode = (container: HTMLElement, id: string) => {
+      const [x, y] = nodeCoords(container, id);
+      return (Math.atan2(x, -y) * 180) / Math.PI;
+    };
+    const chipAngle = (container: HTMLElement) =>
+      parseFloat(
+        (chipFor(container, "Rock").closest(".gtv-wheel-slot") as HTMLElement).style.getPropertyValue("--gtv-chip-angle"),
+      );
+    const UG: GenreTreeNode[] = [
+      ...NODES_WITH_POP,
+      { id: "a-ug", parentId: "a-core", name: "Underground", itemCount: 1, scene: "underground" },
+    ];
+
+    it("moves the chip onto the boundary parent, off the sector centre", () => {
+      const withScene = render(<GenreTreeWheelRadialPopCore nodes={UG} />).container;
+      expect(chipAngle(withScene)).toBeCloseTo(angleOfNode(withScene, "a-core"), 3);
+      cleanup();
+      const plain = render(<GenreTreeWheelRadialPopCore nodes={NODES_WITH_POP} />).container;
+      expect(chipAngle(plain)).toBeCloseTo(90, 3);
+    });
+  });
+
   describe("backdrop", () => {
     stubBackdropLayout();
     const UNDERGROUND_NODES: GenreTreeNode[] = [

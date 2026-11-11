@@ -184,9 +184,18 @@ describe("computeUndergroundSceneSpans", () => {
 describe("underground scene boundary parent", () => {
   const radiusOfDepth = (depth: number) => 100 + depth * 60;
   const angleOf = (d: { x?: number; y?: number }) => (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
-  const placed = (nodes: GenreTreeNode[], slack: "center" | "between-children") => {
-    const laidOut = layoutWedge(d3, buildCoreHierarchy(d3, nodes), 90, 90, radiusOfDepth, slack);
-    return { laidOut, spans: computeUndergroundSceneSpans(laidOut, 90, 90) };
+  const placed = (nodes: GenreTreeNode[], slack: "center" | "between-children", centerDeg = 90, anchor = true) => {
+    const laidOut = layoutWedge(
+      d3,
+      buildCoreHierarchy(d3, nodes),
+      centerDeg,
+      90,
+      radiusOfDepth,
+      slack,
+      undefined,
+      anchor,
+    );
+    return { laidOut, spans: computeUndergroundSceneSpans(laidOut, centerDeg, 90) };
   };
   const find = (laidOut: ReturnType<typeof layoutWedge>, id: string) => laidOut.descendants().find((d) => d.data.id === id)!;
   const node = (id: string, parentId: string | null, scene?: "underground"): GenreTreeNode => ({
@@ -228,8 +237,51 @@ describe("underground scene boundary parent", () => {
   it("offsets the root chip onto the boundary, and not at all without an underground scene", () => {
     const withScene = [node("core", "root-a"), node("ug", "core", "underground"), node("a", "core"), node("b", "core")];
     const { laidOut, spans } = placed(withScene, "between-children");
-    expect(90 + computeRootChipOffsetDegrees(laidOut, 90, 90)).toBeCloseTo(spans[0].endDeg, 6);
+    expect(90 + computeRootChipOffsetDegrees(laidOut, 90)).toBeCloseTo(spans[0].endDeg, 6);
     const plain = placed(withScene.map((n) => ({ ...n, scene: undefined })), "between-children").laidOut;
-    expect(computeRootChipOffsetDegrees(plain, 90, 90)).toBe(0);
+    expect(computeRootChipOffsetDegrees(plain, 90)).toBe(0);
+  });
+
+  it("does not offset the chip when the top node is not on a boundary, even with a deeper underground node", () => {
+    const nodes = [
+      node("core", "root-a"),
+      node("p", "core"),
+      node("q", "core"),
+      node("ug", "q", "underground"),
+      node("q2", "q"),
+      node("p1", "p"),
+      node("p2", "p"),
+    ];
+    const { laidOut } = placed(nodes, "between-children");
+    expect(computeRootChipOffsetDegrees(laidOut, 90)).toBe(0);
+  });
+
+  it("offsets the chip through a single-child chain down to a boundary at the branching node", () => {
+    const nodes = [
+      node("core", "root-a"),
+      node("mid", "core"),
+      node("ug", "mid", "underground"),
+      node("a", "mid"),
+      node("b", "mid"),
+    ];
+    const { laidOut, spans } = placed(nodes, "between-children");
+    expect(90 + computeRootChipOffsetDegrees(laidOut, 90)).toBeCloseTo(spans[0].endDeg, 6);
+  });
+
+  it("gives the same offset near the 0/360 wrap-around as at 90 degrees", () => {
+    const nodes = [node("core", "root-a"), node("ug", "core", "underground"), node("a", "core"), node("b", "core")];
+    const reference = computeRootChipOffsetDegrees(placed(nodes, "between-children", 90).laidOut, 90);
+    expect(reference).not.toBe(0);
+    for (const centre of [350, -10]) {
+      const { laidOut } = placed(nodes, "between-children", centre);
+      expect(computeRootChipOffsetDegrees(laidOut, centre)).toBeCloseTo(reference, 6);
+    }
+  });
+
+  it("leaves the plain centering when anchoring is off", () => {
+    const nodes = [node("core", "root-a"), node("ug", "core", "underground"), node("a", "core"), node("b", "core")];
+    const { laidOut } = placed(nodes, "between-children", 90, false);
+    const mid = (angleOf(find(laidOut, "ug")) + angleOf(find(laidOut, "b"))) / 2;
+    expect(angleOf(find(laidOut, "core"))).toBeCloseTo(mid, 6);
   });
 });

@@ -42,6 +42,7 @@ import {
   pickEmptyLabelSpot,
   RadialSlot,
   solveRingRadius,
+  computeRootWedgeAxes,
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
@@ -479,6 +480,7 @@ export function WheelRadialPopCoreCore({
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
                   dotRadius,
+                  true,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -582,7 +584,11 @@ export function WheelRadialPopCoreCore({
   // A root's wedge is subdivided across its own pop (resp. core) branches by each branch's
   // measured need — mirrors how ring roots themselves share the full circle.
   const placeBranches = useCallback(
-    (side: "pop" | "core", centerByRootId: Map<string, number>) => {
+    (
+      side: "pop" | "core",
+      centerOf: (rootId: string) => number,
+      spanOf: (rootId: string) => number,
+    ) => {
       const map = new Map<
         string,
         { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
@@ -591,14 +597,8 @@ export function WheelRadialPopCoreCore({
         const hierarchies = branchHierarchiesByRootId.get(group.root.id)![side];
         if (hierarchies.length === 0) return;
         const slices = subdivideWedge(
-          centerByRootId.get(group.root.id)!,
-          // Shifting the center by `offset` shrinks the span by twice that, so the wedge's far edge
-          // stays on the sector's edge instead of spilling into the neighbouring root's sector.
-          Math.max(
-            1,
-            wedgeSpanForRoot(group.root.id) -
-              2 * Math.abs(centerByRootId.get(group.root.id)! - rootAngleByRootId.get(group.root.id)!),
-          ),
+          centerOf(group.root.id),
+          spanOf(group.root.id),
           branchNeedsByRootId.get(group.root.id)![side],
         );
         map.set(
@@ -612,11 +612,16 @@ export function WheelRadialPopCoreCore({
       });
       return map;
     },
-    [groups, branchHierarchiesByRootId, branchNeedsByRootId, rootAngleByRootId, wedgeSpanForRoot],
+    [groups, branchHierarchiesByRootId, branchNeedsByRootId],
   );
   const coreHierarchyByRootId = useMemo(
-    () => placeBranches("core", rootAngleByRootId),
-    [placeBranches, rootAngleByRootId],
+    () =>
+      placeBranches(
+        "core",
+        (rootId) => rootAngleByRootId.get(rootId)!,
+        wedgeSpanForRoot,
+      ),
+    [placeBranches, rootAngleByRootId, wedgeSpanForRoot],
   );
 
   // The SVG canvas's actual radius. Core branches render outward from the real coreRootCircleRadius
@@ -655,34 +660,61 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [coreHierarchyByRootId, coreRootCircleRadius, wheelItemCountRange.maxDotRadius]);
 
-  // A root with a single core branch holding an underground scene puts its chip where that branch's
-  // top node sits — on the boundary between the underground zone and its neighbor — instead of the
-  // sector's center. Clamped so the chip stays a chip's width inside its own sector.
-  const rootChipAngleByRootId = useMemo(() => {
-    const map = new Map<string, number>();
+  // A root with a single core branch whose top node sits on an underground-zone boundary puts its
+  // chip there instead of the sector's center, always reaching the boundary (clamped only by its
+  // sector). Its pop wedge follows that axis only as far as its measured need allows
+  // (computeRootWedgeAxes), so pop nodes are never crowded.
+  const rootAxesByRootId = useMemo(() => {
+    const map = new Map<string, { chipAngle: number; popAngle: number; popSpan: number }>();
     groups.forEach((group) => {
-      const base = rootAngleByRootId.get(group.root.id) ?? 0;
-      const branches = coreLayoutsByRootId.get(group.root.id) ?? [];
-      let offset = 0;
+      const rootId = group.root.id;
+      const base = rootAngleByRootId.get(rootId) ?? 0;
+      const branches = coreLayoutsByRootId.get(rootId) ?? [];
+      let requestedOffset = 0;
       if (branches.length === 1) {
-        const { laidOut, angle, span } = branches[0];
-        const itemCount = rootItemCountById.get(group.root.id) ?? 0;
-        const chipRadius = calculateNodeDotRadius(itemCount, wheelItemCountRange);
-        const chipHalfDeg =
-          (Math.asin(Math.min(1, (chipRadius + CHIP_GAP / 2) / Math.max(coreRootCircleRadius, 1))) * 180) / Math.PI;
-        const room = Math.max(0, wedgeSpanForRoot(group.root.id) / 2 - chipHalfDeg);
-        offset = Math.max(-room, Math.min(room, computeRootChipOffsetDegrees(laidOut, angle, span)));
+        const { laidOut, angle } = branches[0];
+        requestedOffset = computeRootChipOffsetDegrees(laidOut, angle);
       }
-      map.set(group.root.id, base + offset);
+      const itemCount = rootItemCountById.get(rootId) ?? 0;
+      const chipRadius = calculateNodeDotRadius(itemCount, wheelItemCountRange);
+      const chipHalfDeg =
+        (Math.asin(Math.min(1, (chipRadius + CHIP_GAP / 2) / Math.max(coreRootCircleRadius, 1))) * 180) / Math.PI;
+      const axes = computeRootWedgeAxes({
+        chipOffsetDeg: requestedOffset,
+        sectorSpanDeg: wedgeSpanForRoot(rootId),
+        chipHalfDeg,
+        popNeedDeg: (sum(branchNeedsByRootId.get(rootId)!.pop) * 180) / Math.PI,
+      });
+      map.set(rootId, {
+        chipAngle: base + axes.chipOffsetDeg,
+        popAngle: base + axes.popOffsetDeg,
+        popSpan: axes.popSpanDeg,
+      });
     });
     return map;
-  }, [groups, rootAngleByRootId, coreLayoutsByRootId, rootItemCountById, wheelItemCountRange, coreRootCircleRadius, wedgeSpanForRoot]);
+  }, [
+    groups,
+    rootAngleByRootId,
+    coreLayoutsByRootId,
+    rootItemCountById,
+    wheelItemCountRange,
+    coreRootCircleRadius,
+    wedgeSpanForRoot,
+    branchNeedsByRootId,
+  ]);
+  const rootChipAngleByRootId = useMemo(
+    () => new Map([...rootAxesByRootId].map(([id, axes]) => [id, axes.chipAngle])),
+    [rootAxesByRootId],
+  );
 
-  // The pop wedge is centered on the same axis as the root chip (narrowed to stay inside its
-  // sector), so the pop subtree and the underground boundary share one axis.
   const popHierarchyByRootId = useMemo(
-    () => placeBranches("pop", rootChipAngleByRootId),
-    [placeBranches, rootChipAngleByRootId],
+    () =>
+      placeBranches(
+        "pop",
+        (rootId) => rootAxesByRootId.get(rootId)!.popAngle,
+        (rootId) => rootAxesByRootId.get(rootId)!.popSpan,
+      ),
+    [placeBranches, rootAxesByRootId],
   );
 
   const { viewportSize, subscribeView } = panZoom;
