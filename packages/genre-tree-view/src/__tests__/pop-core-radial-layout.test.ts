@@ -13,6 +13,7 @@ import {
   nodeLabelPlacementItem,
   measureWedge,
   MIN_DOT_GAP,
+  POP_CORE_NODE_CLEARANCE,
   POP_WEDGE_SPAN_DEGREES,
   popRadiusOfDepth,
   renderPopSubtree,
@@ -22,7 +23,6 @@ import {
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import {
   POP_TREE_DEPTH_RADIAL_SPACING,
-  MAX_NODE_WIDTH,
   LINK_TO_NODE_HEIGHT_RATIO,
   MAX_NODE_HEIGHT,
   calculateLabelRank,
@@ -246,13 +246,13 @@ describe("calculatePopSubtreeRadialExtent", () => {
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
 
-  it("matches the (height + 1) * spacing + half node width + margin formula", () => {
+  it("matches the (height + 1) * spacing + node clearance + margin formula", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const extent = calculatePopSubtreeRadialExtent(hierarchy);
     const maxDepth = hierarchy.height;
 
     expect(extent).toBeCloseTo(
-      (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
+      (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + POP_CORE_NODE_CLEARANCE + 24,
       5,
     );
   });
@@ -343,7 +343,7 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
 
-  it("matches the coreRootCircleRadius + height * depthSpacing + half node width + margin formula", () => {
+  it("matches the coreRootCircleRadius + height * depthSpacing + node clearance + margin formula", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
     const coreRootCircleRadius = 100;
     const extent = calculateMainstreamPopOuterCircleRadius(
@@ -355,7 +355,7 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
     expect(extent).toBeCloseTo(
       coreRootCircleRadius +
         hierarchy.height * POP_TREE_DEPTH_RADIAL_SPACING +
-        MAX_NODE_WIDTH / 2 +
+        POP_CORE_NODE_CLEARANCE +
         24,
       5,
     );

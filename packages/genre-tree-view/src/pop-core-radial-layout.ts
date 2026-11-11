@@ -42,9 +42,14 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 // matching the gutter every other radial-wheel element keeps from its neighbors.
 export const POP_WEDGE_SPAN_DEGREES = 80;
 
-// Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
-// never sits flush against the wheel's own circle edge.
+// Margin (px) added past POP_CORE_NODE_CLEARANCE, so a pop subtree's deepest node never sits
+// flush against the circle it must clear.
 export const POP_SUBTREE_OUTER_MARGIN = 24;
+
+// Room (px) reserved for the deepest node of a pop branch or of the center subtree before the
+// mainstream circle. Well under half the widest card: this wheel draws dots, so half a card
+// width left a gap of several hundred pixels.
+export const POP_CORE_NODE_CLEARANCE = MAX_NODE_WIDTH * 0.175;
 
 // A pop hierarchy (per buildPopHierarchy/splitRootGroupBySide) is rooted at the pop child, which
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
@@ -93,7 +98,7 @@ export function buildPopHierarchy(
 
 /** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without
  * overlapping the wheel's own edge — driven by its deepest node's ring (absolute depth
- * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus that node's own half-width and a fixed outer
+ * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus `POP_CORE_NODE_CLEARANCE` and a fixed outer
  * margin. Used to grow the wheel's circle to fit whichever developed root's pop subtree
  * reaches furthest.
  *
@@ -111,7 +116,7 @@ export function calculatePopSubtreeRadialExtent(
       coreRootCircleRadius,
       POP_TREE_DEPTH_RADIAL_SPACING,
     ) +
-    MAX_NODE_WIDTH / 2 +
+    POP_CORE_NODE_CLEARANCE +
     POP_SUBTREE_OUTER_MARGIN
   );
 }
@@ -358,7 +363,7 @@ export function computeCenterRadialLayout(
 
 /** The "mainstream pop outer circle" radius (px, from the wheel's center) the center "Mainstream
  * Pop" node's own subtree needs to render without overlapping the wheel's own edge (the "core
- * root circle") — driven by its deepest node's ring plus that node's own half-width and a fixed
+ * root circle") — driven by its deepest node's ring plus `POP_CORE_NODE_CLEARANCE` and a fixed
  * outer margin. Only meaningful when the center node actually has children (`hierarchy.height >=
  * 1`). */
 export function calculateMainstreamPopOuterCircleRadius(
@@ -368,7 +373,7 @@ export function calculateMainstreamPopOuterCircleRadius(
 ): number {
   return (
     getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) +
-    MAX_NODE_WIDTH / 2 +
+    POP_CORE_NODE_CLEARANCE +
     POP_SUBTREE_OUTER_MARGIN
   );
 }
