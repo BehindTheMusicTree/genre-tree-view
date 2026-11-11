@@ -78,8 +78,8 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts` — the same node/link rendering (`renderPopSubtree`) as each ring
     root's pop wedge, just laid out over the full circle instead of one root's own sector. The
     wheel's own edge —
-    the **core root circle**, where ring root chips sit — grows only when that subtree's outer radius plus half a max node width
-    (`MAX_NODE_WIDTH`) and `POP_SUBTREE_OUTER_MARGIN` would overlap the ring roots' chip clearance.
+    the **core root circle**, where ring root chips sit — grows only when that subtree's outer radius plus `POP_CORE_NODE_CLEARANCE`
+    (17.5% of `MAX_NODE_WIDTH`) and `POP_SUBTREE_OUTER_MARGIN` would overlap the ring roots' chip clearance.
   - `GenreTreeWheel` and `GenreTreeWheelRight` share their rotation/mounting logic via
     `GenreTreeWheelBase.tsx`'s `WheelCore`, parameterized by a `direction` prop. `GenreTreeWheelRadial`
     and `GenreTreeWheelRadialPopCore` are separate, near-identical components (`WheelRadialCore` /
