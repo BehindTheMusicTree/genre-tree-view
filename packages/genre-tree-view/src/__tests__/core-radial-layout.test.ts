@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { describe, expect, it } from "vitest";
-import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout, computeUndergroundSceneSpans } from "../core-radial-layout";
+import { buildCoreHierarchy, calculateCoreSubtreeRadialExtent, computeCoreRadialLayout, computeRootChipOffsetDegrees, computeUndergroundSceneSpans } from "../core-radial-layout";
 import { POP_TREE_DEPTH_RADIAL_SPACING, MAX_NODE_WIDTH } from "../constants";
 import { coreRadiusOfDepth, layoutWedge } from "../pop-core-radial-layout";
 import type { GenreTreeNode } from "../types";
@@ -178,5 +178,58 @@ describe("computeUndergroundSceneSpans", () => {
   it("returns nothing when no node is underground", () => {
     const root = buildCoreHierarchy(d3, nodes.filter((n) => !n.scene));
     expect(computeUndergroundSceneSpans(layoutWedge(d3, root, 90, 90, (depth: number) => 100 + depth * 60), 90, 90)).toEqual([]);
+  });
+});
+
+describe("underground scene boundary parent", () => {
+  const radiusOfDepth = (depth: number) => 100 + depth * 60;
+  const angleOf = (d: { x?: number; y?: number }) => (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+  const placed = (nodes: GenreTreeNode[], slack: "center" | "between-children") => {
+    const laidOut = layoutWedge(d3, buildCoreHierarchy(d3, nodes), 90, 90, radiusOfDepth, slack);
+    return { laidOut, spans: computeUndergroundSceneSpans(laidOut, 90, 90) };
+  };
+  const find = (laidOut: ReturnType<typeof layoutWedge>, id: string) => laidOut.descendants().find((d) => d.data.id === id)!;
+  const node = (id: string, parentId: string | null, scene?: "underground"): GenreTreeNode => ({
+    id,
+    parentId,
+    name: id,
+    itemCount: 0,
+    scene,
+  });
+
+  it("puts the branching parent on the edge between the underground zone and its neighbor", () => {
+    const nodes = [node("core", "root-a"), node("ug", "core", "underground"), node("ug-child", "ug", "underground"), node("a", "core"), node("b", "core")];
+    const { laidOut, spans } = placed(nodes, "between-children");
+    expect(angleOf(find(laidOut, "core"))).toBeCloseTo(spans[0].endDeg, 6);
+  });
+
+  it("puts a deeper parent on the boundary too", () => {
+    const nodes = [
+      node("core", "root-a"),
+      node("p", "core"),
+      node("ug", "p", "underground"),
+      node("c", "p"),
+      node("d", "p"),
+      node("q", "core"),
+      node("q1", "q"),
+      node("q2", "q"),
+    ];
+    const { laidOut, spans } = placed(nodes, "between-children");
+    expect(angleOf(find(laidOut, "p"))).toBeCloseTo(spans[0].endDeg, 6);
+  });
+
+  it("keeps the plain centering when no node is underground", () => {
+    const nodes = [node("core", "root-a"), node("a", "core"), node("b", "core"), node("c", "core")];
+    const { laidOut } = placed(nodes, "between-children");
+    const mid = (angleOf(find(laidOut, "a")) + angleOf(find(laidOut, "c"))) / 2;
+    expect(angleOf(find(laidOut, "core"))).toBeCloseTo(mid, 6);
+  });
+
+  it("offsets the root chip onto the boundary, and not at all without an underground scene", () => {
+    const withScene = [node("core", "root-a"), node("ug", "core", "underground"), node("a", "core"), node("b", "core")];
+    const { laidOut, spans } = placed(withScene, "between-children");
+    expect(90 + computeRootChipOffsetDegrees(laidOut, 90, 90)).toBeCloseTo(spans[0].endDeg, 6);
+    const plain = placed(withScene.map((n) => ({ ...n, scene: undefined })), "between-children").laidOut;
+    expect(computeRootChipOffsetDegrees(plain, 90, 90)).toBe(0);
   });
 });

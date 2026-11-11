@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `GenreTreeWheelRadialPopCore`: a parent whose children switch between an underground subtree and a non-underground one now sits on the boundary between the two backdrop zones instead of centered over its children, and so does the ring root chip when it has a single core branch with an underground scene; that root's pop subtree is centered on the same axis.
 - `GenreTreeWheelRadialPopCore`: when roots are muted, every muted area (sector wash and underground rings) is the same neutral grey instead of a faded genre color; underground rings are now cut out of their sector rather than layered over it, with the same look for non-muted roots.
 - `GenreTreeWheelRadialPopCore` leaves less room between the mainstream circle and the deepest nodes on either side of it (pop branches outside, Mainstream Pop subtree inside): 17.5% of the widest card instead of half, so the wheel is smaller
 

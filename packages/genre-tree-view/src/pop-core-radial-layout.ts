@@ -180,6 +180,42 @@ export function coreRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: nu
   return (depth: number) => getRadialDepthRadius(depth + 1, coreRootCircleRadius, depthSpacing);
 }
 
+/** A top-most underground-scene node: `scene: "underground"` with no underground ancestor. Its subtree
+ * gets its own darker backdrop zone (see `computeUndergroundSceneSpans`). */
+export function isUndergroundRoot(d: D3Node): boolean {
+  return (
+    d.data.scene === "underground" &&
+    !d
+      .ancestors()
+      .slice(1)
+      .some((a) => a.data.scene === "underground")
+  );
+}
+
+/** Where a parent sits across its `children` (same unit as `rangeOf`, in child order): on the
+ * boundary of the backdrop zone between an underground child subtree and its non-underground
+ * neighbour — the midpoint of their ranges, the same edge `computeUndergroundSceneSpans` draws — so
+ * the parent straddles the two backgrounds. With several such boundaries, the one closest to
+ * `center` (the plain centered position) wins; with none, `center` itself. */
+export function sceneBoundaryAnchor(
+  children: D3Node[],
+  rangeOf: (index: number) => { min: number; max: number },
+  center: number,
+): number {
+  let anchor = center;
+  let closest = Infinity;
+  for (let i = 0; i + 1 < children.length; i++) {
+    if (isUndergroundRoot(children[i]) === isUndergroundRoot(children[i + 1])) continue;
+    const boundary = (rangeOf(i).max + rangeOf(i + 1).min) / 2;
+    const distance = Math.abs(boundary - center);
+    if (distance < closest) {
+      closest = distance;
+      anchor = boundary;
+    }
+  }
+  return anchor;
+}
+
 type ContourEdge = { x: number; dotRadius: number };
 type Contour = { left: ContourEdge; right: ContourEdge }[];
 
@@ -189,7 +225,9 @@ type Contour = { left: ContourEdge; right: ContourEdge }[];
  * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size.
  *
  * Packs each node's children left to right, each one shifted just far enough to clear the
- * accumulated contour of its earlier siblings, parent centered over its first and last child. Not
+ * accumulated contour of its earlier siblings, parent centered over its first and last child — or,
+ * where an underground subtree meets a non-underground sibling, on the boundary between them (see
+ * `sceneBoundaryAnchor`). Not
  * d3.tree: its Reingold–Tilford pass spreads the push between two wide subtrees evenly across every
  * small sibling between them, which on deep rings leaves leaf siblings far apart. */
 export function measureWedge(
@@ -210,6 +248,7 @@ export function measureWedge(
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
+    const childRanges: { min: number; max: number }[] = [];
     for (const child of node.children) {
       const contour = pack(child);
       let offset = 0;
@@ -222,13 +261,21 @@ export function measureWedge(
         }
       }
       childOffsets.push(offset);
+      childRanges.push({
+        min: offset + Math.min(...contour.map((level) => level.left.x)),
+        max: offset + Math.max(...contour.map((level) => level.right.x)),
+      });
       contour.forEach((level, k) => {
         const shifted = shiftLevel(level, offset);
         if (k < below.length) below[k].right = shifted.right;
         else below.push(shifted);
       });
     }
-    const center = (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2;
+    const center = sceneBoundaryAnchor(
+      node.children,
+      (i) => childRanges[i],
+      (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2,
+    );
     node.children.forEach((child, i) => offsetFromParent.set(child, childOffsets[i] - center));
     return [{ left: own, right: own }, ...below.map((level) => shiftLevel(level, -center))];
   };
@@ -310,7 +357,16 @@ export function layoutWedge(
     child.each((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + i * gap));
   });
   const recenter = (gap * (children.length - 1)) / 2;
-  [...chain, branching].forEach((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + recenter));
+  const centered = angleOffsetRad.get(branching)! + recenter;
+  const anchor = sceneBoundaryAnchor(
+    children,
+    (i) => {
+      const offsets = children[i].descendants().map((d) => angleOffsetRad.get(d)!);
+      return { min: Math.min(...offsets), max: Math.max(...offsets) };
+    },
+    centered,
+  );
+  [...chain, branching].forEach((d) => angleOffsetRad.set(d, anchor));
 
   hierarchy.each((d) => {
     const angleRad = wedgeStartRad + angleOffsetRad.get(d)!;
