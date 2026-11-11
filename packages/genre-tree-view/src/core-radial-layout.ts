@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { GenreTreeNode } from "./types";
 import { MAX_NODE_WIDTH, NODE_LAYOUT_SLOT_RADIUS } from "./constants";
 import { buildTreeHierarchyStructure } from "./NodeHelper";
-import { coreRadiusOfDepth, getRadialDepthRadius, layoutWedge } from "./pop-core-radial-layout";
+import { coreRadiusOfDepth, getRadialDepthRadius, isUndergroundRoot, layoutWedge } from "./pop-core-radial-layout";
 
 type D3Node = d3.HierarchyNode<GenreTreeNode>;
 
@@ -75,6 +75,26 @@ export function calculateCoreSubtreeRadialExtent(
   );
 }
 
+/** A laid-out node's angle (degrees, CSS `rotate()` convention), unwrapped around `aroundDegrees`. */
+export function nodeAngleDegrees(d: D3Node, aroundDegrees: number): number {
+  const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
+  return aroundDegrees + ((((deg - aroundDegrees + 540) % 360) + 360) % 360) - 180;
+}
+
+/** How far (degrees) a ring root's chip moves off its sector's center so it sits at its core
+ * subtree's own top node, which `layoutWedge` puts on an underground-zone boundary
+ * (`sceneBoundaryAnchor`). 0 when the subtree has no underground scene or when that top node is
+ * itself underground. */
+export function computeRootChipOffsetDegrees(
+  laidOut: D3Node,
+  wedgeCenterAngleDegrees: number,
+  wedgeSpanDegrees: number,
+): number {
+  if (laidOut.data.scene === "underground") return 0;
+  if (computeUndergroundSceneSpans(laidOut, wedgeCenterAngleDegrees, wedgeSpanDegrees).length === 0) return 0;
+  return nodeAngleDegrees(laidOut, wedgeCenterAngleDegrees) - wedgeCenterAngleDegrees;
+}
+
 /** Angular span (degrees, CSS `rotate()` convention, unwrapped around `wedgeCenterAngleDegrees`) of
  * each top-most underground-scene subtree in a laid-out core wedge. A span reaches the midpoint
  * with the neighboring sibling subtree's own angular range, or the wedge edge when it has no
@@ -84,26 +104,14 @@ export function computeUndergroundSceneSpans(
   wedgeCenterAngleDegrees: number,
   wedgeSpanDegrees: number,
 ): { id: string; startDeg: number; endDeg: number }[] {
-  const angleOf = (d: D3Node) => {
-    const deg = (Math.atan2(d.x!, -d.y!) * 180) / Math.PI;
-    return (
-      wedgeCenterAngleDegrees + ((((deg - wedgeCenterAngleDegrees + 540) % 360) + 360) % 360) - 180
-    );
-  };
+  const angleOf = (d: D3Node) => nodeAngleDegrees(d, wedgeCenterAngleDegrees);
   const subtreeRange = (d: D3Node) => {
     const angles = d.descendants().map(angleOf);
     return { min: Math.min(...angles), max: Math.max(...angles) };
   };
   return laidOut
     .descendants()
-    .filter(
-      (d) =>
-        d.data.scene === "underground" &&
-        !d
-          .ancestors()
-          .slice(1)
-          .some((a) => a.data.scene === "underground"),
-    )
+    .filter(isUndergroundRoot)
     .map((ug) => {
       const mine = subtreeRange(ug);
       const siblings = ug.parent?.children ?? [];
