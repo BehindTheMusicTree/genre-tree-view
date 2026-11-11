@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annularSectorPath, dividerEnd, farRadius } from "../wheel-backdrop-geometry";
+import { annularSectorPath, clampSpanToSector, dividerEnd, farRadius } from "../wheel-backdrop-geometry";
 
 describe("farRadius", () => {
   const viewport = { width: 800, height: 600 };
@@ -61,5 +61,27 @@ describe("dividerEnd", () => {
     expect(dividerEnd(0, 10)).toEqual({ x2: 0, y2: -10 });
     expect(dividerEnd(90, 10)).toEqual({ x2: 10, y2: 0 });
     expect(dividerEnd(180, 10).y2).toBe(10);
+  });
+});
+
+describe("clampSpanToSector", () => {
+  const sector = { startDeg: 100, endDeg: 200 };
+
+  it("keeps a span already inside the sector", () => {
+    expect(clampSpanToSector({ startDeg: 120, endDeg: 150 }, sector)).toEqual({ startDeg: 120, endDeg: 150 });
+  });
+
+  it("clamps a span that overflows the sector", () => {
+    expect(clampSpanToSector({ startDeg: 80, endDeg: 150 }, sector)).toEqual({ startDeg: 100, endDeg: 150 });
+    expect(clampSpanToSector({ startDeg: 150, endDeg: 230 }, sector)).toEqual({ startDeg: 150, endDeg: 200 });
+  });
+
+  it("brings a span offset by whole turns into the sector's frame", () => {
+    expect(clampSpanToSector({ startDeg: -240, endDeg: -210 }, sector)).toEqual({ startDeg: 120, endDeg: 150 });
+    expect(clampSpanToSector({ startDeg: 480, endDeg: 510 }, sector)).toEqual({ startDeg: 120, endDeg: 150 });
+  });
+
+  it("returns null when nothing of the span is inside the sector", () => {
+    expect(clampSpanToSector({ startDeg: 250, endDeg: 280 }, sector)).toBeNull();
   });
 });

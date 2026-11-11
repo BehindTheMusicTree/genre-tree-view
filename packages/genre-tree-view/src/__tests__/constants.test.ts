@@ -11,7 +11,9 @@ import {
   calculateNodeFontSize,
   isLabelRankedForZoom,
   calculateLabelRank,
+  getSceneWashFill,
   getSectorWashFill,
+  MUTED_SECTOR_FILL,
   ROOT_SECTOR_FILL_OPACITY,
   calculateRootLabelFontSize,
   ROOT_LABEL_MIN_SCREEN_PX,
@@ -325,9 +327,20 @@ describe("getSectorWashFill", () => {
     expect(getSectorWashFill("#E11D48", undefined)).toBe(getSectorWashFill("#E11D48", false));
   });
 
-  it("turns a muted root's wash almost grey, without removing its hue entirely", () => {
-    const [r, g, b] = getSectorWashFill("#E11D48", true).match(/\d+(?=,)/g)!.map(Number);
-    expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeGreaterThan(0);
-    expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThan(30);
+  it("gives every muted root the same grey wash", () => {
+    expect(getSectorWashFill("#E11D48", true)).toBe(getSectorWashFill("#2563EB", true));
+    expect(getSectorWashFill("#E11D48", true)).toBe(MUTED_SECTOR_FILL);
+  });
+});
+
+describe("getSceneWashFill", () => {
+  it("gives a muted root's rings the muted grey whatever the color", () => {
+    expect(getSceneWashFill("#E11D48", true)).toBe(MUTED_SECTOR_FILL);
+    expect(getSceneWashFill("#2563EB", true)).toBe(MUTED_SECTOR_FILL);
+  });
+
+  it("composites the darkened root color over the sector wash into one rgba", () => {
+    // alpha = 1 - 0.85 * 0.85 = 0.2775; red = (0x9e * 0.15 + 0xff * 0.15 * 0.85) / 0.2775 = 203, #FF0000 shaded to #9e0000.
+    expect(getSceneWashFill("#FF0000", false)).toBe("rgba(203, 0, 0, 0.2775)");
   });
 });

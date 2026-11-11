@@ -58,8 +58,8 @@ export const POP_SECTOR_TINT_RATIO = 0.8;
 // Share of its color a node in an underground-scene subtree keeps (the rest is mixed toward black).
 export const UNDERGROUND_DARKEN_RATIO = 0.62;
 
-// Opacity of the darker background slice drawn behind an underground-scene subtree, layered over
-// the root's own sector wash.
+// Opacity of the darkened root color in an underground-scene zone's fill, composited over the root's
+// own sector wash (see getSceneWashFill).
 export const UNDERGROUND_SECTOR_FILL_OPACITY = 0.15;
 
 export const DEFAULT_NODE_COLOR = "#4F46E5";
@@ -95,19 +95,29 @@ export function tintSurface(hex: string, ratio: number = ROOT_TINT_RATIO): strin
 // rather than competing with them for attention.
 export const ROOT_SECTOR_FILL_OPACITY = 0.15;
 
-// Share of a muted root's sector wash that is desaturated: almost grey, keeping a hint of the root
-// color so the zone still reads as that genre family.
-export const MUTED_SECTOR_GREY_RATIO = 0.9;
+// Sector wash of a muted root (no focused genre in its zone): one neutral grey shared by every muted
+// zone, so they read as "out of the selection" rather than as a faded genre family.
+export const MUTED_SECTOR_FILL = "rgba(128, 128, 128, 0.15)";
 
-/** Fill of a root's sector wash: the root color at ROOT_SECTOR_FILL_OPACITY, or for a muted root
- * (no focused genre in its zone) nearly its grey equivalent. */
+/** Fill of a root's sector wash: the root color at ROOT_SECTOR_FILL_OPACITY, or for a muted root the
+ * same grey whatever its color. */
 export function getSectorWashFill(hex: string, muted: boolean | undefined): string {
-  if (!muted) return hexToRgba(hex, ROOT_SECTOR_FILL_OPACITY);
-  const channel = (offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
-  const [r, g, b] = [1, 3, 5].map(channel);
-  const luma = 0.299 * r + 0.587 * g + 0.114 * b;
-  const mix = (value: number) => Math.round(value * (1 - MUTED_SECTOR_GREY_RATIO) + luma * MUTED_SECTOR_GREY_RATIO);
-  return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, ${ROOT_SECTOR_FILL_OPACITY})`;
+  return muted ? MUTED_SECTOR_FILL : hexToRgba(hex, ROOT_SECTOR_FILL_OPACITY);
+}
+
+/** Single fill of an underground-scene zone (the zone is cut out of its root's sector, not layered
+ * over it): for a muted root the shared MUTED_SECTOR_FILL, otherwise the exact source-over composite
+ * of the darkened root color at UNDERGROUND_SECTOR_FILL_OPACITY over the sector wash. */
+export function getSceneWashFill(hex: string, muted: boolean | undefined): string {
+  if (muted) return MUTED_SECTOR_FILL;
+  const shaded = shadeSurface(hex, UNDERGROUND_DARKEN_RATIO);
+  const channel = (color: string, offset: number) => parseInt(color.slice(offset, offset + 2), 16);
+  const under = ROOT_SECTOR_FILL_OPACITY;
+  const over = UNDERGROUND_SECTOR_FILL_OPACITY;
+  const alpha = 1 - (1 - under) * (1 - over);
+  const mix = (offset: number) =>
+    Math.round((channel(shaded, offset) * over + channel(hex, offset) * under * (1 - over)) / alpha);
+  return `rgba(${mix(1)}, ${mix(3)}, ${mix(5)}, ${Number(alpha.toFixed(4))})`;
 }
 
 /** Converts an opaque "#RRGGBB" color (e.g. a ROOT_GENRE_COLORS entry) to an "rgba()" string at
