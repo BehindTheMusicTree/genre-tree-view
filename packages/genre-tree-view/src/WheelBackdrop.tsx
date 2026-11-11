@@ -1,7 +1,15 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
 import type { PanZoomView } from "./use-pan-zoom";
-import { annularSectorPath, dividerEnd, farRadius } from "./wheel-backdrop-geometry";
+import { annularSectorPath, clampSpanToSector, dividerEnd, farRadius } from "./wheel-backdrop-geometry";
+
+export interface WheelBackdropScene {
+  key: string;
+  startDeg: number;
+  endDeg: number;
+  /** Final color of the ring: it is cut out of the sector, not layered over it. */
+  fill: string;
+}
 
 export interface WheelBackdropSector {
   key: string;
@@ -9,6 +17,8 @@ export interface WheelBackdropSector {
   endDeg: number;
   fill: string;
   fillOpacity?: number;
+  /** Rings (from `innerSceneRadius` out) inside this sector, e.g. underground scenes. */
+  scenes?: WheelBackdropScene[];
 }
 
 export interface WheelBackdropDivider {
@@ -22,8 +32,6 @@ export interface WheelBackdropProps {
   viewportSize: { width: number; height: number } | null;
   /** Pie-slice washes from the pivot out to the viewport edge. */
   sectors: WheelBackdropSector[];
-  /** Ring-shaped washes starting at `innerSceneRadius` (e.g. the underground scene). */
-  scenes?: WheelBackdropSector[];
   innerSceneRadius?: number;
   dividers: WheelBackdropDivider[];
   /** Rotates the whole backdrop around the pivot (GenreTreeWheel's wheel rotation). */
@@ -55,7 +63,10 @@ function measurePivot(svg: SVGSVGElement | null): { x: number; y: number } | nul
 }
 
 /**
- * The wheel's sector washes, underground rings and dividers: one 1px SVG at the pivot, inside
+ * The wheel's sector washes, underground rings and dividers. Zones are juxtaposed, never stacked:
+ * a sector's rings are holes in its path (evenodd) filled by their own paths, so each zone has a
+ * single fill.
+ * One 1px SVG at the pivot, inside
  * the stage, so it moves with the stage on the compositor and pan/zoom never repaints it. Its
  * shapes reach just past the farthest viewport corner for the current view (not a fixed "cover any
  * zoom" radius): huge fixed shapes made Chrome composite enormous layers that it left partly
@@ -65,7 +76,6 @@ export function WheelBackdrop({
   subscribeView,
   viewportSize,
   sectors,
-  scenes = [],
   innerSceneRadius = 0,
   dividers,
   rotationDeg,
@@ -97,27 +107,37 @@ export function WheelBackdrop({
         style={rotationDeg === undefined ? undefined : { transform: `rotate(${rotationDeg}deg)` }}
       >
         {radius > 0 &&
-          sectors.map((s) => (
-            <path
-              key={`sector-${s.key}`}
-              className="gtv-wheel-backdrop-sector"
-              d={annularSectorPath(s.startDeg, s.endDeg, 0, radius)}
-              fill={s.fill}
-              fillOpacity={s.fillOpacity}
-            />
-          ))}
-        {radius > 0 &&
-          scenes.map((s) => (
-            <path
-              key={`scene-${s.key}`}
-              className="gtv-wheel-scene-sector"
-              data-start-angle={(s.startDeg * Math.PI) / 180}
-              data-end-angle={(s.endDeg * Math.PI) / 180}
-              d={annularSectorPath(s.startDeg, s.endDeg, innerSceneRadius, radius)}
-              fill={s.fill}
-              fillOpacity={s.fillOpacity}
-            />
-          ))}
+          sectors.map((s) => {
+            const rings = (s.scenes ?? []).flatMap((scene) => {
+              const span = clampSpanToSector(scene, s);
+              return span ? [{ scene, span }] : [];
+            });
+            const d = [
+              annularSectorPath(s.startDeg, s.endDeg, 0, radius),
+              ...rings.map(({ span }) => annularSectorPath(span.startDeg, span.endDeg, innerSceneRadius, radius)),
+            ].join("");
+            return (
+              <g key={`sector-${s.key}`}>
+                <path
+                  className="gtv-wheel-backdrop-sector"
+                  d={d}
+                  fillRule="evenodd"
+                  fill={s.fill}
+                  fillOpacity={s.fillOpacity}
+                />
+                {rings.map(({ scene, span }) => (
+                  <path
+                    key={`scene-${scene.key}`}
+                    className="gtv-wheel-scene-sector"
+                    data-start-angle={(span.startDeg * Math.PI) / 180}
+                    data-end-angle={(span.endDeg * Math.PI) / 180}
+                    d={annularSectorPath(span.startDeg, span.endDeg, innerSceneRadius, radius)}
+                    fill={scene.fill}
+                  />
+                ))}
+              </g>
+            );
+          })}
         {radius > 0 &&
           dividers.map((d) => (
             <line

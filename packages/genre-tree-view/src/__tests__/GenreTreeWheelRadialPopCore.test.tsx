@@ -19,7 +19,7 @@ import {
   POP_WEDGE_SPAN_DEGREES,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
-import { NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, LOW_DENSITY_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
+import { MUTED_SECTOR_FILL, NODE_DOT_MAX_RADIUS, NODE_LAYOUT_SLOT_RADIUS, LOW_DENSITY_DOT_MAX_RADIUS, POP_TREE_DEPTH_RADIAL_SPACING } from "../constants";
 import type { GenreTreeNode } from "../types";
 import { stubBackdropLayout } from "./backdrop-test-utils";
 import { linkPathEndpoints } from "./link-path-test-utils";
@@ -432,6 +432,38 @@ describe("GenreTreeWheelRadialPopCore", () => {
       expect(arc).not.toBeNull();
       expect(container.querySelectorAll(".gtv-wheel-scene-sector")).toHaveLength(1);
       expect(Number(arc!.getAttribute("data-end-angle"))).toBeGreaterThan(Number(arc!.getAttribute("data-start-angle")));
+    });
+
+    it("still draws the underground ring when there is a single root", () => {
+      const nodes: GenreTreeNode[] = [
+        CENTER_NODE,
+        { id: "root-a", parentId: null, name: "Root A", itemCount: 2 },
+        { id: "a-ug", parentId: "root-a", name: "Underground", itemCount: 1, scene: "underground" },
+      ];
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+      expect(container.querySelectorAll(".gtv-wheel-scene-sector")).toHaveLength(1);
+      expect(container.querySelector(".gtv-wheel-backdrop-sector")!.getAttribute("fill")).toBe("transparent");
+    });
+
+    it("gives a muted root's underground ring the same grey as its sector", () => {
+      const nodes = UNDERGROUND_NODES.map((node) =>
+        node.id === "root-a" || node.id === "a-ug" ? { ...node, muted: true } : node,
+      );
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+      const ring = container.querySelector(".gtv-wheel-scene-sector")!;
+      expect(ring.getAttribute("fill")).toBe(MUTED_SECTOR_FILL);
+      const sectorFills = Array.from(container.querySelectorAll(".gtv-wheel-backdrop-sector")).map((el) => el.getAttribute("fill"));
+      expect(sectorFills[0]).toBe(MUTED_SECTOR_FILL);
+    });
+
+    it("fills every zone of every muted root with the same grey", () => {
+      const nodes = UNDERGROUND_NODES.map((node) => ({ ...node, muted: true }));
+      const { container } = render(<GenreTreeWheelRadialPopCore nodes={nodes} />);
+      const fills = Array.from(container.querySelectorAll(".gtv-wheel-backdrop-sector, .gtv-wheel-scene-sector")).map((el) =>
+        el.getAttribute("fill"),
+      );
+      expect(fills.length).toBeGreaterThan(2);
+      expect(new Set(fills)).toEqual(new Set([MUTED_SECTOR_FILL]));
     });
 
     it("keeps the same ring element when the viewport grows instead of re-mounting it", () => {

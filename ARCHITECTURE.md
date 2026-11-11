@@ -161,7 +161,7 @@ pnpm workspace with two members:
     `pop-core-radial-layout.ts`'s `renderPopSubtree`, so both a root's core branch and its pop
     branch share the same node/link DOM construction and only differ in the layout math that
     produces each node's angle/radius.
-  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); a darker background slice (`gtv-wheel-scene-sector`, `SCENE_SECTOR_OUTER_RADIUS`) runs behind the subtree out to the wheel's edge; layout is unaffected.
+  - `GenreTreeNode.scene`: `GenreTreeWheelRadialPopCoreBase` draws an `"underground"` node and its descendants in a darker shade (`shadeSurface`, `UNDERGROUND_DARKEN_RATIO`); its zone (`gtv-wheel-scene-sector`, `SCENE_SECTOR_OUTER_RADIUS`) out to the wheel's edge is juxtaposed with, not layered over, the root's sector: `WheelBackdrop` cuts it out of the sector path (evenodd, span bounded by `clampSpanToSector`) and fills it with one color, `getSceneWashFill`; a muted root gives every zone `MUTED_SECTOR_FILL`, so all muted areas share one grey; layout is unaffected.
 - **Layout vs. size metric**: radial layouts (wedge measurement, ring radius, root sectors, positions) depend on tree topology only, every node reserving the fixed `NODE_LAYOUT_SLOT_RADIUS`. `itemCount` drives rendering only (dot radius, fonts, border widths, label rank), so switching the size metric never moves nodes.
 - **`itemCount` contract**: every node's `itemCount` is a subtree total (itself plus all descendants),
   supplied by the consumer. `buildTreeHierarchyStructure` only stratifies, and every renderer, root chip,

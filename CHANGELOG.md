@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `GenreTreeWheelRadialPopCore`: when roots are muted, every muted area (sector wash and underground rings) is the same neutral grey instead of a faded genre color; underground rings are now cut out of their sector rather than layered over it, with the same look for non-muted roots.
 - `GenreTreeWheelRadialPopCore` leaves less room between the mainstream circle and the deepest nodes on either side of it (pop branches outside, Mainstream Pop subtree inside): 17.5% of the widest card instead of half, so the wheel is smaller
 
 ## [9.2.1] - 2026-11-11

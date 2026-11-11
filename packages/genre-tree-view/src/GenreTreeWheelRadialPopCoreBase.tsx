@@ -58,6 +58,7 @@ import {
   getGenreNodeColor,
   getGenreNodeStyle,
   getItemCountRange,
+  getSceneWashFill,
   getSectorWashFill,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
@@ -73,7 +74,6 @@ import {
   ZOOM_FOCUS_SCALE,
   shadeSurface,
   UNDERGROUND_DARKEN_RATIO,
-  UNDERGROUND_SECTOR_FILL_OPACITY,
 } from "./constants";
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
@@ -646,22 +646,6 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [coreHierarchyByRootId, coreRootCircleRadius, wheelItemCountRange.maxDotRadius]);
 
-  const undergroundScenes = useMemo(
-    () =>
-      [...coreLayoutsByRootId].flatMap(([rootId, branches]) =>
-        branches.flatMap(({ laidOut, angle, span }) =>
-          computeUndergroundSceneSpans(laidOut, angle, span).map(({ id, startDeg, endDeg }) => ({
-            key: `${rootId}-${id}`,
-            startDeg,
-            endDeg,
-            fill: shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO),
-            fillOpacity: UNDERGROUND_SECTOR_FILL_OPACITY,
-          })),
-        ),
-      ),
-    [coreLayoutsByRootId, index],
-  );
-
   const { viewportSize, subscribeView } = panZoom;
 
   // Boundary the center Mainstream Pop node's subtree currently occupies, drawn as a cosmetic
@@ -1158,19 +1142,30 @@ export function WheelRadialPopCoreCore({
 
   // One tinted sector fan per root, bounded by its own weight-proportional width — see
   // WheelRadialCore's own copy of this computation, and computeSectorWidths's doc comment.
+  // A lone root has no sector wash, but still owns the whole circle its underground rings are cut from.
   const backdropSectors = useMemo(() => {
-    if (groups.length <= 1) return [];
+    const single = groups.length <= 1;
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
-      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
+      const width = single ? 360 : (sectorSpanByRootId.get(group.root.id) ?? 0);
+      const color = getGenreNodeColor(index, group.root.id);
+      const sceneFill = getSceneWashFill(color, group.root.muted);
       return {
         key: group.root.id,
         startDeg: angle - width / 2,
         endDeg: angle + width / 2,
-        fill: getSectorWashFill(getGenreNodeColor(index, group.root.id), group.root.muted),
+        fill: single ? "transparent" : getSectorWashFill(color, group.root.muted),
+        scenes: (coreLayoutsByRootId.get(group.root.id) ?? []).flatMap(({ laidOut, angle: branchAngle, span }) =>
+          computeUndergroundSceneSpans(laidOut, branchAngle, span).map(({ id, startDeg, endDeg }) => ({
+            key: `${group.root.id}-${id}`,
+            startDeg,
+            endDeg,
+            fill: sceneFill,
+          })),
+        ),
       };
     });
-  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index, coreLayoutsByRootId]);
 
   return (
     <div
@@ -1211,7 +1206,6 @@ export function WheelRadialPopCoreCore({
             subscribeView={subscribeView}
             viewportSize={viewportSize}
             sectors={backdropSectors}
-            scenes={undergroundScenes}
             innerSceneRadius={coreRootCircleRadius}
             dividers={dividers}
             layoutKey={coreRootCircleRadius}
