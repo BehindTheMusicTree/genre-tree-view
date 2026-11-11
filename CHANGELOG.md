@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreNodeFamily` draws the selected node, its parent and its children at one size, so a selected node with no tracks no longer shrinks next to its relatives
+
 ## [9.2.0] - 2026-11-10
 
 ### Added
