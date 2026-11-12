@@ -68,11 +68,13 @@ describe("content pieces", () => {
 
   it("publishes the parent label's measured height so a wrapped label gets its room", () => {
     const r = renderHook(() => useGenreNodeRelations(NODES, "mid", resolver)).result.current!;
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ height: 42 } as DOMRect);
     const { container } = render(
       <GenreNodeFamily node={r.node} fill={r.fill} textColor={r.textColor} parentNode={r.parentNode} childNodes={r.childNodes} onSelectNode={() => {}} />,
     );
+    rect.mockRestore();
     const miniTree = container.querySelector<HTMLElement>(".gtv-info-panel-mini-tree")!;
-    expect(miniTree.style.getPropertyValue("--gtv-mini-parent-label-height")).toMatch(/^\d+(\.\d+)?px$/);
+    expect(miniTree.style.getPropertyValue("--gtv-mini-parent-label-height")).toBe("42px");
   });
 
   it("reserves the mini tree's label space from the parent's font size, only when there is a parent", () => {
