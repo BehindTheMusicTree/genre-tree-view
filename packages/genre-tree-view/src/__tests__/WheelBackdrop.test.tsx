@@ -67,14 +67,26 @@ describe("WheelBackdrop", () => {
     expect(radiusOf()).toBeGreaterThan(before);
   });
 
-  it("draws underground scenes as rings starting at the inner radius", () => {
+  it("cuts underground rings out of their sector and draws them with their own fill", () => {
     const { backdrop } = renderBackdrop({
-      scenes: [{ key: "s", startDeg: 0, endDeg: 90, fill: "black", fillOpacity: 0.2 }],
+      sectors: [
+        {
+          key: "a",
+          startDeg: 0,
+          endDeg: 180,
+          fill: "red",
+          scenes: [{ key: "s", startDeg: 0, endDeg: 90, fill: "rgba(1, 2, 3, 0.3)" }],
+        },
+      ],
       innerSceneRadius: 50,
     });
+    const sector = backdrop.querySelector(".gtv-wheel-backdrop-sector")!;
+    expect(sector.getAttribute("fill-rule")).toBe("evenodd");
+    expect(sector.getAttribute("d")).toContain("A50 50");
     const scene = backdrop.querySelector(".gtv-wheel-scene-sector")!;
     expect(scene.getAttribute("d")).toContain("A50 50 0 0 0");
-    expect(scene.getAttribute("fill-opacity")).toBe("0.2");
+    expect(scene.getAttribute("fill")).toBe("rgba(1, 2, 3, 0.3)");
+    expect(scene.hasAttribute("fill-opacity")).toBe(false);
   });
 
   it("draws one divider per entry and rotates with rotationDeg", () => {

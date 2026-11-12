@@ -15,6 +15,7 @@ import {
   buildCoreHierarchy,
   calculateCoreSubtreeRadialExtent,
   computeCoreRadialLayout,
+  computeRootChipOffsetDegrees,
   computeUndergroundSceneSpans,
 } from "./core-radial-layout";
 import {
@@ -41,6 +42,7 @@ import {
   pickEmptyLabelSpot,
   RadialSlot,
   solveRingRadius,
+  computeRootWedgeAxes,
   subdivideWedge,
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
@@ -58,6 +60,7 @@ import {
   getGenreNodeColor,
   getGenreNodeStyle,
   getItemCountRange,
+  getSceneWashFill,
   getSectorWashFill,
   isMainstreamPopLineage,
   NODE_DOT_MAX_RADIUS,
@@ -73,7 +76,6 @@ import {
   ZOOM_FOCUS_SCALE,
   shadeSurface,
   UNDERGROUND_DARKEN_RATIO,
-  UNDERGROUND_SECTOR_FILL_OPACITY,
 } from "./constants";
 
 /** Why `onFocusChange` fired: the info panel's "Zoom in" button or a node double-click, the parent ("back") /
@@ -444,7 +446,7 @@ export function WheelRadialPopCoreCore({
 
   // Pins coreRootCircleRadius so the deepest node of the deepest developed pop branch (which
   // climbs inward from coreRootCircleRadius by a fixed depthSpacing per depth step — see
-  // computePopRadialLayout) has its card clear the mainstream circle by the usual half-width +
+  // computePopRadialLayout) has its card clear the mainstream circle by POP_CORE_NODE_CLEARANCE +
   // outer margin, rather than leaving that gap to whatever coreRootCircleRadius happens to be for
   // other reasons. Zero (dropped from the Math.max below) when no root has a pop branch at all.
   const popReachRequiredRadius = useMemo(
@@ -478,6 +480,7 @@ export function WheelRadialPopCoreCore({
                   hierarchy,
                   coreRadiusOfDepth(radius, POP_TREE_DEPTH_RADIAL_SPACING),
                   dotRadius,
+                  true,
                 ),
               ),
               chip: 2 * Math.asin(Math.min(1, (chipWidth / 2 + CHIP_GAP) / radius)),
@@ -581,7 +584,11 @@ export function WheelRadialPopCoreCore({
   // A root's wedge is subdivided across its own pop (resp. core) branches by each branch's
   // measured need — mirrors how ring roots themselves share the full circle.
   const placeBranches = useCallback(
-    (side: "pop" | "core") => {
+    (
+      side: "pop" | "core",
+      centerOf: (rootId: string) => number,
+      spanOf: (rootId: string) => number,
+    ) => {
       const map = new Map<
         string,
         { hierarchy: d3.HierarchyNode<GenreTreeNode>; angle: number; span: number }[]
@@ -590,8 +597,8 @@ export function WheelRadialPopCoreCore({
         const hierarchies = branchHierarchiesByRootId.get(group.root.id)![side];
         if (hierarchies.length === 0) return;
         const slices = subdivideWedge(
-          rootAngleByRootId.get(group.root.id)!,
-          wedgeSpanForRoot(group.root.id),
+          centerOf(group.root.id),
+          spanOf(group.root.id),
           branchNeedsByRootId.get(group.root.id)![side],
         );
         map.set(
@@ -605,10 +612,17 @@ export function WheelRadialPopCoreCore({
       });
       return map;
     },
-    [groups, branchHierarchiesByRootId, branchNeedsByRootId, rootAngleByRootId, wedgeSpanForRoot],
+    [groups, branchHierarchiesByRootId, branchNeedsByRootId],
   );
-  const popHierarchyByRootId = useMemo(() => placeBranches("pop"), [placeBranches]);
-  const coreHierarchyByRootId = useMemo(() => placeBranches("core"), [placeBranches]);
+  const coreHierarchyByRootId = useMemo(
+    () =>
+      placeBranches(
+        "core",
+        (rootId) => rootAngleByRootId.get(rootId)!,
+        wedgeSpanForRoot,
+      ),
+    [placeBranches, rootAngleByRootId, wedgeSpanForRoot],
+  );
 
   // The SVG canvas's actual radius. Core branches render outward from the real coreRootCircleRadius
   // (see computeCoreRadialLayout's call below), so the canvas must extend maxCoreExtentDelta past
@@ -646,20 +660,61 @@ export function WheelRadialPopCoreCore({
     return map;
   }, [coreHierarchyByRootId, coreRootCircleRadius, wheelItemCountRange.maxDotRadius]);
 
-  const undergroundScenes = useMemo(
+  // A root with a single core branch whose top node sits on an underground-zone boundary puts its
+  // chip there instead of the sector's center, always reaching the boundary (clamped only by its
+  // sector). Its pop wedge follows that axis only as far as its measured need allows
+  // (computeRootWedgeAxes), so pop nodes are never crowded.
+  const rootAxesByRootId = useMemo(() => {
+    const map = new Map<string, { chipAngle: number; popAngle: number; popSpan: number }>();
+    groups.forEach((group) => {
+      const rootId = group.root.id;
+      const base = rootAngleByRootId.get(rootId) ?? 0;
+      const branches = coreLayoutsByRootId.get(rootId) ?? [];
+      let requestedOffset = 0;
+      if (branches.length === 1) {
+        const { laidOut, angle } = branches[0];
+        requestedOffset = computeRootChipOffsetDegrees(laidOut, angle);
+      }
+      const itemCount = rootItemCountById.get(rootId) ?? 0;
+      const chipRadius = calculateNodeDotRadius(itemCount, wheelItemCountRange);
+      const chipHalfDeg =
+        (Math.asin(Math.min(1, (chipRadius + CHIP_GAP / 2) / Math.max(coreRootCircleRadius, 1))) * 180) / Math.PI;
+      const axes = computeRootWedgeAxes({
+        chipOffsetDeg: requestedOffset,
+        sectorSpanDeg: wedgeSpanForRoot(rootId),
+        chipHalfDeg,
+        popNeedDeg: (sum(branchNeedsByRootId.get(rootId)!.pop) * 180) / Math.PI,
+      });
+      map.set(rootId, {
+        chipAngle: base + axes.chipOffsetDeg,
+        popAngle: base + axes.popOffsetDeg,
+        popSpan: axes.popSpanDeg,
+      });
+    });
+    return map;
+  }, [
+    groups,
+    rootAngleByRootId,
+    coreLayoutsByRootId,
+    rootItemCountById,
+    wheelItemCountRange,
+    coreRootCircleRadius,
+    wedgeSpanForRoot,
+    branchNeedsByRootId,
+  ]);
+  const rootChipAngleByRootId = useMemo(
+    () => new Map([...rootAxesByRootId].map(([id, axes]) => [id, axes.chipAngle])),
+    [rootAxesByRootId],
+  );
+
+  const popHierarchyByRootId = useMemo(
     () =>
-      [...coreLayoutsByRootId].flatMap(([rootId, branches]) =>
-        branches.flatMap(({ laidOut, angle, span }) =>
-          computeUndergroundSceneSpans(laidOut, angle, span).map(({ id, startDeg, endDeg }) => ({
-            key: `${rootId}-${id}`,
-            startDeg,
-            endDeg,
-            fill: shadeSurface(getGenreNodeColor(index, rootId), UNDERGROUND_DARKEN_RATIO),
-            fillOpacity: UNDERGROUND_SECTOR_FILL_OPACITY,
-          })),
-        ),
+      placeBranches(
+        "pop",
+        (rootId) => rootAxesByRootId.get(rootId)!.popAngle,
+        (rootId) => rootAxesByRootId.get(rootId)!.popSpan,
       ),
-    [coreLayoutsByRootId, index],
+    [placeBranches, rootAxesByRootId],
   );
 
   const { viewportSize, subscribeView } = panZoom;
@@ -691,7 +746,7 @@ export function WheelRadialPopCoreCore({
 
     popHierarchyByRootId.forEach((branches, rootId) => {
       const rootLinkOrigin = getRadialPointOnCircle(
-        rootAngleByRootId.get(rootId) ?? 0,
+        rootChipAngleByRootId.get(rootId) ?? 0,
         coreRootCircleRadius,
       );
 
@@ -771,7 +826,7 @@ export function WheelRadialPopCoreCore({
 
     coreHierarchyByRootId.forEach((branches, rootId) => {
       const rootLinkOrigin = getRadialPointOnCircle(
-        rootAngleByRootId.get(rootId) ?? 0,
+        rootChipAngleByRootId.get(rootId) ?? 0,
         coreRootCircleRadius,
       );
 
@@ -936,7 +991,7 @@ export function WheelRadialPopCoreCore({
       },
       ...groups.map((group) => {
         const itemCount = rootItemCountById.get(group.root.id)!;
-        const { x, y } = getRadialPointOnCircle(rootAngleByRootId.get(group.root.id) ?? 0, coreRootCircleRadius);
+        const { x, y } = getRadialPointOnCircle(rootChipAngleByRootId.get(group.root.id) ?? 0, coreRootCircleRadius);
         return {
           id: group.root.id,
           name: group.root.name,
@@ -975,7 +1030,7 @@ export function WheelRadialPopCoreCore({
     coreRootCircleRadius,
     svgCanvasRadius,
     mainstreamCircleRadius,
-    rootAngleByRootId,
+    rootChipAngleByRootId,
     reparentingNodeId,
     playingNodeId,
     playState,
@@ -1158,19 +1213,30 @@ export function WheelRadialPopCoreCore({
 
   // One tinted sector fan per root, bounded by its own weight-proportional width — see
   // WheelRadialCore's own copy of this computation, and computeSectorWidths's doc comment.
+  // A lone root has no sector wash, but still owns the whole circle its underground rings are cut from.
   const backdropSectors = useMemo(() => {
-    if (groups.length <= 1) return [];
+    const single = groups.length <= 1;
     return groups.map((group) => {
       const angle = continuousAngleByRootId.get(group.root.id) ?? 0;
-      const width = sectorSpanByRootId.get(group.root.id) ?? 0;
+      const width = single ? 360 : (sectorSpanByRootId.get(group.root.id) ?? 0);
+      const color = getGenreNodeColor(index, group.root.id);
+      const sceneFill = getSceneWashFill(color, group.root.muted);
       return {
         key: group.root.id,
         startDeg: angle - width / 2,
         endDeg: angle + width / 2,
-        fill: getSectorWashFill(getGenreNodeColor(index, group.root.id), group.root.muted),
+        fill: single ? "transparent" : getSectorWashFill(color, group.root.muted),
+        scenes: (coreLayoutsByRootId.get(group.root.id) ?? []).flatMap(({ laidOut, angle: branchAngle, span }) =>
+          computeUndergroundSceneSpans(laidOut, branchAngle, span).map(({ id, startDeg, endDeg }) => ({
+            key: `${group.root.id}-${id}`,
+            startDeg,
+            endDeg,
+            fill: sceneFill,
+          })),
+        ),
       };
     });
-  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index]);
+  }, [groups, continuousAngleByRootId, sectorSpanByRootId, index, coreLayoutsByRootId]);
 
   return (
     <div
@@ -1211,7 +1277,6 @@ export function WheelRadialPopCoreCore({
             subscribeView={subscribeView}
             viewportSize={viewportSize}
             sectors={backdropSectors}
-            scenes={undergroundScenes}
             innerSceneRadius={coreRootCircleRadius}
             dividers={dividers}
             layoutKey={coreRootCircleRadius}
@@ -1303,7 +1368,8 @@ export function WheelRadialPopCoreCore({
               const slot = layout[groupIndex];
               const root = index.byId.get(group.root.id)!;
               const angle =
-                continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0;
+                (continuousAngleByRootId.get(group.root.id) ?? slot?.angle ?? 0) +
+                ((rootChipAngleByRootId.get(group.root.id) ?? 0) - (rootAngleByRootId.get(group.root.id) ?? 0));
               const chipColor = getGenreNodeStyle(index, group.root.id).fill;
               const rootItemCount = rootItemCountById.get(
                 group.root.id,

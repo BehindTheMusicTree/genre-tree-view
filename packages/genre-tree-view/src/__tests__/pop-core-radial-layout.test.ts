@@ -9,20 +9,22 @@ import {
   computePopRadialLayout,
   getRadialDepthRadius,
   getRadialPointOnCircle,
+  hasSceneBoundary,
   hideCollidingLabels,
   nodeLabelPlacementItem,
   measureWedge,
   MIN_DOT_GAP,
+  POP_CORE_NODE_CLEARANCE,
   POP_WEDGE_SPAN_DEGREES,
   popRadiusOfDepth,
   renderPopSubtree,
   renderRootLabels,
+  sceneBoundaryAnchor,
   type RenderPopSubtreeCallbacks,
 } from "../pop-core-radial-layout";
 import { buildTreeHierarchyStructure } from "../NodeHelper";
 import {
   POP_TREE_DEPTH_RADIAL_SPACING,
-  MAX_NODE_WIDTH,
   LINK_TO_NODE_HEIGHT_RATIO,
   MAX_NODE_HEIGHT,
   calculateLabelRank,
@@ -246,13 +248,13 @@ describe("calculatePopSubtreeRadialExtent", () => {
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
 
-  it("matches the (height + 1) * spacing + half node width + margin formula", () => {
+  it("matches the (height + 1) * spacing + node clearance + margin formula", () => {
     const hierarchy = buildPopHierarchy(d3, popRock);
     const extent = calculatePopSubtreeRadialExtent(hierarchy);
     const maxDepth = hierarchy.height;
 
     expect(extent).toBeCloseTo(
-      (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + MAX_NODE_WIDTH / 2 + 24,
+      (maxDepth + 1) * POP_TREE_DEPTH_RADIAL_SPACING + POP_CORE_NODE_CLEARANCE + 24,
       5,
     );
   });
@@ -343,7 +345,7 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
     expect(deepExtent).toBeGreaterThan(shallowExtent);
   });
 
-  it("matches the coreRootCircleRadius + height * depthSpacing + half node width + margin formula", () => {
+  it("matches the coreRootCircleRadius + height * depthSpacing + node clearance + margin formula", () => {
     const hierarchy = buildTreeHierarchyStructure(d3, centerWithSubtree);
     const coreRootCircleRadius = 100;
     const extent = calculateMainstreamPopOuterCircleRadius(
@@ -355,7 +357,7 @@ describe("calculateMainstreamPopOuterCircleRadius", () => {
     expect(extent).toBeCloseTo(
       coreRootCircleRadius +
         hierarchy.height * POP_TREE_DEPTH_RADIAL_SPACING +
-        MAX_NODE_WIDTH / 2 +
+        POP_CORE_NODE_CLEARANCE +
         24,
       5,
     );
@@ -1207,5 +1209,46 @@ describe("renderPopSubtree muted nodes", () => {
       expect(item.tier).toBe(MUTED_LABEL_TIER);
       expect(item.priority).toBe(0.4);
     });
+  });
+});
+
+describe("scene boundary anchoring", () => {
+  const n = (id: string, scene?: "underground"): GenreTreeNode => ({ id, parentId: "r", name: id, itemCount: 1, scene });
+  const kids = (nodes: GenreTreeNode[]) =>
+    buildPopHierarchy(d3, [{ id: "r", parentId: null, name: "R", itemCount: 1 }, ...nodes]).children!;
+
+  it("hasSceneBoundary is true only where adjacent children differ on underground", () => {
+    expect(hasSceneBoundary(kids([n("a"), n("b")]))).toBe(false);
+    expect(hasSceneBoundary(kids([n("a", "underground"), n("b", "underground")]))).toBe(false);
+    expect(hasSceneBoundary(kids([n("a"), n("b", "underground")]))).toBe(true);
+  });
+
+  it("sceneBoundaryAnchor picks the boundary closest to the centre among several", () => {
+    const children = kids([n("a"), n("b", "underground"), n("c"), n("d", "underground")]);
+    const ranges = [
+      { min: 0, max: 1 },
+      { min: 2, max: 3 },
+      { min: 4, max: 5 },
+      { min: 6, max: 7 },
+    ];
+    expect(sceneBoundaryAnchor(children, (i) => ranges[i], 1.9)).toBe(1.5);
+    expect(sceneBoundaryAnchor(children, (i) => ranges[i], 5.2)).toBe(5.5);
+    expect(sceneBoundaryAnchor(kids([n("a"), n("b")]), (i) => ranges[i], 3)).toBe(3);
+  });
+
+  it("measureWedge ignores underground nodes unless anchoring is requested", () => {
+    const make = () =>
+      buildPopHierarchy(d3, [
+        { id: "r", parentId: null, name: "R", itemCount: 1 },
+        n("a", "underground"),
+        n("b"),
+        n("c"),
+      ]);
+    const plain = make();
+    const anchored = make();
+    measureWedge(d3, plain, () => 1000);
+    measureWedge(d3, anchored, () => 1000, undefined, true);
+    expect(plain.x).toBeCloseTo((plain.children![0].x! + plain.children![2].x!) / 2, 9);
+    expect(anchored.x).not.toBeCloseTo(plain.x!, 6);
   });
 });

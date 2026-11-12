@@ -5,6 +5,7 @@ import {
   computeRadialLayout,
   computeSectorBounds,
   computeSectorSymmetricSpan,
+  computeRootWedgeAxes,
   computeSectorWidths,
   findSectorAtAngle,
   pickEmptyLabelSpot,
@@ -369,5 +370,48 @@ describe("pickEmptyLabelSpot", () => {
 
   it("accepts any free spot when no preference is given", () => {
     expect(pickEmptyLabelSpot(area, 20, 10, [])).not.toBeNull();
+  });
+});
+
+describe("computeRootWedgeAxes", () => {
+  const base = { sectorSpanDeg: 60, chipHalfDeg: 5, popNeedDeg: 20 };
+
+  it("follows the chip fully when nothing clamps", () => {
+    expect(computeRootWedgeAxes({ ...base, chipOffsetDeg: 8 })).toEqual({
+      chipOffsetDeg: 8,
+      popOffsetDeg: 8,
+      popSpanDeg: 44,
+    });
+  });
+
+  it("clamps the chip to the sector minus its half width", () => {
+    const axes = computeRootWedgeAxes({ ...base, chipOffsetDeg: 40, popNeedDeg: 0 });
+    expect(axes.chipOffsetDeg).toBe(25);
+  });
+
+  it("stops the pop axis short when its need is large, the chip still reaching its offset", () => {
+    const axes = computeRootWedgeAxes({ ...base, chipOffsetDeg: 20, popNeedDeg: 50 });
+    expect(axes.chipOffsetDeg).toBe(20);
+    expect(axes.popOffsetDeg).toBe(5);
+    expect(axes.popSpanDeg).toBe(50);
+  });
+
+  it("never drops the pop span below its need and keeps its edges inside the sector", () => {
+    for (const chipOffsetDeg of [-40, -12, 0, 7, 30]) {
+      for (const popNeedDeg of [0, 20, 55, 60]) {
+        const { popOffsetDeg, popSpanDeg } = computeRootWedgeAxes({ ...base, chipOffsetDeg, popNeedDeg });
+        expect(popSpanDeg).toBeGreaterThanOrEqual(popNeedDeg - 1e-9);
+        expect(popOffsetDeg - popSpanDeg / 2).toBeGreaterThanOrEqual(-30 - 1e-9);
+        expect(popOffsetDeg + popSpanDeg / 2).toBeLessThanOrEqual(30 + 1e-9);
+      }
+    }
+  });
+
+  it("handles negative offsets symmetrically", () => {
+    const pos = computeRootWedgeAxes({ ...base, chipOffsetDeg: 20, popNeedDeg: 50 });
+    const neg = computeRootWedgeAxes({ ...base, chipOffsetDeg: -20, popNeedDeg: 50 });
+    expect(neg.chipOffsetDeg).toBe(-pos.chipOffsetDeg);
+    expect(neg.popOffsetDeg).toBe(-pos.popOffsetDeg);
+    expect(neg.popSpanDeg).toBe(pos.popSpanDeg);
   });
 });

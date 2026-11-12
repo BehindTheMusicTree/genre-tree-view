@@ -64,3 +64,18 @@ export function dividerEnd(angleDeg: number, radius: number): { x2: number; y2: 
   const [x2, y2] = polar(angleDeg, radius);
   return { x2: Number(fmt(x2)), y2: Number(fmt(y2)) };
 }
+
+/** Brings the angular span `span` into the frame of `sector` (the two may differ by a multiple of
+ * 360°) and clamps it to the sector; null when nothing of it lies inside. Keeps a hole cut from the
+ * sector's path inside it, which the evenodd fill rule needs. */
+export function clampSpanToSector(
+  span: { startDeg: number; endDeg: number },
+  sector: { startDeg: number; endDeg: number },
+): { startDeg: number; endDeg: number } | null {
+  const turns = Math.round(
+    ((sector.startDeg + sector.endDeg) / 2 - (span.startDeg + span.endDeg) / 2) / 360,
+  );
+  const startDeg = Math.max(span.startDeg + turns * 360, sector.startDeg);
+  const endDeg = Math.min(span.endDeg + turns * 360, sector.endDeg);
+  return endDeg > startDeg ? { startDeg, endDeg } : null;
+}

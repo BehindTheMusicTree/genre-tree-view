@@ -42,9 +42,14 @@ type D3Selection = d3.Selection<SVGGElement, unknown, null, undefined>;
 // matching the gutter every other radial-wheel element keeps from its neighbors.
 export const POP_WEDGE_SPAN_DEGREES = 80;
 
-// Margin (px) added past a pop subtree's deepest node's own half-width, so its rendered card
-// never sits flush against the wheel's own circle edge.
+// Margin (px) added past POP_CORE_NODE_CLEARANCE, so a pop subtree's deepest node never sits
+// flush against the circle it must clear.
 export const POP_SUBTREE_OUTER_MARGIN = 24;
+
+// Room (px) reserved for the deepest node of a pop branch or of the center subtree before the
+// mainstream circle. Well under half the widest card: this wheel draws dots, so half a card
+// width left a gap of several hundred pixels.
+export const POP_CORE_NODE_CLEARANCE = MAX_NODE_WIDTH * 0.175;
 
 // A pop hierarchy (per buildPopHierarchy/splitRootGroupBySide) is rooted at the pop child, which
 // is always the ring root's direct child — i.e. always absolute depth 1 in the whole tree,
@@ -93,7 +98,7 @@ export function buildPopHierarchy(
 
 /** The outer radius (px, from `coreRootCircleRadius`) a pop subtree needs to render without
  * overlapping the wheel's own edge — driven by its deepest node's ring (absolute depth
- * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus that node's own half-width and a fixed outer
+ * `POP_HIERARCHY_ROOT_ABSOLUTE_DEPTH + height`) plus `POP_CORE_NODE_CLEARANCE` and a fixed outer
  * margin. Used to grow the wheel's circle to fit whichever developed root's pop subtree
  * reaches furthest.
  *
@@ -111,7 +116,7 @@ export function calculatePopSubtreeRadialExtent(
       coreRootCircleRadius,
       POP_TREE_DEPTH_RADIAL_SPACING,
     ) +
-    MAX_NODE_WIDTH / 2 +
+    POP_CORE_NODE_CLEARANCE +
     POP_SUBTREE_OUTER_MARGIN
   );
 }
@@ -175,6 +180,50 @@ export function coreRadiusOfDepth(coreRootCircleRadius: number, depthSpacing: nu
   return (depth: number) => getRadialDepthRadius(depth + 1, coreRootCircleRadius, depthSpacing);
 }
 
+/** A top-most underground-scene node: `scene: "underground"` with no underground ancestor. Its subtree
+ * gets its own darker backdrop zone (see `computeUndergroundSceneSpans`). */
+export function isUndergroundRoot(d: D3Node): boolean {
+  return (
+    d.data.scene === "underground" &&
+    !d
+      .ancestors()
+      .slice(1)
+      .some((a) => a.data.scene === "underground")
+  );
+}
+
+/** True when some adjacent pair of `children` differs on `isUndergroundRoot`: a scene boundary. */
+export function hasSceneBoundary(children: D3Node[]): boolean {
+  for (let i = 0; i + 1 < children.length; i++) {
+    if (isUndergroundRoot(children[i]) !== isUndergroundRoot(children[i + 1])) return true;
+  }
+  return false;
+}
+
+/** Where a parent sits across its `children` (same unit as `rangeOf`, in child order): on the
+ * boundary of the backdrop zone between an underground child subtree and its non-underground
+ * neighbour — the midpoint of their ranges, the same edge `computeUndergroundSceneSpans` draws — so
+ * the parent straddles the two backgrounds. With several such boundaries, the one closest to
+ * `center` (the plain centered position) wins; with none, `center` itself. */
+export function sceneBoundaryAnchor(
+  children: D3Node[],
+  rangeOf: (index: number) => { min: number; max: number },
+  center: number,
+): number {
+  let anchor = center;
+  let closest = Infinity;
+  for (let i = 0; i + 1 < children.length; i++) {
+    if (isUndergroundRoot(children[i]) === isUndergroundRoot(children[i + 1])) continue;
+    const boundary = (rangeOf(i).max + rangeOf(i + 1).min) / 2;
+    const distance = Math.abs(boundary - center);
+    if (distance < closest) {
+      closest = distance;
+      anchor = boundary;
+    }
+  }
+  return anchor;
+}
+
 type ContourEdge = { x: number; dotRadius: number };
 type Contour = { left: ContourEdge; right: ContourEdge }[];
 
@@ -184,14 +233,17 @@ type Contour = { left: ContourEdge; right: ContourEdge }[];
  * returns the wedge's minimal span (rad). Without `itemCountRange` every dot is assumed max size.
  *
  * Packs each node's children left to right, each one shifted just far enough to clear the
- * accumulated contour of its earlier siblings, parent centered over its first and last child. Not
- * d3.tree: its Reingold–Tilford pass spreads the push between two wide subtrees evenly across every
+ * accumulated contour of its earlier siblings, parent centered over its first and last child — or,
+ * where an underground subtree meets a non-underground sibling, on the boundary between them (see
+ * `sceneBoundaryAnchor`, only with `anchorOnSceneBoundaries`, i.e. core wedges — pop hierarchies draw
+ * no zones). Not d3.tree: its Reingold–Tilford pass spreads the push between two wide subtrees evenly across every
  * small sibling between them, which on deep rings leaves leaf siblings far apart. */
 export function measureWedge(
   _d3Lib: typeof import("d3"),
   hierarchy: D3Node,
   radiusOfDepth: (depth: number) => number,
   dotRadius = NODE_LAYOUT_SLOT_RADIUS,
+  anchorOnSceneBoundaries = false,
 ): number {
   const slotRadius = () => dotRadius;
   const offsetFromParent = new Map<D3Node, number>();
@@ -205,6 +257,7 @@ export function measureWedge(
     if (!node.children) return [{ left: own, right: own }];
     const below: Contour = [];
     const childOffsets: number[] = [];
+    const childRanges: { min: number; max: number }[] = [];
     for (const child of node.children) {
       const contour = pack(child);
       let offset = 0;
@@ -217,13 +270,20 @@ export function measureWedge(
         }
       }
       childOffsets.push(offset);
+      childRanges.push({
+        min: offset + Math.min(...contour.map((level) => level.left.x)),
+        max: offset + Math.max(...contour.map((level) => level.right.x)),
+      });
       contour.forEach((level, k) => {
         const shifted = shiftLevel(level, offset);
         if (k < below.length) below[k].right = shifted.right;
         else below.push(shifted);
       });
     }
-    const center = (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2;
+    const centered = (childOffsets[0] + childOffsets[childOffsets.length - 1]) / 2;
+    const center = anchorOnSceneBoundaries
+      ? sceneBoundaryAnchor(node.children, (i) => childRanges[i], centered)
+      : centered;
     node.children.forEach((child, i) => offsetFromParent.set(child, childOffsets[i] - center));
     return [{ left: own, right: own }, ...below.map((level) => shiftLevel(level, -center))];
   };
@@ -256,7 +316,7 @@ export const MAX_WEDGE_STRETCH = 1.42;
  * the layout reaches both edges of its wedge. */
 export type WedgeSlack = "center" | "between-children";
 
-function splitAtBranching(hierarchy: D3Node): { chain: D3Node[]; branching: D3Node; children: D3Node[] } | null {
+export function splitAtBranching(hierarchy: D3Node): { chain: D3Node[]; branching: D3Node; children: D3Node[] } | null {
   let branching: D3Node = hierarchy;
   const chain: D3Node[] = [];
   while (branching.children?.length === 1) {
@@ -278,8 +338,9 @@ export function layoutWedge(
   radiusOfDepth: (depth: number) => number,
   slack: WedgeSlack = "center",
   dotRadius = NODE_LAYOUT_SLOT_RADIUS,
+  anchorOnSceneBoundaries = false,
 ): D3Node {
-  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, dotRadius);
+  const neededRad = measureWedge(d3Lib, hierarchy, radiusOfDepth, dotRadius, anchorOnSceneBoundaries);
   const wedgeSpanRad = (wedgeSpanDegrees * Math.PI) / 180;
   const scale = Math.min(MAX_WEDGE_STRETCH, wedgeSpanRad / neededRad);
   const wedgeCenterRad = (wedgeCenterAngleDegrees * Math.PI) / 180;
@@ -305,7 +366,18 @@ export function layoutWedge(
     child.each((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + i * gap));
   });
   const recenter = (gap * (children.length - 1)) / 2;
-  [...chain, branching].forEach((d) => angleOffsetRad.set(d, angleOffsetRad.get(d)! + recenter));
+  const centered = angleOffsetRad.get(branching)! + recenter;
+  const anchor = anchorOnSceneBoundaries
+    ? sceneBoundaryAnchor(
+        children,
+        (i) => {
+          const offsets = children[i].descendants().map((d) => angleOffsetRad.get(d)!);
+          return { min: Math.min(...offsets), max: Math.max(...offsets) };
+        },
+        centered,
+      )
+    : centered;
+  [...chain, branching].forEach((d) => angleOffsetRad.set(d, anchor));
 
   hierarchy.each((d) => {
     const angleRad = wedgeStartRad + angleOffsetRad.get(d)!;
@@ -358,7 +430,7 @@ export function computeCenterRadialLayout(
 
 /** The "mainstream pop outer circle" radius (px, from the wheel's center) the center "Mainstream
  * Pop" node's own subtree needs to render without overlapping the wheel's own edge (the "core
- * root circle") — driven by its deepest node's ring plus that node's own half-width and a fixed
+ * root circle") — driven by its deepest node's ring plus `POP_CORE_NODE_CLEARANCE` and a fixed
  * outer margin. Only meaningful when the center node actually has children (`hierarchy.height >=
  * 1`). */
 export function calculateMainstreamPopOuterCircleRadius(
@@ -368,7 +440,7 @@ export function calculateMainstreamPopOuterCircleRadius(
 ): number {
   return (
     getRadialDepthRadius(hierarchy.height, coreRootCircleRadius, depthSpacing) +
-    MAX_NODE_WIDTH / 2 +
+    POP_CORE_NODE_CLEARANCE +
     POP_SUBTREE_OUTER_MARGIN
   );
 }
