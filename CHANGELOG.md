@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [10.0.0] - 2026-11-12
+
 ### Changed
 
 - **Breaking:** `GenreNodeAncestors` takes the selected `node` with its `fill` and `textColor` (like `GenreNodeFamily`) and ends the lineage on that node, drawn as the current node; ancestors are spaced 50% further apart and drawn at the Family section's size instead of being scaled by their counts
