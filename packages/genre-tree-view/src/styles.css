@@ -375,16 +375,19 @@ nav.gtv-wheel-breadcrumb {
   padding: 0;
 }
 
-/* Room for the parent's one-line label, which sits above its dot: exactly its line box plus its
-   margin, so the label keeps the panel's title-to-content gap whatever its font size. */
+/* Room for the parent's label, which wraps above its dot: its measured height (one line box until
+   measured) plus its margin, so the label keeps the panel's title-to-content gap. */
 .gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent) {
-  padding-top: calc(var(--gtv-mini-parent-font-size) * 1.15 + 0.125rem);
+  padding-top: calc(var(--gtv-mini-parent-label-height, calc(var(--gtv-mini-parent-font-size) * 1.15)) + 0.125rem);
 }
 
-/* From three children on, the children column is the tallest and its absolute title overhangs the
-   mini tree instead of the parent's label: reserve that title's line box plus its margin. */
+/* From three children on, the children column's absolute title also overhangs the mini tree:
+   reserve whichever of that title and the parent's label is taller. */
 .gtv-info-panel-mini-tree:has(> .gtv-info-panel-mini-tree-parent):has(.gtv-info-panel-children-list > li:nth-child(3)) {
-  padding-top: calc(0.6875rem * 1.5 + 0.25rem);
+  padding-top: max(
+    calc(0.6875rem * 1.5 + 0.25rem),
+    calc(var(--gtv-mini-parent-label-height, calc(var(--gtv-mini-parent-font-size) * 1.15)) + 0.125rem)
+  );
 }
 
 /* No parent: size the children to their content and center the node + children as a group,
@@ -511,9 +514,6 @@ nav.gtv-wheel-breadcrumb {
   left: 0;
   margin-bottom: 0.125rem;
   max-width: 8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .gtv-info-panel-mini-tree-current .gtv-info-panel-mini-dot {
@@ -627,13 +627,13 @@ nav.gtv-wheel-breadcrumb {
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: 0;
-  margin-top: -0.1875rem;
+  margin-top: -0.28125rem;
 }
 
 .gtv-info-panel-ancestors-list li {
   position: relative;
   max-width: 100%;
-  padding: 0.1875rem 0;
+  padding: 0.28125rem 0;
 }
 
 .gtv-info-panel-ancestors-list li:not(:last-child)::after {
