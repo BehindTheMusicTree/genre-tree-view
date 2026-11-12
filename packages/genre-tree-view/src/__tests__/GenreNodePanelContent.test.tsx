@@ -40,15 +40,41 @@ describe("useGenreNodeRelations", () => {
 describe("content pieces", () => {
   it("lists ancestors and selects one on click", () => {
     const onSelectNode = vi.fn();
-    const { result } = renderHook(() => useGenreNodeRelations(NODES, "leaf-a", resolver));
-    render(<GenreNodeAncestors ancestorNodes={result.current!.ancestorNodes} onSelectNode={onSelectNode} />);
+    const r = renderHook(() => useGenreNodeRelations(NODES, "leaf-a", resolver)).result.current!;
+    render(<GenreNodeAncestors node={r.node} fill={r.fill} textColor={r.textColor} ancestorNodes={r.ancestorNodes} onSelectNode={onSelectNode} />);
     fireEvent.click(screen.getByRole("button", { name: "Mid" }));
     expect(onSelectNode).toHaveBeenCalledWith("mid");
   });
 
+  it("ends the ancestors lineage on the selected node, not clickable, every dot at one size", () => {
+    const r = renderHook(() => useGenreNodeRelations(NODES, "leaf-a", resolver)).result.current!;
+    const { container } = render(
+      <GenreNodeAncestors node={r.node} fill={r.fill} textColor={r.textColor} ancestorNodes={r.ancestorNodes} onSelectNode={() => {}} />,
+    );
+    const items = Array.from(container.querySelectorAll("li"));
+    expect(items.map((li) => li.textContent)).toEqual(["Root", "Mid", "Leaf A"]);
+    expect(items[2].querySelector("button")).toBeNull();
+    expect(items[2].querySelector("[aria-current]")).not.toBeNull();
+    const dots = Array.from(container.querySelectorAll<HTMLElement>(".gtv-info-panel-mini-dot"));
+    expect(dots.map((dot) => dot.style.width)).toEqual(["32px", "32px", "32px"]);
+  });
+
   it("renders no ancestors section for a root", () => {
-    const { container } = render(<GenreNodeAncestors ancestorNodes={[]} onSelectNode={() => {}} />);
+    const { container } = render(
+      <GenreNodeAncestors node={NODES[0]} fill="#000" textColor="#fff" ancestorNodes={[]} onSelectNode={() => {}} />,
+    );
     expect(container.textContent).toBe("");
+  });
+
+  it("publishes the parent label's measured height so a wrapped label gets its room", () => {
+    const r = renderHook(() => useGenreNodeRelations(NODES, "mid", resolver)).result.current!;
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ height: 42 } as DOMRect);
+    const { container } = render(
+      <GenreNodeFamily node={r.node} fill={r.fill} textColor={r.textColor} parentNode={r.parentNode} childNodes={r.childNodes} onSelectNode={() => {}} />,
+    );
+    rect.mockRestore();
+    const miniTree = container.querySelector<HTMLElement>(".gtv-info-panel-mini-tree")!;
+    expect(miniTree.style.getPropertyValue("--gtv-mini-parent-label-height")).toBe("42px");
   });
 
   it("reserves the mini tree's label space from the parent's font size, only when there is a parent", () => {

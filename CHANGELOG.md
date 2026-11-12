@@ -7,6 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** `GenreNodeAncestors` takes the selected `node` with its `fill` and `textColor` (like `GenreNodeFamily`) and ends the lineage on that node, drawn as the current node; ancestors are spaced 50% further apart and drawn at the Family section's size instead of being scaled by their counts
+- `GenreNodeFamily` wraps a long parent label onto several lines instead of truncating it, and reserves the room it takes above the mini tree
 - `GenreTreeWheelRadialPopCore`: a parent whose children switch between an underground subtree and a non-underground one now sits on the boundary between the two backdrop zones instead of centered over its children, and so does the ring root chip when it has a single core branch with an underground scene at its top node; that root's pop subtree follows the chip's axis only as far as its measured need allows, so pop nodes are never crowded. The chip stays centered when the top node is not on a boundary, and pop hierarchies are no longer shifted by underground nodes.
 - `GenreTreeWheelRadialPopCore`: when roots are muted, every muted area (sector wash and underground rings) is the same neutral grey instead of a faded genre color; underground rings are now cut out of their sector rather than layered over it, with the same look for non-muted roots.
 - `GenreTreeWheelRadialPopCore` leaves less room between the mainstream circle and the deepest nodes on either side of it (pop branches outside, Mainstream Pop subtree inside): 17.5% of the widest card instead of half, so the wheel is smaller
