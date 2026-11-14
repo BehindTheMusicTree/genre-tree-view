@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [10.0.2] - 2026-11-14
+
+### Changed
+
+- Accept `@behindthemusictree/ui` ^0.26.0 alongside existing supported versions and validate against UI 0.26.0, allowing hosts to share its responsive detail-panel framing contract.
+
 ## [10.0.1] - 2026-11-13
 
 ### Changed
