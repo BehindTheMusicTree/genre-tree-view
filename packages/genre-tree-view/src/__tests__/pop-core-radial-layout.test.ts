@@ -895,7 +895,7 @@ describe("renderPopSubtree dot + label nodes", () => {
     const svg = createSvg();
     renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000), "#123456", null, [], noopCallbacks, range);
     renderRootLabels(svg, [{ id: "root", name: "Root", x: 0, y: 0, radius: 20, itemCount: 3 }], range);
-    const envelopes = () => svg.selectAll(".gtv-radial-fit-bounds").nodes().map((node) => node.outerHTML);
+    const envelopes = () => svg.selectAll<SVGRectElement, unknown>(".gtv-radial-fit-bounds").nodes().map((node) => node.outerHTML);
     const initial = envelopes();
     expect(initial).toHaveLength(3);
     expect(svg.selectAll("text[data-gtv-radial-label]").size()).toBe(3);
