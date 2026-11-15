@@ -25,6 +25,7 @@ import {
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { useExposeNodeStyleResolver } from "./use-expose-node-style";
+import { queryTreeContentElements } from "./zoom-pan";
 import { usePanZoom } from "./use-pan-zoom";
 import { WheelBackdrop } from "./WheelBackdrop";
 import { useNodeInfoPanel } from "./use-node-info-panel";
@@ -452,7 +453,7 @@ export function WheelRadialCore({
   // guarded so it only fires once anchored content has actually rendered, and never again
   // afterward so it doesn't fight the user's own pan/zoom on later selections.
   useEffect(() => {
-    const elements = [wheelCircleRef.current, coreSvgRef.current];
+    const elements = [wheelCircleRef.current, ...queryTreeContentElements(coreSvgRef.current)];
     if (!elements.some(Boolean)) return;
     panZoom.fitToFrame(elements, { silent: true });
   });
@@ -650,7 +651,7 @@ export function WheelRadialCore({
         zoomControls={showZoomControls}
         leading={floatingControlsLeading}
         busy={busy}
-        onFit={() => panZoom.fitToFrame([wheelCircleRef.current, coreSvgRef.current])}
+        onFit={() => panZoom.fitToFrame([wheelCircleRef.current, ...queryTreeContentElements(coreSvgRef.current)])}
       />
     </div>
   );

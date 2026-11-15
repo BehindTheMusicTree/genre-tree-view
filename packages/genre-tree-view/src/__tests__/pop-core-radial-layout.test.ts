@@ -890,6 +890,23 @@ describe("renderPopSubtree dot + label nodes", () => {
     ]);
   });
 
+  it("keeps natural fit envelopes stable when zoom changes label placement", () => {
+    const range = getItemCountRange(nodes);
+    const svg = createSvg();
+    renderPopSubtree(d3, svg, computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000), "#123456", null, [], noopCallbacks, range);
+    renderRootLabels(svg, [{ id: "root", name: "Root", x: 0, y: 0, radius: 20, itemCount: 3 }], range);
+    const envelopes = () => svg.selectAll<SVGRectElement, unknown>(".gtv-radial-fit-bounds").nodes().map((node) => node.outerHTML);
+    const initial = envelopes();
+    expect(initial).toHaveLength(3);
+    expect(svg.selectAll("text[data-gtv-radial-label]").size()).toBe(3);
+    hideCollidingLabels(d3, svg, range, 0.03);
+    const smallLabel = svg.select("text.gtv-node-label").style("font-size");
+    expect(envelopes()).toEqual(initial);
+    hideCollidingLabels(d3, svg, range, 0.7);
+    expect(svg.select("text.gtv-node-label").style("font-size")).not.toBe(smallLabel);
+    expect(envelopes()).toEqual(initial);
+  });
+
   it("fills each node from nodeFillOf instead of the sector-wide color when given", () => {
     const laidOut = computePopRadialLayout(d3, buildPopHierarchy(d3, nodes), 90, 1000);
     const svg = createSvg();

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep radial Fit to frame consistent after panning or zooming by measuring stable layout bounds instead of zoom-dependent labels.
+
 ### CI
 
 - Add Android Chrome gesture regression checks using an emulator.

@@ -182,6 +182,21 @@ describe("queryTreeContentElements", () => {
   });
 });
 
+describe("radial fit content", () => {
+  it("uses natural envelopes and preserves Cartesian labels instead of measuring radial display labels", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `<svg>
+      <rect class="gtv-radial-fit-bounds" />
+      <circle class="gtv-node-dot" />
+      <text class="gtv-node-label" data-gtv-radial-label="">Radial</text>
+      <text class="gtv-node-label">Cartesian</text>
+    </svg>`;
+    const content = queryTreeContentElements(container);
+    expect(content).toHaveLength(3);
+    expect(content.map((element) => element.textContent)).toEqual(["", "", "Cartesian"]);
+  });
+});
+
 describe("viewToViewport / viewportToView", () => {
   it("maps the viewport center to the content-space point shown there", () => {
     expect(viewToViewport({ x: 400, y: 225, k: 0.5 }, 1200, 750)).toEqual({ x: 400, y: 300, zoom: 0.5 });

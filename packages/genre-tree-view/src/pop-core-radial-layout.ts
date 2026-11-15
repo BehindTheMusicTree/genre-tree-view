@@ -30,6 +30,7 @@ import {
   calculateLabelRank,
   MUTED_LABEL_TIER,
   calculateNodeFontSize,
+  getItemCountRange,
   isLabelRankedForZoom,
   tintSurface,
 } from "./constants";
@@ -527,6 +528,7 @@ export interface RootLabelDatum {
 export function renderRootLabels<E extends SVGElement>(
   container: d3.Selection<E, unknown, null, undefined>,
   roots: RootLabelDatum[],
+  itemCountRange: ItemCountRange = getItemCountRange(roots),
 ): void {
   container
     .append("g")
@@ -538,8 +540,21 @@ export function renderRootLabels<E extends SVGElement>(
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
     .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)
+    .each(function (d) {
+      const fontSize = calculateNodeFontSize(d.itemCount, itemCountRange);
+      const { box } = dotLabelCandidates(d.name, d.radius, fontSize, { gap: NODE_DOT_LABEL_GAP, preferRight: d.x >= 0 })[0];
+      d3.select(this).append("rect")
+        .attr("class", "gtv-radial-fit-bounds")
+        .attr("x", Math.min(-d.radius, box.x0))
+        .attr("y", Math.min(-d.radius, box.y0))
+        .attr("width", Math.max(d.radius, box.x1) - Math.min(-d.radius, box.x0))
+        .attr("height", Math.max(d.radius, box.y1) - Math.min(-d.radius, box.y0))
+        .attr("fill", "none")
+        .attr("pointer-events", "none");
+    })
     .append("text")
     .attr("class", "gtv-node-label")
+    .attr("data-gtv-radial-label", "")
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
     .attr("stroke", svgLabelHalo(TEXT_COLOR).stroke)
@@ -747,7 +762,7 @@ export function renderPopSubtree(
 
   nodes
     .append("rect")
-    .attr("class", "gtv-hover-hit-area")
+    .attr("class", "gtv-hover-hit-area gtv-radial-fit-bounds")
     .each(function (d) {
       const { hitArea } = getDotLabelGeometry(
         d.x!,
@@ -807,6 +822,7 @@ export function renderPopSubtree(
       "class",
       "gtv-node-label",
     )
+    .attr("data-gtv-radial-label", "")
     .each(function (d) {
       const { labelX, anchor, fontSize } = getDotLabelGeometry(
         d.x!,
