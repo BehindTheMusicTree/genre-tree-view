@@ -491,8 +491,15 @@ describe("usePanZoom", () => {
     await nextFrame();
     expect(liveView(stage).zoomScale).toBeGreaterThan(1);
 
+    const pinched = liveView(stage);
     act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 2, clientX: 750, clientY: 550 }));
+    });
+    await nextFrame();
+    expect(liveView(stage)).toEqual(pinched);
+
+    act(() => {
       window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 2 }));
     });
     document.body.removeChild(viewport);
@@ -853,6 +860,86 @@ describe("usePanZoom", () => {
     chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
     expect(clicked).toHaveBeenCalledTimes(3);
     unmount();
+    viewport.remove();
+  });
+
+  it.each([2, 20])("restores silently during a node gesture moved by %s pixels and accepts the next tap", async (distance) => {
+    const viewport = document.createElement("div");
+    viewport.getBoundingClientRect = () => ({ width: 500, height: 400 }) as DOMRect;
+    const content = document.createElement("div");
+    content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
+    const chip = document.createElement("button");
+    chip.className = "gtv-wheel-chip";
+    viewport.append(chip);
+    document.body.append(viewport);
+    const captured = new Set<number>();
+    viewport.setPointerCapture = (id) => { captured.add(id); };
+    viewport.hasPointerCapture = (id) => captured.has(id);
+    viewport.releasePointerCapture = (id) => { captured.delete(id); };
+    const stage = document.createElement("div");
+    const ref = { current: viewport };
+    const stageRef = { current: stage };
+    const onViewportChange = vi.fn();
+    const clicked = vi.fn();
+    chip.addEventListener("click", clicked);
+    const { result, rerender, unmount } = renderHook(({ revision }) => usePanZoom(ref, undefined, stageRef, {
+      onViewportChange, viewportRestore: { revision, viewport: { x: 20, y: 30, zoom: 2 } },
+    }), { initialProps: { revision: 1 } });
+    act(() => { result.current.fitToFrame([content], { silent: true }); });
+    const down = () => act(() => result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 100, clientY: 100, target: chip } as unknown as React.PointerEvent));
+    down();
+    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 100 + distance, clientY: 100 })); });
+    await nextFrame();
+    rerender({ revision: 2 });
+    const restored = liveView(stage);
+    expect(restored).toEqual({ panX: 210, panY: 140, zoomScale: 2 });
+    expect(captured.size).toBe(0);
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(false);
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 200, clientY: 100 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    await nextFrame();
+    expect(liveView(stage)).toEqual(restored);
+    expect(onViewportChange).not.toHaveBeenCalled();
+    down();
+    act(() => { window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 })); });
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(clicked).toHaveBeenCalledOnce();
+    unmount();
+    viewport.remove();
+  });
+
+  it("releases capture and animation and removes activation suppression when unmounted during a node drag", async () => {
+    const viewport = document.createElement("div");
+    const chip = document.createElement("button");
+    chip.className = "gtv-wheel-chip";
+    viewport.append(chip);
+    document.body.append(viewport);
+    const captured = new Set<number>();
+    viewport.setPointerCapture = (id) => { captured.add(id); };
+    viewport.hasPointerCapture = (id) => captured.has(id);
+    viewport.releasePointerCapture = (id) => { captured.delete(id); };
+    const stage = document.createElement("div");
+    const cancel = vi.fn();
+    stage.animate = vi.fn().mockReturnValue({ cancel, effect: { setKeyframes: vi.fn() } });
+    const ref = { current: viewport };
+    const stageRef = { current: stage };
+    const clicked = vi.fn();
+    chip.addEventListener("click", clicked);
+    const { result, unmount } = renderHook(() => usePanZoom(ref, undefined, stageRef));
+    act(() => result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 100, clientY: 100, target: chip } as unknown as React.PointerEvent));
+    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 120, clientY: 100 })); });
+    await nextFrame();
+    expect(captured.has(1)).toBe(true);
+    expect(stage.animate).toHaveBeenCalledOnce();
+    expect(viewport.querySelector<HTMLElement>(".gtv-gesture-shield")?.hidden).toBe(false);
+    unmount();
+    expect(captured.size).toBe(0);
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(viewport.querySelector(".gtv-gesture-shield")).toBeNull();
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(clicked).toHaveBeenCalledOnce();
     viewport.remove();
   });
 
