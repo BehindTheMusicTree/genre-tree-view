@@ -92,12 +92,10 @@ export function classifyWheelEvent(deltaY: number, now: number, state: WheelClas
   return type;
 }
 
-/** Selector for the elements "fit to frame" should measure: the tree's actually-rendered cards
- * (or radial dots and their labels) and connector links. Deliberately excludes the invisible per-node hit area and the SVG's own
- * declared width/height, both of which bake in ACTIONS_OVERLAY_WIDTH/HEIGHT (see constants.ts) —
- * toolbar/menu clearance reserved to one side of the tree. Fitting to that reserved space instead
- * of the visible content leaves a large, lopsided gap around the tree after fitting. */
-export const TREE_CONTENT_SELECTOR = ".gtv-node-rect, .gtv-node-dot, text.gtv-node-label, .gtv-link";
+/** Radial renderers expose natural dot/label envelopes separately from zoom-dependent
+ * label placement. Cartesian cards and labels keep their existing tight-content measurement.
+ * Toolbar clearance and SVG canvas dimensions are never part of the fitted content. */
+export const TREE_CONTENT_SELECTOR = ".gtv-node-rect, .gtv-node-dot, text.gtv-node-label:not([data-gtv-radial-label]), .gtv-radial-fit-bounds, .gtv-link";
 
 /** Collects the tight-content elements (see TREE_CONTENT_SELECTOR) under `container`, ready to
  * pass into usePanZoom's fitToFrame. */

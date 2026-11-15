@@ -1003,7 +1003,7 @@ export function WheelRadialPopCoreCore({
           muted: group.root.muted,
         };
       }),
-    ]);
+    ], wheelItemCountRange);
     hideCollidingLabels(d3, originGroup, wheelItemCountRange, zoomScaleRef.current);
     // A root's name usually spills past its chip, so the label itself forwards clicks to the chip.
     originGroup
