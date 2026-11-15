@@ -431,7 +431,7 @@ describe("GenreTreeWheelRadial", () => {
     expect(coreSectors(container).every((anchor) => transformDiv.contains(anchor))).toBe(true);
   });
 
-  it("does not start a pan drag from a pointerdown on a wheel chip", () => {
+  it("starts a pan drag from a pointerdown on a wheel chip", () => {
     const { container } = render(<GenreTreeWheelRadial nodes={NODES_FIVE} />);
     const transformDiv = getTransformDiv(container);
     const chip = chipFor(container, "Electronic");
@@ -440,7 +440,7 @@ describe("GenreTreeWheelRadial", () => {
     fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
     fireEvent.pointerUp(window);
 
-    expect(transformDiv.style.transform).toBe("translate(0px, 0px) scale(1)");
+    expect(transformDiv.style.transform).toBe("translate(-20px, -30px) scale(1)");
   });
 
   it("zoom-in button scales the shared stage", () => {
