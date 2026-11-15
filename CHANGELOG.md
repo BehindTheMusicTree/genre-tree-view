@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [10.0.4] - 2026-11-15
+
 ### Fixed
 
 - Allow dragging the tree from genre labels and chips while preserving taps and controls.
