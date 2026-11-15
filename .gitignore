@@ -13,3 +13,7 @@ graphify-out/
 
 /playwright-report/
 /test-results/
+
+/android-results/
+/android-report/
+/android-diagnostics/

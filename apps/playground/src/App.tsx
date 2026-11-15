@@ -903,6 +903,7 @@ export function App() {
               writePopCoreUrl("zoom", id, "push");
             }}
             defaultViewport={popCoreDefaultViewport}
+            showZoomControls="always"
             onViewportChange={({ x, y, zoom }) =>
               writePopCoreUrl("view", `${x.toFixed(1)},${y.toFixed(1)},${zoom.toFixed(2)}`, "replace")
             }

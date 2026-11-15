@@ -15,11 +15,12 @@
     "dev": "concurrently -k -n lib,playground \"pnpm --filter @behindthemusictree/genre-tree-view dev\" \"pnpm --filter genre-tree-view-playground dev\"",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint && eslint playwright.config.ts browser",
+    "lint": "pnpm -r lint && eslint playwright*.config.ts browser",
     "test": "pnpm --filter @behindthemusictree/genre-tree-view test && pnpm --filter genre-tree-view-playground test",
     "coverage": "pnpm --filter @behindthemusictree/genre-tree-view coverage",
     "release": "bash scripts/release.sh",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:android": "playwright test --config playwright.android.config.ts"
   },
   "keywords": [
     "react",
@@ -37,6 +38,7 @@
     "eslint": "10.8.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.9.0",
+    "playwright": "1.65.1",
     "typescript-eslint": "8.66.0"
   }
 }

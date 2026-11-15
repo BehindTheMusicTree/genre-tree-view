@@ -93,3 +93,40 @@ reaches `main`. Initial activation does not publish the existing version.
 2. Fix the issue, then follow the same version-bump/tag/publish steps as a release (steps 2–4
    above), PRing into `main` instead of via a `release/*` branch.
 3. Merge `main` back into `develop` so the fix isn't lost on the next regular release.
+
+# Android browser gestures
+
+`pnpm test:android` uses Chrome inside one booted Android emulator, through
+Playwright's experimental Android API. Install Android SDK platform-tools and an
+API 35 x86_64 `google_apis` image, create a Pixel 5 AVD in portrait, then boot it
+and run `adb devices`. Exactly one authorized, booted device must be listed.
+Chrome 105 or newer must be installed. Non-rooted devices also need Chrome's
+“Enable command line on non-rooted devices” flag. Keep the emulator awake.
+See [Playwright Android requirements](https://playwright.dev/docs/api/class-android).
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+pnpm test:android
+```
+
+The runner starts the production preview on 127.0.0.1:4173, installs an ADB reverse
+mapping for that port and removes it afterward. Reserve this port. Each test
+**clears the selected device's Chrome app data**, launches Chrome, and closes it
+on completion. Use a disposable emulator. Missing ADB, ambiguous devices, old or
+missing Chrome, and unavailable preview fail explicitly.
+
+Input uses CDP `Input.dispatchTouchEvent`, not native OS input. These are functional
+regression tests against the canonical fixture, not emulator latency or FPS gates;
+physical-phone latency needs separate measurements. Desktop and emulated-touch
+checks remain in `pnpm test:browser`. Reports, screenshots on failure, traces and
+console errors go to `android-report/` and `android-results/`.
+
+`android-browser.yml` supports manual feature-branch runs and daily 03:17 UTC runs
+checking out `develop`. Scheduled workflows require the file on the default branch
+(currently `develop`); if that changes to `main`, activation must wait for a normal
+approved release. CI cold-boots API 35 with image-provided Chrome, records Chrome
+and SDK image revisions, and retains diagnostics/logcat for 14 days. It does not
+update Chrome during tests. This job initially runs manually/nightly. Promotion to
+a required PR check needs a separate decision after ten consecutive first-attempt
+clean runs, each under 15 minutes.
