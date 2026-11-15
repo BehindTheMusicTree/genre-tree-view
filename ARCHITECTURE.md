@@ -187,7 +187,11 @@ pnpm workspace with two members:
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
-- **Gesture hit testing**: `usePanZoom` captures moving drag/pinch pointers on the viewport,
+- **Gesture hit testing**: Labels and chips become draggable after 4 CSS pixels of movement;
+  background drags start on the first movement. Toolbar and floating controls remain actionable.
+  Recognized gestures suppress their pointer activation while preserving keyboard activation and
+  the next independent tap. Content-start pinch resumes one-finger pan in `always` mode.
+  `usePanZoom` captures moving drag/pinch pointers on the viewport,
   transferring implicit touch capture away from nodes only when a gesture moves. Taps retain
   their normal targets. A single viewport-sized sibling shield blocks tree hover during gestures
   (including wheel input), below floating controls; it is hidden on commit and removed on unmount.

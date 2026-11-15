@@ -249,7 +249,7 @@ describe("GenreTreeWheel", () => {
     expect(transformDiv.contains(stage.querySelector(".gtv-wheel"))).toBe(true);
   });
 
-  it("does not start a pan drag from a pointerdown on a wheel chip", () => {
+  it("starts a pan drag from a pointerdown on a wheel chip", () => {
     const { container } = render(<GenreTreeWheel nodes={NODES} />);
     const transformDiv = getTransformDiv(container);
     const chip = chipFor(container, "Electronic");
@@ -258,7 +258,7 @@ describe("GenreTreeWheel", () => {
     fireEvent.pointerMove(window, { clientX: 80, clientY: 70 });
     fireEvent.pointerUp(window);
 
-    expect(transformDiv.style.transform).toBe("translate(0px, 0px) scale(1)");
+    expect(transformDiv.style.transform).toBe("translate(-20px, -30px) scale(1)");
   });
 
   it("zoom-in button scales the shared stage, keeping the tree and wheel visually linked", () => {
