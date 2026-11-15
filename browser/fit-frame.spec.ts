@@ -25,10 +25,11 @@ for (const renderer of ["Genre wheel (radial, pop/core)", "Genre wheel (radial)"
       await expect.poll(async () => (await matrix()).k).toBeGreaterThan(initial.k);
       await page.waitForTimeout(700);
       await viewport.getByRole("button", { name: "Fit to frame", exact: true }).click();
+      // CSS matrices round translations to thousandths of a pixel.
       await expect.poll(async () => {
         const fitted = await matrix();
-        return Math.max(Math.abs(fitted.x - initial.x), Math.abs(fitted.y - initial.y), Math.abs(fitted.k - initial.k));
-      }).toBeLessThan(0.001);
+        return Math.max(Math.abs(fitted.x - initial.x), Math.abs(fitted.y - initial.y), Math.abs(fitted.k - initial.k) * 10_000);
+      }).toBeLessThan(0.01);
       await page.waitForTimeout(700);
       frames.push(await matrix());
       expect(frames.at(-1)?.k).toBeCloseTo(initial.k, 5);
