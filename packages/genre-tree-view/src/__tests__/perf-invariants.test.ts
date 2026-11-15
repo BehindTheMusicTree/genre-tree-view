@@ -40,6 +40,7 @@ function setup() {
 const down = (result: ReturnType<typeof setup>["result"], target: Element) =>
   result.current.handlePointerDown({
     pointerId: 1,
+    pointerType: "touch",
     button: 0,
     clientX: 100,
     clientY: 100,
@@ -173,4 +174,41 @@ describe("pan/zoom performance invariants", () => {
     expect(stage.style.transform).toBe("translate(20px, 0px) scale(1)");
     cleanup();
   });
+
+  it("captures a moving touch on the viewport, shields hover, and restores hit testing on cancel", () => {
+    const { viewport, stage, result, cleanup } = setup();
+    const captured = new Set<number>();
+    viewport.hasPointerCapture = (id) => captured.has(id);
+    viewport.setPointerCapture = vi.fn((id) => { captured.add(id); });
+    viewport.releasePointerCapture = vi.fn((id) => { captured.delete(id); });
+    act(() => down(result, viewport));
+    expect(viewport.setPointerCapture).not.toHaveBeenCalled();
+    const shield = viewport.querySelector<HTMLElement>(".gtv-gesture-shield")!;
+    expect(shield.hidden).toBe(true);
+    for (const clientX of [120, 130]) {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, pointerType: "touch", clientX, clientY: 100 }));
+      frames.splice(0).forEach((cb) => cb(0));
+    }
+    expect(viewport.setPointerCapture).toHaveBeenCalledExactlyOnceWith(1);
+    expect(shield.hidden).toBe(false);
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(true);
+    act(() => { window.dispatchEvent(new PointerEvent("pointercancel", { pointerId: 1, pointerType: "touch" })); });
+    expect(result.current.panX).toBe(30);
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(false);
+    expect(viewport.querySelector<HTMLElement>(".gtv-gesture-shield")!.hidden).toBe(true);
+    cleanup();
+    expect(viewport.querySelector(".gtv-gesture-shield")).toBeNull();
+  });
+
+  it("releases a captured pointer when unmounted during a gesture", () => {
+    const { viewport, result, cleanup } = setup();
+    viewport.hasPointerCapture = vi.fn(() => true);
+    viewport.setPointerCapture = vi.fn();
+    viewport.releasePointerCapture = vi.fn();
+    act(() => down(result, viewport));
+    window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 120, clientY: 100 }));
+    cleanup();
+    expect(viewport.releasePointerCapture).toHaveBeenCalledWith(1);
+  });
+
 });

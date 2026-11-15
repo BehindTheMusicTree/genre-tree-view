@@ -187,6 +187,11 @@ pnpm workspace with two members:
   `GenreTreeOutline`, when a row's name receives focus) so a consumer can prefetch what it loads
   on click. `GenreTreeOutline` and `GenreTreeWheelRadialPopCore` (D3 nodes via
   `renderPopSubtree` and ring chips) fire it; the other renderers accept and ignore it.
+- **Gesture hit testing**: `usePanZoom` captures moving drag/pinch pointers on the viewport,
+  transferring implicit touch capture away from nodes only when a gesture moves. Taps retain
+  their normal targets. A single viewport-sized sibling shield blocks tree hover during gestures
+  (including wheel input), below floating controls; it is hidden on commit and removed on unmount.
+  Starting and ending input never changes `pointer-events` on the stage's descendants.
 - **Wheel/touch capture**: `GenreTreeProps.wheelZoom` (`"always"` default | `"modifier"`) is passed
   to `usePanZoom`. In `"always"` mode any wheel over the viewport zooms at the cursor (drag pans).
   In `"modifier"` mode (for trees stacked in a scrolling page): a vertical-dominant

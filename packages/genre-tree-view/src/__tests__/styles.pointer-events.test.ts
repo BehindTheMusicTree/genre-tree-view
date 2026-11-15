@@ -11,6 +11,10 @@ import { join } from "node:path";
 const stylesCss = readFileSync(join(__dirname, "../styles.css"), "utf-8");
 
 describe("styles.css pointer-events", () => {
+  it("never changes descendant hit testing when a gesture starts", () => {
+    expect(stylesCss).not.toMatch(/\.gtv-stage--moving[^{}]*\*\s*{/);
+    expect(stylesCss).toMatch(/\.gtv-gesture-shield\s*{[^}]*position:\s*absolute/);
+  });
   it("keeps .gtv-wheel-pop-layer out of hit-testing so clicks fall through to the layer beneath it", () => {
     const rule = stylesCss.match(/\.gtv-wheel-pop-layer\s*{[^}]*}/);
     expect(rule).toBeTruthy();
