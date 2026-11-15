@@ -770,9 +770,26 @@ export function usePanZoom(
     retryFrameRef.current = () => { fitToFrame(frameElementsRef.current, { silent: true }); };
   }, [fitToFrame]);
 
-  // Click-and-drag pan over empty background. Only starts outside a node/its toolbar so it
-  // doesn't fight their own click/hover interactions.
+  // Content gestures stay candidates until movement distinguishes a drag from a tap.
   const lastPointRef = useRef({ x: 0, y: 0 });
+  const candidatePointersRef = useRef(new Set<number>());
+  const gestureMovedRef = useRef(false);
+  const suppressActivationRef = useRef(false);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const suppress = (event: MouseEvent) => {
+      if (!suppressActivationRef.current || event.detail === 0) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    viewport.addEventListener("click", suppress, true);
+    viewport.addEventListener("dblclick", suppress, true);
+    return () => {
+      viewport.removeEventListener("click", suppress, true);
+      viewport.removeEventListener("dblclick", suppress, true);
+    };
+  }, [viewportRef]);
 
   // handlePointerDown/handlePointerMove/handlePointerUp are registered as window listeners via
   // referentially-stable wrappers (see stablePointerMove/stablePointerUp below), so they can't just
@@ -782,7 +799,7 @@ export function usePanZoom(
   // those writes.
   const minScaleRef = useRef(minScale);
 
-  // Pointers whose pointerdown landed on a node/toolbar/control, or (in "modifier" mode) any touch
+  // Pointers whose pointerdown landed on a toolbar/control, or (in "modifier" mode) any touch
   // pointer: excluded from single-pointer pan (so they don't fight that element's own click/hover
   // handling, or the page's own vertical scroll) but still tracked so a pinch that starts on top of
   // content — the common case, since the tree fills most of the screen — still works.
@@ -795,8 +812,7 @@ export function usePanZoom(
   const capturePointers = useCallback(() => {
     const viewport = viewportRef.current;
     if (!viewport?.setPointerCapture) return;
-    // Transfer implicit touch capture away from a node once a pinch actually moves, so its
-    // eventual click targets the viewport. Leave taps and content-only single drags untouched.
+    // Transfer implicit touch capture to the viewport only after a drag or pinch is recognized.
     for (const id of activePointersRef.current.keys()) {
       if (!viewport.hasPointerCapture(id)) viewport.setPointerCapture(id);
     }
@@ -832,6 +848,9 @@ export function usePanZoom(
         if (current.distance <= 0) {
           return;
         }
+        candidatePointersRef.current.clear();
+        gestureMovedRef.current = true;
+        suppressActivationRef.current = true;
         capturePointers();
         zoomAtPoint(
           () =>
@@ -847,6 +866,14 @@ export function usePanZoom(
 
       if (suppressedPointersRef.current.has(event.pointerId)) return;
 
+      if (candidatePointersRef.current.has(event.pointerId)) {
+        if (Math.hypot(event.clientX - lastPointRef.current.x, event.clientY - lastPointRef.current.y) < 4) return;
+        candidatePointersRef.current.delete(event.pointerId);
+      }
+      gestureMovedRef.current = true;
+      suppressActivationRef.current = true;
+      // eslint-disable-next-line react-hooks/immutability -- interrupt the live centering animation on recognized drag
+      centerAnimationRef.current = null;
       capturePointers();
       const dx = event.clientX - lastPointRef.current.x;
       const dy = event.clientY - lastPointRef.current.y;
@@ -871,11 +898,18 @@ export function usePanZoom(
   const handlePointerUpRef = useRef<(event: PointerEvent) => void>(() => {});
   const stablePointerMove = useCallback((event: PointerEvent) => handlePointerMoveRef.current(event), []);
   const stablePointerUp = useCallback((event: PointerEvent) => handlePointerUpRef.current(event), []);
+  const stableLostCapture = useCallback((event: PointerEvent) => {
+    const viewport = viewportRef.current;
+    if (event.target === viewport && !viewport?.hasPointerCapture?.(event.pointerId)) {
+      handlePointerUpRef.current(event);
+    }
+  }, [viewportRef]);
 
   const handlePointerUp = useCallback((event: PointerEvent) => {
     const pointers = activePointersRef.current;
     pointers.delete(event.pointerId);
     suppressedPointersRef.current.delete(event.pointerId);
+    candidatePointersRef.current.delete(event.pointerId);
 
     if (pointers.size < 2) pinchStartRef.current = null;
     const remaining = Array.from(pointers.values());
@@ -887,9 +921,11 @@ export function usePanZoom(
       window.removeEventListener("pointermove", stablePointerMove);
       window.removeEventListener("pointerup", stablePointerUp);
       window.removeEventListener("pointercancel", stablePointerUp);
-      commitView();
+      window.removeEventListener("lostpointercapture", stableLostCapture);
+      if (gestureMovedRef.current) commitView();
+      gestureMovedRef.current = false;
     }
-  }, [stablePointerMove, stablePointerUp, commitView]);
+  }, [stableLostCapture, stablePointerMove, stablePointerUp, commitView]);
   useEffect(() => {
     handlePointerUpRef.current = handlePointerUp;
   }, [handlePointerUp]);
@@ -897,36 +933,41 @@ export function usePanZoom(
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
     if (event.button !== 0) return;
     operationRef.current += 1;
-    // A pointer landing on a node/toolbar/control/info panel is excluded from single-pointer pan (so
+    // A pointer landing on a toolbar/control is excluded from single-pointer pan (so
     // it doesn't fight that element's own click/hover/text-selection handling) but still tracked below — otherwise a
     // pinch that starts on top of content, the common case since the tree fills most of the screen,
     // would never be recognized as a pinch at all.
-    const isInteractive = (event.target as Element).closest("g.node, foreignObject, .gtv-zoom-controls, .gtv-wheel-chip") !== null;
+    const target = event.target as Element;
+    const isInteractive = target.closest('.gtv-toolbar, .gtv-wheel-floating-controls, .gtv-zoom-controls, input, select, textarea, a, [contenteditable="true"], button:not(.gtv-wheel-chip)') !== null;
+    const isNode = target.closest("g.node, .gtv-wheel-chip, .gtv-root-label") !== null;
     // In "modifier" mode one finger scrolls the page, so a touch pointer must neither pan (which
     // nudges the tree until the browser fires pointercancel) nor preventDefault the scroll.
     const isPageScrollTouch = wheelZoom === "modifier" && event.pointerType === "touch";
 
     const pointers = activePointersRef.current;
     const wasEmpty = pointers.size === 0;
+    if (wasEmpty) {
+      suppressActivationRef.current = false;
+      gestureMovedRef.current = false;
+    }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     lastPointRef.current = { x: event.clientX, y: event.clientY };
 
     if (isInteractive || isPageScrollTouch) {
       suppressedPointersRef.current.add(event.pointerId);
+    } else if (isNode) {
+      candidatePointersRef.current.add(event.pointerId);
     } else {
       event.preventDefault();
-      // Starting a background drag takes over from any in-flight centerOnElement glide, rather
-      // than fighting it over the same panX/panY state.
-      // eslint-disable-next-line react-hooks/immutability -- see minScaleRef comment in fitToFrame
-      centerAnimationRef.current = null;
     }
 
     if (wasEmpty) {
       window.addEventListener("pointermove", stablePointerMove);
       window.addEventListener("pointerup", stablePointerUp);
       window.addEventListener("pointercancel", stablePointerUp);
+      window.addEventListener("lostpointercapture", stableLostCapture);
     }
-  }, [stablePointerMove, stablePointerUp, wheelZoom]);
+  }, [stableLostCapture, stablePointerMove, stablePointerUp, wheelZoom]);
 
   const restore = options.viewportRestore;
   const restoreRevision = restore?.revision;
@@ -955,10 +996,14 @@ export function usePanZoom(
     releasePointers();
     activePointersRef.current.clear();
     suppressedPointersRef.current.clear();
+    candidatePointersRef.current.clear();
+    suppressActivationRef.current = false;
+    gestureMovedRef.current = false;
     pinchStartRef.current = null;
     window.removeEventListener("pointermove", stablePointerMove);
     window.removeEventListener("pointerup", stablePointerUp);
     window.removeEventListener("pointercancel", stablePointerUp);
+    window.removeEventListener("lostpointercapture", stableLostCapture);
     pendingRestoreRef.current = {
       viewport: { x: restoreX, y: restoreY, zoom: restoreZoom },
       revision: restoreRevision,
@@ -967,7 +1012,7 @@ export function usePanZoom(
     };
     if (measuredFrameRef.current === options.frameKey) retryFrameRef.current();
 
-  }, [restoreRevision, restoreX, restoreY, restoreZoom, options.frameKey, options.selectedNodeId, viewportRef, commitView, stablePointerMove, stablePointerUp, releasePointers]);
+  }, [restoreRevision, restoreX, restoreY, restoreZoom, options.frameKey, options.selectedNodeId, viewportRef, commitView, stablePointerMove, stablePointerUp, releasePointers, stageRef, stableLostCapture]);
 
   // Covers the case handlePointerUp's own cleanup can't: the component unmounting mid-gesture
   // (route change, conditional render) before every pointer has lifted, which would otherwise
@@ -975,20 +1020,24 @@ export function usePanZoom(
   useEffect(() => {
     const pointers = activePointersRef.current;
     const suppressed = suppressedPointersRef.current;
+    const candidates = candidatePointersRef.current;
     return () => {
       window.removeEventListener("pointermove", stablePointerMove);
       window.removeEventListener("pointerup", stablePointerUp);
       window.removeEventListener("pointercancel", stablePointerUp);
+      window.removeEventListener("lostpointercapture", stableLostCapture);
       releasePointers();
+      stageAnimationRef.current?.cancel();
       pointers.clear();
       suppressed.clear();
+      candidates.clear();
       pinchStartRef.current = null;
       if (animationFrameIdRef.current !== null) cancelAnimationFrame(animationFrameIdRef.current);
       if (centerAnimationFrameIdRef.current !== null) cancelAnimationFrame(centerAnimationFrameIdRef.current);
       if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current);
       if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
     };
-  }, [stablePointerMove, stablePointerUp, releasePointers]);
+  }, [stablePointerMove, stablePointerUp, releasePointers, stageRef, stableLostCapture]);
 
   return {
     panX,

@@ -817,7 +817,103 @@ describe("usePanZoom", () => {
     document.body.removeChild(viewport);
   });
 
-  it("still tracks a pinch that starts with a finger on a node, without panning on that finger alone", async () => {
+  it("preserves small node taps, suppresses drag activation, and accepts the next tap", async () => {
+    const viewport = document.createElement("div");
+    const chip = document.createElement("button");
+    chip.className = "gtv-wheel-chip";
+    viewport.appendChild(chip);
+    document.body.appendChild(viewport);
+    const stage = document.createElement("div");
+    const onViewportChange = vi.fn();
+    const clicked = vi.fn();
+    chip.addEventListener("click", clicked);
+    chip.addEventListener("dblclick", clicked);
+    const { result, unmount } = renderHook(() => usePanZoom({ current: viewport }, undefined, { current: stage }, { onViewportChange }));
+    const down = () => act(() => result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 100, clientY: 100, target: chip } as unknown as React.PointerEvent));
+    const move = (x: number) => act(() => { window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: x, clientY: 100 })); });
+    const up = () => act(() => { window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 })); });
+    down();
+    move(102);
+    up();
+    expect(onViewportChange).not.toHaveBeenCalled();
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(clicked).toHaveBeenCalledTimes(1);
+    down();
+    move(106);
+    await nextFrame();
+    expect(liveView(stage).panX).toBe(6);
+    up();
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    chip.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, detail: 2 }));
+    expect(clicked).toHaveBeenCalledTimes(1);
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 }));
+    expect(clicked).toHaveBeenCalledTimes(2);
+    down();
+    up();
+    chip.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(clicked).toHaveBeenCalledTimes(3);
+    unmount();
+    viewport.remove();
+  });
+
+  it.each(["pointercancel", "lostpointercapture"])("ends a node drag on %s and ignores later movement", async (type) => {
+    const viewport = document.createElement("div");
+    const stage = document.createElement("div");
+    const node = document.createElement("g");
+    node.classList.add("node");
+    viewport.append(node);
+    document.body.append(viewport);
+    viewport.setPointerCapture = vi.fn();
+    viewport.hasPointerCapture = () => false;
+    const ref = { current: viewport };
+    const stageRef = { current: stage };
+    const { result, unmount } = renderHook(() => usePanZoom(ref, undefined, stageRef));
+    act(() => result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 100, clientY: 100, target: node } as unknown as React.PointerEvent));
+    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 120, clientY: 100 })); });
+    await nextFrame();
+    expect(liveView(stage).panX).toBe(20);
+    act(() => { viewport.dispatchEvent(new PointerEvent(type, { pointerId: 1, bubbles: true })); });
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(false);
+    expect(viewport.querySelector<HTMLElement>(".gtv-gesture-shield")?.hidden).toBe(true);
+    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 160, clientY: 100 })); });
+    await nextFrame();
+    expect(liveView(stage).panX).toBe(20);
+    unmount();
+    viewport.remove();
+  });
+
+  it.each(["gtv-toolbar", "gtv-wheel-floating-controls", "gtv-zoom-controls"])("preserves controls nested in a node: %s", async (className) => {
+    const viewport = document.createElement("div");
+    const node = document.createElement("div");
+    node.className = "node";
+    const control = document.createElement("span");
+    control.className = className;
+    const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    svgNode.classList.add("node");
+    svgNode.append(control);
+    node.append(svgNode);
+    viewport.append(node);
+    document.body.append(viewport);
+    const stage = document.createElement("div");
+    const ref = { current: viewport };
+    const stageRef = { current: stage };
+    const { result, unmount } = renderHook(() => usePanZoom(ref, undefined, stageRef));
+    const clicked = vi.fn();
+    control.addEventListener("click", clicked);
+    act(() => result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 100, clientY: 100, target: control } as unknown as React.PointerEvent));
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 130, clientY: 100 }));
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
+    await nextFrame();
+    expect(liveView(stage).panX).toBe(0);
+    control.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(clicked).toHaveBeenCalledOnce();
+    unmount();
+    viewport.remove();
+  });
+
+  it("recognizes a node drag after the threshold and transitions into pinch", async () => {
     const viewport = document.createElement("div");
     const node = document.createElement("g");
     node.setAttribute("class", "node");
@@ -839,10 +935,9 @@ describe("usePanZoom", () => {
       } as unknown as React.PointerEvent);
     });
 
-    // A single finger down on a node must not pan, so it doesn't fight the node's own click/hover
-    // handling.
+    // A small movement preserves the node tap.
     act(() => {
-      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 300, clientY: 500 }));
+      window.dispatchEvent(new PointerEvent("pointermove", { pointerId: 1, clientX: 398, clientY: 500 }));
     });
     expect(result.current.panX).toBe(0);
     expect(result.current.panY).toBe(0);
@@ -934,7 +1029,8 @@ describe("usePanZoom", () => {
       ({ left: 0, top: 0, right: 1200, bottom: 750, width: 1200, height: 750 }) as DOMRect;
     element.getBoundingClientRect = () =>
       ({ left: 100, top: 200, right: 180, bottom: 240, width: 80, height: 40 }) as DOMRect;
-    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, noStage));
+    const stage = document.createElement("div");
+    const { result } = renderHook(() => usePanZoom({ current: viewport }, undefined, { current: stage }));
     const baseScale = result.current.zoomScale;
 
     act(() => {
@@ -944,7 +1040,14 @@ describe("usePanZoom", () => {
     // Must glide smoothly (Google Maps style) rather than jumping to the target on this same tick.
     expect(result.current.zoomScale).toBe(baseScale);
 
+    await nextFrame();
+    act(() => {
+      result.current.handlePointerDown({ pointerId: 1, button: 0, clientX: 0, clientY: 0, target: viewport, preventDefault: () => {} } as unknown as React.PointerEvent);
+      window.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1 }));
+    });
     await waitFor(() => expect(result.current.zoomScale).toBe(2));
+    expect(stage.classList.contains("gtv-stage--moving")).toBe(false);
+    expect(viewport.querySelector<HTMLElement>(".gtv-gesture-shield")?.hidden).toBe(true);
     // Element's center (140, 220) at scale 2 must land exactly on the viewport's center (600, 375).
     expect(result.current.panX + 140 * 2).toBeCloseTo(600);
     expect(result.current.panY + 220 * 2).toBeCloseTo(375);
@@ -1188,6 +1291,7 @@ describe("usePanZoom", () => {
     expect(removeEventListenerSpy).toHaveBeenCalledWith("pointermove", expect.any(Function));
     expect(removeEventListenerSpy).toHaveBeenCalledWith("pointerup", expect.any(Function));
     expect(removeEventListenerSpy).toHaveBeenCalledWith("pointercancel", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("lostpointercapture", expect.any(Function));
 
     removeEventListenerSpy.mockRestore();
     document.body.removeChild(viewport);
