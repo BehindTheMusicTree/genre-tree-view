@@ -10,3 +10,6 @@ coverage
 .playwright-mcp/
 graphify-out/
 .github/pr-descriptions/
+
+/playwright-report/
+/test-results/
