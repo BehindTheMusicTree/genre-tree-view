@@ -29,7 +29,7 @@ export const test = base.extend<{ androidPage: Page; cdp: CDPSession }>({
       shell("am", "force-stop", "com.android.chrome");
       const cleared = shell("pm", "clear", "com.android.chrome");
       if (!cleared.includes("Success")) throw new Error(`Could not clear Chrome state: ${cleared}`);
-      const context = await device.launchBrowser({ args: ["--no-first-run"] });
+      const context = await device.launchBrowser({ hasTouch: true, args: ["--no-first-run"] });
       const errors: string[] = [];
       try {
         await context.tracing.start({ screenshots: true, snapshots: true });
