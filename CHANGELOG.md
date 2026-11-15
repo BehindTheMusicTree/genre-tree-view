@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### CI
 
 - Add Android Chrome gesture regression checks using an emulator.
+- Correct Android label preparation to target interactive node hit areas and preserve the surviving finger during pinch continuation checks.
 
 ## [10.0.4] - 2026-11-15
 
