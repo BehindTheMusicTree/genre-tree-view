@@ -61,7 +61,7 @@ test("background drag preserves scale and transform through pause and release", 
 for (const selector of [".gtv-wheel-chip[id]", "g.node .gtv-node-label:not(.gtv-node-label--hidden)"]) {
   test(`${selector} drag suppresses selection then tap selects the same genre`, async ({ androidPage: page, cdp }) => {
     for (let attempt = 0; attempt < 8 && !(await dragTarget(page, selector)); attempt++) {
-      const point = await dragTarget(page, ".gtv-node-dot");
+      const point = await dragTarget(page, "g.node .gtv-hover-hit-area");
       if (!point) throw new Error("No visible node for touch pinch label preparation");
       await pinch(page, cdp, point);
       await touch(cdp, "touchEnd", []);
@@ -92,11 +92,11 @@ test("pinch continues with one finger; cancellation permits the next gesture", a
   const before = await matrix(page);
   await pinch(page, cdp, point);
   expect((await matrix(page)).k).toBeGreaterThan(before.k);
-  await touch(cdp, "touchEnd", [{ x: point.x - 60, y: point.y, id: 1 }]);
+  // CDP touchEnd lists the finger being released, leaving finger 1 available to pan.
+  await touch(cdp, "touchEnd", [{ x: point.x + 60, y: point.y, id: 2 }]);
   const one = await stable(page);
   await touch(cdp, "touchMove", [{ x: point.x - 30, y: point.y + 20, id: 1 }]);
-  await frame(page);
-  expect((await matrix(page)).x).toBeGreaterThan(one.x);
+  await expect.poll(async () => (await matrix(page)).x).toBeGreaterThan(one.x);
   expect((await matrix(page)).k).toBeCloseTo(one.k);
   await touch(cdp, "touchCancel", []);
   await expect(page.locator(".gtv-gesture-shield")).toBeHidden();
