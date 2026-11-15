@@ -24,6 +24,8 @@ pnpm typecheck        # tsc --noEmit across all packages
 pnpm lint             # eslint across all packages
 pnpm test             # vitest run, library package only
 pnpm coverage         # vitest run --coverage, library package only
+pnpm exec playwright install chromium # once, for browser checks
+pnpm test:browser      # Chromium touch/desktop gestures against pnpm build output
 ```
 
 Scoped to the library only (`packages/genre-tree-view`):
@@ -33,7 +35,10 @@ pnpm --filter @behindthemusictree/genre-tree-view test:watch
 pnpm --filter @behindthemusictree/genre-tree-view test -- <pattern>   # single test file/name
 ```
 
-PRs are validated by `validate.yml` (build, typecheck, lint, coverage). The coverage gate in
+PRs are validated by `validate.yml` (build, typecheck, lint, coverage and browser gestures).
+Browser checks use the compiled playground and canonical genre fixture. They assert gesture
+behavior; attached Chrome performance counters are diagnostics, not phone timing budgets.
+Use `PLAYWRIGHT_CHANNEL=chrome pnpm test:browser` to use a locally installed Chrome instead. The coverage gate in
 `packages/genre-tree-view/vitest.config.ts` enforces these minimums:
 
 | Scope | Lines / statements | Branches | Functions |

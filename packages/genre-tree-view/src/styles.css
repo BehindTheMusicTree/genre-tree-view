@@ -1381,14 +1381,21 @@ nav.gtv-wheel-breadcrumb {
   }
 }
 
-/* Set by usePanZoom on the stage while a gesture is in flight: promotes it to its own compositor
-   layer and stops hit-testing/:hover recalculation under the cursor until the gesture settles. */
+/* Promote the moving stage without changing any descendant styles. */
 .gtv-stage--moving {
   will-change: transform;
 }
 
-.gtv-stage--moving * {
-  pointer-events: none;
+/* One viewport-sized sibling shields the transformed tree from hover during wheel/drag input.
+   Controls remain above it. Pointer capture keeps a pinch begun on a node off that node. */
+.gtv-gesture-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.gtv-gesture-shield[hidden] {
+  display: none;
 }
 
 /* GenreTreeWheelRadialPopCore only: darker background slice behind an underground-scene subtree

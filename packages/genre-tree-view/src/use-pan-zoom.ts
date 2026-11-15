@@ -114,6 +114,22 @@ export function usePanZoom(
   const frameIdRef = useRef<number | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageAnimationRef = useRef<Animation | null>(null);
+  const gestureShieldRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    // A single sibling intercepts hover during wheel input without restyling the tree's descendants.
+    const shield = document.createElement("div");
+    shield.className = "gtv-gesture-shield";
+    shield.hidden = true;
+    shield.setAttribute("aria-hidden", "true");
+    viewport.appendChild(shield);
+    gestureShieldRef.current = shield;
+    return () => {
+      shield.remove();
+      gestureShieldRef.current = null;
+    };
+  }, [viewportRef]);
   const defaultViewportRef = useRef(options.defaultViewport);
   const operationRef = useRef(0);
   const restoredSelectionRef = useRef<string | null | undefined>(undefined);
@@ -158,7 +174,8 @@ export function usePanZoom(
     notifyView();
     const { x, y, k } = viewRef.current;
     const transform = `translate(${x}px, ${y}px) scale(${k})`;
-    stage.classList.add("gtv-stage--moving");
+    if (!stage.classList.contains("gtv-stage--moving")) stage.classList.add("gtv-stage--moving");
+    if (gestureShieldRef.current?.hidden) gestureShieldRef.current.hidden = false;
     // Mid-gesture frames go through a held Web Animation rather than style.transform: Chrome
     // re-layerizes every paint chunk of the stage (~8ms per frame on the full pop/core tree) on an
     // inline transform change, but applies an animation's value on the compositor directly.
@@ -186,6 +203,7 @@ export function usePanZoom(
       stage.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
       stage.classList.remove("gtv-stage--moving");
     }
+    if (gestureShieldRef.current) gestureShieldRef.current.hidden = true;
     stageAnimationRef.current?.cancel();
     stageAnimationRef.current = null;
     notifyView();
@@ -774,6 +792,22 @@ export function usePanZoom(
   // distance/scale from a different pair — which would otherwise cause a sudden jump in zoom.
   const pinchStartRef = useRef<{ ids: [number, number]; distance: number; scale: number } | null>(null);
 
+  const capturePointers = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport?.setPointerCapture) return;
+    // Transfer implicit touch capture away from a node once a pinch actually moves, so its
+    // eventual click targets the viewport. Leave taps and content-only single drags untouched.
+    for (const id of activePointersRef.current.keys()) {
+      if (!viewport.hasPointerCapture(id)) viewport.setPointerCapture(id);
+    }
+  }, [viewportRef]);
+  const releasePointers = useCallback(() => {
+    const viewport = viewportRef.current;
+    for (const id of activePointersRef.current.keys()) {
+      if (viewport?.hasPointerCapture?.(id)) viewport.releasePointerCapture(id);
+    }
+  }, [viewportRef]);
+
   const pinchPointerIds = useCallback((pointers: Map<number, { x: number; y: number }>): [number, number] => {
     const ids = Array.from(pointers.keys());
     return [ids[0], ids[1]];
@@ -798,6 +832,7 @@ export function usePanZoom(
         if (current.distance <= 0) {
           return;
         }
+        capturePointers();
         zoomAtPoint(
           () =>
             clampZoomScale(
@@ -812,6 +847,7 @@ export function usePanZoom(
 
       if (suppressedPointersRef.current.has(event.pointerId)) return;
 
+      capturePointers();
       const dx = event.clientX - lastPointRef.current.x;
       const dy = event.clientY - lastPointRef.current.y;
       lastPointRef.current = { x: event.clientX, y: event.clientY };
@@ -820,7 +856,7 @@ export function usePanZoom(
       view.y = clampPanAxis(view.y + dy, view.k, "y");
       scheduleFrame();
     },
-    [zoomAtPoint, clampPanAxis, pinchPointerIds, scheduleFrame],
+    [zoomAtPoint, clampPanAxis, pinchPointerIds, scheduleFrame, capturePointers],
   );
 
   // handlePointerMove/handlePointerUp are recreated whenever zoomAtPoint (and so zoomScale)
@@ -916,6 +952,7 @@ export function usePanZoom(
     centerAnimationFrameIdRef.current = null;
     frameIdRef.current = null;
     settleTimerRef.current = null;
+    releasePointers();
     activePointersRef.current.clear();
     suppressedPointersRef.current.clear();
     pinchStartRef.current = null;
@@ -930,7 +967,7 @@ export function usePanZoom(
     };
     if (measuredFrameRef.current === options.frameKey) retryFrameRef.current();
 
-  }, [restoreRevision, restoreX, restoreY, restoreZoom, options.frameKey, options.selectedNodeId, viewportRef, commitView, stablePointerMove, stablePointerUp]);
+  }, [restoreRevision, restoreX, restoreY, restoreZoom, options.frameKey, options.selectedNodeId, viewportRef, commitView, stablePointerMove, stablePointerUp, releasePointers]);
 
   // Covers the case handlePointerUp's own cleanup can't: the component unmounting mid-gesture
   // (route change, conditional render) before every pointer has lifted, which would otherwise
@@ -942,6 +979,7 @@ export function usePanZoom(
       window.removeEventListener("pointermove", stablePointerMove);
       window.removeEventListener("pointerup", stablePointerUp);
       window.removeEventListener("pointercancel", stablePointerUp);
+      releasePointers();
       pointers.clear();
       suppressed.clear();
       pinchStartRef.current = null;
@@ -950,7 +988,7 @@ export function usePanZoom(
       if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current);
       if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
     };
-  }, [stablePointerMove, stablePointerUp]);
+  }, [stablePointerMove, stablePointerUp, releasePointers]);
 
   return {
     panX,

@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Performance
+
+- Avoid restyling every tree element at the start and end of pan/zoom gestures, while preserving tap and pinch interactions; add Chromium touch and desktop gesture checks to CI.
+
 ## [10.0.2] - 2026-11-14
 
 ### Changed
