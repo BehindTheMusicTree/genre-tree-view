@@ -10,6 +10,17 @@ const matrix = (page: Page) => page.locator(stageSelector).evaluate((stage) => {
 const touch = (cdp: CDPSession, type: "touchStart" | "touchMove" | "touchEnd" | "touchCancel", points: { x: number; y: number; id: number }[]) =>
   cdp.send("Input.dispatchTouchEvent", { type, touchPoints: points });
 
+const dragTarget = (page: Page, selector: string) => page.locator(selector).evaluateAll((elements) => {
+  for (const element of elements) {
+    const r = element.getBoundingClientRect();
+    for (const fraction of [0.5, 0.25, 0.75]) {
+      const x = r.left + r.width * fraction, y = r.top + r.height / 2;
+      if (x > 70 && x < innerWidth - 100 && y > 100 && y < innerHeight - 100 && element.contains(document.elementFromPoint(x, y))) return { x, y };
+    }
+  }
+  return null;
+});
+
 async function background(page: Page) {
   return page.locator(viewportSelector).evaluate((viewport) => {
     const r = viewport.getBoundingClientRect();
@@ -73,7 +84,7 @@ test("real drag preserves its transform through a pause and commits on release",
   await info.attach("gesture-metrics", { body: JSON.stringify({ browser: context.browser()?.version(), before, moved, phases }, null, 2), contentType: "application/json" });
 });
 
-for (const selector of [".gtv-wheel-chip", "g.node .gtv-node-label"]) {
+for (const selector of [".gtv-wheel-chip", "g.node .gtv-node-label:not(.gtv-node-label--hidden)"]) {
   test(`${selector} drag pans without selecting and the next tap still selects`, async ({ page, context, isMobile }) => {
     if (selector.includes("node")) {
       const nodePoint = await page.locator(".gtv-node-dot").evaluateAll((dots) => {
@@ -82,23 +93,21 @@ for (const selector of [".gtv-wheel-chip", "g.node .gtv-node-label"]) {
           const x = r.left + r.width / 2, y = r.top + r.height / 2;
           if (x > 70 && x < innerWidth - 100 && y > 100 && y < innerHeight - 100) return { x, y };
         }
-        throw new Error("No visible node to magnify");
+        return null;
       });
+      if (!nodePoint) throw new Error("No visible node to magnify");
       await page.mouse.move(nodePoint.x, nodePoint.y);
-      for (let tick = 0; tick < 6; tick++) {
+      // Font metrics and collision culling vary by platform. Zoom around a node until a
+      // label is actually actionable, allowing both the gesture and label placement to settle.
+      for (let tick = 0; tick < 12 && !(await dragTarget(page, selector)); tick++) {
         await page.mouse.wheel(0, -50);
-        await page.waitForTimeout(100);
+        await expect(page.locator(".gtv-gesture-shield")).toBeHidden();
+        await page.waitForTimeout(250);
       }
-      await expect(page.locator(".gtv-gesture-shield")).toBeHidden();
     }
-    const point = await page.locator(selector).evaluateAll((chips) => {
-      for (const chip of chips) {
-        const r = chip.getBoundingClientRect();
-        const x = r.left + r.width / 2, y = r.top + r.height / 2;
-        if (x > 60 && x < innerWidth - 100 && y > 70 && y < innerHeight - 100 && (chip.closest("g.node") ?? chip).contains(document.elementFromPoint(x, y))) return { x, y };
-      }
-      throw new Error("No visible drag target");
-    });
+    await expect.poll(() => dragTarget(page, selector)).not.toBeNull();
+    const point = await dragTarget(page, selector);
+    if (!point) throw new Error("No visible drag target");
     const before = await matrix(page);
     const cdp = await context.newCDPSession(page);
     if (isMobile) await touch(cdp, "touchStart", [{ ...point, id: 1 }]);
