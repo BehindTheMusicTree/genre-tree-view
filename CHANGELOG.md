@@ -7,6 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+
+- **Agent directories**: Keep plans and scratch data out of Git while tracking the directory ignore rules.
 - Keep radial Fit to frame consistent after panning or zooming by measuring stable layout bounds instead of zoom-dependent labels.
 
 ### CI
