@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [10.0.5] - 2026-11-21
+
 ### CI
 
 - Add canonical workflow concurrency groups so superseded pull-request runs are cancelled and release runs are never replaced.
