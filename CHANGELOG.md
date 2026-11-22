@@ -3,12 +3,6 @@
 All notable changes to `@behindthemusictree/genre-tree-view` are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
-
-### CI
-
-- Prepare release PRs automatically and publish from one workflow on `main`.
-
 ## [10.0.5] - 2026-11-22
 
 ### Removed
