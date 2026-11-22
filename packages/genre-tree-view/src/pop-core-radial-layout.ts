@@ -976,7 +976,20 @@ function layoutRadialLabels<E extends SVGElement>(
       });
     }),
   ];
-  return { nodes, roots, geometryById, rootGeometryById, items, placement: placeLabels(items) };
+  // The collision grid uses fixed-size cells. Index screen coordinates so a fixed-size
+  // label cannot span millions of cells when the wheel fits at a very small scale.
+  const toScreen = ({ x0, y0, x1, y1 }: Box): Box => ({
+    x0: x0 * zoomScale,
+    y0: y0 * zoomScale,
+    x1: x1 * zoomScale,
+    y1: y1 * zoomScale,
+  });
+  const placement = placeLabels(items.map((item) => ({
+    ...item,
+    labels: item.labels.map(toScreen),
+    dot: item.dot && toScreen(item.dot),
+  })));
+  return { nodes, roots, geometryById, rootGeometryById, items, placement };
 }
 
 export function measureRadialLabelBounds(

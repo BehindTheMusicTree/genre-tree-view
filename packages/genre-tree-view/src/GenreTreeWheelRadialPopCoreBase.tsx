@@ -297,11 +297,24 @@ export function WheelRadialPopCoreCore({
   );
 
   const popSvgRef = useRef<SVGSVGElement>(null);
+  const fitLabelCache = useRef(new WeakMap<SVGGElement, Map<string, ReturnType<typeof measureRadialLabelBounds>>>());
   const fitLabels = useCallback((scale: number, view: PanZoomView, viewport: DOMRect) => {
     const origin = popSvgRef.current?.querySelector<SVGGElement>(":scope > g");
     const matrix = origin?.getScreenCTM?.();
     if (!origin || !matrix) return undefined;
-    const bounds = measureRadialLabelBounds(d3, origin, wheelItemCountRange, scale);
+    // The origin is replaced whenever the label layout changes. Round away subpixel DOM
+    // measurement noise so a settled pan can reuse the previous fit's candidate placements.
+    let byScale = fitLabelCache.current.get(origin);
+    if (!byScale) {
+      byScale = new Map();
+      fitLabelCache.current.set(origin, byScale);
+    }
+    const key = scale.toPrecision(6);
+    if (!byScale.has(key)) {
+      if (byScale.size >= 32) byScale.clear();
+      byScale.set(key, measureRadialLabelBounds(d3, origin, wheelItemCountRange, scale));
+    }
+    const bounds = byScale.get(key);
     if (!bounds) return undefined;
     const x = (matrix.e - viewport.left - view.x) / view.k;
     const y = (matrix.f - viewport.top - view.y) / view.k;
