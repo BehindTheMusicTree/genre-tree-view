@@ -31,8 +31,6 @@ When reviewing a pull request, check for:
   not just the percentage. A behavioral change should come with updated or new tests in
   `packages/genre-tree-view/src/__tests__/`. If an existing test's expected value encodes the old
   (pre-change) behavior as correct, it should be rewritten, not left passing by coincidence.
-- **Changelog**: user-facing fixes or features should add an entry under `[Unreleased]` in
-  `CHANGELOG.md`.
-- **Git workflow**: per `AGENTS.md`, no commits directly to `main` or `develop` — changes should
-  land on a `feature/*`, `fix/*`, `chore/*`, `release/*`, or `hotfix/*` branch per the Gitflow model
-  in `CONTRIBUTING.md`.
+- **Changelog**: use a Conventional Commit PR title that describes the user-facing change.
+  Release-please generates the entries for `CHANGELOG.md`.
+- **Git workflow**: branch from `main` and open a pull request with a Conventional Commit title.

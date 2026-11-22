@@ -11,9 +11,9 @@ and a Vite playground in `apps/playground`. The playground's
 by the pipelines infrastructure.
 
 Read `ARCHITECTURE.md` for renderers, layout modules and the public API. Read
-`CONTRIBUTING.md` for branching, validation and releases. Branch from `develop`
-and target it for feature work; do not commit directly to `main` or `develop`.
-Releases are published directly to npm by `publish.yml` (trusted publishing).
+`CONTRIBUTING.md` for branching, validation and releases. Branch from `main` and
+open a pull request with a Conventional Commit title. `publish.yml` manages
+release-please, release tags and npm Trusted Publishing.
 
 From the repository root, `pnpm dev` starts the playground and a library watch
 build; `pnpm build`, `pnpm typecheck` and `pnpm lint` cover the workspace.

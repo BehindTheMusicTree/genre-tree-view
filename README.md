@@ -71,9 +71,6 @@ package is put together.
 
 ## Release
 
-```bash
-pnpm release patch   # or minor / major
-```
-
-Run from a `release/x.y.z` branch — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full release
-flow.
+Release-please prepares release PRs from Conventional Commit titles merged to
+`main`. CI tags the version and publishes to npm after the release PR merges.
+See [the release workflow](CONTRIBUTING.md#branching-and-releases).
