@@ -2,22 +2,35 @@ name: Publish to npm
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
 
+permissions:
+  contents: read
+
+# Keep every main push so a newer run cannot replace a pending release.
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
+  tag:
+    permissions:
+      contents: write
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-tag.yml@c8bb5b9da0269b68c6ded0fb7cda486a1637b208
+    with:
+      app-id: ${{ vars.RELEASE_APP_ID }}
+    secrets:
+      release-app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
   publish:
+    needs: tag
+    if: needs.tag.outputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
@@ -27,11 +40,13 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: BehindTheMusicTree/github-workflows
-          ref: 7857565a0fbbf7a4569147044d14eb7350df82c3
+          ref: c8bb5b9da0269b68c6ded0fb7cda486a1637b208
           path: .release-foundation
           persist-credentials: false
 
       - name: Validate tag and release notes
+        env:
+          RELEASE_TAG: ${{ needs.tag.outputs.tag }}
         run: python3 .release-foundation/release/github-release.py notes "$RUNNER_TEMP/release-notes.md"
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -57,8 +72,20 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ needs.tag.outputs.tag }}
           body_path: ${{ runner.temp }}/release-notes.md
           overwrite_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-please:
+    needs: [tag, publish]
+    # Ordinary pushes have no tag, so publication is skipped and reconciliation still runs.
+    if: ${{ !cancelled() && needs.tag.result == 'success' && (needs.tag.outputs.tag == '' || needs.publish.result == 'success') }}
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-please.yml@c8bb5b9da0269b68c6ded0fb7cda486a1637b208
+    with:
+      app-id: ${{ vars.RELEASE_PR_APP_ID }}
+      auto-merge: true
+      release-policies: .github/release-policy.json
+    secrets:
+      release-pr-app-private-key: ${{ secrets.RELEASE_PR_APP_PRIVATE_KEY }}

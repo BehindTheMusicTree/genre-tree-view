@@ -33,6 +33,4 @@ When reviewing a pull request, check for:
   (pre-change) behavior as correct, it should be rewritten, not left passing by coincidence.
 - **Changelog**: user-facing fixes or features should add an entry under `[Unreleased]` in
   `CHANGELOG.md`.
-- **Git workflow**: per `AGENTS.md`, no commits directly to `main` or `develop` — changes should
-  land on a `feature/*`, `fix/*`, `chore/*`, `release/*`, or `hotfix/*` branch per the Gitflow model
-  in `CONTRIBUTING.md`.
+- **Git workflow**: branch from `main` and open a pull request with a Conventional Commit title.

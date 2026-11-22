@@ -18,7 +18,6 @@
     "lint": "pnpm -r lint && eslint playwright*.config.ts browser",
     "test": "pnpm --filter @behindthemusictree/genre-tree-view test && pnpm --filter genre-tree-view-playground test",
     "coverage": "pnpm --filter @behindthemusictree/genre-tree-view coverage",
-    "release": "bash scripts/release.sh",
     "test:browser": "playwright test",
     "test:android": "playwright test --config playwright.android.config.ts"
   },
