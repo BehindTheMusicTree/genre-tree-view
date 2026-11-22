@@ -216,8 +216,9 @@ pnpm workspace with two members:
   them); the `floatingControlsLeading` slot is unaffected. `GenreTreeOutline` omits that prop.
 
 Radial Fit to frame measures natural node/label envelopes emitted by the layout, plus
-links and the wheel circle. Zoom-dependent label placement and visibility do not change
-these bounds, so initial and repeated fits agree after pan or zoom. Cartesian renderers
+links and the wheel circle. The pop/core wheel also includes labels placed at the
+proposed fit scale, since their on-screen size does not shrink with the wheel. Each fit
+starts from the same natural bounds so it is independent of prior pan or zoom. Cartesian renderers
 continue measuring their fixed cards and labels; the outline has no fitting path.
 
 ## Public surface

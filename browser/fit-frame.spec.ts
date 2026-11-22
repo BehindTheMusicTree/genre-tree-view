@@ -40,3 +40,20 @@ for (const renderer of ["Genre wheel (radial, pop/core)", "Genre wheel (radial)"
     await info.attach("fit-frames", { body: JSON.stringify(frames), contentType: "application/json" });
   });
 }
+
+test("radial pop/core keeps visible labels inside a narrow fitted viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+  const viewport = page.locator('div[style*="touch-action"]').first();
+  const centerLabel = viewport.locator(".gtv-root-label text").filter({ hasText: /^Mainstream Pop$/ });
+  await expect(centerLabel).toBeVisible();
+  await expect.poll(() => viewport.evaluate((element) => {
+    const frame = element.getBoundingClientRect();
+    const labels = element.querySelectorAll("[data-gtv-radial-label]:not(.gtv-node-label--hidden)");
+    const overflow = Array.from(labels, (label) => {
+      const box = label.getBoundingClientRect();
+      return Math.max(frame.left - box.left, box.right - frame.right, frame.top - box.top, box.bottom - frame.bottom);
+    });
+    return Math.max(...overflow);
+  })).toBeLessThanOrEqual(0);
+});

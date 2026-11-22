@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampZoomScale,
   classifyWheelEvent,
+  computeFitFrame,
   computeFitScale,
   computeZoomScale,
   computeZoomScaleForButton,
@@ -216,5 +217,29 @@ describe("viewToViewport / viewportToView", () => {
     const view = viewportToView(viewport, 600, 400);
     expect((600 / 2 - view.x) / view.k).toBe(400);
     expect((400 / 2 - view.y) / view.k).toBe(300);
+  });
+});
+
+
+describe("computeFitFrame", () => {
+  it("centers fixed screen-size label overhang at the fitted scale", () => {
+    const content = { x0: 0, y0: 0, x1: 1000, y1: 1000 };
+    const { scale, bounds } = computeFitFrame(content, 320, 400, 40, (zoom) => ({
+      x0: 900,
+      y0: 450,
+      x1: 900 + 120 / zoom,
+      y1: 550,
+    }));
+    expect(scale).toBeLessThan(0.24);
+    expect((bounds.x1 - bounds.x0) * scale).toBeLessThanOrEqual(240.24);
+    expect(bounds.x1).toBeCloseTo(900 + 120 / scale);
+  });
+
+  it("fits the fixed geometry when there are no placed zoom-dependent labels", () => {
+    const content = { x0: 10, y0: 20, x1: 1010, y1: 1020 };
+    expect(computeFitFrame(content, 320, 400, 40, () => undefined)).toEqual({
+      scale: 0.24,
+      bounds: content,
+    });
   });
 });

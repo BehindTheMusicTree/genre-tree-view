@@ -1,3 +1,4 @@
+import type { Box } from "@behindthemusictree/ui";
 import {
   ZOOM_BUTTON_SCALE_STEP,
   ZOOM_MAX_SCALE,
@@ -129,4 +130,36 @@ export function computeFitScale(
     (viewportWidth - padding * 2) / contentWidth,
     (viewportHeight - padding * 2) / contentHeight,
   );
+}
+
+export function computeFitFrame(
+  content: Box,
+  viewportWidth: number,
+  viewportHeight: number,
+  padding: number,
+  labelBoundsAtScale?: (scale: number) => Box | undefined,
+): { scale: number; bounds: Box } {
+  const fitScale = (bounds: Box) =>
+    computeFitScale(bounds.x1 - bounds.x0, bounds.y1 - bounds.y0, viewportWidth, viewportHeight, padding);
+
+  let scale = fitScale(content);
+  let bounds = content;
+  if (labelBoundsAtScale) {
+    // Zoom can change which labels are visible and where they sit. Start from the same
+    // geometry on every fit, and recompute placements after each reduction.
+    const maxAttempts = 12;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const labels = labelBoundsAtScale(scale);
+      bounds = labels ? {
+        x0: Math.min(content.x0, labels.x0),
+        y0: Math.min(content.y0, labels.y0),
+        x1: Math.max(content.x1, labels.x1),
+        y1: Math.max(content.y1, labels.y1),
+      } : content;
+      const next = fitScale(bounds);
+      if (next >= scale * 0.999 || attempt === maxAttempts) break;
+      scale = next;
+    }
+  }
+  return { scale, bounds };
 }
