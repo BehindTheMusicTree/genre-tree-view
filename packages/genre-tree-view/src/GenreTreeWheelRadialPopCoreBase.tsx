@@ -27,6 +27,7 @@ import {
   coreRadiusOfDepth,
   getRadialPointOnCircle,
   hideCollidingLabels,
+  measureRadialLabelBounds,
   renderRootLabels,
   measureWedge,
   popRadiusOfDepth,
@@ -47,7 +48,7 @@ import {
 } from "./radial-wheel-geometry";
 import { FloatingControls } from "./FloatingControls";
 import { useExposeNodeStyleResolver } from "./use-expose-node-style";
-import { usePanZoom } from "./use-pan-zoom";
+import { usePanZoom, type PanZoomView } from "./use-pan-zoom";
 import { queryTreeContentElements } from "./zoom-pan";
 import { useNodeInfoPanel } from "./use-node-info-panel";
 import { isZoomableNode, resolvePopCoreFrame } from "./pop-core-frame";
@@ -282,7 +283,44 @@ export function WheelRadialPopCoreCore({
   const stageRef = useRef<HTMLDivElement>(null);
   const dotRadiusMemoryRef = useRef(new Map<string, number>());
   const viewportFrame = useMemo(() => JSON.stringify([focusNodeId, nodes.map(({ id, parentId, side }) => [id, parentId, side])]), [nodes, focusNodeId]);
-  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, frameKey: viewportFrame });
+  // Pop-subtree node cards scale against the whole tree's item counts, not just their own subtree's
+  // — a pop chain's few nodes can have a narrow itemCount spread that would otherwise get stretched
+  // across the full size range and render wildly inconsistent card sizes next to core siblings.
+  // Root counts included so root circles and node dots share one track-count scale.
+  const wheelItemCountRange = useMemo(
+    () =>
+      getItemCountRange([
+        ...nodes,
+        ...groups.map((group) => ({ itemCount: group.root.itemCount, muted: group.root.muted })),
+      ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
+    [nodes, groups, itemCountScaleMax, fullNodeCountForSizing],
+  );
+
+  const popSvgRef = useRef<SVGSVGElement>(null);
+  const fitLabelCache = useRef(new WeakMap<SVGGElement, Map<string, ReturnType<typeof measureRadialLabelBounds>>>());
+  const fitLabels = useCallback((scale: number, view: PanZoomView, viewport: DOMRect) => {
+    const origin = popSvgRef.current?.querySelector<SVGGElement>(":scope > g");
+    const matrix = origin?.getScreenCTM?.();
+    if (!origin || !matrix) return undefined;
+    // The origin is replaced whenever the label layout changes. Round away subpixel DOM
+    // measurement noise so a settled pan can reuse the previous fit's candidate placements.
+    let byScale = fitLabelCache.current.get(origin);
+    if (!byScale) {
+      byScale = new Map();
+      fitLabelCache.current.set(origin, byScale);
+    }
+    const key = scale.toPrecision(6);
+    if (!byScale.has(key)) {
+      if (byScale.size >= 32) byScale.clear();
+      byScale.set(key, measureRadialLabelBounds(d3, origin, wheelItemCountRange, scale));
+    }
+    const bounds = byScale.get(key);
+    if (!bounds) return undefined;
+    const x = (matrix.e - viewport.left - view.x) / view.k;
+    const y = (matrix.f - viewport.top - view.y) / view.k;
+    return { x0: x + bounds.x0, y0: y + bounds.y0, x1: x + bounds.x1, y1: y + bounds.y1 };
+  }, [wheelItemCountRange]);
+  const panZoom = usePanZoom(viewportRef, wheelZoom, stageRef, { defaultViewport, viewportRestore, selectedNodeId: selectedNodeId, obscuredInset, onViewportChange, fitLabels, frameKey: viewportFrame });
   // Shared across every mounted sector (ring roots' pop/core branches, and the center subtree) —
   // exactly one hook instance for the whole component instance, so only one panel is ever open at
   // a time regardless of which sector's node was clicked.
@@ -331,7 +369,6 @@ export function WheelRadialPopCoreCore({
     zoomScaleRef.current = zoomScale;
   });
   const wheelCircleRef = useRef<HTMLDivElement>(null);
-  const popSvgRef = useRef<SVGSVGElement>(null);
   const centerChipRef = useRef<HTMLButtonElement>(null);
   const regionLabelRef = useRef<HTMLDivElement>(null);
   // Stage-space (pre pan/zoom) position and font size of the current root's name, so it pans and
@@ -361,19 +398,6 @@ export function WheelRadialPopCoreCore({
   const rootItemCountById = useMemo(
     () => new Map(groups.map((group) => [group.root.id, group.root.itemCount])),
     [groups],
-  );
-
-  // Pop-subtree node cards scale against the whole tree's item counts, not just their own subtree's
-  // — a pop chain's few nodes can have a narrow itemCount spread that would otherwise get stretched
-  // across the full size range and render wildly inconsistent card sizes next to core siblings.
-  // Root counts included so root circles and node dots share one track-count scale.
-  const wheelItemCountRange = useMemo(
-    () =>
-      getItemCountRange([
-        ...nodes,
-        ...groups.map((group) => ({ itemCount: group.root.itemCount, muted: group.root.muted })),
-      ], { itemCountScaleMax, nodeCountForSizing: fullNodeCountForSizing }),
-    [nodes, groups, itemCountScaleMax, fullNodeCountForSizing],
   );
 
   const isCenterMainstream = isMainstreamPopLineage(index, centerNode.id);
