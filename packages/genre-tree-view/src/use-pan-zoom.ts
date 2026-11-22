@@ -1,3 +1,4 @@
+import type { Box } from "@behindthemusictree/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -14,7 +15,7 @@ import {
 import {
   classifyWheelEvent,
   clampZoomScale,
-  computeFitScale,
+  computeFitFrame,
   computeZoomScale,
   computeZoomScaleForButton,
   createWheelClassifierState,
@@ -30,6 +31,7 @@ export interface UsePanZoomOptions {
   selectedNodeId?: string | null;
   /** See GenreTreeProps.obscuredInset. Read when centering, so a change never re-centers. */
   obscuredInset?: ObscuredInset;
+  fitLabels?: (scale: number, view: PanZoomView, viewport: DOMRect) => Box | undefined;
   onViewportChange?: (viewport: GenreTreeViewport) => void;
 }
 
@@ -566,12 +568,18 @@ export function usePanZoom(
         height: contentHeight,
       };
 
-      const fitScale = computeFitScale(
-        contentWidth,
-        contentHeight,
+      const fitLabels = options.fitLabels;
+      const { scale: fitScale, bounds: fitBounds } = computeFitFrame(
+        {
+          x0: contentOriginX,
+          y0: contentOriginY,
+          x1: contentOriginX + contentWidth,
+          y1: contentOriginY + contentHeight,
+        },
         viewportRect.width,
         viewportRect.height,
         ZOOM_FIT_PADDING,
+        fitLabels && ((scale) => fitLabels(scale, view, viewportRect)),
       );
 
       // Keep viewRef/minScaleRef current immediately so a wheel/pinch event firing right after
@@ -632,12 +640,12 @@ export function usePanZoom(
         return true;
       }
       view.k = fitScale;
-      view.x = viewportRect.width / 2 - (contentOriginX + contentWidth / 2) * fitScale;
-      view.y = viewportRect.height / 2 - (contentOriginY + contentHeight / 2) * fitScale;
+      view.x = viewportRect.width / 2 - ((fitBounds.x0 + fitBounds.x1) / 2) * fitScale;
+      view.y = viewportRect.height / 2 - ((fitBounds.y0 + fitBounds.y1) / 2) * fitScale;
       commitView(!silent);
       return true;
     },
-    [viewportRef, commitView, options.frameKey, options.selectedNodeId],
+    [viewportRef, commitView, options.frameKey, options.selectedNodeId, options.fitLabels],
   );
 
   // Tracks the eased "fly to" glide started by centerOnElement below — unlike zoomAnimationRef's

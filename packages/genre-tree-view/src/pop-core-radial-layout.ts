@@ -30,6 +30,7 @@ import {
   calculateLabelRank,
   MUTED_LABEL_TIER,
   calculateNodeFontSize,
+  getItemCountRange,
   isLabelRankedForZoom,
   tintSurface,
 } from "./constants";
@@ -527,6 +528,7 @@ export interface RootLabelDatum {
 export function renderRootLabels<E extends SVGElement>(
   container: d3.Selection<E, unknown, null, undefined>,
   roots: RootLabelDatum[],
+  itemCountRange: ItemCountRange = getItemCountRange(roots),
 ): void {
   container
     .append("g")
@@ -538,8 +540,21 @@ export function renderRootLabels<E extends SVGElement>(
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
     .style("--gtv-node-fill", (d) => d.fill ?? TEXT_COLOR)
     .style("--gtv-node-hover-halo", (d) => svgLabelHalo(d.fill ?? TEXT_COLOR).stroke)
+    .each(function (d) {
+      const fontSize = calculateNodeFontSize(d.itemCount, itemCountRange);
+      const { box } = dotLabelCandidates(d.name, d.radius, fontSize, { gap: NODE_DOT_LABEL_GAP, preferRight: d.x >= 0 })[0];
+      d3.select(this).append("rect")
+        .attr("class", "gtv-radial-fit-bounds")
+        .attr("x", Math.min(-d.radius, box.x0))
+        .attr("y", Math.min(-d.radius, box.y0))
+        .attr("width", Math.max(d.radius, box.x1) - Math.min(-d.radius, box.x0))
+        .attr("height", Math.max(d.radius, box.y1) - Math.min(-d.radius, box.y0))
+        .attr("fill", "none")
+        .attr("pointer-events", "none");
+    })
     .append("text")
     .attr("class", "gtv-node-label")
+    .attr("data-gtv-radial-label", "")
     .attr("dominant-baseline", "middle")
     .attr("fill", TEXT_COLOR)
     .attr("stroke", svgLabelHalo(TEXT_COLOR).stroke)
@@ -747,7 +762,7 @@ export function renderPopSubtree(
 
   nodes
     .append("rect")
-    .attr("class", "gtv-hover-hit-area")
+    .attr("class", "gtv-hover-hit-area gtv-radial-fit-bounds")
     .each(function (d) {
       const { hitArea } = getDotLabelGeometry(
         d.x!,
@@ -807,6 +822,7 @@ export function renderPopSubtree(
       "class",
       "gtv-node-label",
     )
+    .attr("data-gtv-radial-label", "")
     .each(function (d) {
       const { labelX, anchor, fontSize } = getDotLabelGeometry(
         d.x!,
@@ -904,18 +920,12 @@ export function nodeLabelPlacementItem({
   return muted ? { id, labels, priority: rank, tier: MUTED_LABEL_TIER } : { id, labels, dot, priority: rank };
 }
 
-/** Places every dot label under `container` (across all rendered subtrees, so labels of
- * neighboring branches/sectors are checked against each other) on its first candidate spot (see
- * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
- * `gtv-node-label--hidden` (CSS reveals it again on hover). Labels below the zoom's importance
- * threshold (see isLabelRankedForZoom) are hidden outright. Labels are sized for `zoomScale`: zoomed
- * out they are bigger in layout units and collide more, so fewer of them show. */
-export function hideCollidingLabels<E extends SVGElement>(
+function layoutRadialLabels<E extends SVGElement>(
   d3Lib: typeof import("d3"),
   container: d3.Selection<E, unknown, null, undefined>,
   itemCountRange: ItemCountRange,
   zoomScale: number,
-): void {
+) {
   const nodes = container.selectAll<SVGGElement, D3Node>("g.node");
   const offset = (box: Box, x: number, y: number): Box => ({
     x0: box.x0 + x,
@@ -941,7 +951,7 @@ export function hideCollidingLabels<E extends SVGElement>(
       return [d.id, { fontSize, candidates: dotLabelCandidates(d.name, d.radius, fontSize, { gap: NODE_DOT_LABEL_GAP, preferRight: d.x >= 0 }) }];
     }),
   );
-  const placement = placeLabels([
+  const items = [
     ...roots.data().map((d) => ({
       id: `root:${d.id}`,
       labels: rootGeometryById.get(d.id)!.candidates.map((candidate) => offset(candidate.box, d.x, d.y)),
@@ -965,7 +975,59 @@ export function hideCollidingLabels<E extends SVGElement>(
         muted: d.data.muted === true,
       });
     }),
-  ]);
+  ];
+  // The collision grid uses fixed-size cells. Index screen coordinates so a fixed-size
+  // label cannot span millions of cells when the wheel fits at a very small scale.
+  const toScreen = ({ x0, y0, x1, y1 }: Box): Box => ({
+    x0: x0 * zoomScale,
+    y0: y0 * zoomScale,
+    x1: x1 * zoomScale,
+    y1: y1 * zoomScale,
+  });
+  const placement = placeLabels(items.map((item) => ({
+    ...item,
+    labels: item.labels.map(toScreen),
+    dot: item.dot && toScreen(item.dot),
+  })));
+  return { nodes, roots, geometryById, rootGeometryById, items, placement };
+}
+
+export function measureRadialLabelBounds(
+  d3Lib: typeof import("d3"),
+  origin: SVGGElement,
+  itemCountRange: ItemCountRange,
+  zoomScale: number,
+): Box | undefined {
+  const { items, placement } = layoutRadialLabels(d3Lib, d3Lib.select(origin), itemCountRange, zoomScale);
+  let bounds: Box | undefined;
+  for (const item of items) {
+    const candidate = placement.get(item.id) ?? -1;
+    if (candidate < 0) continue;
+    const box = item.labels[candidate];
+    bounds = bounds ? {
+      x0: Math.min(bounds.x0, box.x0),
+      y0: Math.min(bounds.y0, box.y0),
+      x1: Math.max(bounds.x1, box.x1),
+      y1: Math.max(bounds.y1, box.y1),
+    } : box;
+  }
+  return bounds;
+}
+
+/** Places every dot label under `container` (across all rendered subtrees, so labels of
+ * neighboring branches/sectors are checked against each other) on its first candidate spot (see
+ * getDotLabelGeometry) that overlaps no higher-ranked label (see calculateLabelRank) and no dot, else marks it
+ * `gtv-node-label--hidden` (CSS reveals it again on hover). Labels below the zoom's importance
+ * threshold (see isLabelRankedForZoom) are hidden outright. Labels are sized for `zoomScale`: zoomed
+ * out they are bigger in layout units and collide more, so fewer of them show. */
+export function hideCollidingLabels<E extends SVGElement>(
+  d3Lib: typeof import("d3"),
+  container: d3.Selection<E, unknown, null, undefined>,
+  itemCountRange: ItemCountRange,
+  zoomScale: number,
+): void {
+  const { nodes, roots, geometryById, rootGeometryById, placement } =
+    layoutRadialLabels(d3Lib, container, itemCountRange, zoomScale);
   roots.each(function (d) {
     const { candidates, fontSize } = rootGeometryById.get(d.id)!;
     const index = placement.get(`root:${d.id}`)!;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampZoomScale,
   classifyWheelEvent,
+  computeFitFrame,
   computeFitScale,
   computeZoomScale,
   computeZoomScaleForButton,
@@ -182,6 +183,21 @@ describe("queryTreeContentElements", () => {
   });
 });
 
+describe("radial fit content", () => {
+  it("uses natural envelopes and preserves Cartesian labels instead of measuring radial display labels", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `<svg>
+      <rect class="gtv-radial-fit-bounds" />
+      <circle class="gtv-node-dot" />
+      <text class="gtv-node-label" data-gtv-radial-label="">Radial</text>
+      <text class="gtv-node-label">Cartesian</text>
+    </svg>`;
+    const content = queryTreeContentElements(container);
+    expect(content).toHaveLength(3);
+    expect(content.map((element) => element.textContent)).toEqual(["", "", "Cartesian"]);
+  });
+});
+
 describe("viewToViewport / viewportToView", () => {
   it("maps the viewport center to the content-space point shown there", () => {
     expect(viewToViewport({ x: 400, y: 225, k: 0.5 }, 1200, 750)).toEqual({ x: 400, y: 300, zoom: 0.5 });
@@ -201,5 +217,40 @@ describe("viewToViewport / viewportToView", () => {
     const view = viewportToView(viewport, 600, 400);
     expect((600 / 2 - view.x) / view.k).toBe(400);
     expect((400 / 2 - view.y) / view.k).toBe(300);
+  });
+});
+
+
+describe("computeFitFrame", () => {
+  it("centers fixed screen-size label overhang at the fitted scale", () => {
+    const content = { x0: 0, y0: 0, x1: 1000, y1: 1000 };
+    const { scale, bounds } = computeFitFrame(content, 320, 400, 40, (zoom) => ({
+      x0: 900,
+      y0: 450,
+      x1: 900 + 120 / zoom,
+      y1: 550,
+    }));
+    expect(scale).toBeLessThan(0.24);
+    expect((bounds.x1 - bounds.x0) * scale).toBeLessThanOrEqual(240.24);
+    expect(bounds.x1).toBeCloseTo(900 + 120 / scale);
+  });
+
+  it("fits the fixed geometry when there are no placed zoom-dependent labels", () => {
+    const content = { x0: 10, y0: 20, x1: 1010, y1: 1020 };
+    expect(computeFitFrame(content, 320, 400, 40, () => undefined)).toEqual({
+      scale: 0.24,
+      bounds: content,
+    });
+  });
+
+  it("bounds zoom-out when a fixed-size label cannot fit at any scale", () => {
+    const content = { x0: 0, y0: 0, x1: 1000, y1: 1000 };
+    const scales: number[] = [];
+    const { scale } = computeFitFrame(content, 120, 400, 40, (zoom) => {
+      scales.push(zoom);
+      return { x0: 500, y0: 500, x1: 500 + 126 / zoom, y1: 550 };
+    });
+    expect(scale).toBeGreaterThanOrEqual(0.02);
+    expect(Math.min(...scales)).toBe(scale);
   });
 });

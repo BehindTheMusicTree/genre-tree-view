@@ -215,6 +215,12 @@ pnpm workspace with two members:
   screens (`gtv-zoom-controls--auto`, hidden under `@media (pointer: coarse)`, where pinch replaces
   them); the `floatingControlsLeading` slot is unaffected. `GenreTreeOutline` omits that prop.
 
+Radial Fit to frame measures natural node/label envelopes emitted by the layout, plus
+links and the wheel circle. The pop/core wheel also includes labels placed at the
+proposed fit scale, since their on-screen size does not shrink with the wheel. Each fit
+starts from the same natural bounds so it is independent of prior pan or zoom. Cartesian renderers
+continue measuring their fixed cards and labels; the outline has no fitting path.
+
 ## Public surface
 
 `index.ts` is the sole export boundary:

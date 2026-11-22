@@ -1,3 +1,4 @@
+import type { Box } from "@behindthemusictree/ui";
 import {
   ZOOM_BUTTON_SCALE_STEP,
   ZOOM_MAX_SCALE,
@@ -92,12 +93,10 @@ export function classifyWheelEvent(deltaY: number, now: number, state: WheelClas
   return type;
 }
 
-/** Selector for the elements "fit to frame" should measure: the tree's actually-rendered cards
- * (or radial dots and their labels) and connector links. Deliberately excludes the invisible per-node hit area and the SVG's own
- * declared width/height, both of which bake in ACTIONS_OVERLAY_WIDTH/HEIGHT (see constants.ts) —
- * toolbar/menu clearance reserved to one side of the tree. Fitting to that reserved space instead
- * of the visible content leaves a large, lopsided gap around the tree after fitting. */
-export const TREE_CONTENT_SELECTOR = ".gtv-node-rect, .gtv-node-dot, text.gtv-node-label, .gtv-link";
+/** Radial renderers expose natural dot/label envelopes separately from zoom-dependent
+ * label placement. Cartesian cards and labels keep their existing tight-content measurement.
+ * Toolbar clearance and SVG canvas dimensions are never part of the fitted content. */
+export const TREE_CONTENT_SELECTOR = ".gtv-node-rect, .gtv-node-dot, text.gtv-node-label:not([data-gtv-radial-label]), .gtv-radial-fit-bounds, .gtv-link";
 
 /** Collects the tight-content elements (see TREE_CONTENT_SELECTOR) under `container`, ready to
  * pass into usePanZoom's fitToFrame. */
@@ -131,4 +130,39 @@ export function computeFitScale(
     (viewportWidth - padding * 2) / contentWidth,
     (viewportHeight - padding * 2) / contentHeight,
   );
+}
+
+export function computeFitFrame(
+  content: Box,
+  viewportWidth: number,
+  viewportHeight: number,
+  padding: number,
+  labelBoundsAtScale?: (scale: number) => Box | undefined,
+): { scale: number; bounds: Box } {
+  const fitScale = (bounds: Box) =>
+    computeFitScale(bounds.x1 - bounds.x0, bounds.y1 - bounds.y0, viewportWidth, viewportHeight, padding);
+
+  let scale = fitScale(content);
+  let bounds = content;
+  if (labelBoundsAtScale) {
+    // Zoom can change which labels are visible and where they sit. Start from the same
+    // geometry on every fit, and recompute placements after each reduction.
+    // A fixed-size label may be wider than the available space at every zoom.
+    // Bound the extra zoom-out so collision boxes cannot grow without limit.
+    const minScale = Math.min(scale, ZOOM_MIN_SCALE) / 2;
+    const maxAttempts = 12;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const labels = labelBoundsAtScale(scale);
+      bounds = labels ? {
+        x0: Math.min(content.x0, labels.x0),
+        y0: Math.min(content.y0, labels.y0),
+        x1: Math.max(content.x1, labels.x1),
+        y1: Math.max(content.y1, labels.y1),
+      } : content;
+      const next = Math.max(minScale, fitScale(bounds));
+      if (next >= scale * 0.999 || attempt === maxAttempts) break;
+      scale = next;
+    }
+  }
+  return { scale, bounds };
 }

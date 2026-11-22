@@ -105,7 +105,7 @@ describe("usePanZoom", () => {
       return { observe: vi.fn(), disconnect: vi.fn() };
     }) as unknown as typeof ResizeObserver;
     const viewport = document.createElement("div");
-    viewport.getBoundingClientRect = () => ({ width, height: 400 }) as DOMRect;
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width, height: 400 }) as DOMRect;
     const content = document.createElement("div");
     content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
     const onViewportChange = vi.fn();
@@ -124,7 +124,7 @@ describe("usePanZoom", () => {
   });
   it("restores a viewport silently when its revision changes", () => {
     const viewport = document.createElement("div");
-    viewport.getBoundingClientRect = () => ({ width: 500, height: 400 }) as DOMRect;
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width: 500, height: 400 }) as DOMRect;
     const content = document.createElement("div");
     content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
     const onViewportChange = vi.fn();
@@ -865,7 +865,7 @@ describe("usePanZoom", () => {
 
   it.each([2, 20])("restores silently during a node gesture moved by %s pixels and accepts the next tap", async (distance) => {
     const viewport = document.createElement("div");
-    viewport.getBoundingClientRect = () => ({ width: 500, height: 400 }) as DOMRect;
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width: 500, height: 400 }) as DOMRect;
     const content = document.createElement("div");
     content.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 800, width: 1000, height: 800 }) as DOMRect;
     const chip = document.createElement("button");
