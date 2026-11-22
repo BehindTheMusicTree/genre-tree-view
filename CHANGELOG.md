@@ -5,11 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [10.0.5] - 2026-11-21
+## [10.0.5] - 2026-11-22
 
-### CI
+### Removed
 
-- Add canonical workflow concurrency groups so superseded pull-request runs are cancelled and release runs are never replaced.
+- Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
 
 ### Fixed
 
@@ -17,11 +17,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Agent directories**: Keep plans and scratch data out of Git while tracking the directory ignore rules.
 - Keep radial Fit to frame consistent after panning or zooming by measuring stable layout bounds instead of zoom-dependent labels, and account for labels at the fitted scale to avoid clipping in narrow viewports.
 
-### Removed
-
-- Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
-
 ### CI
+
+- Add canonical workflow concurrency groups so superseded pull-request runs are cancelled and release runs are never replaced.
 
 - Add Android Chrome gesture regression checks using an emulator.
 - Correct Android label preparation to target interactive node hit areas and preserve the surviving finger during pinch continuation checks.

@@ -33,4 +33,3 @@ export async function background(page: Page) {
     throw new Error("No visible background available for a real drag");
   });
 }
-
