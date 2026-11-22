@@ -242,4 +242,15 @@ describe("computeFitFrame", () => {
       bounds: content,
     });
   });
+
+  it("bounds zoom-out when a fixed-size label cannot fit at any scale", () => {
+    const content = { x0: 0, y0: 0, x1: 1000, y1: 1000 };
+    const scales: number[] = [];
+    const { scale } = computeFitFrame(content, 120, 400, 40, (zoom) => {
+      scales.push(zoom);
+      return { x0: 500, y0: 500, x1: 500 + 126 / zoom, y1: 550 };
+    });
+    expect(scale).toBeGreaterThanOrEqual(0.02);
+    expect(Math.min(...scales)).toBe(scale);
+  });
 });

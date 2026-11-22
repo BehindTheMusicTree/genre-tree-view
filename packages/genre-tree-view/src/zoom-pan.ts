@@ -147,6 +147,9 @@ export function computeFitFrame(
   if (labelBoundsAtScale) {
     // Zoom can change which labels are visible and where they sit. Start from the same
     // geometry on every fit, and recompute placements after each reduction.
+    // A fixed-size label may be wider than the available space at every zoom.
+    // Bound the extra zoom-out so collision boxes cannot grow without limit.
+    const minScale = Math.min(scale, ZOOM_MIN_SCALE) / 2;
     const maxAttempts = 12;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const labels = labelBoundsAtScale(scale);
@@ -156,7 +159,7 @@ export function computeFitFrame(
         x1: Math.max(content.x1, labels.x1),
         y1: Math.max(content.y1, labels.y1),
       } : content;
-      const next = fitScale(bounds);
+      const next = Math.max(minScale, fitScale(bounds));
       if (next >= scale * 0.999 || attempt === maxAttempts) break;
       scale = next;
     }
