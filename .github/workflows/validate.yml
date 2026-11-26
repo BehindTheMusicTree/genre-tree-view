@@ -49,7 +49,8 @@ jobs:
     needs: [build, coverage]
     if: always()
     runs-on: ubuntu-24.04
-    env:
-      NEEDS: ${{ toJSON(needs) }}
     steps:
-      - run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"
+      - name: Require build, tests and coverage to pass
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"
