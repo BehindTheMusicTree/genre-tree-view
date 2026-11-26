@@ -28,6 +28,28 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm coverage
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-vitest
+          path: packages/genre-tree-view/coverage/cobertura-coverage.xml
+          if-no-files-found: error
 
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:browser
+
+  coverage:
+    needs: build
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/coverage.yml@18b90bc9c64b9abab0a86e7ea74f65acac93aec1 # v6.6.0
+    with:
+      line: 85
+      branch: 80
+
+  tests-success:
+    name: Tests success
+    needs: [build, coverage]
+    if: always()
+    runs-on: ubuntu-24.04
+    env:
+      NEEDS: ${{ toJSON(needs) }}
+    steps:
+      - run: jq -e 'all(.[]; .result == "success")' <<<"$NEEDS"

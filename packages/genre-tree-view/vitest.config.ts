@@ -11,7 +11,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "lcov"],
+      reporter: ["text", "html", "lcov", "cobertura"],
       include: ["src/**/*.{ts,tsx}"],
       exclude: [...coverageConfigDefaults.exclude, "src/index.ts", "src/types.ts", "src/__bench__/**"],
       thresholds: {
