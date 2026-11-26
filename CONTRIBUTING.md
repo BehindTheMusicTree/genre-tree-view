@@ -36,7 +36,8 @@ pnpm --filter @behindthemusictree/genre-tree-view test -- <pattern>   # single t
 
 PRs are validated by `validate.yml` (build, typecheck, lint, coverage and browser gestures). The
 `Tests success` job gates the workflow: it passes only when `build` and the organization `coverage` job
-(merged Cobertura report, at least 85% lines and 80% branches, plus patch coverage) both succeed.
+(merged Cobertura report: at least 85% lines, 80% branches and the organization's 90% on changed lines) both
+succeed. The stricter thresholds below still apply inside `build`.
 Browser checks use the compiled playground and canonical genre fixture. They assert gesture
 behavior; attached Chrome performance counters are diagnostics, not phone timing budgets.
 Use `PLAYWRIGHT_CHANNEL=chrome pnpm test:browser` to use a locally installed Chrome instead. The coverage gate in
